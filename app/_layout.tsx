@@ -1,7 +1,7 @@
-import {SplashScreen, Stack} from "expo-router";
-import {useFonts} from "expo-font";
-import {useEffect} from "react";
-import {KeyboardProvider} from "react-native-keyboard-controller";
+import { SplashScreen, Stack } from "expo-router";
+import { useFonts } from "expo-font";
+import { useEffect } from "react";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,11 +25,7 @@ export default function RootLayout() {
 
     return (
         <KeyboardProvider>
-            <Stack screenOptions={{headerShown: false}}>
-                <Stack.Screen name='(auth)/index'/>
-                <Stack.Screen name='(auth)/signUp'/>
-                <Stack.Screen name='(tabs)'/>
-            </Stack>
+            <Stack initialRouteName="(auth)/index" screenOptions={{ headerShown: false }} />
         </KeyboardProvider>
 
     )

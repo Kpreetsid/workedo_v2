@@ -1,9 +1,5 @@
 import {View} from "react-native";
 
 export default function More(){
-    return(
-        <View>
-
-        </View>
-    )
+    return null;
 }

@@ -1,0 +1,7 @@
+node_modules
+.DS_Store
+.expo/
+__MACOSX/.DS_Store
+app/.DS_Store
+assets/.DS_Store
+components/.DS_Store

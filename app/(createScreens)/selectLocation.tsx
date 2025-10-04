@@ -1,10 +1,11 @@
 import Header from "@/components/global/Header";
-import {FlatList, Pressable, Text, StyleSheet, Dimensions, View} from "react-native";
+import {Dimensions, FlatList, Pressable, StyleSheet, Text, View} from "react-native";
 import ActionButton from "@/components/create-screens/ActionButton";
 import {router} from "expo-router";
 import Fonts from "@/constants/Typography";
 import {ArrowRight, MapIcon} from "@/constants/IconProvider";
 import {useState} from "react";
+import SearchBar from "@/components/global/SearchBar";
 
 const locations: string[] = [
     "New York, USA",
@@ -30,19 +31,25 @@ const locations: string[] = [
 ];
 
 const width = Dimensions.get("window").width;
-export default function SelectLocation() {
+export default function SelectLocation({showHeader = true}: { showHeader?: boolean }) {
     const [selectedLocation, setSelectedLocation] = useState<string>("");
+    const [searchText, setSearchText] = useState("");
+
     return (
         <>
-            <Header title="Select Location"/>
+            {showHeader && <Header title="Select Location"/>}
+
+            <SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText}/>
+
             <FlatList
                 data={locations}
                 keyExtractor={(_, index) => index.toString()}
                 renderItem={({item}) => (
-                    <Pressable style={[styles.locationButton, {
-                        backgroundColor: selectedLocation === item ? "#FFBF0080" : "#fff",
-                        borderColor: selectedLocation === item ? "#FFC1074D" : "#99999933"
-                    }]} onPress={() => setSelectedLocation(item)}>
+                    <Pressable style={[styles.locationButton, {backgroundColor: selectedLocation === item ? "#FFBF0080" : "#fff", borderColor: selectedLocation === item ? "#FFC1074D" : "#99999933"}]}
+                               onPress={() => {
+                                   setSelectedLocation(item);
+                                   selectedLocation === item && router.push("/locationDetail")
+                               }}>
                         <View style={styles.textRow}>
                             <Text style={styles.locationText}>{item}</Text>
                             <ArrowRight color={"#201F23CC"}/>
@@ -57,6 +64,20 @@ export default function SelectLocation() {
 }
 
 const styles = StyleSheet.create({
+    searchContainer: {
+        backgroundColor: "#fff",
+        borderRadius: 8,
+        alignItems: "center",
+        flexDirection: "row",
+        paddingHorizontal: 20,
+        marginHorizontal: 20,
+        marginVertical: 10,
+        gap: 10
+    },
+    input: {
+        fontSize: 12,
+        fontFamily: Fonts.regular
+    },
     container: {
         flexGrow: 1,
         backgroundColor: "#F5F7FA",
@@ -87,7 +108,7 @@ const styles = StyleSheet.create({
     },
     actionButton: {
         position: "absolute",
-        bottom: "2%",
+        bottom: "0.5%",
         alignSelf: "center",
         width: width - 50
     }

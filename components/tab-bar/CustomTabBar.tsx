@@ -13,7 +13,6 @@ type CustomTabBarProps = {
 
 export default function CustomTabBar({state, descriptors, navigation, onMorePress}: CustomTabBarProps) {
     const insets = useSafeAreaInsets();
-    console.log("Bottom inset:", insets.bottom);
     const icons: Record<string, (props: { color: string }) => JSX.Element> = {
         overview: (props) => <Overview {...props} />,
         workOrders: (props) => <WorkOrders {...props} />,
