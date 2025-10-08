@@ -1,11 +1,11 @@
-import {cloneElement, ReactElement, ReactNode, useRef, useState} from "react";
+import {cloneElement, isValidElement, ReactElement, ReactNode, useRef, useState} from "react";
 import {Pressable, StyleProp, StyleSheet, Text, TextStyle, View, ViewStyle} from "react-native";
 import PagerView, {PagerViewOnPageSelectedEvent} from "react-native-pager-view";
 import Fonts from "@/constants/Typography";
 
 interface TabConfig {
     label: string;
-    icon?: ReactNode;
+    icon?: ReactElement<{ color?: string }>;
     component: ReactNode;
 }
 
@@ -40,7 +40,8 @@ export default function SegmentedPager({tabs, initialPage = 0, containerStyle, t
                     const isActive = index === activeTab;
                     return (
                         <Pressable key={index} style={[styles.tab, tabStyle, isActive && [styles.activeTab, activeTabStyle]]} onPress={() => handleTabPress(index)}>
-                            {cloneElement(tab.icon as ReactElement<any>, {color: isActive ? "#FFFFFF" : "#000000"})}
+                            {isValidElement(tab?.icon) ? cloneElement(tab.icon, { color: isActive ? "#FFFFFF" : "#000000" }) : null}
+
 
                             <Text style={[styles.tabText, textStyle, isActive && [styles.activeTabText, activeTextStyle]]}> {tab.label} </Text>
                         </Pressable>

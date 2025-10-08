@@ -21,10 +21,8 @@ export default function ScannerScreen() {
     if (!permission.granted) {
         return (
             <View style={styles.center}>
-                <Text style={styles.resultText}>
-                    We need your permission to use the camera
-                </Text>
-                <ActionButton onPress={requestPermission} label="Grant Permission"/>
+                <Text style={styles.resultText}>We need your permission to use the camera</Text>
+                <ActionButton onPress={requestPermission} label="Grant Permission" buttonStyle={{width: "90%"}}/>
             </View>
         );
     }

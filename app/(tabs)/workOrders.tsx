@@ -9,7 +9,9 @@ export default function WorkOrders() {
         <>
             <Header title="Work Orders"/>
 
-            <SegmentedPager tabs={[{label: "To Do", icon: <ToDoIcon/>, component: <ToDoTab/>}, {label: "Done", icon: <DoneIcon/>, component: <DoneTab/>}]}/>
+            <SegmentedPager tabs={[
+                {label: "To Do", icon: <ToDoIcon/>, component: <ToDoTab/>},
+                {label: "Done", icon: <DoneIcon/>, component: <DoneTab/>}]}/>
         </>
     );
 }

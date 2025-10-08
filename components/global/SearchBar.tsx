@@ -1,4 +1,4 @@
-import {Pressable, StyleSheet, TextInput, View} from "react-native";
+import {Pressable, StyleSheet, TextInput, View, ViewStyle} from "react-native";
 import Fonts from "@/constants/Typography";
 import {CloseIcon, SearchIconLocationTab} from "@/constants/IconProvider";
 import {FC} from "react";
@@ -7,11 +7,12 @@ type SearchBarProps = {
     placeholder?: string;
     value: string;
     onChangeText: (text: string) => void;
+    containerStyle?: ViewStyle;
 };
 
-const SearchBar: FC<SearchBarProps> = ({placeholder = "Search...", value, onChangeText}) => {
+const SearchBar: FC<SearchBarProps> = ({placeholder = "Search...", value, onChangeText, containerStyle}) => {
     return (
-        <View style={styles.searchContainer}>
+        <View style={[styles.searchContainer, containerStyle]}>
             <SearchIconLocationTab/>
 
             <TextInput

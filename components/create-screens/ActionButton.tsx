@@ -1,4 +1,4 @@
-import {TouchableOpacity, Text, StyleSheet, GestureResponderEvent, ViewStyle} from "react-native";
+import {GestureResponderEvent, StyleSheet, Text, TouchableOpacity, ViewStyle} from "react-native";
 import Fonts from "@/constants/Typography";
 
 interface ActionButtonProps {
@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         color: "#FFFFFF",
-        fontSize: 16,
+        fontSize: 15,
         fontFamily: Fonts.semiBold,
         lineHeight: 20
     }

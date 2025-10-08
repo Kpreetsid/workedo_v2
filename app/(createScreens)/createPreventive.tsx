@@ -18,7 +18,7 @@ export default function CreatePreventive() {
                 <View style={{marginVertical: 5}}/>
 
                 <FormInput label="Part Name" placeholder="Enter Title"/>
-                <FormInput label="Description" placeholder="Enter Title" inputStyle={styles.descriptionInput}/>
+                <FormInput label="Description" placeholder="Enter a message" inputStyle={styles.descriptionInput}/>
 
                 <AssignInput label="Location" onPress={() => router.push("/selectLocation")}/>
                 <AssignInput label="Assign User" onPress={() => router.push("/selectUser")}/>

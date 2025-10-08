@@ -6,18 +6,19 @@ interface FormInputProps extends TextInputProps {
     label: string;
     required?: boolean;
     containerStyle?: ViewStyle;
+    inputContainer?: ViewStyle;
     labelStyle?: TextStyle;
     inputStyle?: TextStyle;
 }
 
-const FormInput: FC<FormInputProps> = ({label, required = true, containerStyle, labelStyle, inputStyle, ...textInputProps}) => {
+const FormInput: FC<FormInputProps> = ({label, required = true, containerStyle, labelStyle, inputStyle, inputContainer, ...textInputProps}) => {
     return (
         <View style={[styles.container, containerStyle]}>
             <View style={styles.labelContainer}>
                 <Text style={[styles.labelText, labelStyle]}>{label}</Text>
                 {required && <Text style={styles.asterisk}>*</Text>}
             </View>
-            <View style={styles.field}>
+            <View style={[styles.field, inputContainer]}>
                 <TextInput
                     style={[styles.inputField, inputStyle]}
                     placeholderTextColor="#6B788899"

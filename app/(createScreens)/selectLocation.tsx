@@ -38,27 +38,28 @@ export default function SelectLocation({showHeader = true}: { showHeader?: boole
     return (
         <>
             {showHeader && <Header title="Select Location"/>}
+            <View style={{flex:1}}>
+                <SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText}/>
 
-            <SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText}/>
-
-            <FlatList
-                data={locations}
-                keyExtractor={(_, index) => index.toString()}
-                renderItem={({item}) => (
-                    <Pressable style={[styles.locationButton, {backgroundColor: selectedLocation === item ? "#FFBF0080" : "#fff", borderColor: selectedLocation === item ? "#FFC1074D" : "#99999933"}]}
-                               onPress={() => {
-                                   setSelectedLocation(item);
-                                   selectedLocation === item && router.push("/locationDetail")
-                               }}>
-                        <View style={styles.textRow}>
-                            <Text style={styles.locationText}>{item}</Text>
-                            <ArrowRight color={"#201F23CC"}/>
-                        </View>
-                        <MapIcon/>
-                    </Pressable>)}
-                contentContainerStyle={styles.container}
-            />
-            <ActionButton onPress={() => router.back()} label="Confirm Location" buttonStyle={styles.actionButton}/>
+                <FlatList
+                    data={locations}
+                    keyExtractor={(_, index) => index.toString()}
+                    renderItem={({item}) => (
+                        <Pressable style={[styles.locationButton, {backgroundColor: selectedLocation === item ? "#FFBF0080" : "#fff", borderColor: selectedLocation === item ? "#FFC1074D" : "#99999933"}]}
+                                   onPress={() => {
+                                       setSelectedLocation(item);
+                                       selectedLocation === item && router.push("/locationDetail")
+                                   }}>
+                            <View style={styles.textRow}>
+                                <Text style={styles.locationText}>{item}</Text>
+                                <ArrowRight color={"#201F23CC"}/>
+                            </View>
+                            <MapIcon/>
+                        </Pressable>)}
+                    contentContainerStyle={styles.container}
+                />
+                <ActionButton onPress={() => router.back()} label="Confirm Location" buttonStyle={styles.actionButton}/>
+            </View>
         </>
     )
 }
@@ -108,7 +109,7 @@ const styles = StyleSheet.create({
     },
     actionButton: {
         position: "absolute",
-        bottom: "0.5%",
+        bottom: 20,
         alignSelf: "center",
         width: width - 50
     }

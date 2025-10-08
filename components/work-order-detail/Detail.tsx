@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Pressable } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Image, Pressable } from "react-native";
 import Fonts from "@/constants/Typography";
 import { AssignUserRightIcon } from "@/constants/IconProvider";
 import { useState } from "react";
@@ -38,7 +38,7 @@ export default function Detail({ params }: any) {
                     </Pressable>
                 </View>
                 <View style={styles.rowBetween}>
-                    <Text style={styles.cardSubtitle}>{params.assignedTo || "N/A"}</Text>
+                    <Text style={styles.cardSubtitle}>{params?.assignedTo || "N/A"}</Text>
                 </View>
             </View>
 
@@ -46,8 +46,8 @@ export default function Detail({ params }: any) {
             <View style={styles.card}>
                 <View style={styles.rowBetween}>
                     <Text style={styles.cardTitle}>Priority</Text>
-                    <Text style={[styles.badge, params.priority === "Low" && styles.badgeLow, params.priority === "Medium" && styles.badgeMedium, params.priority === "High" && styles.badgeHigh]}>
-                        #{params.priority}
+                    <Text style={[styles.badge, params?.priority === "Low" && styles.badgeLow, params?.priority === "Medium" && styles.badgeMedium, params?.priority === "High" && styles.badgeHigh]}>
+                        #{params?.priority}
                     </Text>
                 </View>
                 <View style={styles.rowBetween}>
@@ -55,8 +55,8 @@ export default function Detail({ params }: any) {
                     <Text style={styles.cardSubtitle}>End Date</Text>
                 </View>
                 <View style={styles.rowBetween}>
-                    <Text style={styles.cardValue}>{params.startDate || "N/A"}</Text>
-                    <Text style={styles.cardValue}>{params.endDate || "N/A"}</Text>
+                    <Text style={styles.cardValue}>{params?.startDate || "N/A"}</Text>
+                    <Text style={styles.cardValue}>{params?.endDate || "N/A"}</Text>
                 </View>
             </View>
 
@@ -73,7 +73,7 @@ export default function Detail({ params }: any) {
                 <View style={styles.rowBetween}>
                     <Text style={styles.cardTitle}>Parts</Text>
                     <View style={styles.avatarRow}>
-                        <Text style={styles.linkText}>{params.parts || 0} Parts</Text>
+                        <Text style={styles.linkText}>{params?.parts || 0} Parts</Text>
                         <AssignUserRightIcon />
                     </View>
                 </View>
@@ -83,7 +83,7 @@ export default function Detail({ params }: any) {
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Description</Text>
                 <Text style={styles.description}>
-                    {params.description || "No description available."}
+                    {params?.description || "No description available."}
                 </Text>
             </View>
 
@@ -91,7 +91,8 @@ export default function Detail({ params }: any) {
 
             <PartsInfoModal visible={partsModalVisible} onClose={() => setPartsModalVisible(false)} parts={parts} />
 
-            <MoreInfoModal visible={moreInfoModalVisible} onClose={() => setMoreInfoModalVisible(false)} estimatedTime="2h 30m" requestedBy="Parwez Alam" createdOn="23/09/2025" />
+            <MoreInfoModal visible={moreInfoModalVisible} onClose={() => setMoreInfoModalVisible(false)}
+                           estimatedTime="2h 30m" requestedBy="Parwez Alam" createdOn="23/09/2025" />
 
         </ScrollView>
     )

@@ -12,7 +12,6 @@ type CustomTabBarProps = {
 };
 
 export default function CustomTabBar({state, descriptors, navigation, onMorePress}: CustomTabBarProps) {
-    const insets = useSafeAreaInsets();
     const icons: Record<string, (props: { color: string }) => JSX.Element> = {
         overview: (props) => <Overview {...props} />,
         workOrders: (props) => <WorkOrders {...props} />,
@@ -22,7 +21,7 @@ export default function CustomTabBar({state, descriptors, navigation, onMorePres
     };
 
     return (
-        <View style={[styles.tabBar, {marginBottom: insets.bottom === 0 ? undefined : insets.bottom - 10, height: insets.bottom === 0 ? 70 : 60}]}>
+        <View style={[styles.tabBar, {marginBottom: useSafeAreaInsets().bottom}]}>
             {state.routes.map((route, index) => {
                 const {options} = descriptors[route.key];
                 const label = options.title || route.name;
@@ -31,22 +30,14 @@ export default function CustomTabBar({state, descriptors, navigation, onMorePres
                 const color = isFocused ? "#742BDE" : "#8B8B94";
 
                 const onPress = () => {
-                    if (route.name === "more") {
-                        onMorePress();
-                    } else {
-                        navigation.navigate(route.name as never);
-                    }
+                    if (route.name === "more") onMorePress();
+                    else navigation.navigate(route.name as never);
                 };
 
                 return (
                     <Pressable key={route.key} onPress={onPress} style={styles.tabItem}>
-                        <View style={{
-                            height: 23,
-                            width: 23,
-                            alignItems: "center",
-                            justifyContent: "center"
-                        }}>{icons[route.name]({color})}</View>
-                        <Text style={[styles.tabLabel, {color: isFocused ? "#742BDE" : "#8B8B94"}]}>{label}</Text>
+                        <View style={styles.iconContainer}>{icons[route.name]({color})}</View>
+                        <Text style={[styles.tabLabel, {color: isFocused ? "#742BDE" : "#8B8B94"}]} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
                     </Pressable>
                 );
             })}
@@ -61,7 +52,8 @@ const styles = StyleSheet.create({
         borderTopColor: "#eee",
         backgroundColor: "#fff",
         alignItems: "center",
-        paddingHorizontal: 5
+        paddingHorizontal: 5,
+        height: 70
     },
     tabItem: {
         flex: 1,
@@ -73,4 +65,11 @@ const styles = StyleSheet.create({
         fontSize: 11,
         marginTop: 4
     },
+    iconContainer: {
+        height: 23,
+        width: 23,
+        alignItems: "center",
+        justifyContent: "center"
+
+    }
 })

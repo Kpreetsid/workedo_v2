@@ -46,6 +46,7 @@ export default function AssetHealth() {
                     yAxisThickness={0}
                     xAxisThickness={0}
                     width={screenWidth - 55}
+
                 />
 
                 {/* Floating tooltip/modal */}

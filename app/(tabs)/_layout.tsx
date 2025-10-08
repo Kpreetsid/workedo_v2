@@ -8,7 +8,7 @@ export default function TabsLayout() {
 
     return (
         <>
-            <Tabs screenOptions={{headerShown: false}} tabBar={(props) => <CustomTabBar {...props} onMorePress={() => setModalVisible(true)}/>}>
+            <Tabs screenOptions={{headerShown: false}} tabBar={(props) => <CustomTabBar {...props} onMorePress={() => setModalVisible(!modalVisible)}/>}>
                 <Tabs.Screen name="overview" options={{title: "Overview"}}/>
                 <Tabs.Screen name="workOrders" options={{title: "Work Orders"}}/>
                 <Tabs.Screen name="assets" options={{title: "Assets"}}/>
