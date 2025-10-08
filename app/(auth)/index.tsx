@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, ToastAndroid } from "react-native";
 import { router } from "expo-router";
 import AuthHeader from "@/components/auth-screens/AuthHeader";
 import { Logo } from "@/constants/IconProvider";
@@ -6,9 +6,55 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
 import ActionButton from "@/components/auth-screens/ActionButton";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { useForm, Controller } from "react-hook-form";
 import Field from "@/components/auth-screens/InputField";
 
+import { loginService } from "@/src/services/auth.service";
+import { useAuthStore } from "@/src/store/useAuthStore";
+
+type LoginFormValues = {
+	username: string;
+	password: string;
+};
+
 export default function Login() {
+	const {
+		control,
+		handleSubmit,
+		formState: { isSubmitting }
+	} = useForm<LoginFormValues>({
+		defaultValues: {
+			username: "",
+			password: ""
+		},
+	});
+
+	const setUser = useAuthStore((state) => state.setUser);
+
+	const onSubmit = async (values: LoginFormValues) => {
+		console.log('login values = ', values);
+		try {
+			const response = await loginService(values.username, values.password);
+			console.log('response in login = ', response);
+
+			if (response?.error || response?.error?.message === "Invalid credentials") {
+				const errorMsg =
+					response?.error?.message ||
+					"Login failed. Please check your credentials.";
+				ToastAndroid.show(errorMsg, ToastAndroid.SHORT);
+				return;
+			}
+
+			setUser(response.data);
+			ToastAndroid.show("Login successful!", ToastAndroid.SHORT);
+			router.replace("/overview");
+		} catch (err: any) {
+			console.error("Login failed:", err);
+			const errMsg = err?.message || "Something went wrong. Please try again.";
+			ToastAndroid.show(errMsg, ToastAndroid.SHORT);
+		}
+	};
+
 	return (
 		<SafeAreaView style={styles.container}>
 			<KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
@@ -20,11 +66,48 @@ export default function Login() {
 					<Text style={styles.subtitle}>Enter Your Details Below</Text>
 
 					<View style={styles.col}>
-						<Field icon="person" placeholder="Username" />
-						<Field icon="lock" placeholder="Password" secure={true} />
+						<Field
+							icon="person"
+							name="username"
+							control={control}
+							placeholder="Username"
+							rules={{
+								required: "Username is required",
+								minLength: {
+									value: 3,
+									message: "Username must be at least 3 characters",
+								},
+								maxLength: {
+									value: 20,
+									message: "Username must be less than 20 characters",
+								},
+								pattern: {
+									value: /^[a-zA-Z0-9_]+$/,
+									message: "Only letters, numbers, and underscores are allowed",
+								},
+							}}
+						/>
+
+						{/* Password Field */}
+						<Field
+							icon="lock"
+							name="password"
+							control={control}
+							placeholder="Password"
+							secure
+							rules={{
+								required: "Password is required",
+								minLength: { value: 5, message: "At least 5 characters" },
+							}}
+						/>
 					</View>
 
-					<ActionButton label="Login" onPress={() => router.push("/overview")} />
+					<ActionButton
+						label={isSubmitting ? "Logging in..." : "Login"}
+						onPress={handleSubmit(onSubmit)}
+						disabled={isSubmitting}
+					/>
+					{/* <ActionButton label="Login" onPress={() => router.push("/overview")} /> */}
 
 					<TouchableOpacity style={styles.forgotBtn}>
 						<Text style={styles.forgotText}>Forgot Your Password?</Text>
@@ -92,5 +175,12 @@ const styles = StyleSheet.create({
 		position: "absolute",
 		bottom: 0,
 		right: 0,
-	}
+	},
+	errorText: {
+		color: "red",
+		fontSize: 12,
+		marginTop: -8,
+		marginBottom: 8,
+		fontFamily: Fonts.regular,
+	},
 })

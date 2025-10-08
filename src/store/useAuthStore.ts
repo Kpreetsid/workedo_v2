@@ -1,10 +1,10 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { storage } from '@/src/storage/mmkv';
 
 interface AuthState {
   user: any | null;
-  token: string | null;
-  setUser: (user: any, token: string) => void;
+  setUser: (user: any) => void;
   clearUser: () => void;
 }
 
@@ -12,10 +12,16 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      token: null,
-      setUser: (user, token) => set({ user, token }),
-      clearUser: () => set({ user: null, token: null }),
+      setUser: (user) => set({ user }),
+      clearUser: () => set({ user: null }),
     }),
-    { name: 'auth-storage' }
+    {
+      name: 'auth-storage',
+      storage: createJSONStorage(() => ({
+        setItem: (name, value) => storage.set(name, value),
+        getItem: (name) => storage.getString(name) ?? null,
+        removeItem: (name) => storage.delete(name),
+      })),
+    }
   )
 );

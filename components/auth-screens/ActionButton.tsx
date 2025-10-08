@@ -6,11 +6,12 @@ interface ActionButtonProps {
     label: string;
     onPress?: (event: GestureResponderEvent) => void;
     icon?: boolean;
+    disabled?: boolean;
 }
 
-export default function ActionButton({label, onPress, icon}: ActionButtonProps) {
+export default function ActionButton({label, onPress, icon, disabled}: ActionButtonProps) {
     return (
-        <TouchableOpacity style={styles.registerBtn} onPress={onPress} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.registerBtn} onPress={onPress} activeOpacity={0.8} disabled={disabled}>
             <Text style={styles.registerText}>{label}</Text>
             {icon && <FontAwesome6 name="arrow-right-long" size={18} color="#fff"/>}
         </TouchableOpacity>

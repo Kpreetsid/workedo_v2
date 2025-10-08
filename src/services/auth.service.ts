@@ -1,14 +1,19 @@
 import { sendRequest } from '../api/api.service';
+import { endpoints} from '../api/endpoints';
 import { storage } from '../storage/mmkv';
 
-export const loginService = async (email: string, password: string) => {
-    const data = await sendRequest('POST', '/login', { email, password });
+export const loginService = async (username: string, password: string) => {
+    const response = await sendRequest('POST', endpoints.auth.login, {
+        username,
+        password,
+        device_type: 'mobile',
+    });
 
-    if (data?.token) {
-        storage.set('token', data.token);
+    if (response?.token) {
+        storage.set('token', response.token);
     }
 
-    return data;
+    return response;
 };
 
 export const logoutService = async () => {

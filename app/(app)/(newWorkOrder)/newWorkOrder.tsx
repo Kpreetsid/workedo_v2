@@ -1,11 +1,11 @@
-import Header from "../../components/global/Header";
-import FormInput from "../../components/create-screens/FormInput";
+import Header from "../../../components/global/Header";
+import FormInput from "../../../components/create-screens/FormInput";
 import {Pressable, StyleSheet, Text, View} from "react-native";
-import AssignInput from "../../components/create-screens/AssignInput";
+import AssignInput from "../../../components/create-screens/AssignInput";
 import {router} from "expo-router";
-import Fonts from "../../constants/Typography";
+import Fonts from "../../../constants/Typography";
 import {DropDownIcon} from "@/constants/IconProvider";
-import ActionButton from "../../components/create-screens/ActionButton";
+import ActionButton from "../../../components/create-screens/ActionButton";
 import AssignInputContainer from "@/components/new-work-order/AssignInputContainer";
 
 export default function NewWorkOrder() {

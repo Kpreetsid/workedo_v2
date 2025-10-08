@@ -2,7 +2,7 @@ import Header from "@/components/global/Header";
 import SegmentedPager from "@/components/global/SegmentPager";
 import AssetsTab from "@/components/assets/AssetsTab";
 import {AssetsTabIcon, LocationTabIcon} from "@/constants/IconProvider";
-import SelectLocation from "@/app/(createScreens)/selectLocation";
+import SelectLocation from "@/app/(app)/(createScreens)/selectLocation";
 import {StatusBar} from "expo-status-bar";
 
 export default function Assets() {

@@ -25,7 +25,7 @@ export default function RootLayout() {
 
     return (
         <KeyboardProvider>
-            <Stack initialRouteName="(auth)/index" screenOptions={{ headerShown: false }} />
+            <Stack screenOptions={{ headerShown: false }} />
         </KeyboardProvider>
 
     )

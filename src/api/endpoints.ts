@@ -1,5 +1,5 @@
 // src/api/endpoints.ts
-export const ENDPOINTS = {
+export const endpoints = {
     auth: {
       login: 'users/login',
       logout: '/',
