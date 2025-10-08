@@ -110,6 +110,7 @@ export default function DoneTab() {
     return (
         <FlatList
             data={mockData}
+            removeClippedSubviews={false}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContainer}
             renderItem={({item}) => <WorkOrderCard item={item} isSelected={selectedId === item.id} onPress={() => setSelectedId(item.id)}/>}
