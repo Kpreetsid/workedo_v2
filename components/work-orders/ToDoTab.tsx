@@ -1,7 +1,8 @@
-import { Pressable, Text, View, StyleSheet, FlatList } from "react-native";
+import {Pressable, Text, View, StyleSheet} from "react-native";
 import Fonts from "@/constants/Typography";
 import { useState } from "react";
 import WorkOrderCard from "@/components/work-orders/WorkOrderCard";
+import {FlashList} from "@shopify/flash-list";
 
 type WorkOrder = {
 	id: string;
@@ -122,7 +123,7 @@ export default function ToDoTab() {
 				))}
 			</View>
 
-			<FlatList
+			<FlashList
 				data={mockData}
 				removeClippedSubviews={false}
 				keyExtractor={(item) => item.id}

@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     labelContainer: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 5,
+        marginBottom: 3,
     },
     labelText: {
         fontSize: 12,

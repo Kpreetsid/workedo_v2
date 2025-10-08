@@ -14,8 +14,7 @@
       "backgroundColor": "#742BDE"
     },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Workedo"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
@@ -24,6 +23,8 @@
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],

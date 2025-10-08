@@ -1,6 +1,7 @@
-import {FlatList, StyleSheet} from "react-native";
+import {StyleSheet} from "react-native";
 import WorkOrderCard from "@/components/work-orders/WorkOrderCard";
 import {useState} from "react";
+import {FlashList} from "@shopify/flash-list";
 
 type WorkOrder = {
     id: string;
@@ -108,12 +109,14 @@ export default function DoneTab() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
 
     return (
-        <FlatList
+        <FlashList
             data={mockData}
             removeClippedSubviews={false}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContainer}
-            renderItem={({item}) => <WorkOrderCard item={item} isSelected={selectedId === item.id} onPress={() => setSelectedId(item.id)}/>}
+            renderItem={({item}) => <WorkOrderCard item={item} isSelected={selectedId === item.id}/>}
+            // selection for the work orders
+            // onPress={() => setSelectedId(item.id)}
         />
     )
 }
