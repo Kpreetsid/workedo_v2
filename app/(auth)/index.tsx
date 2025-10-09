@@ -9,8 +9,9 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useForm, Controller } from "react-hook-form";
 import Field from "@/components/auth-screens/InputField";
 
-import { loginService } from "@/src/services/auth.service";
+import { loginService, userDetails } from "@/src/services/auth.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
+import { storage } from "@/src/storage/mmkv";
 
 type LoginFormValues = {
 	username: string;
@@ -24,8 +25,8 @@ export default function Login() {
 		formState: { isSubmitting }
 	} = useForm<LoginFormValues>({
 		defaultValues: {
-			username: "",
-			password: ""
+			username: "kpreetsid",
+			password: "Password@123"
 		},
 	});
 
@@ -34,20 +35,25 @@ export default function Login() {
 	const onSubmit = async (values: LoginFormValues) => {
 		console.log('login values = ', values);
 		try {
-			const response = await loginService(values.username, values.password);
-			console.log('response in login = ', response);
+			const res = await loginService(values.username, values.password);
+			console.log('res in login = ', res);
 
-			if (response?.error || response?.error?.message === "Invalid credentials") {
+			if (res?.error || res?.error?.message === "Invalid credentials") {
 				const errorMsg =
-					response?.error?.message ||
+					res?.error?.message ||
 					"Login failed. Please check your credentials.";
 				ToastAndroid.show(errorMsg, ToastAndroid.SHORT);
 				return;
 			}
 
-			setUser(response.data);
-			ToastAndroid.show("Login successful!", ToastAndroid.SHORT);
-			router.replace("/overview");
+			if(res?.status) {
+				storage.set('token', res?.data?.token);
+				storage.set('user', JSON.stringify(res?.data));
+				setUser(res?.data?.userDetails);
+				ToastAndroid.show("Login successful!", ToastAndroid.SHORT);
+				router.replace("/overview");
+			}
+
 		} catch (err: any) {
 			console.error("Login failed:", err);
 			const errMsg = err?.message || "Something went wrong. Please try again.";

@@ -4,41 +4,48 @@ import ActionButton from "@/components/create-screens/ActionButton";
 import { router } from "expo-router";
 import Fonts from "@/constants/Typography";
 import { ArrowRight, MapIcon } from "@/constants/IconProvider";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SearchBar from "@/components/global/SearchBar";
+import { locationTree } from "@/src/services/location.service";
+import { useAuthStore } from "@/src/store/useAuthStore";
+import { Location } from "@/src/types/location";
 
-const locations: string[] = [
-	"New York, USA",
-	"Berlin, Germany",
-	"Tokyo, Japan",
-	"Sydney, Australia",
-	"Toronto, Canada",
-	"Dubai, UAE",
-	"Paris, France",
-	"Singapore",
-	"San Francisco, USA",
-	"London, UK",
-	"Barcelona, Spain",
-	"Amsterdam, Netherlands",
-	"Mumbai, India",
-	"Cape Town, South Africa",
-	"Seoul, South Korea",
-	"Chicago, USA",
-	"Rome, Italy",
-	"Bangkok, Thailand",
-	"Lisbon, Portugal",
-	"Rio de Janeiro, Brazil",
-];
-
-interface LocationInterface { 
-	showHeader?: boolean, 
-	selection?: boolean 
+interface LocationInterface {
+	showHeader?: boolean,
+	selection?: boolean
 }
 
 const width = Dimensions.get("window").width;
 export default function SelectLocation({ showHeader = true, selection = true }: LocationInterface) {
-	const [selectedLocation, setSelectedLocation] = useState<string>("");
+	const [selectedLocation, setSelectedLocation] = useState<Location>();
 	const [searchText, setSearchText] = useState("");
+	const user = useAuthStore((state) => state.user);
+	const [locations, setLocations] = useState<Location[]>([]);
+	const [refreshing, setRefreshing] = useState(false);
+
+	useEffect(() => {
+		fetchLocations();
+	}, []);
+
+	const fetchLocations = async () => {
+		try {
+			const res = await locationTree();
+
+			if (res.status) {
+				console.log('res locations = ', res?.data);
+				return;
+				setLocations(res.data as Location[]);
+			}
+		} catch (err: any) {
+			console.error("Login failed:", err);
+		}
+	};
+
+	const handleRefresh = async () => {
+		setRefreshing(true);
+		await fetchLocations();
+		setRefreshing(false);
+	};
 
 	return (
 		<>
@@ -51,16 +58,32 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 					keyExtractor={(_, index) => index.toString()}
 					renderItem={({ item }) => (
 						<Pressable style={[styles.locationButton, { backgroundColor: selectedLocation === item ? "#FFBF0080" : "#fff", borderColor: selectedLocation === item ? "#FFC1074D" : "#99999933" }]}
-							onPress={() => selection ? setSelectedLocation(item) : router.push("/locationDetail")}>
+							onPress={() => {
+								if (selection) {
+									setSelectedLocation(item);
+								} else {
+									// setLocationParams(item); // use this if needed to pass data through zustand store.
+									// router.push("/locationDetail");
+									router.push({
+										pathname: "/locationDetail",
+										params: { data: JSON.stringify(item) },
+									});
+								}
+							}}
+						>
+
 							<View style={styles.textRow}>
-								<Text style={styles.locationText}>{item}</Text>
+								<Text style={styles.locationText}>{item.location_name}</Text>
 								<ArrowRight color={"#201F23CC"} />
 							</View>
 							<MapIcon />
 						</Pressable>)}
 					contentContainerStyle={styles.container}
+					refreshing={refreshing}
+					onRefresh={handleRefresh}
 				/>
-				<ActionButton onPress={() => router.back()} label="Confirm Location" buttonStyle={styles.actionButton} />
+
+				{selection && <ActionButton onPress={() => router.back()} label="Confirm Location" buttonStyle={styles.actionButton} />}
 			</View>
 		</>
 	)

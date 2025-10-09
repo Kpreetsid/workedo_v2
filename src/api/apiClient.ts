@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { storage } from '../storage/mmkv';
 
-
 const apiClient = axios.create({
-  baseURL: 'https://app.presageinsights.ai/cmms_api/api',
+  // baseURL: 'https://app.presageinsights.ai/cmms_api/api/',
+  baseURL: 'https://new.presageinsights.ai/cmms_express/api/',
   timeout: 15000,
 });
 
@@ -13,6 +13,8 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  console.log('apiClient config = ', config.headers.Authorization);
   return config;
 });
 

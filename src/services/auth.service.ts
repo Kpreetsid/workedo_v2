@@ -1,5 +1,5 @@
 import { sendRequest } from '../api/api.service';
-import { endpoints} from '../api/endpoints';
+import { endpoints } from '../api/endpoints';
 import { storage } from '../storage/mmkv';
 
 export const loginService = async (username: string, password: string) => {
@@ -15,6 +15,12 @@ export const loginService = async (username: string, password: string) => {
 
     return response;
 };
+
+export const userDetails = async (userId: string, token: string) => {
+    const url = `${endpoints.auth.details}/${userId}?access_token=${token}`;
+    const response = await sendRequest('GET', url);
+    return response;
+}
 
 export const logoutService = async () => {
     await sendRequest('POST', '/logout');
