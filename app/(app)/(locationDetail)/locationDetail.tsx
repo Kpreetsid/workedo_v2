@@ -11,6 +11,7 @@ import { AssetHealth } from "@/src/types/assetHealth";
 import apiClient from "@/src/api/apiClient";
 import { Image } from 'expo-image';
 import { LocationAsset } from "@/src/types/locationAsset";
+import { endpoints } from "@/src/api/endpoints";
 
 const blurhash =
 	'|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
@@ -64,7 +65,7 @@ export default function LocationDetail() {
 				<View style={styles.headerCard}>
 					<Image
 						style={styles.image}
-						source={{ uri: `${apiClient.defaults.baseURL}uploads/locations/download/${location?.image_path}` }}
+						source={{ uri: `${endpoints.baseURL}locations/${location?.image_path}` }}
 						placeholder={{ blurhash }}
 						contentFit="cover"
 						transition={1000}

@@ -10,7 +10,7 @@ export default function AssetDetailScreen() {
 
 	return (
 		<>
-			<Header title="Asset Detail" />
+			<Header title={asset_data?.asset_name} />
 
 			<SegmentedPager tabs={[
 				{ label: "Info", component: <AssetInfoTab asset_data={asset_data} /> },

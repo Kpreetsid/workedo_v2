@@ -31,20 +31,17 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 	const [assets, setAssets] = useState<Asset[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
 
-	const filteredAssets = assets.filter((asset) => asset.asset_name.toLowerCase().includes(searchText.toLowerCase()) || asset?.locationName?.toLowerCase().includes(searchText.toLowerCase()));
+	const filteredAssets = assets.filter((asset) => asset.asset_name.toLowerCase().includes(searchText.toLowerCase()) || asset?.locationData?.location_name?.toLowerCase().includes(searchText.toLowerCase()));
 
 	useEffect(() => {
-		// fetchAssets();
+		fetchAssets();
 	}, []);
 
 	const fetchAssets = async () => {
 		try {
-			const res = await assetTree({
-				account_id: user?.account_id,
-				user_id: user?.id,
-			});
+			const res = await assetTree();
 
-			if (res.result === 1) {
+			if (res.status) {
 				console.log('res assets = ', res?.data);
 				setAssets(res.data as Asset[]);
 			}
@@ -78,7 +75,7 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 						<View style={styles.textRow}>
 							<View>
 								<Text style={styles.assetText}>{item.asset_name}</Text>
-								<Text style={styles.assetLocations}>Location: {item.locationName}</Text>
+								<Text style={styles.assetLocations}>Location: {item?.locationData?.location_name}</Text>
 							</View>
 						</View>
 						<MapIcon />

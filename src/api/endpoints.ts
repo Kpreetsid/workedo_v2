@@ -1,5 +1,6 @@
 // src/api/endpoints.ts
 export const endpoints = {
+  baseURL: 'https://new.presageinsights.ai/cmms_express/',
   auth: {
     login: 'users/login',
     details: 'users/',
@@ -13,7 +14,7 @@ export const endpoints = {
     assetsHealthLocation: 'get_asset_health_location_api/'
   },
   asset: {
-    tree: 'asset_master/getAssetsTree',
+    tree: 'master/assets/tree',
     children: 'asset_master/get_children',
     asset_endpoints: 'getAllEndPointsMobile/',
     singleAssetHealthHistory: 'single_asset_health_history/'

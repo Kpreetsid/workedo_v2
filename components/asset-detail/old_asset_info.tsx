@@ -52,63 +52,83 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 	const [compositeIdSelected, setCompositeIdSelected] = useState<string | null>(null);
 	const [assetHealth, setAssetHealth] = useState<any>();
 
-	console.log('asset_data in info = ', asset_data)
 
 	useEffect(() => {
-		fetchEndpoints();
+		fetchAssetChildren();
 	}, []);
 
-	const fetchEndpoints = async () => {
-		console.log('fetching endpoints');
+	const fetchAssetChildren = async () => {
+		console.log('asset_data in info = ', asset_data);
+		const childrenRes = await getChildren(asset_data?.id);
+		console.log("asset children =", childrenRes);
+		if (childrenRes.result == 1) {
+			if (childrenRes.message == "Data Found") {
+				let allChildAssets = childrenRes.data;
+				fetchEndpoints(allChildAssets);
+			}
+		}
+	}
+
+	const fetchEndpoints = async (allChildAssets: Asset[]) => {
+		console.log('allChildAssets in info = ', allChildAssets);
 		let payload: any[] = [];
-		payload.push(asset_data?.id);
+
+		allChildAssets.forEach((snap: any) => {
+			payload.push(snap.id);
+		})
 
 		console.log('payload = ', payload);
 		const endpointsRes = await getAllEndpoints(payload);
 		console.log('res endpoints = ', endpointsRes);
 
-		if (endpointsRes?.data?.length !== 0) {
-			setEndpoints(endpointsRes.data);
+		const categorized = await categorizeEachEndpointWithAssetName(allChildAssets, endpointsRes);
 
-			const first = endpointsRes.data[0];
+		if (categorized.length !== 0) {
+			setEndpoints(categorized);
 
+			const first = categorized[0];
 			setEndpointSelected({
 				name: `${first.point_name}-${first.mount_location}`,
-				composite_id: first.composite_id,
-				asset_name: asset_data?.asset_name,
+				asset_name: first.asset_name,
 			});
 
+			if (first.composite_id != null) {
+				setCompositeIdSelected(first.composite_id);
+				const assetHealth = await getSingleAssetHealthHistory(asset_data?.id);
+				console.log('asset health = ', assetHealth);
+				if (assetHealth) {
+					setAssetHealth(assetHealth?.data);
+				}
+			} else {
+				ToastAndroid.show("No Sensor is mapped against this endpoint", ToastAndroid.SHORT);
+			}
 		} else {
 			setEndpointSelected({
 				name: "No Endpoints Found",
-				composite_id: null,
 				asset_name: "",
 			});
 			ToastAndroid.show("No endpoints created against selected asset.", ToastAndroid.SHORT);
 		}
 	}
 
-	useEffect(() => {
-		endpointSelected != null ? calculateAssetHealth() : null;
-	}, [endpointSelected])
+	const categorizeEachEndpointWithAssetName = (allChildAssets: any, endpointsRes: any): Promise<any> => {
+		return new Promise((resolve, reject) => {
+			var endpointsArr: any = [];
 
-	const calculateAssetHealth = async () => {
-		if (endpointSelected?.composite_id != null) {
-			setCompositeIdSelected(endpointSelected?.composite_id);
-			const assetHealth = await getSingleAssetHealthHistory(asset_data?.id);
-			console.log('asset health = ', assetHealth);
-			if (assetHealth) {
-				setAssetHealth(assetHealth?.data);
-			}
-		} else {
-			setAssetHealth({
-				assetHealth: "Not Defined",
-				assetScore: null,
-				assetStatus: ["Not Defined", "Not Defined", "Not Defined", "Not Defined"],
-				timeStamp: []
-			})
-			ToastAndroid.show("No Sensor is mapped against this endpoint", ToastAndroid.SHORT);
-		}
+			// Iterate through endpoints array
+			endpointsRes?.data.forEach((endpoint: any) => {
+				// Find the matching childAsset
+				const matchingChildAsset = allChildAssets.find((childAsset: any) => childAsset.id === endpoint.asset_id);
+				// Add a new property to the endpoint based on the matching childAsset
+				if (matchingChildAsset) {
+					endpoint.asset_name = matchingChildAsset.asset_name;
+					endpointsArr.push(endpoint);
+				}
+			});
+
+			console.log('final endpoints = ', endpointsArr)
+			resolve(endpointsArr)
+		})
 	}
 
 	return (
@@ -154,7 +174,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 				<DetailPill icon="location-dot" label="Location" value="New Delhi" iconColor="#EE2E6B" />
 			</View> */}
 
-			<SelectEndpoint endpointSelected={endpointSelected} endpoints={endpoints} asset_data={asset_data} onEndpointSelect={setEndpointSelected} />
+			<SelectEndpoint endpointSelected={endpointSelected} endpoints={endpoints} />
 
 			{/* <InfoCards /> */}
 

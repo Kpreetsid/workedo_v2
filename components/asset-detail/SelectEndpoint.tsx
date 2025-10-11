@@ -6,13 +6,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { AssetEndpoint } from "@/src/types/assetEndpoint";
 
 interface SelectEndpointProps {
-	endpointSelected: {name: string, asset_name: string},
+	endpointSelected: { name: string, asset_name: string },
 	endpoints: AssetEndpoint[]
+	asset_data: any
+	onEndpointSelect: (endpoint: { name: string, composite_id: string, asset_name: string }) => void
 }
 
-export default function SelectEndpoint({ endpointSelected, endpoints }: SelectEndpointProps) {
+export default function SelectEndpoint({ endpointSelected, endpoints, asset_data, onEndpointSelect }: SelectEndpointProps) {
 	const [modalVisible, setModalVisible] = useState(false);
-	const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(null);
+	const [selectedEndpoint, setSelectedEndpoint] = useState<AssetEndpoint>();
 	const [buttonLayout, setButtonLayout] = useState<LayoutRectangle | null>(null);
 	const buttonRef = useRef<View>(null);
 
@@ -20,7 +22,13 @@ export default function SelectEndpoint({ endpointSelected, endpoints }: SelectEn
 	}, [])
 
 	const handleSelect = (composite_id: string) => {
-		setSelectedEndpoint(composite_id);
+		let found = endpoints.find((endpoint) => endpoint.composite_id === composite_id);
+		setSelectedEndpoint(found);
+		onEndpointSelect({
+			name: `${found?.point_name}-${found?.mount_location}`,
+			composite_id: found?.composite_id || "",
+			asset_name: asset_data?.asset_name,
+		});
 		setModalVisible(false);
 	};
 
@@ -60,13 +68,15 @@ export default function SelectEndpoint({ endpointSelected, endpoints }: SelectEn
 							keyExtractor={(item) => item?.composite_id}
 							style={{ maxHeight: 250 }}
 							renderItem={({ item }) => {
-								const isSelected = item?.composite_id === selectedEndpoint;
+								const isSelected = item?.composite_id === selectedEndpoint?.composite_id;
 								return (
 									<Pressable style={[styles.endpointItem, isSelected && styles.selectedItem]} onPress={() => handleSelect(item.composite_id)}>
 										<View style={[styles.checkbox, isSelected && styles.checkedBox]}>
 											{isSelected && <Ionicons name="checkmark" size={14} color="#fff" />}
 										</View>
-										<Text style={[styles.endpointText, isSelected && { color: "#742BDE" }]}>{item.asset_name}</Text>
+										<Text style={[styles.endpointText, isSelected && { color: "#742BDE" }]}>
+											{item.point_name + " - " + item.mount_location + " (" + asset_data?.asset_name + ")"}
+										</Text>
 									</Pressable>
 								)
 							}} />
