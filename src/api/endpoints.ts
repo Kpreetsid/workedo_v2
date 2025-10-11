@@ -7,9 +7,14 @@ export const endpoints = {
     logout: '/',
     profile: 'users/profile',
   },
+  overview: {
+    kpi: 'master/locations/kpi-filter',
+    locationDetails: 'master/locations',
+    childAssets: 'master/locations/child-assets',
+    assetHealthKPIHistory: 'get_asset_health_kpi_summary/'
+  },
   location: {
     tree: 'master/locations/tree',
-    kpiFitler: 'location_master/getKPIFilterLocations',
     topLevelAssets: 'master/assets',
     assetsHealthLocation: 'get_asset_health_location_api/'
   },

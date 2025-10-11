@@ -1,35 +1,125 @@
-import { useState } from "react";
-import { TouchableOpacity, View, StyleSheet } from "react-native";
+import { useEffect, useState } from "react";
+import { TouchableOpacity, View, StyleSheet, ToastAndroid } from "react-native";
 import Dropdown from "@/components/overview-screen/DropDown";
-
-interface Option {
-	label: string;
-	value: string;
-}
-
-const parentOptions: Option[] = [
-	{ label: "Noida", value: "noida" },
-	{ label: "Delhi", value: "delhi" },
-	{ label: "Mumbai", value: "mumbai" },
-	{ label: "Punjab", value: "punjab" },
-	{ label: "Bihar", value: "bihar" },
-	{ label: "Kolkata", value: "kolkata" },
-	{ label: "Hyderabad", value: "hyderabad" },
-	{ label: "Goa", value: "goa" },
-	{ label: "Nepal", value: "nepal" },
-	{ label: "SriLanka", value: "sriLanka" },
-	{ label: "Bangladesh", value: "bangladesh" },
-];
-
-const childOptions: Option[] = [
-	{ label: "Building A", value: "a" },
-	{ label: "Building B", value: "b" },
-];
+import { assetHealthKPIHistory, childAssetsAgainstLocation, fetchKPIFilterLocations, fetchParentLocationDetails } from "@/src/services/location.service";
+import { AssetHealthSummary } from "@/src/types/assetHistory";
+import { useOverviewStore } from "@/src/store/useOverviewStore";
 
 export default function Location() {
-	const [parentLocation, setParentLocation] = useState<string>("noida");
-	const [childLocation, setChildLocation] = useState<string>("");
+	const {
+		parentLocations,
+		childLocations,
+		childAssets,
+		parentSelectionId,
+		childSelectionIds,
+
+		setParentLocations,
+		setChildLocations,
+		setChildAssets,
+		setParentSelectionId,
+		setChildSelectionIds,
+		setAssetKPIHistory,
+	} = useOverviewStore();
+
 	const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+	useEffect(() => {
+		fetchLocations();
+	}, []);
+
+	// 🧩 Fetch all locations initially and select first parent
+	const fetchLocations = async () => {
+		const res = await fetchKPIFilterLocations();
+		if (res.status) {
+			setParentLocations(res.data.levelOneLocations);
+
+			const firstParent = res.data.levelOneLocations[0];
+			if (firstParent) setParentSelectionId(firstParent.id); // triggers below effect
+		}
+	};
+
+	// 🧠 When parent changes — fetch its child locations
+	useEffect(() => {
+		if (!parentSelectionId) return;
+
+		const fetchChildsForParent = async () => {
+			try {
+				const childs = await fetchParentLocationDetails(parentSelectionId, "parent");
+
+				// 🧠 CASE 1: API returns success but "status": false (no data found)
+				if (!childs?.status || !Array.isArray(childs.data) || childs.data.length === 0) {
+					handleNoChildData();
+					return;
+				}
+
+				// 🧠 CASE 2: We have valid data
+				setChildLocations(childs.data);
+
+				// Select ALL child IDs by default
+				const allChildIds = childs.data.map((child: any) => child.id);
+				setChildSelectionIds(allChildIds);
+
+				// Fetch assets for selected children
+				fetchChildAssets(parentSelectionId ?? undefined, allChildIds);
+
+			} catch (error: any) {
+				console.error("fetchParentLocationDetails failed:", error);
+				handleNoChildData();
+			}
+		};
+
+		fetchChildsForParent();
+	}, [parentSelectionId]);
+
+	const handleNoChildData = () => {
+		setChildLocations([]);
+		setChildSelectionIds([]);
+		setChildAssets([]);
+		setAssetKPIHistory(null);
+
+		ToastAndroid.show("No Data Found", ToastAndroid.SHORT);
+	};
+
+	// 🧠 When child selections change (user toggles checkboxes)
+	useEffect(() => {
+		if (!childSelectionIds.length) {
+			setChildAssets([]);
+			setAssetKPIHistory(null);
+			return;
+		}
+
+		fetchChildAssets(parentSelectionId ?? undefined, childSelectionIds);
+	}, [childSelectionIds]);
+
+
+	// Fetch child assets for a parent + selected children
+	const fetchChildAssets = async (parentId?: string, childIds?: string[]) => {
+		const payload = {
+			levelOneLocations: [parentId || parentLocations[0]?.id],
+			levelTwoLocations: childIds || childLocations.map((i) => i.id),
+		};
+
+		const childAssetsRes = await childAssetsAgainstLocation(payload);
+		if (childAssetsRes.status) {
+			setChildAssets(childAssetsRes.data.assetList);
+		}
+	};
+
+	// When child assets are ready, fetch KPI data
+	useEffect(() => {
+		if (!childAssets.length) return;
+		fetchAssetHealthKPIHistory();
+	}, [childAssets]);
+
+	const fetchAssetHealthKPIHistory = async () => {
+		const payload = {
+			org_id: "68e5f3b3a2ba64a5ef4d23d0",
+			asset_list: childAssets.map((item) => item.id),
+		};
+		const res = await assetHealthKPIHistory(payload);
+		setAssetKPIHistory(res.data);
+	};
+
 
 	return (
 		<>
@@ -40,22 +130,24 @@ export default function Location() {
 				<Dropdown
 					name="parent"
 					label="Parent Location"
-					options={parentOptions}
-					value={parentLocation}
-					onValueChange={setParentLocation}
+					options={parentLocations}
 					openDropdown={openDropdown}
 					setOpenDropdown={setOpenDropdown}
+					value={parentSelectionId ?? undefined}
+					onValueChange={(v: any) => setParentSelectionId(v ?? null)}
 				/>
 
-				<Dropdown
-					name="child"
-					label="Child Location"
-					options={childOptions}
-					value={childLocation}
-					onValueChange={setChildLocation}
-					openDropdown={openDropdown}
-					setOpenDropdown={setOpenDropdown}
-				/>
+				{childLocations.length > 0 && (
+					<Dropdown
+						name="child"
+						label="Child Location"
+						options={childLocations}
+						value={childSelectionIds}
+						onValueChange={(v: any) => setChildSelectionIds(v ?? null)}
+						openDropdown={openDropdown}
+						setOpenDropdown={setOpenDropdown}
+					/>
+				)}
 			</View>
 		</>
 	);

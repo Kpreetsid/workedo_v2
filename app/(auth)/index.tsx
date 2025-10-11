@@ -25,7 +25,7 @@ export default function Login() {
 		formState: { isSubmitting }
 	} = useForm<LoginFormValues>({
 		defaultValues: {
-			username: "kpreetsid",
+			username: "abhay_test",
 			password: "Password@123"
 		},
 	});

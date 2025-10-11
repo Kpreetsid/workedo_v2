@@ -1,18 +1,74 @@
 import { ScrollView, Text, View, StyleSheet } from "react-native";
-import infoCardsData from "../../constants/InfoCardsData";
 import { AssetStatus } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
+import { useOverviewStore } from "@/src/store/useOverviewStore";
 
 export default function InfoCards() {
+	const { childAssets, assetKPIHistory } = useOverviewStore();
+	console.log("assetKPIHistory", assetKPIHistory);
+
+	const Critical = assetKPIHistory?.Critical ?? 0;
+	const Danger = assetKPIHistory?.Danger ?? 0;
+	const Alert = assetKPIHistory?.Alert ?? 0;
+	const Healthy = assetKPIHistory?.Healthy ?? 0;
+	const NotDefined = assetKPIHistory?.["Not Defined"] ?? 0;
+	const openAlarms = assetKPIHistory?.openAlarms ?? 0;
+	const total_live_sensors = assetKPIHistory?.total_live_sensors ?? 0;
+
+	const infoCardsData = [
+		{
+			id: 1,
+			title: `Assets\nMonitored`,
+			value: childAssets.length,
+			color: "#3b82f6",
+		},
+		{
+			id: 2,
+			title: `Assets in\nDanger Zone`,
+			value: Danger,
+			color: "#FFC107",
+		},
+		{
+			id: 3,
+			title: `Assets in\nCritical Zone`,
+			value: Critical,
+			color: "#DC3545",
+		},
+		{
+			id: 4,
+			title: `Un-Addressed\nAlarms`,
+			value: openAlarms,
+			color: "#16CCF1",
+		},
+		{
+			id: 5,
+			title: `Total End\nPoints`,
+			value: total_live_sensors,
+			color: "#212529",
+		},
+	];
+
 	return (
 		<ScrollView horizontal contentContainerStyle={styles.container} showsHorizontalScrollIndicator={false}>
-			{infoCardsData.map(card => (
-				<View key={card.id} style={[styles.card, { borderColor: card.color }]}>
+			{infoCardsData.map((card) => (
+				<View
+					key={card.id}
+					style={[styles.card, { borderColor: card.color }]}
+				>
 					<View style={styles.topRow}>
 						<AssetStatus />
-						<Text style={styles.cardLabel} numberOfLines={2} adjustsFontSizeToFit>{card.title}</Text>
+						<Text
+							style={styles.cardLabel}
+							numberOfLines={2}
+							adjustsFontSizeToFit
+						>
+							{card.title}
+						</Text>
 					</View>
-					<Text style={[styles.cardValue, { color: card.color }]}>{card.value}</Text>
+
+					<Text style={[styles.cardValue, { color: card.color }]}>
+						{card.value}
+					</Text>
 				</View>
 			))}
 		</ScrollView>
