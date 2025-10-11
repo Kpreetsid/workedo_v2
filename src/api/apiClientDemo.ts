@@ -12,6 +12,7 @@ const apiClientDemo = axios.create({
 apiClientDemo.interceptors.request.use((config) => {
     const token = storage.getString('token');
     const { user } = useAuthStore.getState();
+    console.log("user = ", user);
 
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -19,7 +20,10 @@ apiClientDemo.interceptors.request.use((config) => {
 
     if (user?.id) {
         config.headers['X-User-ID'] = user.id;
+        config.headers['X-Env'] = true;
     }
+
+    console.log("config = ", config.headers);
     return config;
 });
 

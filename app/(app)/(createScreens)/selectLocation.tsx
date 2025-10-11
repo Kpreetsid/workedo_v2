@@ -33,7 +33,6 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 
 			if (res.status) {
 				console.log('res locations = ', res?.data);
-				return;
 				setLocations(res.data as Location[]);
 			}
 		} catch (err: any) {

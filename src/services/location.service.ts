@@ -7,9 +7,9 @@ export const locationTree = async () => {
     return await sendRequest('GET', url);
 };
 
-export const topLevelAssets = async (payload: {location_id: string[]}) => {
-    const url = `${endpoints.location.topLevelAssets}`;
-    return await sendRequest('POST', url, payload);
+export const topLevelAssets = async (location_id: string) => {
+    const url = `${endpoints.location.topLevelAssets}?location_id=${location_id}&top_level=true`;
+    return await sendRequest('GET', url);
 }
 
 export const assetsHealthLocation = async (payload: {org_id: string, asset_list: string[]}) => {

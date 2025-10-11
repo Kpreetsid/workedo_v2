@@ -9,7 +9,7 @@ export const endpoints = {
   location: {
     tree: 'master/locations/tree',
     kpiFitler: 'location_master/getKPIFilterLocations',
-    topLevelAssets: 'location_master/getTopLevelAssets',
+    topLevelAssets: 'master/assets',
     assetsHealthLocation: 'get_asset_health_location_api/'
   },
   asset: {

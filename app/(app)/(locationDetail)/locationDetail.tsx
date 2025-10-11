@@ -7,7 +7,7 @@ import { useLocationStore } from "@/src/store/useLocationStore";
 import { useLocalSearchParams } from "expo-router";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import moment from "moment";
-import { AssetHealth } from "@/src/types/assethealth";
+import { AssetHealth } from "@/src/types/assetHealth";
 import apiClient from "@/src/api/apiClient";
 import { Image } from 'expo-image';
 import { LocationAsset } from "@/src/types/locationAsset";
@@ -26,11 +26,9 @@ export default function LocationDetail() {
 	}, []);
 
 	const fetchTopLevelAssets = async () => {
-		let payload: { location_id: string[] } = {
-			location_id: [location.id]
-		}
-		const res = await topLevelAssets(payload);
-		if (res) {
+		const res = await topLevelAssets(location.id);
+		console.log("res top level assets = ", res);
+		if (res.status) {
 			let assets: LocationAsset[] = res?.data;
 
 			// fetching each asset health
@@ -39,7 +37,10 @@ export default function LocationDetail() {
 				asset_list: assets?.map((asset: LocationAsset) => asset.id),
 			};
 
+			console.log("obj = ", obj);
+			// return;
 			const resp = await assetsHealthLocation(obj);
+			console.log("resp = ", resp);
 			if (resp?.data && assets?.length) {
 				for (const asset of assets) {
 					const match = resp.data.find((r: AssetHealth) => r.asset_id === asset.id);
@@ -56,7 +57,7 @@ export default function LocationDetail() {
 
 	return (
 		<>
-			<Header title="Location Detail" />
+			<Header title={location?.location_name ?? "Location Detail"} />
 			<ScrollView contentContainerStyle={styles.container}>
 
 				{/* Header card with image + info */}
