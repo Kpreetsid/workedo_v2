@@ -3,42 +3,91 @@ import Header from "@/components/global/Header";
 import Detail from "@/components/work-order-detail/Detail";
 import Comments from "@/components/work-order-detail/Comments";
 import SegmentedPager from "@/components/global/SegmentPager";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { WorkOrderCompleteIcon, WorkOrderInProgressIcon, WorkOrderOnHoldIcon, WorkOrderOpenIcon } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
+import { updateWorkOrderStatus } from "@/src/services/work-order.service";
+import { useState } from "react";
 
 export default function WorkOrderDetail() {
-	const params = useLocalSearchParams();
+	const params: any = useLocalSearchParams();
+	const work_order_data = JSON.parse(params?.data);
+
+	const [workOrderData, setWorkOrderData] = useState(work_order_data);
+
+	console.log("work_order_data = ", work_order_data);
 
 	return (
 		<>
 			<Header title="Work Order Details" />
 			<View style={styles.headerContainer}>
 				<View style={styles.header}>
-					<Text style={styles.woId}>{params.id}</Text>
-					<Text style={styles.woType}>{params.type}</Text>
-					<Text style={styles.woTitle}>{params.title}</Text>
+					<Text style={styles.woId}># {workOrderData?.order_no}</Text>
+					<Text style={styles.woType}>{workOrderData?.type}</Text>
+					<Text style={styles.woTitle}>{workOrderData?.title}</Text>
 				</View>
 
 
 				<View style={styles.statusTabs}>
-					{["Open", "On Hold", "In Progress", "Done"].map((status, index) => {
-						const isActive = (params.priority === "Low" && status === "Open") || (params.priority === "Medium" && status === "In Progress") || (params.priority === "High" && status === "Done");
+					{["Open", "On Hold", "In Progress", "Completed"].map((status, index) => {
+						const normalize = (str: string) => str?.toLowerCase().replace(/[-\s]/g, "");
+						const isActive = normalize(workOrderData?.status) === normalize(status);
+
+						const handleStatusChange = async () => {
+							if (isActive) return;
+
+							try {
+								const payload = { status: status === "Done" ? "Completed" : status.replace(/\s/g, "-") }; // e.g. "On Hold" → "On-Hold"
+								console.log("Updating status:", payload);
+
+								const res = await updateWorkOrderStatus(workOrderData.id, payload);
+
+								if (res?.status) {
+									ToastAndroid.show("Status updated successfully!", ToastAndroid.SHORT);
+									// optional: refresh locally
+									setWorkOrderData((prev: any) => ({ ...prev, status: payload.status }));
+								} else {
+									ToastAndroid.show("Failed to update status.", ToastAndroid.SHORT);
+								}
+							} catch (err) {
+								console.error("Error updating status:", err);
+								ToastAndroid.show("Error updating status.", ToastAndroid.SHORT);
+							}
+						};
 
 						return (
-							<Pressable key={index} style={[styles.tab, isActive && styles.tabActive]}>
+							<Pressable
+								key={index}
+								style={[styles.tab, isActive && styles.tabActive]}
+								onPress={handleStatusChange}
+							>
 								<View style={styles.tabIcon}>
-									{status === "Open" ? <WorkOrderOpenIcon /> : status === "On Hold" ? <WorkOrderOnHoldIcon /> : status === "In Progress" ? <WorkOrderInProgressIcon /> : <WorkOrderCompleteIcon />}
+									{status === "Open" ? (
+										<WorkOrderOpenIcon />
+									) : status === "On Hold" ? (
+										<WorkOrderOnHoldIcon />
+									) : status === "In Progress" ? (
+										<WorkOrderInProgressIcon />
+									) : (
+										<WorkOrderCompleteIcon />
+									)}
 								</View>
 
-								<Text style={[styles.tabText, isActive && styles.tabTextActive]}>{status}</Text>
+								<Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+									{status}
+								</Text>
 							</Pressable>
 						);
 					})}
 				</View>
+
+
 			</View>
 
-			<SegmentedPager tabs={[{ label: "Details", component: <Detail params={params} /> }, { label: "Comments", component: <Comments /> }]} />
+			<SegmentedPager tabs={[
+				{ label: "Details", component: <Detail params={workOrderData} /> },
+				{ label: "Comments", component: <Comments comments={workOrderData?.comments} /> }
+			]} />
 		</>
 	);
 }
@@ -77,21 +126,22 @@ const styles = StyleSheet.create({
 	statusTabs: {
 		flexDirection: "row",
 		justifyContent: "space-between",
-		marginTop: 12,
-		// marginBottom: 5,
-		width: "100%"
+		alignItems: "center",
+		width: "100%",
+		marginTop: 8,
 	},
 	tab: {
+		flex: 1,
 		alignItems: "center",
 		justifyContent: "center",
-		width: 86,
-		height: 58,
+		height: 60,
 		borderRadius: 8,
 		backgroundColor: "#F9FAF9",
 		marginHorizontal: 4,
 		borderColor: "#00000033",
-		borderWidth: 0.6
+		borderWidth: 0.6,
 	},
+
 	tabIcon: {
 		height: 25,
 		width: 25,

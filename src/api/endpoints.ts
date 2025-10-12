@@ -24,5 +24,9 @@ export const endpoints = {
     asset_endpoints: 'getAllEndPoints/',
     singleAssetHealthHistory: 'single_asset_health_history/',
     graphData: 'get_function_trend_data_v2/'
+  },
+  workOrders: {
+    workOrders: 'work/orders',
+    updateWorkOrder: 'work/orders/status'
   }
 };

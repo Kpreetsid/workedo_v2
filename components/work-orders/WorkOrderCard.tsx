@@ -1,17 +1,9 @@
 import { Pressable, Text, View, StyleSheet } from "react-native";
 import Fonts from "@/constants/Typography";
 import { WorkOrderCardLogo } from "@/constants/IconProvider";
+import { WorkOrder } from "@/src/types/workOrder";
+import moment from "moment";
 import { router } from "expo-router";
-
-type WorkOrder = {
-	id: string;
-	title: string;
-	requestedBy: string;
-	createdOn: string;
-	status: "Open" | "Closed" | "Completed";
-	priority: "Low" | "Medium" | "High";
-	image: string;
-};
 
 const getPriorityColor = (priority: WorkOrder["priority"]) => {
 	switch (priority) {
@@ -40,41 +32,30 @@ const WorkOrderCard = ({
 		// isSelected && 
 		router.push({
 			pathname: "/workOrderDetail",
-			params: {
-				id: item.id,
-				title: item.title,
-				type: "Preventive",
-				requestedBy: item.requestedBy,
-				createdOn: item.createdOn,
-				priority: item.priority,
-				startDate: "Sep 22, 2025",
-				endDate: "Sep 25, 2025",
-				parts: 2,
-				description: "Hii, Welcome to our app...",
-				assignedTo: "Gufic Biosciences Indore",
-			},
+			params: {data: JSON.stringify(item)}
 		});
 	}
+	
 	return (
 		<Pressable style={[styles.card, isSelected && styles.selectedCard]} onPress={onCardPress}>
 
-			<View>
-				<Text style={styles.id}>{item.id}</Text>
-				<Text style={styles.title}>{item.title}</Text>
-				<Text style={styles.subText}>Requested By : {item.requestedBy}</Text>
-				<Text style={styles.subText}>Created On : {item.createdOn}</Text>
+			<View style={styles.leftSection}>
+				<Text style={styles.id}>#{item?.order_no}</Text>
+				<Text style={styles.title}>{item?.title}</Text>
+				{/* <Text style={styles.subText}>Requested By : {item?.requestedBy}</Text> */}
+				<Text style={styles.subText}>Created On : {moment(item?.createdAt).format("DD MMM, YYYY")}</Text>
 			</View>
 
 			<View style={styles.rightSection}>
 				<WorkOrderCardLogo />
 
 				<View style={styles.badgesRow}>
-					<View style={[styles.statusBadge, { backgroundColor: item.status === "Completed" ? "#00B227" : "#FFFFFF" }]}>
-						<Text style={[styles.statusText, { color: item.status === "Completed" ? "#fff" : "#343C6A" }]}>{item.status}</Text>
+					<View style={[styles.statusBadge, { backgroundColor: item?.status === "Completed" ? "#00B227" : "#FFFFFF" }]}>
+						<Text style={[styles.statusText, { color: item?.status === "Completed" ? "#fff" : "#343C6A" }]}>{item?.status}</Text>
 					</View>
 
 					<View style={[styles.priorityBadge, { backgroundColor: priorityStyle.bg }]}>
-						<Text style={[styles.priorityText, { color: priorityStyle.text }]}>{item.priority}</Text>
+						<Text style={[styles.priorityText, { color: priorityStyle.text }]}>{item?.priority}</Text>
 					</View>
 				</View>
 			</View>
@@ -116,8 +97,8 @@ const styles = StyleSheet.create({
 		color: "#000000",
 	},
 	title: {
-		fontFamily: Fonts.regular,
-		fontSize: 10,
+		fontFamily: Fonts.bold,
+		fontSize: 12,
 		marginBottom: 2,
 		color: "#000000",
 	},
@@ -127,7 +108,11 @@ const styles = StyleSheet.create({
 		marginBottom: 2,
 		fontFamily: Fonts.light
 	},
+	leftSection: {
+		flex: 6
+	},
 	rightSection: {
+		flex: 4,
 		alignItems: "flex-end",
 		justifyContent: "space-between",
 	},

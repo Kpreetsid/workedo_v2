@@ -1,129 +1,76 @@
-import {StyleSheet} from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import WorkOrderCard from "@/components/work-orders/WorkOrderCard";
-import {useState} from "react";
-import {FlashList} from "@shopify/flash-list";
-
-type WorkOrder = {
-    id: string;
-    title: string;
-    requestedBy: string;
-    createdOn: string;
-    status: "Open" | "Closed" | "Completed";
-    priority: "Low" | "Medium" | "High";
-    image: string;
-};
-const mockData: WorkOrder[] = [
-    {
-        id: "#WO - 201",
-        title: "Air Conditioner Maintenance",
-        requestedBy: "Aman Bhambra",
-        createdOn: "Sep 20, 2025",
-        status: "Completed",
-        priority: "Low",
-        image: "https://placehold.co/60x60/png",
-    },
-    {
-        id: "#WO - 202",
-        title: "Generator Checkup",
-        requestedBy: "Rahul Mehta",
-        createdOn: "Sep 19, 2025",
-        status: "Completed",
-        priority: "Medium",
-        image: "https://placehold.co/60x60/png",
-    },
-    {
-        id: "#WO - 203",
-        title: "Electrical Wiring Fix",
-        requestedBy: "Priya Sharma",
-        createdOn: "Sep 18, 2025",
-        status: "Completed",
-        priority: "High",
-        image: "https://placehold.co/60x60/png",
-    },
-    {
-        id: "#WO - 204",
-        title: "Routine Safety Inspection",
-        requestedBy: "Suresh Kumar",
-        createdOn: "Sep 17, 2025",
-        status: "Completed",
-        priority: "Low",
-        image: "https://placehold.co/60x60/png",
-    },
-    {
-        id: "#WO - 205",
-        title: "Replace Water Pump",
-        requestedBy: "Meena Rani",
-        createdOn: "Sep 16, 2025",
-        status: "Completed",
-        priority: "High",
-        image: "https://placehold.co/60x60/png",
-    },
-    {
-        id: "#WO - 206",
-        title: "Check Fire Alarm",
-        requestedBy: "Rohit Verma",
-        createdOn: "Sep 15, 2025",
-        status: "Completed",
-        priority: "Medium",
-        image: "https://placehold.co/60x60/png",
-    },
-    {
-        id: "#WO - 207",
-        title: "Elevator Service",
-        requestedBy: "Anjali Singh",
-        createdOn: "Sep 14, 2025",
-        status: "Completed",
-        priority: "Low",
-        image: "https://placehold.co/60x60/png",
-    },
-    {
-        id: "#WO - 208",
-        title: "Painting Touch-Up",
-        requestedBy: "Deepak Sharma",
-        createdOn: "Sep 13, 2025",
-        status: "Completed",
-        priority: "Medium",
-        image: "https://placehold.co/60x60/png",
-    },
-    {
-        id: "#WO - 209",
-        title: "Replace HVAC Filter",
-        requestedBy: "Neha Gupta",
-        createdOn: "Sep 12, 2025",
-        status: "Completed",
-        priority: "High",
-        image: "https://placehold.co/60x60/png",
-    },
-    {
-        id: "#WO - 210",
-        title: "Plumbing Leak Fix",
-        requestedBy: "Arjun Patel",
-        createdOn: "Sep 11, 2025",
-        status: "Completed",
-        priority: "Medium",
-        image: "https://placehold.co/60x60/png",
-    },
-];
+import { useEffect, useState } from "react";
+import { FlashList } from "@shopify/flash-list";
+import { getWorkOrders } from "@/src/services/work-order.service";
+import { WorkOrder } from "@/src/types/workOrder";
+import { ToastAndroid } from "react-native";
 
 export default function DoneTab() {
-    const [selectedId, setSelectedId] = useState<string | null>(null);
+	const [selectedId, setSelectedId] = useState<string | null>(null);
+	const [workorders, setWorkOrders] = useState<WorkOrder[]>([]);
+	const [refreshing, setRefreshing] = useState(false);
 
-    return (
-        <FlashList
-            data={mockData}
-            removeClippedSubviews={false}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContainer}
-            renderItem={({item}) => <WorkOrderCard item={item} isSelected={selectedId === item.id}/>}
-            // selection for the work orders
-            // onPress={() => setSelectedId(item.id)}
-        />
-    )
+	useEffect(() => {
+		fetchWorkOrders();
+	}, [])
+
+	const fetchWorkOrders = async () => {
+		console.log("fetch work orders");
+
+		try {
+			const res = await getWorkOrders('done');
+
+			if (res?.status && res?.data) {
+				const allWorkOrders = res.data as WorkOrder[];
+				setWorkOrders(allWorkOrders);
+			}
+		} catch (error: any) {
+			console.log("error =", error);
+			ToastAndroid.show(error?.message || "Something went wrong", ToastAndroid.LONG);
+		}
+	};
+
+	const handleRefresh = async () => {
+		setRefreshing(true);
+		await fetchWorkOrders();
+		setRefreshing(false);
+	};
+
+	return (
+		<FlashList
+			data={workorders || []}
+			removeClippedSubviews={false}
+			keyExtractor={(item) => item.id}
+			contentContainerStyle={[
+				styles.listContainer,
+				{ flexGrow: 1 }, // ensure empty component shows
+			]}
+			renderItem={({ item }) => (
+				<WorkOrderCard item={item} isSelected={selectedId === item.id} />
+			)}
+			refreshing={refreshing}
+			onRefresh={handleRefresh}
+			ListEmptyComponent={
+				<View style={{ flex: 1, alignItems: "center", justifyContent: "center", marginTop: 40 }}>
+					<Text style={styles.footerText}>No work orders found</Text>
+				</View>
+			}
+		// selection for the work orders
+		// onPress={() => setSelectedId(item.id)}
+		/>
+	)
 }
 
 const styles = StyleSheet.create({
-    listContainer: {
-        paddingHorizontal: 20,
-        paddingVertical: 12
-    }
+	listContainer: {
+		paddingHorizontal: 20,
+		paddingVertical: 12
+	},
+	footerText: {
+		fontSize: 12,
+		color: "#000000",
+		textAlign: "center",
+		marginVertical: 12
+	}
 })
