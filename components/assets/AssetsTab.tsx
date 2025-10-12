@@ -11,14 +11,6 @@ import { Asset } from "@/src/types/asset";
 
 const width = Dimensions.get("window").width;
 
-// const mockAssets = [
-// 	{ id: "1", name: "Primary Booth ASU V-11", location: "Grasim Nagda Plant" },
-// 	{ id: "2", name: "Die Casting Motor 560 ton-8", location: "Plant Zone A" },
-// 	{ id: "3", name: "Mixture Machine", location: "Workshop 3" },
-// 	{ id: "4", name: "Cooling Tower Motor", location: "Plant Zone B" },
-// 	{ id: "5", name: "Hydraulic Pump V-9", location: "Unit 7" },
-// 	{ id: "6", name: "Die Casting Motor 560 ton-9", location: "Plant Zone A" },
-// ];
 interface AssetsTabInterface {
 	selection?: boolean
 }
@@ -26,6 +18,7 @@ interface AssetsTabInterface {
 export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 	const [searchText, setSearchText] = useState("");
 	const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
+	const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
 
 	const { user } = useAuthStore();
 	const [assets, setAssets] = useState<Asset[]>([]);
@@ -63,28 +56,81 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 			<FlatList
 				data={filteredAssets}
 				keyExtractor={(item) => item.id}
-				renderItem={({ item }: { item: Asset }) => (
-					<Pressable key={item.id} style={[styles.assetButton,
-					{ backgroundColor: selectedAsset === item.id ? "#FFBF0080" : "#fff", borderColor: selectedAsset === item.id ? "#FFC1074D" : "#99999933" }]}
-						onLongPress={() => setSelectedAsset(item.id)} onPress={() => {
-							router.push({
-								pathname: "/assetDetail",
-								params: { data: JSON.stringify(item) },
-							})
-						}}>
-						<View style={styles.textRow}>
-							<View>
-								<Text style={styles.assetText}>{item.asset_name}</Text>
-								<Text style={styles.assetLocations}>Location: {item?.locationData?.location_name}</Text>
-							</View>
+				renderItem={({ item }: { item: Asset }) => {
+					const isExpanded = expandedAssetId === item.id;
+					const hasChildren = item.childs && item.childs.length > 0;
+
+					return (
+						<View key={item.id}>
+							<Pressable
+								style={[
+									styles.assetButton,
+									isExpanded ? {
+										borderBottomLeftRadius: 0,
+										borderBottomRightRadius: 0,
+									} : {},
+									{
+										backgroundColor: selectedAsset === item.id ? "#FFBF0080" : "#fff",
+										borderColor: selectedAsset === item.id ? "#FFC1074D" : "#99999933",
+									},
+								]}
+								onLongPress={() => setSelectedAsset(item.id)}
+								onPress={() => {
+									router.push({
+										pathname: "/assetDetail",
+										params: { data: JSON.stringify(item) },
+									});
+								}}
+							>
+								<View style={styles.textRow}>
+									<View>
+										<Text style={styles.assetText}>{item.asset_name}</Text>
+										<Text style={styles.assetLocations}>
+											Location: {item?.locationData?.location_name}
+										</Text>
+										{hasChildren && (
+											<Pressable onPress={()=>{
+												// Toggle expand instead of navigating
+												setExpandedAssetId(isExpanded ? null : item.id);
+											}}>
+												<Text style={styles.childLabel}>
+													Child locations
+													{isExpanded ? " ▲" : " ▼"}
+												</Text>
+											</Pressable>
+										)}
+									</View>
+								</View>
+								<MapIcon />
+							</Pressable>
+
+							{/* 👇 Show child assets if expanded */}
+							{isExpanded && hasChildren && (
+								<View style={styles.childContainer}>
+									{item?.childs?.map((child) => (
+										<Pressable
+											key={child.id}
+											style={styles.childButton}
+											onPress={() =>
+												router.push({
+													pathname: "/assetDetail",
+													params: { data: JSON.stringify(child) },
+												})
+											}
+										>
+											<Text style={styles.childText}>{child.asset_name}</Text>
+										</Pressable>
+									))}
+								</View>
+							)}
 						</View>
-						<MapIcon />
-					</Pressable>
-				)}
+					);
+				}}
 				contentContainerStyle={styles.listContainer}
 				refreshing={refreshing}
 				onRefresh={handleRefresh}
 			/>
+
 
 			{selection && <ActionButton onPress={() => console.info("Confirm Pressed")} label="Confirm Location" buttonStyle={styles.actionButton} />}
 		</>
@@ -102,9 +148,9 @@ const styles = StyleSheet.create({
 		marginTop: 5
 	},
 	assetButton: {
-		borderWidth: 0.6,
+		// borderWidth: 0.6,
 		borderRadius: 7,
-		height: 60,
+		height: 65,
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "space-between",
@@ -131,4 +177,26 @@ const styles = StyleSheet.create({
 		alignSelf: "center",
 		width: width - 50,
 	},
+	childContainer: {
+		backgroundColor: "#fff",
+		paddingLeft: 40,
+		paddingBottom: 10,
+		borderBottomLeftRadius: 7,
+		borderBottomRightRadius: 7,
+	},
+	childButton: {
+		paddingVertical: 5,
+	},
+	childText: {
+		fontSize: 10,
+		color: "#555",
+		fontFamily: Fonts.regular,
+	},
+	childLabel: {
+		marginTop: 3,
+		fontSize: 10,
+		color: "#201F23",
+		fontFamily: Fonts.light,
+	},
+
 });
