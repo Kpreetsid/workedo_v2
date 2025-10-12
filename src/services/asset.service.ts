@@ -14,9 +14,7 @@ export const getChildren = async (assetId: string) => {
 export const getAllEndpoints = async (payload: string[]) => {
     const url = `${endpoints.asset.asset_endpoints}`;
     console.log('final payload = ', { asset_id: payload });
-    return await sendRequestDemo('POST', url, JSON.stringify({ asset_id: payload }), {
-        headers: { 'Content-Type': 'application/json' },
-    });
+    return await sendRequestDemo('POST', url, JSON.stringify({ asset_id: payload }));
 };
 
 export const getSingleAssetHealthHistory = async (assetId: string) => {
@@ -24,3 +22,8 @@ export const getSingleAssetHealthHistory = async (assetId: string) => {
     const url = `${endpoints.asset.singleAssetHealthHistory}`;
     return await sendRequestDemo('POST', url, payload);
 };
+
+export const getGraphTrendData = async (payload: any) => {
+    const url = `${endpoints.asset.graphData}`;
+    return await sendRequestDemo("POST", url, payload);
+  };

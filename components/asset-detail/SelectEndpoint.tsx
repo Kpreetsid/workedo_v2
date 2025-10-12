@@ -6,10 +6,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { AssetEndpoint } from "@/src/types/assetEndpoint";
 
 interface SelectEndpointProps {
-	endpointSelected: { name: string, asset_name: string },
+	endpointSelected: AssetEndpoint | null,
 	endpoints: AssetEndpoint[]
 	asset_data: any
-	onEndpointSelect: (endpoint: { name: string, composite_id: string, asset_name: string }) => void
+	onEndpointSelect: (endpoint: AssetEndpoint) => void
 }
 
 export default function SelectEndpoint({ endpointSelected, endpoints, asset_data, onEndpointSelect }: SelectEndpointProps) {
@@ -19,16 +19,13 @@ export default function SelectEndpoint({ endpointSelected, endpoints, asset_data
 	const buttonRef = useRef<View>(null);
 
 	useEffect(() => {
-	}, [])
+		setSelectedEndpoint(endpointSelected!);
+	}, [endpointSelected])
 
 	const handleSelect = (composite_id: string) => {
 		let found = endpoints.find((endpoint) => endpoint.composite_id === composite_id);
 		setSelectedEndpoint(found);
-		onEndpointSelect({
-			name: `${found?.point_name}-${found?.mount_location}`,
-			composite_id: found?.composite_id || "",
-			asset_name: asset_data?.asset_name,
-		});
+		onEndpointSelect(found!);
 		setModalVisible(false);
 	};
 
@@ -42,7 +39,9 @@ export default function SelectEndpoint({ endpointSelected, endpoints, asset_data
 	return (
 		<View style={styles.selectCard}>
 			<View>
-				<Text style={styles.assetName}>{endpointSelected?.name}</Text>
+				<Text style={styles.assetName}>
+					{endpointSelected?.point_name}-{endpointSelected?.mount_location}
+				</Text>
 				<Text style={styles.assetDesc}>{endpointSelected?.asset_name}</Text>
 			</View>
 

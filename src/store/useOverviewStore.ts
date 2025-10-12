@@ -23,14 +23,21 @@ interface OverviewState {
 }
 
 export const useOverviewStore = create<OverviewState>((set) => ({
+  // these are for the data inside dropdown for parent and child locations
   parentLocations: [],
   childLocations: [],
+
+  // child assets are actually assets data of all or selected child locations
   childAssets: [],
+
+  // assetKPIHistory is the data of assets health summary of all or selected child locations
   assetKPIHistory: null,
 
+  // selections from drop down
   parentSelectionId: null,
   childSelectionIds: [],
 
+  // functions to set the data
   setParentLocations: (data) => set({ parentLocations: data }),
   setChildLocations: (data) => set({ childLocations: data }),
   setChildAssets: (data) => set({ childAssets: data }),
@@ -38,6 +45,7 @@ export const useOverviewStore = create<OverviewState>((set) => ({
   setChildSelectionIds: (data) => set({ childSelectionIds: data }),
   setAssetKPIHistory: (data) => set({ assetKPIHistory: data }),
 
+  // function to clear the data
   clearOverview: () => set({
     parentLocations: [],
     childLocations: [],

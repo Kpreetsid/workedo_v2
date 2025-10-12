@@ -21,7 +21,8 @@ export const endpoints = {
   asset: {
     tree: 'master/assets/tree',
     children: 'asset_master/get_children',
-    asset_endpoints: 'getAllEndPointsMobile/',
-    singleAssetHealthHistory: 'single_asset_health_history/'
+    asset_endpoints: 'getAllEndPoints/',
+    singleAssetHealthHistory: 'single_asset_health_history/',
+    graphData: 'get_function_trend_data_v2/'
   }
 };

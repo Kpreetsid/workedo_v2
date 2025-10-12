@@ -29,7 +29,7 @@ apiClientDemo.interceptors.request.use((config) => {
 apiClientDemo.interceptors.response.use(
     (response) => response,
     (error) => {
-        console.error('API Error:', error?.response || error);
+        // console.error('API Error:', error?.response || error);
         throw error?.response?.data || error;
     }
 );

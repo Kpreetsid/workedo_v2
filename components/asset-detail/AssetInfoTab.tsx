@@ -1,4 +1,4 @@
-import { Dimensions, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
 import { Feather, FontAwesome, FontAwesome6 } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
@@ -7,9 +7,11 @@ import { ArrowRight } from "@/constants/IconProvider";
 import InfoCards from "@/components/overview-screen/InfoCards";
 import SelectEndpoint from "@/components/asset-detail/SelectEndpoint";
 import { useLocalSearchParams } from "expo-router";
-import { getAllEndpoints, getChildren, getSingleAssetHealthHistory } from "@/src/services/asset.service";
+import { getAllEndpoints, getChildren, getGraphTrendData, getSingleAssetHealthHistory } from "@/src/services/asset.service";
 import { Asset } from "@/src/types/asset";
 import { AssetEndpoint } from "@/src/types/assetEndpoint";
+import AssetFilter from "./AssetFilter";
+import { useAssetStore } from "@/src/store/useAssetStore";
 
 const dataAxial = [
 	{ value: 0.05 },
@@ -47,69 +49,186 @@ interface AssetInfoTabProps {
 
 export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 	const [activeTab, setActiveTab] = useState("Horizontal");
-	const [endpoints, setEndpoints] = useState<AssetEndpoint[]>([]);
-	const [endpointSelected, setEndpointSelected] = useState<any>(null);
-	const [compositeIdSelected, setCompositeIdSelected] = useState<string | null>(null);
-	const [assetHealth, setAssetHealth] = useState<any>();
+	const {
+		endpoints,
+		endpointSelected,
+		assetHealth,
+		selectedAxis,
+		selectedSignal,
+		selectedValueType,
+		graphData,
+
+		setGraphData,
+		setEndpoints,
+		setEndpointSelected,
+		setAssetHealth,
+		toggleAxis,
+		clearAssetState,
+	} = useAssetStore();
+
+	const [chartSeries, setChartSeries] = useState<
+		{ axis: string; points: { value: number; label: string }[] }[]
+	>([]);
+	const [xLabels, setXLabels] = useState<string[]>([]);
+
+	// ✅ fixed color mapping
+	const axisColors: Record<string, string> = {
+		Horizontal: "#01d711", // green
+		Vertical: "#ff0000",   // red
+		Axial: "#1237ff",      // blue
+	};
+
+	// ✅ sort chartSeries in correct order
+	const orderedSeries = ["Horizontal", "Vertical", "Axial"].map(
+		(axis) => chartSeries.find((s) => s.axis === axis)
+	);
 
 	console.log('asset_data in info = ', asset_data)
 
 	useEffect(() => {
 		fetchEndpoints();
+
+		return () => {
+			clearAssetState(); // cleanup when leaving page
+		};
 	}, []);
 
 	const fetchEndpoints = async () => {
 		console.log('fetching endpoints');
-		let payload: any[] = [];
-		payload.push(asset_data?.id);
+		try {
+			console.log('endpointSelected = ', endpointSelected);
+			console.log('asset_data = ', asset_data);
 
-		console.log('payload = ', payload);
-		const endpointsRes = await getAllEndpoints(payload);
-		console.log('res endpoints = ', endpointsRes);
+			let payload: string[] = [asset_data?.id];
+			console.log('payload for endpoints = ', payload);
+			const endpointsRes = await getAllEndpoints(payload);
+			console.log('res endpoints = ', endpointsRes);
 
-		if (endpointsRes?.data?.length !== 0) {
-			setEndpoints(endpointsRes.data);
-
-			const first = endpointsRes.data[0];
-
-			setEndpointSelected({
-				name: `${first.point_name}-${first.mount_location}`,
-				composite_id: first.composite_id,
-				asset_name: asset_data?.asset_name,
-			});
-
-		} else {
-			setEndpointSelected({
-				name: "No Endpoints Found",
-				composite_id: null,
-				asset_name: "",
-			});
-			ToastAndroid.show("No endpoints created against selected asset.", ToastAndroid.SHORT);
+			if (endpointsRes?.data?.length > 0) {
+				setEndpoints(endpointsRes.data);
+				setEndpointSelected(endpointsRes.data[0]);
+			} else {
+				setEndpointSelected(null);
+				ToastAndroid.show("No endpoints created against selected asset.", ToastAndroid.SHORT);
+			}
+		} catch (err) {
+			console.error("Error fetching endpoints:", err);
+			ToastAndroid.show("Failed to load endpoints.", ToastAndroid.SHORT);
 		}
 	}
 
 	useEffect(() => {
+		console.log('endpoint selected = ', endpointSelected);
+
 		endpointSelected != null ? calculateAssetHealth() : null;
 	}, [endpointSelected])
 
 	const calculateAssetHealth = async () => {
-		if (endpointSelected?.composite_id != null) {
-			setCompositeIdSelected(endpointSelected?.composite_id);
-			const assetHealth = await getSingleAssetHealthHistory(asset_data?.id);
-			console.log('asset health = ', assetHealth);
-			if (assetHealth) {
-				setAssetHealth(assetHealth?.data);
+		try {
+			if (endpointSelected?.composite_id) {
+				const assetHealthRes = await getSingleAssetHealthHistory(endpointSelected?.asset_id);
+				if (assetHealthRes) {
+					setAssetHealth(assetHealthRes?.data);
+				}
+			} else {
+				setAssetHealth({
+					assetHealth: "Not Defined",
+					assetScore: null,
+					assetStatus: ["Not Defined", "Not Defined", "Not Defined", "Not Defined"],
+					timeStamp: [],
+				});
+				ToastAndroid.show("No Sensor is mapped against this endpoint.", ToastAndroid.SHORT);
 			}
-		} else {
-			setAssetHealth({
-				assetHealth: "Not Defined",
-				assetScore: null,
-				assetStatus: ["Not Defined", "Not Defined", "Not Defined", "Not Defined"],
-				timeStamp: []
-			})
-			ToastAndroid.show("No Sensor is mapped against this endpoint", ToastAndroid.SHORT);
+		} catch (err) {
+			console.error("Error fetching asset health:", err);
+			ToastAndroid.show("Failed to fetch asset health.", ToastAndroid.SHORT);
 		}
-	}
+	};
+
+	// 👇 Every time endpoint, axis, signal, or valueType changes → fetch graph data
+	useEffect(() => {
+		if (endpointSelected && selectedAxis.length > 0 && selectedSignal && selectedValueType) {
+			fetchGraphTrendData();
+		}
+	}, [endpointSelected, selectedAxis, selectedSignal, selectedValueType]);
+
+	const fetchGraphTrendData = async () => {
+		try {
+			if (!endpointSelected?.composite_id) return;
+
+			const payload = {
+				asset_id: asset_data?.id,
+				fft_only: false,
+				compositeList: [
+					{
+						asset_id: endpointSelected?.asset_id,
+						composite_id: endpointSelected?.composite_id,
+						axis: selectedAxis, // ✅ dynamic from store
+						is_linked: true,
+					},
+				],
+				function: {
+					Vibration: [
+						`${selectedSignal.toLowerCase()}-${selectedValueType.toLowerCase()}`
+					],
+					Temperature: ["temperature"],
+					Acoustics: [],
+					"Magnetic Flux": [],
+					Current: [],
+				},
+				fromDate: "",
+				toDate: "",
+			};
+
+			console.log("graph data payload = ", payload);
+
+			const res = await getGraphTrendData(payload);
+			console.log("graph trend data =", res);
+			if (res) setGraphData(res['velocity-rms']);
+		} catch (err) {
+			console.error("Error fetching graph trend data:", err);
+			ToastAndroid.show("Failed to load graph trend data.", ToastAndroid.SHORT);
+		}
+	};
+
+	// 2) formatter for the API shape you showed
+	const formatGraphData = (arr: any[]) => {
+		return arr.map((item) => ({
+			axis: item.axis, // Horizontal / Vertical / Axial
+			points: item.data.map(([ts, amp]: [number, number]) => ({
+				value: amp,
+				label: new Date(ts).toLocaleTimeString("en-GB", {
+					hour12: false,
+					hour: "2-digit",
+					minute: "2-digit",
+					second: "2-digit",
+				}),
+			})),
+		}));
+	};
+
+	// 3) whenever graphData (your store value) changes → format for chart
+	useEffect(() => {
+		if (graphData && Array.isArray(graphData)) {
+			const formatted = formatGraphData(graphData);
+			setChartSeries(formatted);
+
+			// optional: derive shared labels from the first dataset
+			const labels = formatted[0].points.map((p: any) => p.label);
+			setXLabels(labels);
+		}
+	}, [graphData]);
+
+	// 4) optional: inspect final points
+	useEffect(() => {
+		if (chartSeries.length) {
+			console.log("final chart = ", chartSeries);
+
+			const orderedSeries = ["Horizontal", "Vertical", "Axial"].map(
+				(axis) => chartSeries.find((s) => s.axis === axis)
+			);
+		}
+	}, [chartSeries]);
 
 	return (
 		<ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 50 }}>
@@ -119,6 +238,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 					<View style={styles.cameraIcon}>
 						<Feather name="camera" size={20} color="#201f23" />
 					</View>
+
 					<View>
 						<Text style={styles.summaryTitle}>Assets Health</Text>
 						{assetHealth && (
@@ -135,8 +255,8 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 								{assetHealth?.assetScore ? assetHealth.assetScore : "-"}
 							</Text>
 						)}
-
 					</View>
+
 					<View>
 						<Text style={styles.summaryTitle}>Temperature</Text>
 						<View style={[styles.rowBetween, { gap: 5 }]}>
@@ -148,41 +268,57 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 			</View>
 
 			{/* Asset Details */}
-			{/* <View style={styles.detailsRow}>
-				<DetailPill icon="orcid" label="Asset ID" value="A-01" iconColor="#742bde" />
-				<DetailPill icon="screwdriver-wrench" label="Asset Type" value="Fan_blower" iconColor="#FF8D54" />
-				<DetailPill icon="location-dot" label="Location" value="New Delhi" iconColor="#EE2E6B" />
-			</View> */}
+			<View style={styles.detailsRow}>
+				<DetailPill icon="orcid" label="Asset ID" value={asset_data?.id} iconColor="#742bde" />
+				<DetailPill icon="screwdriver-wrench" label="Asset Type" value={asset_data?.asset_type || "-"} iconColor="#FF8D54" />
+				<DetailPill icon="location-dot" label="Location" value={asset_data?.locationData?.location_name || "-"} iconColor="#EE2E6B" />
+			</View>
 
-			<SelectEndpoint endpointSelected={endpointSelected} endpoints={endpoints} asset_data={asset_data} onEndpointSelect={setEndpointSelected} />
+			{/* Endpoint Selector */}
+			<SelectEndpoint
+				endpointSelected={endpointSelected}
+				endpoints={endpoints}
+				asset_data={asset_data}
+				onEndpointSelect={setEndpointSelected}
+			/>
 
-			{/* <InfoCards /> */}
+			{/* Axis Selection Tabs */}
+			<View style={styles.modeTabs}>
+				{["Horizontal", "Vertical", "Axial"].map((tab) => {
+					const isActive = selectedAxis.includes(tab);
+					return (
+						<Pressable
+							key={tab}
+							style={[styles.modeTab, isActive && styles.modeTabActive]}
+							onPress={() => toggleAxis(tab)}
+						>
+							<Text style={[styles.modeTabText, isActive && styles.modeTabTextActive]}>
+								{tab}
+							</Text>
+						</Pressable>
+					);
+				})}
+			</View>
 
-			{/* Mode Tabs */}
-			{/* <View style={styles.modeTabs}>
-				{["Horizontal", "Vertical", "Axial", "Velocity", "RMS"].map((tab) => (
-					<Pressable key={tab} style={[styles.modeTab, activeTab === tab && styles.modeTabActive]} onPress={() => setActiveTab(tab)}>
-						<Text style={[styles.modeTabText, activeTab === tab && styles.modeTabTextActive]}>{tab}</Text>
-					</Pressable>
-				))}
-			</View> */}
+			{/* Signal / ValueType Filter */}
+			<AssetFilter />
 
 			{/* Chart */}
-			{/* <View style={styles.chartContainer}>
+			<View style={styles.chartContainer}>
 				<LineChart
 					curved
-					data={dataAxial}
-					data2={dataHorizontal}
-					data3={dataVertical}
-					color1="#E056FD"
-					color2="#742BDE"
-					color3="#FF9D00"
+					data={orderedSeries[0]?.points || []}
+					data2={orderedSeries[1]?.points || []}
+					data3={orderedSeries[2]?.points || []}
+					color1={axisColors[orderedSeries[0]?.axis || "Horizontal"]}
+					color2={axisColors[orderedSeries[1]?.axis || "Vertical"]}
+					color3={axisColors[orderedSeries[2]?.axis || "Axial"]}
+					dataPointsColor1={axisColors[orderedSeries[0]?.axis || "Horizontal"]}
+					dataPointsColor2={axisColors[orderedSeries[1]?.axis || "Vertical"]}
+					dataPointsColor3={axisColors[orderedSeries[2]?.axis || "Axial"]}
 					thickness={2}
 					hideRules={false}
 					hideDataPoints={false}
-					dataPointsColor1="#E056FD"
-					dataPointsColor2="#742BDE"
-					dataPointsColor3="#FF9D00"
 					yAxisTextStyle={{ color: "#A0A0A0", fontSize: 8 }}
 					xAxisLabelTextStyle={{ color: "#A0A0A0", fontSize: 8 }}
 					backgroundColor="transparent"
@@ -197,11 +333,23 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 					yAxisColor="#EAEAEA"
 					xAxisThickness={1}
 					yAxisThickness={1}
-					yAxisLabelWidth={20}
+					yAxisLabelWidth={40}
 					height={180}
+					xAxisLabelTexts={xLabels}
 				/>
 
+
 				<View style={styles.legendRow}>
+					{orderedSeries.filter(Boolean).map((s: any) => (
+						<View key={s.axis} style={styles.legendItem}>
+							<View style={[styles.dot, { backgroundColor: axisColors[s.axis] }]} />
+							<Text style={styles.legendText}>{selectedValueType}-{s.axis}</Text>
+						</View>
+					))}
+				</View>
+
+
+				{/* <View style={styles.legendRow}>
 					<View style={styles.legendItem}>
 						<View style={[styles.dot, { backgroundColor: "#E056FD" }]} />
 						<Text style={styles.legendText}>Axial</Text>
@@ -217,18 +365,34 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 						<Text style={styles.legendText}>Vertical</Text>
 						<Text style={styles.legendValue}>3.69</Text>
 					</View>
-				</View>
-			</View> */}
+				</View> */}
+			</View>
 		</ScrollView>
 	)
 }
 
-const DetailPill = ({ icon, label, value, iconColor }: { icon: string; label: string; value: string, iconColor: string }) => (
+const DetailPill = ({
+	icon,
+	label,
+	value,
+	iconColor,
+}: {
+	icon: string;
+	label: string;
+	value: string;
+	iconColor: string;
+}) => (
 	<View style={styles.detailPill}>
 		<FontAwesome6 name={icon as any} size={14} color={iconColor} />
-		<View>
+		<View style={styles.detailTextWrapper}>
 			<Text style={styles.detailLabel}>{label}</Text>
-			<Text style={styles.detailValue}>{value}</Text>
+			<Text
+				style={styles.detailValue}
+				numberOfLines={1}
+				ellipsizeMode="tail"
+			>
+				{value}
+			</Text>
 		</View>
 	</View>
 );
@@ -300,10 +464,16 @@ const styles = StyleSheet.create({
 		elevation: 2,
 	},
 	detailPill: {
+		width: "30%",
 		padding: 8,
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 10
+		gap: 10,
+	},
+
+	detailTextWrapper: {
+		flex: 1,
+		flexShrink: 1, // allows truncation instead of wrapping
 	},
 	detailLabel: {
 		fontSize: 10,
@@ -346,6 +516,7 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.semiBold
 	},
 	chartContainer: {
+		marginTop: 20,
 		backgroundColor: "#fff",
 		marginHorizontal: 20,
 		borderRadius: 10,
