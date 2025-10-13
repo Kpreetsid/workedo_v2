@@ -5,19 +5,27 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Fonts from "@/constants/Typography";
 import ActionButton from "@/components/create-screens/ActionButton";
 import { useRef, useState } from "react";
+import { createEndpoint, getBearingDetails } from "@/src/services/asset.service";
+import { useAuthStore } from "@/src/store/useAuthStore";
+import { useRouter } from "expo-router";
 
 export default function CreateNewEndPoint() {
+	const router = useRouter();
+	const user = useAuthStore(state => state.user);
 	const [selectedPart, setSelectedPart] = useState<string>("DE");
 	// refs for all text inputs
 	const nameRef = useRef("");
 	const rpmRef = useRef("");
 	const bearingNoRef = useRef("");
-	const bpfoRef = useRef("");
-	const bpfiRef = useRef("");
-	const bsfRef = useRef("");
-	const ftfRef = useRef("");
 
-	const handleSubmit = () => {
+	const [bearingData, setBearingData] = useState({
+		bpfo: "",
+		bpfi: "",
+		bsf: "",
+		ftf: ""
+	})
+
+	const handleSubmit = async () => {
 		const name = nameRef.current?.trim();
 		const measuringPointLocation = selectedPart?.trim();
 		const rpm = rpmRef.current?.trim();
@@ -39,19 +47,54 @@ export default function CreateNewEndPoint() {
 			name,
 			measuringPointLocation,
 			rpm,
-			bearingNo,
-			bpfo: bpfoRef.current,
-			bpfi: bpfiRef.current,
-			bsf: bsfRef.current,
-			ftf: ftfRef.current,
+			bearingNo
 		};
 
 		console.log("Collected Data:", data);
-		ToastAndroid.show("Data submitted successfully!", ToastAndroid.SHORT);
-		// now send `data` to API
+
+		// construct the payload for API
+		const payload = {
+			asset_id: "68e634fc55f585c8ba8e2a88", // from your selected asset or Zustand
+			point_name: name,
+			rpm: Number(rpm),
+			mount_location: measuringPointLocation,
+			bearing_number: bearingNo,
+			bpfo: bearingData.bpfo,
+			bpfi: bearingData.bpfi,
+			bsf: bearingData.bsf,
+			ftf: bearingData.ftf,
+			asset_timezone: "Asia/Calcutta", // or fetch dynamically from device or org
+			org_id: user?.account_id,
+		};
+
+		console.log("Final Payload:", payload);
+
+		const res = await createEndpoint(payload);
+		console.log("API Response:", res);
+
+		if (res?.message === "End Point created successfully.") {
+			ToastAndroid.show("Endpoint created successfully!", ToastAndroid.SHORT);
+			router.back();
+		}
 	};
-	const getBearingDetails = () => {
+
+	const fetchBearingDetails = async () => {
 		console.log("Bearing Number:", bearingNoRef.current);
+		const payload = {
+			account_id: user?.account_id,
+			bearing_number: bearingNoRef.current,
+			user_id: user?.id,
+		};
+		const res = await getBearingDetails(payload);
+		console.log("Bearing Details:", res);
+		if (res.result) {
+			setBearingData({
+				bpfo: res.message.bpfo,
+				bpfi: res.message.bpfi,
+				bsf: res.message.bsf,
+				ftf: res.message.ftf
+			})
+		}
 	};
 
 	return (
@@ -78,19 +121,19 @@ export default function CreateNewEndPoint() {
 
 				<View style={styles.row}>
 					<FormInput label="Bearing Number" placeholder="Bearing No. of Measuring Point" containerStyle={styles.inputContainer} onChangeText={(text) => (bearingNoRef.current = text)} />
-					<Pressable style={styles.buttonContainer} onPress={getBearingDetails}>
+					<Pressable style={styles.buttonContainer} onPress={fetchBearingDetails}>
 						<Text style={styles.buttonText}>Get Details</Text>
 					</Pressable>
 				</View>
 
 				<View style={styles.row}>
-					<FormInput label="BPFO" placeholder="" containerStyle={styles.inputContainer} onChangeText={(text) => (bpfoRef.current = text)} />
-					<FormInput label="BPFI" placeholder="" containerStyle={styles.inputContainer} onChangeText={(text) => (bpfiRef.current = text)} />
+					<FormInput label="BPFO" placeholder={bearingData.bpfo} editable={false} value={bearingData.bpfo} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bpfo = text)} />
+					<FormInput label="BPFI" placeholder={bearingData.bpfi} editable={false} value={bearingData.bpfi} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bpfi = text)} />
 				</View>
 
 				<View style={styles.row}>
-					<FormInput label="BSF" placeholder="" containerStyle={styles.inputContainer} onChangeText={(text) => (bsfRef.current = text)} />
-					<FormInput label="FTF" placeholder="" containerStyle={styles.inputContainer} onChangeText={(text) => (ftfRef.current = text)} />
+					<FormInput label="BSF" placeholder={bearingData.bsf} editable={false} value={bearingData.bsf} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bsf = text)} />
+					<FormInput label="FTF" placeholder={bearingData.ftf} editable={false} value={bearingData.ftf} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.ftf = text)} />
 				</View>
 
 			</KeyboardAwareScrollView>

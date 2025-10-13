@@ -1,4 +1,4 @@
-import { sendRequest, sendRequestDemo } from '../api/api.service';
+import { sendRequest, sendRequestDemo, sendRequestValidate } from '../api/api.service';
 import { endpoints } from '../api/endpoints';
 
 export const assetTree = async () => {
@@ -31,5 +31,15 @@ export const getGraphTrendData = async (payload: any) => {
 export const getSensorConfig = async (payload: any) => {
     const url = `${endpoints.asset.sensorConfig}`;
     console.log('request url = get_device_config/ payload = ', url, payload);
+    return await sendRequestDemo("POST", url, payload);
+};
+
+export const getBearingDetails = async (payload: any) => {
+    const url = `${endpoints.asset.bearingDetails}`;
+    return await sendRequestValidate("POST", url, payload);
+};
+
+export const createEndpoint = async (payload: any) => {
+    const url = `${endpoints.asset.createEndpoint}`;
     return await sendRequestDemo("POST", url, payload);
 };

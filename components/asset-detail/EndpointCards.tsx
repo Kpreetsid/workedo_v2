@@ -9,6 +9,8 @@ export default function EndpointCards() {
 	const selectedSensor = useAssetStore((state) => state.selectedSensor);
 	const setSelectedSensor = useAssetStore((state) => state.setSelectedSensor);
 
+	if (!selectedSensor) setSelectedSensor(endpoints[0]);
+
 	const handleSelect = (ep: AssetEndpoint) => {
 		setSelectedSensor(ep);
 	};

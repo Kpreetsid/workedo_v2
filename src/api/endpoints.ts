@@ -13,6 +13,16 @@ export const endpoints = {
     childAssets: 'master/locations/child-assets',
     assetHealthKPIHistory: 'get_asset_health_kpi_summary/'
   },
+  parts: {
+    createPart: 'master/parts',
+    getParts: 'master/parts'
+  },
+  preventive: {
+    users: 'master/users',
+    create: 'master/schedulers',
+    getFilteredAssets: 'master/assets/filter',
+    getSOPs: 'master/sops',
+  },
   location: {
     tree: 'master/locations/tree',
     topLevelAssets: 'master/assets',
@@ -24,7 +34,9 @@ export const endpoints = {
     asset_endpoints: 'getAllEndPoints/',
     singleAssetHealthHistory: 'single_asset_health_history/',
     graphData: 'get_function_trend_data_v2/',
-    sensorConfig: 'get_device_config/'
+    sensorConfig: 'get_device_config/',
+    bearingDetails: 'get_bearing_details/',
+    createEndpoint: 'endPointApi/'
   },
   workOrders: {
     workOrders: 'work/orders',

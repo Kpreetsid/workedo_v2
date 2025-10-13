@@ -1,109 +1,157 @@
 import Header from "@/components/global/Header";
-import {Pressable, Text, StyleSheet, FlatList, View, Dimensions} from "react-native";
+import { Pressable, Text, StyleSheet, FlatList, View, Dimensions } from "react-native";
 import Fonts from "@/constants/Typography";
-import {LinearGradient} from "expo-linear-gradient";
-import {useState} from "react";
-import {TickIcon} from "@/constants/IconProvider";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useState } from "react";
+import { TickIcon } from "@/constants/IconProvider";
 import ActionButton from "@/components/create-screens/ActionButton";
-import {router} from "expo-router";
-
-const names: string[] = [
-    "Aarav Sharma",
-    "Ishita Verma",
-    "Kabir Malhotra",
-    "Saanvi Iyer",
-    "Rohan Kapoor",
-    "Meera Bansal",
-    "Advait Nair",
-    "Ananya Gupta",
-    "Vivaan Khanna",
-    "Kiara Singh",
-    "Arjun Mehta",
-    "Diya Reddy",
-    "Reyansh Joshi",
-    "Myra Choudhary",
-    "Vihaan Das",
-    "Aanya Menon",
-    "Hrithik Agarwal",
-    "Pari Saxena",
-    "Ishaan Kulkarni",
-    "Riya Deshmukh",
-];
+import { router } from "expo-router";
+import { getUsers } from "@/src/services/preventive.service";
+import { usePreventiveStore } from "@/src/store/usePreventiveStore";
 
 const width = Dimensions.get("window").width;
 export default function SelectUser() {
-    const [selectedUser, setSelectedUser] = useState<string>("");
-    return (
-        <>
-            <Header title="Select User"/>
-            <FlatList
-                data={names}
-                keyExtractor={(_, index) => index.toString()}
-                renderItem={({item}) => (
-                    <Pressable style={styles.userButton} onPress={() => setSelectedUser(item)}>
-                        {selectedUser === item ?
-                            <View style={styles.tickIcon}><TickIcon/></View>
-                            : <LinearGradient colors={["#A259FF", "#C7AAF2"]} style={styles.initials}>
-                                <Text style={styles.initialText}>{item.split(" ").map(part => part[0]).join("").toUpperCase()}</Text>
-                            </LinearGradient>}
-                        <Text style={styles.userText}>{item}</Text>
-                    </Pressable>)}
-                contentContainerStyle={styles.contentContainer}
-            />
-            <ActionButton onPress={() => router.back()} label="Confirm User" buttonStyle={styles.actionButton}/>
-        </>
-    )
+	const [users, setUsers] = useState<any[]>([]);
+	const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
+	const { setFormValue } = usePreventiveStore();
+
+	useEffect(() => {
+		fetchUsers();
+	}, []);
+
+	const fetchUsers = async () => {
+		try {
+			const res = await getUsers();
+			if (res?.status && Array.isArray(res?.data)) {
+				setUsers(res.data);
+			}
+		} catch (err) {
+			console.error("Error fetching users:", err);
+		}
+	};
+
+	// ✅ Toggle selection
+	const toggleUserSelection = (user: any) => {
+		const userId = user._id || user.id;
+
+		const alreadySelected = selectedUsers.some(
+			(u) => (u._id || u.id) === userId
+		);
+
+		if (alreadySelected) {
+			setSelectedUsers(selectedUsers.filter((u) => (u._id || u.id) !== userId));
+		} else {
+			setSelectedUsers([...selectedUsers, user]);
+		}
+	};
+
+
+	// ✅ Confirm selection
+	const handleConfirm = () => {
+		if (selectedUsers.length === 0) return;
+
+		// Save all selected users into preventive store
+		setFormValue("assigned_users", selectedUsers);
+		router.back();
+	};
+
+	return (
+		<>
+			<Header title="Select User" />
+			<FlatList
+				data={users}
+				keyExtractor={(item) =>
+					item.id?.toString() ||
+					item._id?.toString() ||
+					Math.random().toString()
+				}
+				renderItem={({ item }) => {
+					const isSelected = selectedUsers.some(
+						(u) => (u._id || u.id) === (item._id || item.id)
+					);
+					return (
+						<Pressable
+							style={[
+								styles.userButton,
+								isSelected && { borderColor: "#A259FF", backgroundColor: "#F4EDFF" },
+							]}
+							onPress={() => toggleUserSelection(item)}
+						>
+							{isSelected ? (
+								<View style={styles.tickIcon}>
+									<TickIcon />
+								</View>
+							) : (
+								<LinearGradient colors={["#A259FF", "#C7AAF2"]} style={styles.initials}>
+									<Text style={styles.initialText}>
+										{item?.username
+											?.split(" ")
+											.map((part: string) => part[0])
+											.join("")
+											.toUpperCase()}
+									</Text>
+								</LinearGradient>
+							)}
+							<Text style={styles.userText}>{item?.username}</Text>
+						</Pressable>
+					);
+				}}
+				contentContainerStyle={styles.contentContainer}
+			/>
+			<ActionButton onPress={handleConfirm} label="Confirm User" buttonStyle={styles.actionButton} />
+		</>
+	)
 }
 
 const styles = StyleSheet.create({
-    contentContainer: {
-        flexGrow: 1,
-        backgroundColor: "#fff",
-        paddingHorizontal: 25,
-        paddingTop: 15,
-        paddingBottom: 105,
-        gap: 10
-    },
-    userButton: {
-        borderWidth: 1,
-        borderColor: "#E1E8EE66",
-        borderRadius: 7,
-        backgroundColor: "#EFF2FC",
-        height: 50,
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 20,
-        gap: 10
-    },
-    initials: {
-        width: 35,
-        height: 35,
-        borderRadius: 18,
-        alignItems: "center",
-        justifyContent: "center"
-    },
-    tickIcon: {
-        width: 35,
-        height: 35,
-        borderRadius: 18,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#742BDE",
-    },
-    initialText: {
-        color: "#FFFFFF",
-        fontSize: 10,
-        fontFamily: Fonts.semiBold
-    },
-    userText: {
-        fontSize: 10,
-        fontFamily: Fonts.semiBold,
-        color: "#201F23",
-    },
-    actionButton: {
-        position: "absolute",
-        bottom: "2%",
-        alignSelf: "center",
-        width: width - 50
-    }
+	contentContainer: {
+		flexGrow: 1,
+		backgroundColor: "#fff",
+		paddingHorizontal: 25,
+		paddingTop: 15,
+		paddingBottom: 105,
+		gap: 10
+	},
+	userButton: {
+		borderWidth: 1,
+		borderColor: "#E1E8EE66",
+		borderRadius: 7,
+		backgroundColor: "#EFF2FC",
+		height: 50,
+		flexDirection: "row",
+		alignItems: "center",
+		paddingHorizontal: 20,
+		gap: 10
+	},
+	initials: {
+		width: 35,
+		height: 35,
+		borderRadius: 18,
+		alignItems: "center",
+		justifyContent: "center"
+	},
+	tickIcon: {
+		width: 35,
+		height: 35,
+		borderRadius: 18,
+		alignItems: "center",
+		justifyContent: "center",
+		backgroundColor: "#742BDE",
+	},
+	initialText: {
+		color: "#FFFFFF",
+		fontSize: 10,
+		fontFamily: Fonts.semiBold
+	},
+	userText: {
+		fontSize: 10,
+		fontFamily: Fonts.semiBold,
+		color: "#201F23",
+	},
+	actionButton: {
+		position: "absolute",
+		bottom: "2%",
+		alignSelf: "center",
+		width: width - 50
+	}
 })

@@ -11,32 +11,39 @@ import { useAuthStore } from "@/src/store/useAuthStore";
 import { Location } from "@/src/types/location";
 import { useLocationStore } from "@/src/store/useLocationStore";
 import { usePreventiveStore } from "@/src/store/usePreventiveStore";
+import { getFilteredAssets } from "@/src/services/preventive.service";
+import { Asset } from "@/src/types/asset";
 
-interface LocationInterface {
+interface AssetInterface {
 	showHeader?: boolean,
 	selection?: boolean
 }
 
 const width = Dimensions.get("window").width;
-export default function SelectLocation({ showHeader = true, selection = true }: LocationInterface) {
-	const [selectedLocation, setSelectedLocation] = useState<Location>();
+export default function SelectAsset({ showHeader = true, selection = true }: AssetInterface) {
+	const [selectedAsset, setSelectedAsset] = useState<Asset>();
 	const [searchText, setSearchText] = useState("");
 	const user = useAuthStore((state) => state.user);
-	const [locations, setLocations] = useState<Location[]>([]);
+	const [assets, setAssets] = useState<Asset[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
-	const { setFormValue } = usePreventiveStore();
+	const { formData, setFormValue } = usePreventiveStore();
 
 	useEffect(() => {
-		fetchLocations();
+		fetchAssets();
 	}, []);
 
-	const fetchLocations = async () => {
+	const fetchAssets = async () => {
 		try {
-			const res = await locationTree();
+			const payload = {
+				"locationList": [
+					formData.location?.id || formData.location?._id
+				]
+			}
+			const res = await getFilteredAssets(payload);
 
 			if (res.status) {
-				console.log('res locations = ', res?.data);
-				setLocations(res.data as Location[]);
+				console.log('res assets = ', res?.data);
+				setAssets(res?.data);
 			}
 		} catch (err: any) {
 			console.error("Login failed:", err);
@@ -45,38 +52,31 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 
 	const handleRefresh = async () => {
 		setRefreshing(true);
-		await fetchLocations();
+		await fetchAssets();
 		setRefreshing(false);
 	};
 
 	return (
 		<>
-			{showHeader && <Header title="Select Location" />}
+			{showHeader && <Header title="Select Asset" />}
 			<View style={{ flex: 1 }}>
-				<SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText} />
 
 				<FlatList
-					data={locations}
+					data={assets}
 					keyExtractor={(_, index) => index.toString()}
 					renderItem={({ item }) => (
-						<Pressable style={[styles.locationButton, { backgroundColor: selectedLocation === item ? "#FFBF0080" : "#fff", borderColor: selectedLocation === item ? "#FFC1074D" : "#99999933" }]}
+						<Pressable style={[styles.locationButton, { backgroundColor: selectedAsset === item ? "#FFBF0080" : "#fff", borderColor: selectedAsset === item ? "#FFC1074D" : "#99999933" }]}
 							onPress={() => {
 								if (selection) {
-									setSelectedLocation(item);
-									// updating selected location in zustand store while creating part
-									setFormValue("location", item);
+									setSelectedAsset(item);
+									// updating selected asset in zustand store while creating preventive
+									setFormValue("selected_asset", item);
 									router.back();
-								} else {
-									router.push({
-										pathname: "/locationDetail",
-										params: { data: JSON.stringify(item) },
-									});
 								}
 							}}
 						>
-
 							<View style={styles.textRow}>
-								<Text style={styles.locationText}>{item.location_name}</Text>
+								<Text style={styles.locationText}>{item.asset_name}</Text>
 								<ArrowRight color={"#201F23CC"} />
 							</View>
 							<MapIcon />
@@ -86,7 +86,7 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 					onRefresh={handleRefresh}
 				/>
 
-				{selection && <ActionButton onPress={() => router.back()} label="Confirm Location" buttonStyle={styles.actionButton} />}
+				{selection && <ActionButton onPress={() => router.back()} label="Confirm Asset" buttonStyle={styles.actionButton} />}
 			</View>
 		</>
 	)
