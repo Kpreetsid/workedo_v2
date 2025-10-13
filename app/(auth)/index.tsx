@@ -12,6 +12,7 @@ import Field from "@/components/auth-screens/InputField";
 import { loginService, userDetails } from "@/src/services/auth.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { storage } from "@/src/storage/mmkv";
+import { useEffect } from "react";
 
 type LoginFormValues = {
 	username: string;
@@ -33,6 +34,15 @@ export default function Login() {
 
 	const setUser = useAuthStore((state) => state.setUser);
 
+	useEffect(() => {
+		const user = storage.getString('user');
+		if (user) {
+			console.log('user in login = ', JSON.parse(user));
+			setUser(JSON.parse(user));
+			router.replace("/overview");
+		}
+	}, []);
+
 	const onSubmit = async (values: LoginFormValues) => {
 		console.log('login values = ', values);
 		try {
@@ -47,9 +57,9 @@ export default function Login() {
 				return;
 			}
 
-			if(res?.status) {
+			if (res?.status) {
 				storage.set('token', res?.data?.token);
-				storage.set('user', JSON.stringify(res?.data));
+				storage.set('user', JSON.stringify(res?.data?.userDetails));
 				setUser(res?.data?.userDetails);
 				ToastAndroid.show("Login successful!", ToastAndroid.SHORT);
 				router.replace("/overview");

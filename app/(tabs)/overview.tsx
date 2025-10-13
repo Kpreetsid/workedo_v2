@@ -7,7 +7,7 @@ import AssetHealth from "@/components/overview-screen/AssetHealth";
 import AssetHealthStatus from "@/components/overview-screen/AssetHealthStatus";
 import { router } from "expo-router";
 import CreateAlertBox from "@/components/overview-screen/CreateAlertBox";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Overview() {
 	const [createAlertBoxVisible, setCreateAlertBoxVisible] = useState(false);
@@ -17,6 +17,11 @@ export default function Overview() {
 		option === "preventive" && router.push("/createPreventive");
 		setCreateAlertBoxVisible(false);
 	}
+
+	useEffect(() => {
+		console.log('createAlertBoxVisible = ', createAlertBoxVisible)
+	}, [createAlertBoxVisible])
+
 	return (
 		<>
 			<OverviewHeader />
