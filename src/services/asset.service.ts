@@ -26,4 +26,10 @@ export const getSingleAssetHealthHistory = async (assetId: string) => {
 export const getGraphTrendData = async (payload: any) => {
     const url = `${endpoints.asset.graphData}`;
     return await sendRequestDemo("POST", url, payload);
-  };
+};
+
+export const getSensorConfig = async (payload: any) => {
+    const url = `${endpoints.asset.sensorConfig}`;
+    console.log('request url = get_device_config/ payload = ', url, payload);
+    return await sendRequestDemo("POST", url, payload);
+};

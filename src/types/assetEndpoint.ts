@@ -1,4 +1,6 @@
 export interface AssetEndpoint {
+  id?: string;
+  online?: string;
   composite_id: string;
   point_name: string;
   mount_location: string;
