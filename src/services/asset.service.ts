@@ -48,3 +48,8 @@ export const updateEndpoint = async (payload: any) => {
     const url = `${endpoints.asset.updateEndpoint}`;
     return await sendRequestDemo("PATCH", url, payload);
 };
+
+export const deleteEndpoint = async (id: string) => {
+    const url = `${endpoints.asset.deleteEndpoint}/${id}`;
+    return await sendRequestDemo("DELETE", url);
+};

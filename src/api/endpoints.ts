@@ -1,3 +1,5 @@
+import { deleteEndpoint } from "../services/asset.service";
+
 // src/api/endpoints.ts
 export const endpoints = {
   baseURL: 'https://new.presageinsights.ai/cmms_express/',
@@ -37,7 +39,8 @@ export const endpoints = {
     sensorConfig: 'get_device_config/',
     bearingDetails: 'get_bearing_details/',
     createEndpoint: 'endPointApi/',
-    updateEndpoint: 'update_endpoint/'
+    updateEndpoint: 'update_endpoint/',
+    deleteEndpoint: 'deleteEndPointApi/'
   },
   workOrders: {
     workOrders: 'work/orders',

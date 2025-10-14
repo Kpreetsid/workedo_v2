@@ -1,11 +1,11 @@
-import { Pressable, ScrollView, Text, TouchableOpacity, View, StyleSheet, RefreshControl, FlatList } from "react-native";
+import { Pressable, ScrollView, Text, TouchableOpacity, View, StyleSheet, RefreshControl, FlatList, ToastAndroid } from "react-native";
 import { Fontisto, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Fonts from "../../constants/Typography";
 import { AssetEndpoint } from "@/src/types/assetEndpoint";
 import { useAssetStore } from "@/src/store/useAssetStore";
 import { useEffect, useState } from "react";
 import { Asset } from "@/src/types/asset";
-import { getAllEndpoints } from "@/src/services/asset.service";
+import { deleteEndpoint, getAllEndpoints } from "@/src/services/asset.service";
 import Popover from "react-native-popover-view";
 import { useRouter } from "expo-router";
 
@@ -112,8 +112,17 @@ export default function EndpointCards({ asset_data }: Props) {
 													<Pressable
 														style={styles.popoverItem}
 														key={index}
-														onPress={() => {
+														onPress={async () => {
 															setOpenPopoverId(null);
+															
+															if (index === 2) {
+																const re = await deleteEndpoint(ep?.id?.toString() || "")
+																console.log('re = ', re);
+																if (re?.message === "End Point deleted successfully.") {
+																	ToastAndroid.show("Endpoint deleted successfully", ToastAndroid.SHORT);
+																	fetchEndpoints();
+																}
+															}
 
 															if (index === 1) {
 																setSelectedEndpointToEdit(ep);
