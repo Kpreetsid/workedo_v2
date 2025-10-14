@@ -1,148 +1,395 @@
 import Header from "@/components/global/Header";
 import FormInput from "@/components/create-screens/FormInput";
-import {Pressable, StyleSheet, Text, View} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import AssignInput from "@/components/create-screens/AssignInput";
-import {router} from "expo-router";
 import Fonts from "@/constants/Typography";
-import {DropDownIcon} from "@/constants/IconProvider";
+import { DropDownIcon } from "@/constants/IconProvider";
 import ActionButton from "@/components/create-screens/ActionButton";
 import AssignInputContainer from "@/components/new-work-order/AssignInputContainer";
+import { useWorkOrderStore, WorkOrderFormData } from "@/src/store/useWorkOrderStore";
+import DropDownInput from "@/components/create-screens/DropDownInput";
+import { Ionicons } from "@expo/vector-icons";
+import { createWorkOrder } from "@/src/services/work-request.service";
+import { useEffect, useRef, useState } from "react";
+import { getSOPs } from "@/src/services/preventive.service";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import DatePicker from "@/components/global/DatePicker";
+import moment from "moment";
+import { AssignSection } from "@/components/new-work-order/AssignSection";
+import { useRouter } from "expo-router";
 
 export default function NewWorkOrder() {
-    return (
-        <>
-            <Header title="New Work Order"/>
+	const router = useRouter();
+	const { workForm, setWorkForm } = useWorkOrderStore();
+	const [forms, setForms] = useState<any>([]);
+	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+	const [activeDateField, setActiveDateField] = useState<"start_date" | "end_date" | null>(null);
 
-            <View style={styles.container}>
-                <View style={styles.subContainer}>
-                    <FormInput label="Title" placeholder="Enter Title" labelStyle={styles.label} inputStyle={styles.value}
-                               inputContainer={styles.inputContainer}/>
+	useEffect(() => {
+		console.log("Work form title = ", workForm.title);
+	}, [workForm.title]);
 
-                    <FormInput label="Message" placeholder="Enter a message" labelStyle={styles.label} inputStyle={styles.messageInput}
-                               inputContainer={styles.inputContainer}/>
-                </View>
+	useEffect(() => {
+		const fetchForms = async () => {
+			try {
+				const res = await getSOPs();
+				if (res?.status) {
+					setForms(res?.data);
+				}
+			} catch (error) {
+				console.error("Error fetching forms:", error);
+			}
+		};
+
+		fetchForms();
+	}, []);
+
+	const handleRemovePart = (partId: string) => {
+		const updatedParts = workForm.parts.filter(
+			(p: any) => p.id !== partId && p._id !== partId
+		);
+		setWorkForm("parts", updatedParts);
+	};
+
+	const handleSubmit = async () => {
+		const { workForm } = useWorkOrderStore.getState();
+		console.log("Work Order Form =", workForm);
+
+		// setWorkForm("title", titleRef.current);
+		// setWorkForm("message", messageRef.current);
+
+		// ✅ Basic validation
+		const required: (keyof typeof workForm)[] = [
+			"title",
+			"message",
+			"assigned_users",
+			"location",
+			"selected_asset",
+			"start_date",
+			"end_date",
+			"parts",
+			"nature_of_work",
+			"priority",
+			"completion_days",
+		];
+
+		for (const field of required) {
+			if (!workForm[field]) {
+				const label = (field as string)
+					.replace(/_/g, " ")
+					.replace(/\b\w/g, (c) => c.toUpperCase());
+				ToastAndroid.show(`${label} is required`, ToastAndroid.SHORT);
+				return;
+			}
+		}
+
+		// ✅ Build final payload matching your structure
+		const payload = {
+			createdFrom: "Work Order",
+			description: workForm.message,
+			end_date: workForm.end_date || new Date().toISOString().split("T")[0],
+			estimated_time: workForm.completion_days, // using completion_days for hours/days input
+			files: workForm.files || [],
+			parts: workForm.parts?.map((p: any) => ({
+				part_id: p.part_id || p._id,
+				part_name: p.part_name,
+				part_type: p.part_type,
+				estimatedQuantity: p.quantity_needed || 1,
+			})) || [],
+			priority: workForm.priority,
+			sop_form_id: null,
+			// sop_form_id: workForm.sop_form_id || null,
+			start_date: workForm.start_date || new Date().toISOString().split("T")[0],
+			status: "Open",
+			title: workForm.title,
+			type: workForm.nature_of_work,
+			userIdList: workForm.assigned_users?.map((u: any) => u.id) || [],
+			wo_asset_id: workForm.selected_asset?.id || "",
+			wo_location_id: workForm.location?.id || "",
+		};
+
+		console.log("📦 Final Work Order Payload:", payload);
+
+		try {
+			const res = await createWorkOrder(payload);
+			console.log("✅ Response:", res);
+			if (res?.status) {
+				ToastAndroid.show("Work Order created successfully!", ToastAndroid.SHORT);
+				useWorkOrderStore.getState().resetForm();
+				router.back();
+			}
+		} catch (error) {
+			console.error("❌ Error creating work order:", error);
+			ToastAndroid.show("Failed to create work order!", ToastAndroid.SHORT);
+		}
+	};
 
 
-                <AssignInputContainer/>
+	return (
+		<>
+			<Header title="New Work Order" />
 
-                <View style={styles.subContainer}>
-                    <View style={styles.dropdownsRow}>
-                        <View style={styles.dropdownContainer}>
-                            <Text style={styles.dropdownTitle}>Problem Type</Text>
-                            <Pressable style={styles.dropdown}>
-                                <Text style={styles.dropdownItemText}>General</Text>
-                                <DropDownIcon/>
-                            </Pressable>
-                        </View>
-                        <View style={styles.dropdownContainer}>
-                            <Text style={styles.dropdownTitle}>Priority</Text>
-                            <Pressable style={styles.dropdown}>
-                                <Text style={styles.dropdownItemText}>None</Text>
-                                <DropDownIcon/>
-                            </Pressable>
-                        </View>
+			<KeyboardAwareScrollView bottomOffset={30}>
+				<ScrollView style={styles.container}>
+					<View style={styles.subContainer}>
+						<FormInput
+							label="Title"
+							placeholder="Enter Title"
+							value={workForm.title}
+							labelStyle={styles.label}
+							inputStyle={styles.value}
+							inputContainer={styles.inputContainer}
+							onChangeText={(text) => setWorkForm("title", text)}
+						/>
 
-                        <View style={styles.dropdownContainer}>
-                            <Text style={styles.dropdownTitle} numberOfLines={1} adjustsFontSizeToFit>Estimation Duration</Text>
-                            <Pressable style={styles.dropdown}>
-                                <Text style={styles.dropdownItemText}>Hours</Text>
-                                <DropDownIcon/>
-                            </Pressable>
-                        </View>
-                    </View>
-                </View>
+						<FormInput
+							label="Message"
+							placeholder="Enter a message"
+							value={workForm.message}
+							labelStyle={styles.label}
+							inputStyle={styles.messageInput}
+							inputContainer={styles.inputContainer}
+							onChangeText={(text) => setWorkForm("message", text)}
+						/>
 
-                <View style={{marginHorizontal: -15}}>
-                    <AssignInput label="Add Parts" onPress={() => router.push("/updateParts")}/>
-                </View>
+					</View>
 
-                <Pressable style={styles.uploadBtn}>
-                    <Text style={styles.uploadBtnText}>Upload or Capture Photos</Text>
-                </Pressable>
+					<AssignSection />
 
-                <ActionButton onPress={() => console.info("Create Work Order Request Pressed")} label="Create Work Request" buttonStyle={styles.submitBtn}/>
-            </View>
-        </>
-    )
+					{/* <AssignInputContainer /> */}
+
+					<View style={styles.row}>
+
+						<DropDownInput
+							label="Problem Type"
+							value={workForm.nature_of_work}
+							options={["Preventive", "Electrical", "Break Down", "Inspection", "Corrective", "Safety", "Upgrade", "Meter Reading", "Mechanical", "Other"]}
+							containerStyle={[styles.inputContainer, { flex: 1 }]}
+							onSelect={(val) => {
+								setWorkForm("nature_of_work", val);
+							}}
+						/>
+
+						<DropDownInput
+							label="Priority"
+							value={workForm.priority}
+							options={["None", "Low", "Medium", "High"]}
+							containerStyle={[styles.inputContainer, { flex: 1 }]}
+							onSelect={(val) => {
+								setWorkForm("priority", val);
+							}}
+						/>
+
+					</View>
+
+					<FormInput
+						label="Estimation Duration"
+						labelStyle={styles.label}
+						placeholder="Estimation Hours"
+						containerStyle={styles.inputContainer}
+						value={workForm.completion_days}
+						onChangeText={(text) => setWorkForm("completion_days", text)}
+					/>
+
+					{/* <View style={styles.row}>
+
+						<DropDownInput
+							label="Select SOP Form"
+							value={workForm.sop_form_id}
+							options={forms?.map((form: any) => form.name)}
+							containerStyle={styles.inputContainer}
+							onSelect={(val) => { setWorkForm("sop_form_id", val); }}
+						/>
+
+						<FormInput
+							label="Estimation Duration"
+							labelStyle={styles.label}
+							placeholder="Estimation Hours"
+							containerStyle={styles.inputContainer}
+							value={workForm.completion_days}
+							onChangeText={(text) => setWorkForm("completion_days", text)}
+						/>
+
+					</View> */}
+
+
+					{/* <View style={styles.subContainer}>
+					<View style={styles.dropdownsRow}>
+						<View style={styles.dropdownContainer}>
+							<Text style={styles.dropdownTitle}>Problem Type</Text>
+							<Pressable style={styles.dropdown}>
+								<Text style={styles.dropdownItemText}>General</Text>
+								<DropDownIcon />
+							</Pressable>
+						</View>
+						<View style={styles.dropdownContainer}>
+							<Text style={styles.dropdownTitle}>Priority</Text>
+							<Pressable style={styles.dropdown}>
+								<Text style={styles.dropdownItemText}>None</Text>
+								<DropDownIcon />
+							</Pressable>
+						</View>
+
+						<View style={styles.dropdownContainer}>
+							<Text style={styles.dropdownTitle} numberOfLines={1} adjustsFontSizeToFit>Estimation Duration</Text>
+							<Pressable style={styles.dropdown}>
+								<Text style={styles.dropdownItemText}>Hours</Text>
+								<DropDownIcon />
+							</Pressable>
+						</View>
+					</View>
+				</View> */}
+
+					<View style={{ marginHorizontal: 0 }}>
+						<AssignInput label="Add Parts" comingFrom="newWorkOrder" onPress={() => router.push({
+							pathname: "/updateParts",
+							params: { comingFrom: "newWorkOrder" }
+						})} />
+					</View>
+
+					<View style={styles.partsContainer}>
+						{workForm.parts.length > 0 &&
+							workForm.parts.map((part: any, index: number) => (
+								<View style={styles.partItem} key={index}>
+									<Text style={styles.partText}>{part?.part_name}</Text>
+									<Text style={styles.partText}>({part?.estimatedQuantity})</Text>
+									<Pressable onPress={() => handleRemovePart(part.id || part._id)}>
+										<Ionicons name="close" size={16} color="#000" />
+									</Pressable>
+								</View>
+							))}
+					</View>
+
+					<DatePicker
+						visible={isDatePickerVisible}
+						onClose={() => setIsDatePickerVisible(false)}
+						onDateSelect={(date) => {
+							const formattedDate = moment(date).format("YYYY-MM-DD");
+
+							// ✅ Save to correct field in Zustand store
+							if (activeDateField) {
+								setWorkForm(activeDateField, formattedDate);
+							}
+
+							setIsDatePickerVisible(false);
+							setActiveDateField(null);
+						}}
+					/>
+
+					<Pressable style={styles.uploadBtn}>
+						<Text style={styles.uploadBtnText}>Upload or Capture Photos</Text>
+					</Pressable>
+
+					<ActionButton onPress={handleSubmit} label="Create Work Order" buttonStyle={styles.submitBtn} />
+				</ScrollView>
+			</KeyboardAwareScrollView>
+		</>
+	)
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#fff",
-        margin: 20
-    },
-    subContainer: {
-        backgroundColor: "#f9f9ff",
-        margin: 10
-    },
-    label: {
-        fontSize: 12,
-        fontFamily: Fonts.semiBold,
-        color: "#201f23",
-    },
-    value: {
-        fontSize: 10,
-        fontFamily: Fonts.regular,
-        color: "#201f23",
-        padding: 6
-    },
-    inputContainer: {
-        borderRadius: 2,
-        padding: 2
-    },
-    messageInput: {
-        height: 80,
-        textAlignVertical: "top"
-    },
-    dropdownsRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        padding: 10,
-        borderRadius: 8
-    },
-    dropdownContainer: {
-        gap: 3,
-        padding: 5,
-        flexShrink: 1,
-    },
-    dropdownTitle: {
-        fontSize: 10,
-        fontFamily: Fonts.semiBold,
-        color: "#201f23",
-        flex: 1
-    },
-    dropdown: {
-        flexDirection: "row",
-        backgroundColor: "#fff",
-        borderRadius: 4,
-        paddingVertical: 2,
-        paddingHorizontal: 8,
-        alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
-    },
-    dropdownItemText: {
-        fontFamily: Fonts.regular,
-        fontSize: 10,
-    },
-    uploadBtn: {
-        backgroundColor: "#742BDE10",
-        padding: 10,
-        marginHorizontal: 10,
-        marginVertical: 10,
-        alignItems: "center",
-        borderWidth: 0.5,
-        borderColor: "#742BDE",
-        borderStyle: "dashed",
-        borderRadius: 4,
-    },
-    uploadBtnText: {
-        fontFamily: Fonts.regular,
-        fontSize: 10,
-        color: "#742BDE"
-    },
-    submitBtn: {
-        marginHorizontal: 10
-    }
+	container: {
+		flex: 1,
+		backgroundColor: "#f9f9ff",
+	},
+	subContainer: {
+		backgroundColor: "#f9f9ff",
+	},
+	label: {
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
+		color: "#201f23",
+	},
+	value: {
+		fontSize: 12,
+		fontFamily: Fonts.regular,
+		color: "#201f23",
+		padding: 6
+	},
+	row: {
+		flexDirection: "row",
+	},
+	inputContainer: {
+		borderRadius: 2,
+		padding: 2
+	},
+	messageInput: {
+		height: 80,
+		textAlignVertical: "top"
+	},
+	dropdownsRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		padding: 10,
+		paddingHorizontal: 20,
+		borderRadius: 8
+	},
+	dropdownContainer: {
+		gap: 3,
+		padding: 5,
+		flexShrink: 1,
+	},
+	dropdownTitle: {
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
+		color: "#201f23",
+		flex: 1
+	},
+	dropdown: {
+		flexDirection: "row",
+		backgroundColor: "#fff",
+		borderRadius: 4,
+		paddingVertical: 2,
+		paddingHorizontal: 8,
+		alignItems: "center",
+		justifyContent: "space-between",
+		width: "100%",
+	},
+	dropdownItemText: {
+		fontFamily: Fonts.regular,
+		fontSize: 12,
+	},
+	uploadBtn: {
+		backgroundColor: "#742BDE10",
+		padding: 20,
+		marginHorizontal: 25,
+		marginVertical: 10,
+		alignItems: "center",
+		borderWidth: 0.5,
+		borderColor: "#742BDE",
+		borderStyle: "dashed",
+		borderRadius: 4,
+	},
+	uploadBtnText: {
+		fontFamily: Fonts.regular,
+		fontSize: 12,
+		color: "#742BDE"
+	},
+	submitBtn: {
+		marginHorizontal: 20
+	},
+	partsContainer: {
+		paddingHorizontal: 25,
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: 10,
+	},
+	partItem: {
+		paddingHorizontal: 10,
+		backgroundColor: "#fff",
+		borderColor: "#999",
+		borderWidth: 0.2,
+		justifyContent: "center",
+		padding: 6,
+		gap: 5,
+		borderRadius: 5,
+		display: "flex",
+		alignItems: "center",
+		flexDirection: "row",
+	},
+	partText: {
+		fontSize: 11,
+		fontFamily: Fonts.regular,
+		color: "#000",
+	},
 })

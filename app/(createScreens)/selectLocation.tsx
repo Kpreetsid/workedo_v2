@@ -1,7 +1,7 @@
 import Header from "@/components/global/Header";
 import { Dimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import ActionButton from "@/components/create-screens/ActionButton";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import Fonts from "@/constants/Typography";
 import { ArrowRight, MapIcon } from "@/constants/IconProvider";
 import { useEffect, useState } from "react";
@@ -11,6 +11,8 @@ import { useAuthStore } from "@/src/store/useAuthStore";
 import { Location } from "@/src/types/location";
 import { useLocationStore } from "@/src/store/useLocationStore";
 import { usePreventiveStore } from "@/src/store/usePreventiveStore";
+import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
+import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 
 interface LocationInterface {
 	showHeader?: boolean,
@@ -20,12 +22,17 @@ interface LocationInterface {
 const width = Dimensions.get("window").width;
 export default function SelectLocation({ showHeader = true, selection = true }: LocationInterface) {
 	console.log('rendering select location');
+	const params: any = useLocalSearchParams();
+	const comingFrom = params?.comingFrom;
+
 	const [selectedLocation, setSelectedLocation] = useState<Location>();
 	const [searchText, setSearchText] = useState("");
 	const user = useAuthStore((state) => state.user);
 	const [locations, setLocations] = useState<Location[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
 	const { setFormValue } = usePreventiveStore();
+	const { setWorkForm } = useWorkOrderStore();
+	const { setWorkRequestForm } = useWorkRequestStore();
 
 	useEffect(() => {
 		fetchLocations();
@@ -65,7 +72,13 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 								if (selection) {
 									setSelectedLocation(item);
 									// updating selected location in zustand store while creating part
-									setFormValue("location", item);
+									if (comingFrom === "newWorkOrder") {
+										setWorkForm("location", item);
+									} else if (comingFrom === "newWorkRequest") {
+										setWorkRequestForm("location", item);
+									} else {
+										setFormValue("location", item);
+									}
 									router.back();
 								} else {
 									router.push({

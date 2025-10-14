@@ -16,7 +16,7 @@ const CreateFAB: FC<FABProps> = ({label, icon = <AddNewGatewayIcon/>, onPress, b
     const insets = useSafeAreaInsets();
 
     return (
-        <Pressable onPress={onPress} style={[styles.fab, {bottom: insets.bottom + 20, backgroundColor}, style,]}>
+        <Pressable onPress={onPress} style={[styles.fab, label === "Create Work Order" ? {width: 200} : null, {bottom: insets.bottom + 20, backgroundColor}, style,]}>
             {icon}
             {label && <Text style={styles.label}>{label}</Text>}
         </Pressable>

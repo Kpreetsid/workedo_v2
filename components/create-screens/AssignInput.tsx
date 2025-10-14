@@ -4,9 +4,12 @@ import { ArrowRight } from "@/constants/IconProvider";
 import { FC } from "react";
 import { useLocationStore } from "@/src/store/useLocationStore";
 import { usePreventiveStore } from "@/src/store/usePreventiveStore";
+import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
+import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 
 interface AssignInputProps {
 	label: string;
+	comingFrom?: string;
 	required?: boolean;
 	onPress?: (event: GestureResponderEvent) => void;
 	containerStyle?: ViewStyle;
@@ -15,11 +18,26 @@ interface AssignInputProps {
 	buttonTextStyle?: TextStyle;
 }
 
-const AssignInput: FC<AssignInputProps> = ({ label, required = true, onPress, containerStyle, labelStyle, buttonStyle, buttonTextStyle }) => {
+const AssignInput: FC<AssignInputProps> = ({ label, comingFrom, required = true, onPress, containerStyle, labelStyle, buttonStyle, buttonTextStyle }) => {
+
+	console.log('coming from in assign input = ', label, comingFrom);
+
 	const selectedPartLocation = usePreventiveStore((state) => state.formData.location);
 	const assignedUsers = usePreventiveStore((state) => state.formData.assigned_users);
 	const startDate = usePreventiveStore((state) => state.formData.start_date);
 	const selectedAsset = usePreventiveStore((state) => state.formData.selected_asset);
+
+
+	// newWorkOrder
+	const workOrderLocation = useWorkOrderStore((state) => state.workForm.location);
+	const workOrderUsers = useWorkOrderStore((state) => state.workForm.assigned_users);
+	const workOrderStartDate = useWorkOrderStore((state) => state.workForm.start_date);
+	const workOrderEndDate = useWorkOrderStore((state) => state.workForm.end_date);
+	const workOrderAsset = useWorkOrderStore((state) => state.workForm.selected_asset);
+
+	// newWorkRequest
+	const workRequestLocation = useWorkRequestStore((state) => state.workRequestForm.location);
+	const workRequestAsset = useWorkRequestStore((state) => state.workRequestForm.selected_asset);
 
 	return (
 		<View style={[styles.container, containerStyle]}>
@@ -29,13 +47,27 @@ const AssignInput: FC<AssignInputProps> = ({ label, required = true, onPress, co
 					{required && <Text style={styles.asterisk}>*</Text>}
 				</View>
 
-				{label === "Location" && selectedPartLocation && (
+				{label === "Location" && comingFrom !== "newWorkOrder" && selectedPartLocation && (
 					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
 						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>{selectedPartLocation?.location_name}</Text>
 					</View>
 				)}
 
-				{label === "Assign User" && assignedUsers?.length > 0 && (
+
+				{label === "Location" && comingFrom === "newWorkOrder" && workOrderLocation && (
+					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>{workOrderLocation?.location_name}</Text>
+					</View>
+				)}
+
+				
+				{label === "Location" && comingFrom === "newWorkRequest" && workOrderLocation && (
+					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>{workOrderLocation?.location_name}</Text>
+					</View>
+				)}
+
+				{label === "Assign User" && comingFrom !== "newWorkOrder" && assignedUsers?.length > 0 && (
 					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
 						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>
 							{assignedUsers?.map((u: any) => u.username).join(", ")}
@@ -43,15 +75,48 @@ const AssignInput: FC<AssignInputProps> = ({ label, required = true, onPress, co
 					</View>
 				)}
 
-				{label === "Start Date" && startDate && (
+				{label === "Assign User" && comingFrom === "newWorkOrder" && workOrderUsers?.length > 0 && (
+					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>
+							{workOrderUsers?.map((u: any) => u.username).join(", ")}
+						</Text>
+					</View>
+				)}
+
+				{label === "Start Date" && comingFrom !== "newWorkOrder" && startDate && (
 					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
 						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>{startDate}</Text>
 					</View>
 				)}
 
-				{label === "Asset" && selectedAsset && (
+				{label === "Start Date" && comingFrom === "newWorkOrder" && workOrderStartDate && (
+					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>{workOrderStartDate}</Text>
+					</View>
+				)}
+
+				{label === "Asset" && comingFrom !== "newWorkOrder" && selectedAsset && (
 					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
 						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>{selectedAsset?.asset_name}</Text>
+					</View>
+				)}
+
+				{label === "Asset" && comingFrom === "newWorkOrder" && workOrderAsset && (
+					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>{workOrderAsset?.asset_name}</Text>
+					</View>
+				)}
+
+
+				{label === "Asset" && comingFrom === "newWorkRequest" && workRequestAsset && (
+					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>{workRequestAsset?.asset_name}</Text>
+					</View>
+				)}
+
+				{label === "End Date" && comingFrom === "newWorkOrder" && workOrderEndDate && (
+					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>{workOrderEndDate}</Text>
 					</View>
 				)}
 			</View>

@@ -1,167 +1,170 @@
 import Header from "@/components/global/Header";
-import {Pressable, StyleSheet, Text, View} from "react-native";
-import {WorkOrderCardLogo} from "@/constants/IconProvider";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { WorkOrderCardLogo } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
-import {useLocalSearchParams} from "expo-router";
-import {Ionicons, MaterialIcons} from "@expo/vector-icons";
-import {useState} from "react";
+import { useLocalSearchParams } from "expo-router";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useState } from "react";
 import RejectModal from "@/components/request-detail/RejectModal.tsx";
+import moment from "moment";
 
 export default function WorkRequestDetail() {
-    const {stringifyItem} = useLocalSearchParams();
-    let item;
-    if (typeof stringifyItem === "string") item = JSON.parse(stringifyItem);
-    const [rejectVisible, setRejectVisible] = useState(false);
+	const params: any = useLocalSearchParams();
+	const item = JSON.parse(params?.data);
+	console.log('data on request details = ', item);
 
-    return (
-        <>
-            <Header title="Work Request Detail"/>
-            <View style={styles.container}>
-                <View style={styles.card}>
-                    <View style={styles.textContainer}>
-                        <Text style={styles.title}>{item.title}</Text>
-                        <Text style={styles.subText}>Requested By : {item.requestedBy}</Text>
-                        <Text style={styles.subText}>Created On : {item.createdOn}</Text>
-                    </View>
+	const [rejectVisible, setRejectVisible] = useState(false);
 
-                    <View style={styles.rightContainer}>
-                        <WorkOrderCardLogo/>
-                        <View style={styles.tagButton}>
-                            <Text style={styles.tagText}>{item.status}</Text>
-                        </View>
-                    </View>
-                </View>
+	return (
+		<>
+			<Header title="Work Request Detail" />
+			<View style={styles.container}>
+				<View style={styles.card}>
+					<View style={styles.textContainer}>
+						<Text style={styles.title}>{item?.title}</Text>
+						<Text style={styles.subText}>Requested By : {item?.createdBy?.firstName + " " + item?.createdBy?.lastName}</Text>
+						<Text style={styles.subText}>Created On : {moment(item?.createdAt).format("MMM D, YYYY")}</Text>
+					</View>
 
-                <View style={styles.card}>
-                    <Text style={styles.title}>Status</Text>
-                    <Text style={styles.subText}>Created</Text>
-                </View>
+					<View style={styles.rightContainer}>
+						<WorkOrderCardLogo />
+						<View style={styles.tagButton}>
+							<Text style={styles.tagText}>{item?.status}</Text>
+						</View>
+					</View>
+				</View>
 
-                <View style={styles.card}>
-                    <Text style={styles.title}>Location</Text>
-                    <Text style={styles.subText}>report testing</Text>
-                </View>
+				<View style={styles.card}>
+					<Text style={styles.title}>Status</Text>
+					<Text style={styles.subText}>{item?.status}</Text>
+				</View>
 
-                <View style={styles.card}>
-                    <Text style={styles.title}>Assets</Text>
-                    <Text style={styles.subText}>portable test 8g</Text>
-                </View>
+				<View style={styles.card}>
+					<Text style={styles.title}>Location</Text>
+					<Text style={styles.subText}>{item?.location_id?.location_name}</Text>
+				</View>
 
-                <View style={styles.descBox}>
-                    <Text style={styles.desText}>Description</Text>
-                </View>
+				<View style={styles.card}>
+					<Text style={styles.title}>Assets</Text>
+					<Text style={styles.subText}>{item?.asset_id?.asset_name}</Text>
+				</View>
 
-                <View style={styles.actionButtons}>
-                    <Pressable style={[styles.actionBtn, {backgroundColor: "#FF0400"}]} onPress={() => setRejectVisible(true)}>
-                        <MaterialIcons name="cancel" size={15} color="#fff"/>
-                        <Text style={styles.actionBtnTxt}>Reject</Text>
-                    </Pressable>
+				<View style={styles.descBox}>
+					<Text style={styles.desText}>Description</Text>
+					<Text style={styles.desText}>{item?.description}</Text>
+				</View>
 
-                    <Pressable style={[styles.actionBtn, {backgroundColor: "#742bde"}]}>
-                        <Ionicons name="checkmark-circle" size={15} color="#fff"/>
-                        <Text style={styles.actionBtnTxt}>Accept</Text>
-                    </Pressable>
-                </View>
-            </View>
+				<View style={styles.actionButtons}>
+					<Pressable style={[styles.actionBtn, { backgroundColor: "#FF0400" }]} onPress={() => setRejectVisible(true)}>
+						<MaterialIcons name="cancel" size={15} color="#fff" />
+						<Text style={styles.actionBtnTxt}>Reject</Text>
+					</Pressable>
 
-            <RejectModal visible={rejectVisible} onCancel={() => setRejectVisible(false)}
-                         onSubmit={(reason) => {
-                             console.log("Rejected with reason:", reason);
-                             setRejectVisible(false);
-                         }}/>
-        </>
-    )
+					<Pressable style={[styles.actionBtn, { backgroundColor: "#742bde" }]}>
+						<Ionicons name="checkmark-circle" size={15} color="#fff" />
+						<Text style={styles.actionBtnTxt}>Accept</Text>
+					</Pressable>
+				</View>
+			</View>
+
+			<RejectModal visible={rejectVisible} onCancel={() => setRejectVisible(false)}
+				onSubmit={(reason) => {
+					console.log("Rejected with reason:", reason);
+					setRejectVisible(false);
+				}} />
+		</>
+	)
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#fff",
-        padding: 20
-    },
-    card: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        backgroundColor: "#f9f9ff",
-        padding: 12,
-        borderRadius: 5,
-        marginVertical: 6,
-        shadowColor: "#000",
-        shadowOpacity: 0.06,
-        shadowOffset: {width: 0, height: 2},
-        shadowRadius: 3,
-        elevation: 2,
-    },
-    textContainer: {
-        flex: 1,
-    },
-    title: {
-        fontSize: 11,
-        fontFamily: Fonts.semiBold,
-        color: "#201F23",
-        marginBottom: 2,
-    },
-    subText: {
-        fontSize: 9,
-        fontFamily: Fonts.regular,
-        color: "#000000A0",
-        marginVertical: 1,
-    },
-    rightContainer: {
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 10
-    },
-    tagButton: {
-        backgroundColor: "#742BDE",
-        paddingVertical: 5,
-        paddingHorizontal: 10,
-        borderRadius: 6,
-    },
-    tagText: {
-        color: "#fff",
-        fontSize: 9,
-        fontFamily: Fonts.regular,
-    },
-    descBox: {
-        backgroundColor: "#f9f9ff",
-        paddingHorizontal: 10,
-        paddingBottom: 50,
-        paddingTop: 5,
-        borderRadius: 5,
-        marginVertical: 6,
-        shadowColor: "#000",
-        shadowOpacity: 0.06,
-        shadowOffset: {width: 0, height: 2},
-        shadowRadius: 3,
-        elevation: 2,
-    },
-    desText: {
-        fontSize: 11,
-        fontFamily: Fonts.light,
-        color: "#000",
-    },
-    actionButtons: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginTop: 30
-    },
-    actionBtn: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 5,
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        width: "47%",
-        borderRadius: 5
-    },
-    actionBtnTxt: {
-        fontFamily: Fonts.regular,
-        fontSize: 10,
-        color: "#fff",
-        lineHeight: 16
-    }
+	container: {
+		flex: 1,
+		backgroundColor: "#fff",
+		padding: 20
+	},
+	card: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		backgroundColor: "#f9f9ff",
+		padding: 12,
+		borderRadius: 5,
+		marginVertical: 6,
+		shadowColor: "#000",
+		shadowOpacity: 0.06,
+		shadowOffset: { width: 0, height: 2 },
+		shadowRadius: 3,
+		elevation: 2,
+	},
+	textContainer: {
+		flex: 1,
+	},
+	title: {
+		fontSize: 11,
+		fontFamily: Fonts.semiBold,
+		color: "#201F23",
+		marginBottom: 2,
+	},
+	subText: {
+		fontSize: 9,
+		fontFamily: Fonts.regular,
+		color: "#000000A0",
+		marginVertical: 1,
+	},
+	rightContainer: {
+		alignItems: "center",
+		justifyContent: "center",
+		gap: 10
+	},
+	tagButton: {
+		backgroundColor: "#742BDE",
+		paddingVertical: 5,
+		paddingHorizontal: 10,
+		borderRadius: 6,
+	},
+	tagText: {
+		color: "#fff",
+		fontSize: 9,
+		fontFamily: Fonts.regular,
+	},
+	descBox: {
+		backgroundColor: "#f9f9ff",
+		paddingHorizontal: 10,
+		paddingBottom: 50,
+		paddingTop: 5,
+		borderRadius: 5,
+		marginVertical: 6,
+		shadowColor: "#000",
+		shadowOpacity: 0.06,
+		shadowOffset: { width: 0, height: 2 },
+		shadowRadius: 3,
+		elevation: 2,
+	},
+	desText: {
+		fontSize: 11,
+		fontFamily: Fonts.light,
+		color: "#000",
+	},
+	actionButtons: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		marginTop: 30
+	},
+	actionBtn: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "center",
+		gap: 5,
+		paddingHorizontal: 20,
+		paddingVertical: 10,
+		width: "47%",
+		borderRadius: 5
+	},
+	actionBtnTxt: {
+		fontFamily: Fonts.regular,
+		fontSize: 10,
+		color: "#fff",
+		lineHeight: 16
+	}
 })

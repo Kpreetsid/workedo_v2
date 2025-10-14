@@ -152,21 +152,30 @@ export default function CreatePreventive() {
 
 				<AssignInput
 					label="Location"
-					onPress={() => router.push("/selectLocation")}
+					onPress={() => router.push({
+						pathname: "/selectLocation",
+						params: { comingFrom: "" }
+					})}
 				/>
 
 				{
 					formData.location && (
 						<AssignInput
 							label="Asset"
-							onPress={() => router.push("/selectAsset")}
+							onPress={() => router.push({
+								pathname: "/selectAsset",
+								params: { comingFrom: "" }
+							})}
 						/>
 					)
 				}
 
 				<AssignInput
 					label="Assign User"
-					onPress={() => router.push("/selectUser")}
+					onPress={() => router.push({
+						pathname: "/selectUser",
+						params: { comingFrom: "" }
+					})}
 				/>
 
 				<AssignInput label="Start Date" onPress={() => setIsDatePickerVisible(true)} />
@@ -182,14 +191,6 @@ export default function CreatePreventive() {
 						containerStyle={styles.inputContainer}
 						onSelect={(val) => { setFormValue("sop_form_id", val); }}
 					/>
-
-
-					{/* <FormInput
-						label="Start Date"
-						labelStyle={styles.label}
-						placeholder="dd-mm-yyyy"
-						containerStyle={styles.inputContainer}
-					/> */}
 
 					<DropDownInput
 						label="Nature of Work"
@@ -226,7 +227,7 @@ export default function CreatePreventive() {
 				</View>
 
 				<AssignInput label="Add Parts" onPress={() => router.push("/updateParts")} />
-					{/* <AssignInput label="Add Parts" onPress={() => router.push("/selectPart")} /> */}
+				{/* <AssignInput label="Add Parts" onPress={() => router.push("/selectPart")} /> */}
 
 				<View style={styles.partsContainer}>
 					{formData.parts.length > 0 &&

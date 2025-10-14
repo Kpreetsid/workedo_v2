@@ -1,7 +1,7 @@
 import Header from "@/components/global/Header";
 import { Dimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import ActionButton from "@/components/create-screens/ActionButton";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import Fonts from "@/constants/Typography";
 import { ArrowRight, MapIcon } from "@/constants/IconProvider";
 import { useEffect, useState } from "react";
@@ -13,6 +13,8 @@ import { useLocationStore } from "@/src/store/useLocationStore";
 import { usePreventiveStore } from "@/src/store/usePreventiveStore";
 import { getFilteredAssets } from "@/src/services/preventive.service";
 import { Asset } from "@/src/types/asset";
+import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
+import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 
 interface AssetInterface {
 	showHeader?: boolean,
@@ -21,12 +23,16 @@ interface AssetInterface {
 
 const width = Dimensions.get("window").width;
 export default function SelectAsset({ showHeader = true, selection = true }: AssetInterface) {
+	const params: any = useLocalSearchParams();
+	const comingFrom = params?.comingFrom;
 	const [selectedAsset, setSelectedAsset] = useState<Asset>();
 	const [searchText, setSearchText] = useState("");
 	const user = useAuthStore((state) => state.user);
 	const [assets, setAssets] = useState<Asset[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
 	const { formData, setFormValue } = usePreventiveStore();
+	const { setWorkForm } = useWorkOrderStore();
+	const { setWorkRequestForm } = useWorkRequestStore();
 
 	useEffect(() => {
 		fetchAssets();
@@ -70,7 +76,13 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 								if (selection) {
 									setSelectedAsset(item);
 									// updating selected asset in zustand store while creating preventive
-									setFormValue("selected_asset", item);
+									if (comingFrom === "newWorkOrder") {
+										setWorkForm("selected_asset", item);
+									} else if (comingFrom === "newWorkRequest") {
+										setWorkRequestForm("selected_asset", item);
+									} else {
+										setFormValue("selected_asset", item);
+									}
 									router.back();
 								}
 							}}

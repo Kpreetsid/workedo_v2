@@ -5,15 +5,20 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import { TickIcon } from "@/constants/IconProvider";
 import ActionButton from "@/components/create-screens/ActionButton";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { getUsers } from "@/src/services/preventive.service";
 import { usePreventiveStore } from "@/src/store/usePreventiveStore";
+import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 
 const width = Dimensions.get("window").width;
 export default function SelectUser() {
+	const params: any = useLocalSearchParams();
+	const comingFrom = params?.comingFrom;
+
 	const [users, setUsers] = useState<any[]>([]);
 	const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
 	const { setFormValue } = usePreventiveStore();
+	const { setWorkForm } = useWorkOrderStore();
 
 	useEffect(() => {
 		fetchUsers();
@@ -51,7 +56,12 @@ export default function SelectUser() {
 		if (selectedUsers.length === 0) return;
 
 		// Save all selected users into preventive store
-		setFormValue("assigned_users", selectedUsers);
+		if (comingFrom === "newWorkOrder") {
+			console.log('selected users in select user = ', selectedUsers);
+			setWorkForm("assigned_users", selectedUsers);
+		} else {
+			setFormValue("assigned_users", selectedUsers);
+		}
 		router.back();
 	};
 

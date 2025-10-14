@@ -9,15 +9,22 @@ import { useEffect, useRef, useState } from "react";
 import { usePreventiveStore } from "@/src/store/usePreventiveStore";
 import { getParts } from "@/src/services/part.service";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 
 export default function UpdateParts() {
+	const params: any = useLocalSearchParams();
+	const comingFrom = params?.comingFrom;
+	console.log('comingFrom = ', comingFrom);
+
+
 	const router = useRouter();
 	const [selectedPart, setSelectedPart] = useState<string>("");
 	const [part, setPart] = useState<any>(null);
 
 	const [parts, setParts] = useState<any[]>([]);
 	const { formData, setFormValue } = usePreventiveStore();
+	const { workForm, setWorkForm } = useWorkOrderStore();
 	const quantityNeeded = useRef(0);
 
 	useEffect(() => {
@@ -89,8 +96,11 @@ export default function UpdateParts() {
 			updatedParts = [...existingParts, part];
 		}
 
-		// update store
-		setFormValue("parts", updatedParts);
+		if (comingFrom === "newWorkOrder") {
+			setWorkForm("parts", updatedParts);
+		} else {
+			setFormValue("parts", updatedParts);
+		}
 
 		setSelectedPart("");
 		setPart(null);
@@ -123,18 +133,34 @@ export default function UpdateParts() {
 					<Text style={styles.btnText}>Add Part</Text>
 				</TouchableOpacity>
 
-				<View style={styles.partsContainer}>
-					{formData.parts.length > 0 &&
-						formData.parts.map((part: any, index: number) => (
-							<View style={styles.partItem} key={index}>
-								<Text style={styles.partText}>{part?.part_name}</Text>
-								<Text style={styles.partText}>({part?.quantity_needed})</Text>
-								<Pressable onPress={() => handleRemovePart(part.id || part._id)}>
-									<Ionicons name="close" size={16} color="#000" />
-								</Pressable>
-							</View>
-						))}
-				</View>
+				{
+					comingFrom === "newWorkOrder" ?
+						<View style={styles.partsContainer}>
+							{workForm.parts.length > 0 &&
+								workForm.parts.map((part: any, index: number) => (
+									<View style={styles.partItem} key={index}>
+										<Text style={styles.partText}>{part?.part_name}</Text>
+										<Text style={styles.partText}>({part?.estimatedQuantity})</Text>
+										<Pressable onPress={() => handleRemovePart(part.id || part._id)}>
+											<Ionicons name="close" size={16} color="#000" />
+										</Pressable>
+									</View>
+								))}
+						</View>
+						:
+						<View style={styles.partsContainer}>
+							{formData.parts.length > 0 &&
+								formData.parts.map((part: any, index: number) => (
+									<View style={styles.partItem} key={index}>
+										<Text style={styles.partText}>{part?.part_name}</Text>
+										<Text style={styles.partText}>({part?.estimatedQuantity})</Text>
+										<Pressable onPress={() => handleRemovePart(part.id || part._id)}>
+											<Ionicons name="close" size={16} color="#000" />
+										</Pressable>
+									</View>
+								))}
+						</View>
+				}
 
 				<ActionButton onPress={() => router.back()} label="Confirm" />
 
