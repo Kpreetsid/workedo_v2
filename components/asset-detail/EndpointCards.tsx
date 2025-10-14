@@ -1,22 +1,85 @@
-import { Pressable, ScrollView, Text, TouchableOpacity, View, StyleSheet } from "react-native";
+import { Pressable, ScrollView, Text, TouchableOpacity, View, StyleSheet, RefreshControl, FlatList } from "react-native";
 import { Fontisto, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Fonts from "../../constants/Typography";
 import { AssetEndpoint } from "@/src/types/assetEndpoint";
 import { useAssetStore } from "@/src/store/useAssetStore";
+import { useEffect, useState } from "react";
+import { Asset } from "@/src/types/asset";
+import { getAllEndpoints } from "@/src/services/asset.service";
+import Popover from "react-native-popover-view";
+import { useRouter } from "expo-router";
 
-export default function EndpointCards() {
+interface Props {
+	asset_data: Asset;
+}
+
+export default function EndpointCards({ asset_data }: Props) {
 	const endpoints = useAssetStore<AssetEndpoint[]>((state) => state.endpoints);
+	const setEndpoints = useAssetStore((state) => state.setEndpoints);
 	const selectedSensor = useAssetStore((state) => state.selectedSensor);
 	const setSelectedSensor = useAssetStore((state) => state.setSelectedSensor);
+	const setSelectedEndpointToEdit = useAssetStore((state) => state.setSelectedEndpointToEdit);
+	const [openPopoverId, setOpenPopoverId] = useState<number | null>(null);
 
-	if (!selectedSensor) setSelectedSensor(endpoints[0]);
+	const router = useRouter();
+
+	const [refreshing, setRefreshing] = useState(false);
+
+	useEffect(() => {
+		if (!selectedSensor && endpoints.length > 0) {
+			setSelectedSensor(endpoints[0]);
+		}
+	}, [endpoints]);
+
+	// ✅ Pull-to-refresh logic
+	const onRefresh = async () => {
+		setRefreshing(true);
+		try {
+			await fetchEndpoints(); // this should re-fetch from API and update store
+		} catch (error) {
+			console.error("Error refreshing endpoints:", error);
+		} finally {
+			setRefreshing(false);
+		}
+	};
 
 	const handleSelect = (ep: AssetEndpoint) => {
 		setSelectedSensor(ep);
 	};
 
+	const fetchEndpoints = async () => {
+		console.log('fetching endpoints');
+		try {
+			console.log('asset_data = ', asset_data);
+
+			let payload: string[] = [asset_data?.id];
+			console.log('payload for endpoints = ', payload);
+			const endpointsRes = await getAllEndpoints(payload);
+			console.log('res endpoints = ', endpointsRes);
+
+			if (endpointsRes?.data?.length > 0) {
+				setEndpoints(endpointsRes.data);
+			}
+		} catch (err) {
+			console.error("Error fetching endpoints:", err);
+		}
+	}
+
 	return (
-		<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardsRow} nestedScrollEnabled>
+		<ScrollView
+			horizontal
+			showsHorizontalScrollIndicator={false}
+			contentContainerStyle={styles.cardsRow}
+			nestedScrollEnabled
+			refreshControl={
+				<RefreshControl
+					refreshing={refreshing}
+					onRefresh={onRefresh}
+					tintColor="#5552FE"
+					colors={["#5552FE"]}
+				/>
+			}
+		>
 			{endpoints.map((ep) => {
 				const isSelected = selectedSensor?.id === ep.id;
 				return (
@@ -34,9 +97,46 @@ export default function EndpointCards() {
 						>
 							<View style={styles.cardHeader}>
 								<Text style={styles.cardMac}>{ep.mac_id}</Text>
-								<Pressable onPress={() => console.log("Card menu")} style={styles.cardMenu}>
-									<Fontisto name="more-v-a" size={15} color="#201F23" />
-								</Pressable>
+								<Popover
+									isVisible={openPopoverId === Number(ep.id)}
+									onRequestClose={() => setOpenPopoverId(null)}
+									from={(
+										<TouchableOpacity style={{padding: 6}} onPress={() => setOpenPopoverId(Number(ep.id))}>
+											<Fontisto name="more-v-a" size={15} color="#201F23" />
+										</TouchableOpacity>
+									)}>
+									<View style={styles.popoverContent}>
+										{
+											["Attach a sensor", "Edit Endpoint", "Delete Endpoint"].map((item, index) => {
+												return (
+													<Pressable
+														style={styles.popoverItem}
+														key={index}
+														onPress={() => {
+															setOpenPopoverId(null);
+
+															if (index === 1) {
+																setSelectedEndpointToEdit(ep);
+																// Small timeout helps ensure popover unmounts smoothly before navigation
+																setTimeout(() => {
+																	router.push("/createNewEndPoint");
+																}, 150);
+															}
+
+															if (index === 0) {
+																console.log("Attach Sensor");
+															} else if (index === 2) {
+																console.log("Delete Endpoint");
+															}
+														}}
+													>
+														<Text>{item}</Text>
+													</Pressable>
+												);
+											})
+										}
+									</View>
+								</Popover>
 							</View>
 
 							<View>
@@ -121,6 +221,15 @@ const styles = StyleSheet.create({
 		borderRadius: 2,
 		padding: 4,
 		textTransform: 'capitalize'
+	},
+	popoverContent: {
+		borderRadius: 20,
+		backgroundColor: "#fff",
+		padding: 10,
+	},
+	popoverItem: {
+		width: 150,
+		padding: 10,
 	},
 	cardMenu: {
 		padding: 6,

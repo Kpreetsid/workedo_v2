@@ -43,3 +43,8 @@ export const createEndpoint = async (payload: any) => {
     const url = `${endpoints.asset.createEndpoint}`;
     return await sendRequestDemo("POST", url, payload);
 };
+
+export const updateEndpoint = async (payload: any) => {
+    const url = `${endpoints.asset.updateEndpoint}`;
+    return await sendRequestDemo("PATCH", url, payload);
+};

@@ -16,6 +16,7 @@ interface AssetsTabInterface {
 }
 
 export default function AssetsTab({ selection = true }: AssetsTabInterface) {
+	console.log('rendering assets');
 	const [searchText, setSearchText] = useState("");
 	const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
 	const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
@@ -89,7 +90,7 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 											Location: {item?.locationData?.location_name}
 										</Text>
 										{hasChildren && (
-											<Pressable onPress={()=>{
+											<Pressable onPress={() => {
 												// Toggle expand instead of navigating
 												setExpandedAssetId(isExpanded ? null : item.id);
 											}}>

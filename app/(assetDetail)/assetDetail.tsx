@@ -14,7 +14,7 @@ export default function AssetDetailScreen() {
 
 			<SegmentedPager tabs={[
 				{ label: "Info", component: <AssetInfoTab asset_data={asset_data} /> },
-				{ label: "Sensors", component: <AssetSensorsTab /> }
+				{ label: "Sensors", component: <AssetSensorsTab asset_data={asset_data} /> }
 			]} />
 		</>
 	);

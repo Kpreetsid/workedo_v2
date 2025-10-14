@@ -81,6 +81,7 @@ export default function ConfigSections() {
 	useEffect(() => {
 		if (selectedSensor) {
 			console.log("Fetching data for:", selectedSensor.mac_id);
+			if(selectedSensor.mac_id==undefined) return;
 			fetchSensorData();
 		}
 	}, [selectedSensor]);

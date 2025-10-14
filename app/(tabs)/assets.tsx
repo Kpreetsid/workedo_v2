@@ -10,9 +10,21 @@ export default function Assets() {
 		<>
 			<Header title="Assets" />
 			<StatusBar style="light" animated={true} />
-			<SegmentedPager tabs={[
-				{ label: "Locations", icon: <LocationTabIcon />, component: <SelectLocation showHeader={false} selection={false} /> },
-				{ label: "Assets", icon: <AssetsTabIcon />, component: <AssetsTab selection={false} /> }]} />
+
+			<SegmentedPager
+				tabs={[
+					{
+						label: "Locations",
+						icon: <LocationTabIcon />,
+						component: () => <SelectLocation showHeader={false} selection={false} />,
+					},
+					{
+						label: "Assets",
+						icon: <AssetsTabIcon />,
+						component: () => <AssetsTab selection={false} />,
+					},
+				]}
+			/>
 		</>
 	)
 }

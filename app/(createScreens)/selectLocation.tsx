@@ -19,6 +19,7 @@ interface LocationInterface {
 
 const width = Dimensions.get("window").width;
 export default function SelectLocation({ showHeader = true, selection = true }: LocationInterface) {
+	console.log('rendering select location');
 	const [selectedLocation, setSelectedLocation] = useState<Location>();
 	const [searchText, setSearchText] = useState("");
 	const user = useAuthStore((state) => state.user);

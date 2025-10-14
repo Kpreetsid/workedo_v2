@@ -36,7 +36,8 @@ export const endpoints = {
     graphData: 'get_function_trend_data_v2/',
     sensorConfig: 'get_device_config/',
     bearingDetails: 'get_bearing_details/',
-    createEndpoint: 'endPointApi/'
+    createEndpoint: 'endPointApi/',
+    updateEndpoint: 'update_endpoint/'
   },
   workOrders: {
     workOrders: 'work/orders',

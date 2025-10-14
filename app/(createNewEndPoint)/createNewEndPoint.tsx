@@ -4,16 +4,22 @@ import { Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Fonts from "@/constants/Typography";
 import ActionButton from "@/components/create-screens/ActionButton";
-import { useRef, useState } from "react";
-import { createEndpoint, getBearingDetails } from "@/src/services/asset.service";
+import { useEffect, useRef, useState } from "react";
+import { createEndpoint, getBearingDetails, updateEndpoint } from "@/src/services/asset.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router/build/hooks";
+import { useAssetStore } from "@/src/store/useAssetStore";
 
 export default function CreateNewEndPoint() {
+	const selectedEndpointToEdit = useAssetStore((state) => state.selectedEndpointToEdit);
+	console.log('selectedEndpointToEdit = ', selectedEndpointToEdit);
+
 	const router = useRouter();
 	const user = useAuthStore(state => state.user);
 	const [selectedPart, setSelectedPart] = useState<string>("DE");
-	// refs for all text inputs
+
+	// Refs for all text inputs
 	const nameRef = useRef("");
 	const rpmRef = useRef("");
 	const bearingNoRef = useRef("");
@@ -22,8 +28,16 @@ export default function CreateNewEndPoint() {
 		bpfo: "",
 		bpfi: "",
 		bsf: "",
-		ftf: ""
-	})
+		ftf: "",
+	});
+
+	// ✅ Prefill fields when editing
+	useEffect(() => {
+		if (selectedEndpointToEdit) {
+			nameRef.current = selectedEndpointToEdit?.point_name || "";
+			setSelectedPart(selectedEndpointToEdit?.mount_location || "DE");
+		}
+	}, [selectedEndpointToEdit]);
 
 	const handleSubmit = async () => {
 		const name = nameRef.current?.trim();
@@ -31,15 +45,16 @@ export default function CreateNewEndPoint() {
 		const rpm = rpmRef.current?.trim();
 		const bearingNo = bearingNoRef.current?.trim();
 
-		if (!name || !measuringPointLocation || !rpm || !bearingNo) {
+		if (!name || !measuringPointLocation || !rpm || !bearingNo || !bearingData.bpfo || !bearingData.bpfi || !bearingData.bsf || !bearingData.ftf) {
 			let missingField = "";
 
 			if (!name) missingField = "Data Collection Point Name";
 			else if (!measuringPointLocation) missingField = "Measuring Point Location";
 			else if (!rpm) missingField = "RPM";
 			else if (!bearingNo) missingField = "Bearing Number";
+			else if (!bearingData.bpfo || !bearingData.bpfi || !bearingData.bsf || !bearingData.ftf) missingField = "Bearing Details";
 
-			ToastAndroid.show(`${missingField} is required`, ToastAndroid.SHORT);
+			ToastAndroid.show(`${missingField} required`, ToastAndroid.SHORT);
 			return;
 		}
 
@@ -47,10 +62,11 @@ export default function CreateNewEndPoint() {
 			name,
 			measuringPointLocation,
 			rpm,
-			bearingNo
+			bearingNo,
 		};
 
 		console.log("Collected Data:", data);
+
 
 		// construct the payload for API
 		const payload = {
@@ -78,6 +94,52 @@ export default function CreateNewEndPoint() {
 		}
 	};
 
+	const handleEdit = async () => {
+		const name = nameRef.current?.trim();
+		const measuringPointLocation = selectedPart?.trim();
+
+		if (!name || !measuringPointLocation) {
+			let missingField = "";
+
+			if (!name) missingField = "Data Collection Point Name";
+			else if (!measuringPointLocation) missingField = "Measuring Point Location";
+
+			ToastAndroid.show(`${missingField} required`, ToastAndroid.SHORT);
+			return;
+		}
+
+		const data = {
+			name,
+			measuringPointLocation,
+		};
+
+		console.log("Collected Data:", data);
+
+
+		// construct the payload for API
+		const payload = {
+			mount_id: selectedEndpointToEdit?.id,
+			name: name,
+			location: measuringPointLocation
+		};
+
+		console.log("Final Payload:", payload);
+
+		try {
+			const res = await updateEndpoint(payload);
+			console.log("API Response:", res);
+
+			if (res?.message === "Endpoint updated successfully.") {
+				ToastAndroid.show("Endpoint updated successfully!", ToastAndroid.SHORT);
+				router.back();
+			}
+		} catch (e: any) {
+			console.log('error = ', e);
+			ToastAndroid.show(e?.message, ToastAndroid.SHORT);
+		}
+
+	};
+
 	const fetchBearingDetails = async () => {
 		console.log("Bearing Number:", bearingNoRef.current);
 		const payload = {
@@ -99,11 +161,11 @@ export default function CreateNewEndPoint() {
 
 	return (
 		<>
-			<Header title="Create New End Point" />
+			<Header title={selectedEndpointToEdit ? "Edit End Point" : "Create New End Point"} />
 			<KeyboardAwareScrollView bottomOffset={30}>
 				<View style={{ marginVertical: 5 }} />
 
-				<FormInput label="Data Collection Point Name" placeholder="Use a descriptive name" onChangeText={(text) => (nameRef.current = text)} />
+				<FormInput label="Data Collection Point Name" placeholder="Use a descriptive name" defaultValue={selectedEndpointToEdit?.point_name || ""} onChangeText={(text) => (nameRef.current = text)} />
 
 				<FormInput
 					label="Measuring Point Location"
@@ -114,13 +176,14 @@ export default function CreateNewEndPoint() {
 				/>
 
 				<FormInput
+					readOnly
 					label="RPM"
 					placeholder="Input machine RPM"
 					onChangeText={(text) => (rpmRef.current = text)}
 				/>
 
 				<View style={styles.row}>
-					<FormInput label="Bearing Number" placeholder="Bearing No. of Measuring Point" containerStyle={styles.inputContainer} onChangeText={(text) => (bearingNoRef.current = text)} />
+					<FormInput readOnly label="Bearing Number" placeholder="Bearing No. of Measuring Point" containerStyle={styles.inputContainer} onChangeText={(text) => (bearingNoRef.current = text)} />
 					<Pressable style={styles.buttonContainer} onPress={fetchBearingDetails}>
 						<Text style={styles.buttonText}>Get Details</Text>
 					</Pressable>
@@ -138,7 +201,7 @@ export default function CreateNewEndPoint() {
 
 			</KeyboardAwareScrollView>
 
-			<ActionButton label="Create Endpoint" onPress={handleSubmit} />
+			<ActionButton label={selectedEndpointToEdit ? "Update Endpoint" : "Create Endpoint"} onPress={selectedEndpointToEdit ? handleEdit : handleSubmit} />
 		</>
 	)
 }

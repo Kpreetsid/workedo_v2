@@ -27,8 +27,8 @@ export default function Login() {
 	} = useForm<LoginFormValues>({
 		defaultValues: {
 			// username: "abhay_test",
-			username: "kpreetsid",
-			password: "Password@123"
+			username: "test",
+			password: "12345"
 		},
 	});
 

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { AssetEndpoint } from "@/src/types/assetEndpoint";
 
 export interface AssetState {
+	asset_data: any;
 	endpoints: AssetEndpoint[];
 	endpointSelected: AssetEndpoint | null;
 	compositeIdSelected: string | null;
@@ -15,9 +16,11 @@ export interface AssetState {
 	graphData: null,
 
 	selectedSensor: AssetEndpoint | null,
+	selectedEndpointToEdit: AssetEndpoint | null;
 	deviceInfo: [] | null,
 
 	// ✅ Actions
+	setAssetData: (data: any) => void,
 	setEndpoints: (data: AssetEndpoint[]) => void;
 	setEndpointSelected: (data: AssetEndpoint | null) => void;
 	setCompositeIdSelected: (id: string | null) => void;
@@ -27,6 +30,7 @@ export interface AssetState {
 
 	setGraphData: (data: string[]) => void;
 	setSelectedSensor: (data: any) => void;
+	setSelectedEndpointToEdit: (data: any) => void;
 	setDeviceInfo: (data: any) => void;
 
 	// ✅ Filter actions
@@ -37,6 +41,7 @@ export interface AssetState {
 }
 
 export const useAssetStore = create<AssetState>((set) => ({
+	asset_data: null,
 	endpoints: [],
 	endpointSelected: null,
 	compositeIdSelected: null,
@@ -48,9 +53,12 @@ export const useAssetStore = create<AssetState>((set) => ({
 
 	graphData: null,
 	selectedSensor: null,
+	selectedEndpointToEdit: null,
 	deviceInfo: [],
+	setAssetData: (data: any) => set({ asset_data: data }),
 	setGraphData: (data: any) => set({ graphData: data }),
 	setSelectedSensor: (data: any) => set({ selectedSensor: data }),
+	setSelectedEndpointToEdit: (data: any) => set({ selectedEndpointToEdit: data }),
 	setDeviceInfo: (data: any) => set({ deviceInfo: data }),
 
 	setEndpoints: (data) => set({ endpoints: data }),
@@ -72,6 +80,7 @@ export const useAssetStore = create<AssetState>((set) => ({
 
 	clearAssetState: () =>
 		set({
+			asset_data: null,
 			endpoints: [],
 			endpointSelected: null,
 			compositeIdSelected: null,
@@ -81,6 +90,7 @@ export const useAssetStore = create<AssetState>((set) => ({
 			selectedValueType: "Rms",
 			graphData: null,
 			selectedSensor: null,
+			selectedEndpointToEdit: null,
 			deviceInfo: [],
 		}),
 }));

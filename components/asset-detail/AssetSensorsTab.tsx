@@ -6,8 +6,13 @@ import EndpointCards from "@/components/asset-detail/EndpointCards";
 import ConfigSections from "@/components/asset-detail/ConfigSections";
 import { router } from "expo-router";
 import { useAssetStore } from "@/src/store/useAssetStore";
+import { Asset } from "@/src/types/asset";
 
-export default function SensorsScreen(): JSX.Element {
+interface Props {
+	asset_data: Asset;
+}
+
+export default function SensorsScreen({ asset_data }: Props) {
 
 	return (
 		<ScrollView contentContainerStyle={styles.screenContainer} showsVerticalScrollIndicator={false}>
@@ -20,7 +25,7 @@ export default function SensorsScreen(): JSX.Element {
 				</TouchableOpacity>
 			</View>
 
-			<EndpointCards />
+			<EndpointCards asset_data={asset_data} />
 
 			<ConfigSections />
 
