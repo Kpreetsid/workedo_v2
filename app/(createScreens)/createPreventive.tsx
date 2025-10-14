@@ -112,7 +112,7 @@ export default function CreatePreventive() {
 		try {
 			const res = await createPreventive(payload);
 			console.log("✅ Response:", res);
-			if(res?.status) {
+			if (res?.status) {
 				ToastAndroid.show("Preventive created successfully!", ToastAndroid.SHORT);
 				usePreventiveStore.getState().resetForm();
 			}
@@ -225,13 +225,15 @@ export default function CreatePreventive() {
 
 				</View>
 
-				<AssignInput label="Add Parts" onPress={() => router.push("/selectPart")} />
+				<AssignInput label="Add Parts" onPress={() => router.push("/updateParts")} />
+					{/* <AssignInput label="Add Parts" onPress={() => router.push("/selectPart")} /> */}
 
 				<View style={styles.partsContainer}>
 					{formData.parts.length > 0 &&
 						formData.parts.map((part: any, index: number) => (
 							<View style={styles.partItem} key={index}>
-								<Text style={styles.partText}>{part.part_name}</Text>
+								<Text style={styles.partText}>{part?.part_name}</Text>
+								<Text style={styles.partText}>({part?.quantity_needed})</Text>
 								<Pressable onPress={() => handleRemovePart(part.id || part._id)}>
 									<Ionicons name="close" size={16} color="#000" />
 								</Pressable>

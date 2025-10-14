@@ -49,7 +49,7 @@ export default function SelectPart({ showHeader = true, selection = true }: Part
 
 	// ✅ Save selected parts in store and go back
 	const handleConfirm = () => {
-		if(selectedParts.length === 0) {
+		if (selectedParts.length === 0) {
 			return;
 		}
 		setFormValue("parts", selectedParts);
