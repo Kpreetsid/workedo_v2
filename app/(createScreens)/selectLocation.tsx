@@ -13,6 +13,7 @@ import { useLocationStore } from "@/src/store/useLocationStore";
 import { usePreventiveStore } from "@/src/store/usePreventiveStore";
 import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
+import { usePartFormStore } from "@/src/store/usePartFormStore";
 
 interface LocationInterface {
 	showHeader?: boolean,
@@ -33,6 +34,7 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 	const { setFormValue } = usePreventiveStore();
 	const { setWorkForm } = useWorkOrderStore();
 	const { setWorkRequestForm } = useWorkRequestStore();
+	const { setPartFormValue } = usePartFormStore();
 
 	useEffect(() => {
 		fetchLocations();
@@ -76,6 +78,8 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 										setWorkForm("location", item);
 									} else if (comingFrom === "newWorkRequest") {
 										setWorkRequestForm("location", item);
+									} else if(comingFrom === "createPart") {
+										setPartFormValue("location", item);
 									} else {
 										setFormValue("location", item);
 									}

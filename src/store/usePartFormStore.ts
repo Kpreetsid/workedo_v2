@@ -1,41 +1,41 @@
 import { create } from "zustand";
 
 interface PartFormState {
-  formData: {
+  partForm: {
     part_name: string;
     description: string;
-    location: string;
+    location: any | null;
     selected_part: string;
     part_number: string;
     available_quantity: string;
     min_stock_quantity: string;
     unit_cost: string;
   };
-  setFormValue: (key: keyof PartFormState["formData"], value: string) => void;
-  resetForm: () => void;
+  setPartFormValue: (key: keyof PartFormState["partForm"], value: any) => void;
+  resetPartForm: () => void;
 }
 
 export const usePartFormStore = create<PartFormState>((set) => ({
-  formData: {
+  partForm: {
     part_name: "",
     description: "",
-    location: "",
+    location: null,
     selected_part: "",
     part_number: "",
     available_quantity: "",
     min_stock_quantity: "",
     unit_cost: "",
   },
-  setFormValue: (key, value) =>
+  setPartFormValue: (key, value) =>
     set((state) => ({
-      formData: { ...state.formData, [key]: value },
+      partForm: { ...state.partForm, [key]: value },
     })),
-  resetForm: () =>
+  resetPartForm: () =>
     set({
-      formData: {
+      partForm: {
         part_name: "",
         description: "",
-        location: "",
+        location: null,
         selected_part: "",
         part_number: "",
         available_quantity: "",

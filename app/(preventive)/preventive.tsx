@@ -18,7 +18,6 @@ const mockData = Array.from({ length: 10 }, (_, i) => ({
 }));
 
 export default function PreventivePage() {
-	console.log('preventive');
 	const [refreshing, setRefreshing] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [preventives, setPreventives] = useState<any[]>([]);

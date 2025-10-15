@@ -13,10 +13,10 @@ import { createPart } from "@/src/services/part.service";
 
 export default function CreatePart() {
 	const router = useRouter();
-	const { formData, setFormValue, resetForm } = usePartFormStore();
+	const { partForm, setPartFormValue, resetPartForm } = usePartFormStore();
 
 	const handleSubmit = async () => {
-		const data: any = { ...formData };
+		const data: any = { ...partForm };
 
 		// ✅ Basic validation
 		const required = ["part_name", "description", "location", "part_number", "available_quantity", "min_stock_quantity", "unit_cost"];
@@ -54,7 +54,7 @@ export default function CreatePart() {
 
 			ToastAndroid.show("Part created successfully!", ToastAndroid.SHORT);
 
-			resetForm();
+			resetPartForm();
 		} catch (error) {
 			console.error("❌ Error creating part:", error);
 			ToastAndroid.show("Failed to create part!", ToastAndroid.SHORT);
@@ -71,58 +71,62 @@ export default function CreatePart() {
 				<FormInput
 					label="Part Name"
 					placeholder="Enter Title"
-					value={formData.part_name}
-					onChangeText={(text) => setFormValue("part_name", text)}
+					value={partForm.part_name}
+					onChangeText={(text) => setPartFormValue("part_name", text)}
 				/>
 
 				<FormInput
 					label="Description"
 					placeholder="Enter a message"
 					inputStyle={styles.descriptionInput}
-					value={formData.description}
-					onChangeText={(text) => setFormValue("description", text)}
+					value={partForm.description}
+					onChangeText={(text) => setPartFormValue("description", text)}
 				/>
 
 				<AssignInput
 					label="Location"
-					onPress={() => router.push("/selectLocation")}
+					comingFrom="createPart"
+					onPress={() => router.push({
+						pathname: "/selectLocation",
+						params: { comingFrom: "createPart" }
+					})}
 				/>
 
 				<DropDownInput
 					label="Select Spare Type"
-					value={formData.selected_part}
+					value={partForm.selected_part}
 					options={["Spare 1", "Spare 2", "Spare 3"]}
 					onSelect={(val) => {
-						setFormValue("selected_part", val);
+						setPartFormValue("selected_part", val);
 					}}
 				/>
 
 				<FormInput
 					label="Part Number"
 					placeholder="Type Number"
-					value={formData.part_number}
-					onChangeText={(text) => setFormValue("part_number", text)}
+					value={partForm.part_number}
+					onChangeText={(text) => setPartFormValue("part_number", text)}
 				/>
 
 				<FormInput
 					label="Available Quantity"
 					placeholder="Enter Quantity"
-					value={formData.available_quantity}
-					onChangeText={(text) => setFormValue("available_quantity", text)}
+					value={partForm.available_quantity}
+					onChangeText={(text) => setPartFormValue("available_quantity", text)}
 				/>
 
 				<FormInput
 					label="Minimum Stock Quantity"
 					placeholder="Enter Quantity"
-					value={formData.min_stock_quantity}
-					onChangeText={(text) => setFormValue("min_stock_quantity", text)}
+					value={partForm.min_stock_quantity}
+					onChangeText={(text) => setPartFormValue("min_stock_quantity", text)}
 				/>
 
 				<FormInput
 					label="Unit Cost"
 					placeholder="Enter Cost"
-					value={formData.unit_cost}
-					onChangeText={(text) => setFormValue("unit_cost", text)}
+					value={partForm.unit_cost}
+					onChangeText={(text) => setPartFormValue("unit_cost", text)}
 				/>
 
 				<ActionButton label="Submit" onPress={handleSubmit} />

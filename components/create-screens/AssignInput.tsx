@@ -6,6 +6,7 @@ import { useLocationStore } from "@/src/store/useLocationStore";
 import { usePreventiveStore } from "@/src/store/usePreventiveStore";
 import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
+import { usePartFormStore } from "@/src/store/usePartFormStore";
 
 interface AssignInputProps {
 	label: string;
@@ -39,6 +40,9 @@ const AssignInput: FC<AssignInputProps> = ({ label, comingFrom, required = true,
 	const workRequestLocation = useWorkRequestStore((state) => state.workRequestForm.location);
 	const workRequestAsset = useWorkRequestStore((state) => state.workRequestForm.selected_asset);
 
+	// create Part
+	const partLocation = usePartFormStore((state) => state.partForm.location);
+
 	return (
 		<View style={[styles.container, containerStyle]}>
 			<View style={styles.labelContainer}>
@@ -64,6 +68,13 @@ const AssignInput: FC<AssignInputProps> = ({ label, comingFrom, required = true,
 				{label === "Location" && comingFrom === "newWorkRequest" && workRequestLocation && (
 					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
 						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>{workRequestLocation?.location_name}</Text>
+					</View>
+				)}
+
+
+				{label === "Location" && comingFrom === "createPart" && partLocation && (
+					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>{partLocation?.location_name}</Text>
 					</View>
 				)}
 

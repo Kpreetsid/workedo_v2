@@ -6,6 +6,11 @@ export const createPart = async (payload: any) => {
     return await sendRequest("POST", url, payload);
 };
 
+export const updatePart = async (id: string, qty: string) => {
+    const url = `${endpoints.parts.createPart}/${id}`;
+    return await sendRequest("PUT", url, { quantity: qty });
+};
+
 export const getParts = async () => {
     const url = `${endpoints.parts.getParts}`;
     return await sendRequest("GET", url);
