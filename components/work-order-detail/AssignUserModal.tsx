@@ -17,7 +17,7 @@ const { height } = Dimensions.get("window");
 const AssignedUsersModal: FC<AssignedUsersModalProps> = ({ visible, onClose, users }) => {
 	const [search, setSearch] = useState("");
 
-	const filteredUsers = users.filter((u) => u?.user?.firstName?.toLowerCase().includes(search.toLowerCase()));
+	const filteredUsers = users?.filter((u) => u?.user?.firstName?.toLowerCase().includes(search.toLowerCase()));
 
 	return (
 		<Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} >
@@ -41,16 +41,16 @@ const AssignedUsersModal: FC<AssignedUsersModalProps> = ({ visible, onClose, use
 					/>
 
 					<FlatList
-						data={filteredUsers}
-						keyExtractor={(item) => item.id}
-						renderItem={({ item }) => {
-							const profileImg = item?.user?.user_profile_img;
-							const first = item?.user?.firstName?.[0] || "";
-							const last = item?.user?.lastName?.[0] || "";
+						data={users}
+						keyExtractor={(item) => item.id || item._id}
+						renderItem={({ item, index }: { item: any; index: number }) => {
+							const profileImg = item?.user_profile_img;
+							const first = item?.firstName?.[0] || "";
+							const last = item?.lastName?.[0] || "";
 							const initials = (first + last).toUpperCase();
 
 							return (
-								<TouchableOpacity style={styles.userRow}>
+								<TouchableOpacity style={styles.userRow} key={index}>
 									{profileImg ? (
 										<Image
 											source={{ uri: `${endpoints.baseURL}user_profile_img/${profileImg}` }}
@@ -61,8 +61,7 @@ const AssignedUsersModal: FC<AssignedUsersModalProps> = ({ visible, onClose, use
 											<Text style={styles.avatarInitials}>{initials}</Text>
 										</View>
 									)}
-
-									<Text style={styles.userName}>{item?.user?.firstName}</Text>
+									<Text style={styles.userName}>{item?.firstName}</Text>
 								</TouchableOpacity>
 							);
 						}}
@@ -70,6 +69,7 @@ const AssignedUsersModal: FC<AssignedUsersModalProps> = ({ visible, onClose, use
 						showsVerticalScrollIndicator={false}
 						style={{ maxHeight: height * 0.23 }}
 					/>
+
 				</KeyboardAvoidingView>
 			</Pressable>
 		</Modal>

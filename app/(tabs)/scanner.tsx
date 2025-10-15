@@ -1,6 +1,6 @@
-import {useState} from "react";
-import {StyleSheet, Text, View} from "react-native";
-import {CameraView, useCameraPermissions} from "expo-camera";
+import { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import ActionButton from "@/components/create-screens/ActionButton";
 import Fonts from "@/constants/Typography";
 import Header from "@/components/global/Header";
@@ -22,12 +22,12 @@ export default function ScannerScreen() {
         return (
             <View style={styles.center}>
                 <Text style={styles.resultText}>We need your permission to use the camera</Text>
-                <ActionButton onPress={requestPermission} label="Grant Permission" buttonStyle={{width: "90%"}}/>
+                <ActionButton onPress={requestPermission} label="Grant Permission" buttonStyle={{ width: "90%" }} />
             </View>
         );
     }
 
-    const handleBarCodeScanned = ({data}: { data: string }) => {
+    const handleBarCodeScanned = ({ data }: { data: string }) => {
         if (!scanned) {
             setScanned(true);
             setScannedData(data);
@@ -36,15 +36,36 @@ export default function ScannerScreen() {
 
     return (
         <>
-            <Header title="Scanner"/>
+            <Header title="Scanner" />
             <View style={styles.container}>
                 <View style={styles.scannerBox}>
-                    {!scanned ? <CameraView style={StyleSheet.absoluteFillObject} facing="back" onBarcodeScanned={handleBarCodeScanned}
-                                            barcodeScannerSettings={{barcodeTypes: ["qr", 'aztec', 'pdf417', 'codabar', 'code128', 'ean13', 'datamatrix', 'ean8']}}/>
-                        : <View style={styles.center}>
+                    {!scanned ? (
+                        permission?.granted && (
+                            <CameraView
+                                style={StyleSheet.absoluteFillObject}
+                                facing="back"
+                                onBarcodeScanned={handleBarCodeScanned}
+                                barcodeScannerSettings={{
+                                    barcodeTypes: [
+                                        "qr",
+                                        "aztec",
+                                        "pdf417",
+                                        "codabar",
+                                        "code128",
+                                        "ean13",
+                                        "datamatrix",
+                                        "ean8",
+                                    ],
+                                }}
+                            />
+                        )
+                    ) : (
+                        <View style={styles.center}>
                             <Text style={styles.resultText}>QR Code Scanned!</Text>
-                        </View>}
+                        </View>
+                    )}
                 </View>
+
 
                 {scannedData && (
                     <View style={styles.resultBox}>
@@ -56,7 +77,7 @@ export default function ScannerScreen() {
                 <ActionButton label={scanned ? "Scan Again" : "Scan"} buttonStyle={styles.actionButton} onPress={() => {
                     setScanned(false);
                     setScannedData(null);
-                }}/>
+                }} />
             </View>
         </>
     );

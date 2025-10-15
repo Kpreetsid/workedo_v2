@@ -9,6 +9,7 @@ export interface Part {
     description: string;
     quantity: number;
     min_quantity: number;
+    estimatedQuantity?: number;
     cost: number;
     location_id: string;
     visible: boolean;

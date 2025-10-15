@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getWorkRequests } from "@/src/services/work-request.service";
 import { WorkRequest } from "@/src/types/workRequest";
 import moment from "moment";
+import { FlashList } from "@shopify/flash-list";
 
 export default function PendingRequests() {
 	console.log('pending requests');
@@ -37,7 +38,8 @@ export default function PendingRequests() {
 	}
 
 	return (
-		<FlatList
+		<FlashList
+			removeClippedSubviews={false}
 			data={pendingRequests}
 			keyExtractor={(item) => item.id}
 			renderItem={({ item }: { item: WorkRequest }) => (

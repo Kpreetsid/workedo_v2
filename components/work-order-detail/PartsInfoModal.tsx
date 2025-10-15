@@ -2,12 +2,7 @@ import { FC } from "react";
 import { Modal, Pressable, StyleSheet, Text, View, FlatList, Dimensions } from "react-native";
 import Fonts from "@/constants/Typography";
 import { CloseIcon } from "@/constants/IconProvider";
-
-interface Part {
-  id: string;
-  name: string;
-  quantity: number;
-}
+import { Part } from "@/src/types/part";
 
 interface PartsInfoModalProps {
   visible: boolean;
@@ -18,6 +13,7 @@ interface PartsInfoModalProps {
 const { height } = Dimensions.get("window");
 
 const PartsInfoModal: FC<PartsInfoModalProps> = ({ visible, onClose, parts }) => {
+  
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
 
@@ -37,10 +33,10 @@ const PartsInfoModal: FC<PartsInfoModalProps> = ({ visible, onClose, parts }) =>
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingBottom: 20 }}
             style={{ maxHeight: height * 0.35 }}
-            renderItem={({ item }) => (
-              <View style={styles.partRow}>
-                <Text style={styles.partName}>{item.name}</Text>
-                <Text style={styles.partQuantity}>{item.quantity}</Text>
+            renderItem={({ item, index }) => (
+              <View style={styles.partRow} key={index}>
+                <Text style={styles.partName}>{item?.part_name}</Text>
+                <Text style={styles.partQuantity}>{item?.estimatedQuantity}</Text>
               </View>
             )}
           />

@@ -20,3 +20,14 @@ export const getSOPs = async () => {
     const url = `${endpoints.preventive.getSOPs}`;
     return await sendRequest("GET", url);
 };
+
+export const getPreventives = async () => {
+    const url = `${endpoints.preventive.preventives}`;
+    return await sendRequest("GET", url);
+};
+
+export const toggleWorkOrderStatus = async (id: string, payload: any) => {
+    console.log('payload item = ', payload);
+    const url = `${endpoints.preventive.preventives}/${id}`;
+    return await sendRequest("PUT", url, payload);
+};

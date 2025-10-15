@@ -24,6 +24,7 @@ export const endpoints = {
     create: 'master/schedulers',
     getFilteredAssets: 'master/assets/filter',
     getSOPs: 'master/sops',
+    preventives: 'master/schedulers'
   },
   location: {
     tree: 'master/locations/tree',
