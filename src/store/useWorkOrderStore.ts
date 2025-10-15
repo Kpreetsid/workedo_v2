@@ -4,16 +4,17 @@ export interface WorkOrderFormData {
 	title: string;
 	message: string;
 	location: any | null; // full location object
-  assigned_users: any[]; // full user object
-  selected_asset: any | null;
-  start_date: string;
+	assigned_users: any[]; // full user object
+	selected_asset: any | null;
+	start_date: string;
 	end_date: string;
 	nature_of_work: string; // Problem Type
-  sop_form_id: string;
+	sop_form_id: string;
 	priority: string;
 	completion_days: string; // Estimation Duration
 	parts: any[];
 	files: any[];
+	work_request_id?: string;
 }
 
 interface WorkOrderStore {
@@ -37,6 +38,7 @@ export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
 		completion_days: "",
 		parts: [],
 		files: [],
+		work_request_id: "",
 	},
 
 	setWorkForm: (key, value) =>
@@ -60,6 +62,7 @@ export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
 				completion_days: "",
 				parts: [],
 				files: [],
+				work_request_id: "",
 			},
 		}),
 }));

@@ -1,8 +1,8 @@
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import Fonts from "@/constants/Typography";
 import { WorkOrderCardLogo } from "@/constants/IconProvider";
-import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { getWorkRequests } from "@/src/services/work-request.service";
 import { WorkRequest } from "@/src/types/workRequest";
 import moment from "moment";
@@ -12,9 +12,11 @@ export default function PendingRequests() {
 	const [pendingRequests, setPendingRequests] = useState<WorkRequest[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
 
-	useEffect(() => {
-		fetchPendingRequests();
-	}, []);
+	useFocusEffect(
+		useCallback(() => {
+			fetchPendingRequests();
+		}, [])
+	);
 
 	const fetchPendingRequests = async () => {
 		try {

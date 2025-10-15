@@ -46,6 +46,8 @@ export const endpoints = {
     workOrders: 'work/orders',
     updateWorkOrder: 'work/orders/status',
     createWorkOrder: 'work/orders',
-    requests: 'work/requests'
+    requests: 'work/requests',
+    approveRequest: 'work/requests/approve',
+    rejectRequest: 'work/requests/reject'
   }
 };

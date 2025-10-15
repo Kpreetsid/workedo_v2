@@ -9,7 +9,7 @@ import AssignInputContainer from "@/components/new-work-order/AssignInputContain
 import { useWorkOrderStore, WorkOrderFormData } from "@/src/store/useWorkOrderStore";
 import DropDownInput from "@/components/create-screens/DropDownInput";
 import { Ionicons } from "@expo/vector-icons";
-import { createWorkOrder } from "@/src/services/work-request.service";
+import { approveWorkRequest, createWorkOrder } from "@/src/services/work-request.service";
 import { useEffect, useRef, useState } from "react";
 import { getSOPs } from "@/src/services/preventive.service";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -17,6 +17,7 @@ import DatePicker from "@/components/global/DatePicker";
 import moment from "moment";
 import { AssignSection } from "@/components/new-work-order/AssignSection";
 import { useRouter } from "expo-router";
+import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 
 export default function NewWorkOrder() {
 	const router = useRouter();
@@ -84,8 +85,8 @@ export default function NewWorkOrder() {
 		}
 
 		// ✅ Build final payload matching your structure
-		const payload = {
-			createdFrom: "Work Order",
+		let payload = {
+			createdFrom: workForm.work_request_id ? "Work Request" : "Work Order",
 			description: workForm.message,
 			end_date: workForm.end_date || new Date().toISOString().split("T")[0],
 			estimated_time: workForm.completion_days, // using completion_days for hours/days input
@@ -106,6 +107,9 @@ export default function NewWorkOrder() {
 			userIdList: workForm.assigned_users?.map((u: any) => u.id) || [],
 			wo_asset_id: workForm.selected_asset?.id || "",
 			wo_location_id: workForm.location?.id || "",
+
+			// ✅ Conditionally include work_request_id
+			...(workForm.work_request_id && { work_request_id: workForm.work_request_id }),
 		};
 
 		console.log("📦 Final Work Order Payload:", payload);
@@ -114,9 +118,22 @@ export default function NewWorkOrder() {
 			const res = await createWorkOrder(payload);
 			console.log("✅ Response:", res);
 			if (res?.status) {
-				ToastAndroid.show("Work Order created successfully!", ToastAndroid.SHORT);
+
+				if(workForm.work_request_id) {
+					const approveRes = await approveWorkRequest(workForm.work_request_id);
+					console.log("✅ Approve Response:", approveRes);
+					if(approveRes.status) {
+						ToastAndroid.show("Work Order created successfully and Work Request approved!", ToastAndroid.SHORT);
+						useWorkRequestStore.getState().resetWorkRequestForm();
+						router.replace("/requests")
+					}
+				}
+
 				useWorkOrderStore.getState().resetForm();
-				router.back();
+				if(!workForm.work_request_id) {
+					ToastAndroid.show("Work Order created successfully!", ToastAndroid.SHORT);
+					router.back();
+				}
 			}
 		} catch (error) {
 			console.error("❌ Error creating work order:", error);
@@ -154,7 +171,7 @@ export default function NewWorkOrder() {
 
 					</View>
 
-					<AssignSection />
+					<AssignSection type="workOrders" />
 
 					{/* <AssignInputContainer /> */}
 

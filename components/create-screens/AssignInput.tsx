@@ -20,7 +20,7 @@ interface AssignInputProps {
 
 const AssignInput: FC<AssignInputProps> = ({ label, comingFrom, required = true, onPress, containerStyle, labelStyle, buttonStyle, buttonTextStyle }) => {
 
-	console.log('coming from in assign input = ', label, comingFrom);
+	// console.log('coming from in assign input = ', label, comingFrom);
 
 	const selectedPartLocation = usePreventiveStore((state) => state.formData.location);
 	const assignedUsers = usePreventiveStore((state) => state.formData.assigned_users);
@@ -60,10 +60,10 @@ const AssignInput: FC<AssignInputProps> = ({ label, comingFrom, required = true,
 					</View>
 				)}
 
-				
-				{label === "Location" && comingFrom === "newWorkRequest" && workOrderLocation && (
+
+				{label === "Location" && comingFrom === "newWorkRequest" && workRequestLocation && (
 					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
-						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>{workOrderLocation?.location_name}</Text>
+						<Text style={[styles.labelText, { fontFamily: Fonts.light, fontSize: 10 }]}>{workRequestLocation?.location_name}</Text>
 					</View>
 				)}
 

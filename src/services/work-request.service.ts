@@ -13,3 +13,11 @@ export const getWorkRequests = async () => {
 export const createWorkRequest = async (payload: any) => {
     return await sendRequest('POST', `${endpoints.workOrders.requests}`, payload);
 };
+
+export const approveWorkRequest = async (id: string) => {
+    return await sendRequest('PATCH', `${endpoints.workOrders.approveRequest}/${id}`, {status:  "Approved"});
+};
+
+export const rejectWorkRequest = async (id: string, remarks: string) => {
+    return await sendRequest('PATCH', `${endpoints.workOrders.rejectRequest}/${id}`, {remarks: remarks});
+};

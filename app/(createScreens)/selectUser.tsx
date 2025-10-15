@@ -28,6 +28,7 @@ export default function SelectUser() {
 		try {
 			const res = await getUsers();
 			if (res?.status && Array.isArray(res?.data)) {
+				console.log('users = ', res?.data);
 				setUsers(res.data);
 			}
 		} catch (err) {
@@ -94,15 +95,19 @@ export default function SelectUser() {
 							) : (
 								<LinearGradient colors={["#A259FF", "#C7AAF2"]} style={styles.initials}>
 									<Text style={styles.initialText}>
-										{item?.username
-											?.split(" ")
-											.map((part: string) => part[0])
-											.join("")
-											.toUpperCase()}
+										{
+											item?.username
+												?.split(" ")
+												.map((part: string) => part[0])
+												.join("")
+												.toUpperCase()
+										}
 									</Text>
 								</LinearGradient>
 							)}
-							<Text style={styles.userText}>{item?.username}</Text>
+							<Text style={styles.userText}>
+								{item?.firstName + "--" + item?.user_role}
+							</Text>
 						</Pressable>
 					);
 				}}

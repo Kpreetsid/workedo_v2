@@ -18,16 +18,31 @@ export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => 
 	return (
 		<View>
 			{/* --- Location --- */}
-			<AssignInput
-				label="Location"
-				comingFrom="newWorkRequest"
-				onPress={() =>
-					router.push({
-						pathname: "/selectLocation",
-						params: { comingFrom: "newWorkRequest" },
-					})
-				}
-			/>
+			{
+				type === "requests" ?
+					<AssignInput
+						label="Location"
+						comingFrom="newWorkRequest"
+						onPress={() =>
+							router.push({
+								pathname: "/selectLocation",
+								params: { comingFrom: "newWorkRequest" },
+							})
+						}
+					/>
+					:
+					<AssignInput
+						label="Location"
+						comingFrom="newWorkOrder"
+						onPress={() =>
+							router.push({
+								pathname: "/selectLocation",
+								params: { comingFrom: "newWorkOrder" },
+							})
+						}
+					/>
+			}
+
 
 			{
 				type === "requests" ?
@@ -61,11 +76,11 @@ export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => 
 					{/* --- Assign User --- */}
 					<AssignInput
 						label="Assign User"
-						comingFrom="newWorkRequest"
+						comingFrom="newWorkOrder"
 						onPress={() =>
 							router.push({
 								pathname: "/selectUser",
-								params: { comingFrom: "newWorkRequest" },
+								params: { comingFrom: "newWorkOrder" },
 							})
 						}
 					/>
@@ -73,7 +88,7 @@ export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => 
 					{/* --- Start Date --- */}
 					<AssignInput
 						label="Start Date"
-						comingFrom="newWorkRequest"
+						comingFrom="newWorkOrder"
 						onPress={() => {
 							setActiveDateField("start_date");
 							setIsDatePickerVisible(true);
@@ -83,7 +98,7 @@ export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => 
 					{/* --- End Date --- */}
 					<AssignInput
 						label="End Date"
-						comingFrom="newWorkRequest"
+						comingFrom="newWorkOrder"
 						onPress={() => {
 							setActiveDateField("end_date");
 							setIsDatePickerVisible(true);
