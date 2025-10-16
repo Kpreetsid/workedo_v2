@@ -1,4 +1,4 @@
-import { cloneElement, isValidElement, ReactElement, ReactNode, useRef, useState } from "react";
+import { cloneElement, ComponentType, isValidElement, ReactElement, ReactNode, useEffect, useRef, useState } from "react";
 import { Pressable, StyleProp, StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
 import PagerView, { PagerViewOnPageSelectedEvent } from "react-native-pager-view";
 import Fonts from "@/constants/Typography";
@@ -6,7 +6,7 @@ import Fonts from "@/constants/Typography";
 interface TabConfig {
 	label: string;
 	icon?: ReactElement<{ color?: string }>;
-	component: ReactNode | (() => React.JSX.Element);
+	component: ReactNode | (() => React.JSX.Element)
 }
 
 interface SegmentedPagerProps {
@@ -18,6 +18,8 @@ interface SegmentedPagerProps {
 	textStyle?: StyleProp<TextStyle>;
 	activeTextStyle?: StyleProp<TextStyle>;
 }
+
+console.log("[SegmentedPager] rendering PagerView now");
 
 export default function SegmentedPager({ tabs, initialPage = 0, containerStyle, tabStyle, activeTabStyle, textStyle, activeTextStyle }: SegmentedPagerProps) {
 	const pagerRef = useRef<PagerView>(null);
@@ -69,11 +71,13 @@ export default function SegmentedPager({ tabs, initialPage = 0, containerStyle, 
 			>
 				{tabs.map((tab, index) => (
 					<View key={index.toString()} style={styles.page}>
-						{mountedTabs.includes(index)
-							? typeof tab.component === "function"
-								? tab.component()
-								: tab.component
-							: null}
+						{
+							mountedTabs.includes(index) &&
+							(typeof tab.component === "function"
+								? tab.component()       // ✅ call it if it’s a function component
+								: tab.component)        // ✅ otherwise just render the node directly
+						}
+
 					</View>
 				))}
 			</PagerView>

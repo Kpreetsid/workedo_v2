@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
 	},
 	error: {
 		color: "red",
-		fontSize: 12,
+		fontSize: 11,
 		marginTop: 2,
 	},
 })

@@ -1,8 +1,8 @@
-import { Pressable, Text, View, StyleSheet, ToastAndroid } from "react-native";
+import { Pressable, Text, View, StyleSheet, ToastAndroid, FlatList } from "react-native";
 import Fonts from "@/constants/Typography";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import WorkOrderCard from "@/components/work-orders/WorkOrderCard";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, ListRenderItem } from "@shopify/flash-list";
 import { getWorkOrders } from "@/src/services/work-order.service";
 import { AssignedUser, WorkOrder } from "@/src/types/workOrder";
 import { useAuthStore } from "@/src/store/useAuthStore";
@@ -67,6 +67,11 @@ export default function ToDoTab() {
 		setRefreshing(false);
 	};
 
+	const renderWorkOrderItem = useCallback(
+		({ item }: { item: WorkOrder }) => <WorkOrderCard item={item} isSelected={selectedId === item.id} />,
+		[selectedId]
+	);
+
 	return (
 		<>
 			<View style={styles.buttonContainer}>
@@ -80,17 +85,22 @@ export default function ToDoTab() {
 				))}
 			</View>
 
-			<FlashList
-				data={selectedButton === 0 ? workOrders : selectedButton === 1 ? createdByMeWorkOrders : openForAllWorkOrders}
+			<FlatList
+				data={
+					(selectedButton === 0
+						? workOrders
+						: selectedButton === 1
+							? createdByMeWorkOrders
+							: openForAllWorkOrders)
+				}
+				keyExtractor={(item) => item.id.toString()} // ensure string
+				renderItem={renderWorkOrderItem}
 				removeClippedSubviews={false}
-				keyExtractor={(item) => item.id}
-				contentContainerStyle={styles.listContainer}
-				renderItem={({ item }) => <WorkOrderCard item={item} isSelected={selectedId === item.id} />}
 				refreshing={refreshing}
 				onRefresh={handleRefresh}
-			// selection for the work orders
-			// onPress={() => setSelectedId(item.id)}
+				contentContainerStyle={styles.listContainer}
 			/>
+
 		</>
 	)
 }

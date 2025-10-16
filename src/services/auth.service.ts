@@ -28,7 +28,7 @@ export const logoutService = async () => {
 };
 
 export const registerService = async (payload: Record<string, any>) => {
-    return await sendRequest('POST', '/register', payload);
+    return await sendRequest('POST', '/registration', payload);
 };
 
 export const getProfileService = async () => {

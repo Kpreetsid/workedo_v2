@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import WorkOrderCard from "@/components/work-orders/WorkOrderCard";
 import { useEffect, useState } from "react";
 import { FlashList } from "@shopify/flash-list";
@@ -38,7 +38,7 @@ export default function DoneTab() {
 	};
 
 	return (
-		<FlashList
+		<FlatList
 			data={workorders || []}
 			removeClippedSubviews={false}
 			keyExtractor={(item) => item.id}

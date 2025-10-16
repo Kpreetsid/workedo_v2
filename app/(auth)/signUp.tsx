@@ -41,6 +41,31 @@ export default function RegisterScreen() {
 
 	const onSubmit = async (values: RegisterFormValues) => {
 		try {
+			console.log('form values = ', values);
+			
+			let payload = {
+				"firstName": "vbhjsbjjcvhbhj",
+				"lastName": "bhjvbsjb",
+				"username": "qawsedvsjmrbchscvjhsftg1",
+				"email": "pawangtm2419+4@gmail.com",
+				"isFirstUser": true,
+				"phone_no": {
+					"number": "01234 567 891",
+					"internationalNumber": "+91 1234 567 891",
+					"nationalNumber": "01234 567 891",
+					"e164Number": "+911234567891",
+					"countryCode": "IN",
+					"dialCode": "+91"
+				},
+				"password": "Password@123",
+				"account_name": "bhvjsbdvskjbcjhsvnjksdhbhj",
+				"type": "bhjsbjcbhj",
+				"description": "xrgfhvbjhn"
+			}
+			console.log('payload sign up = ', payload);
+
+
+
 			// You can send the data to your registerService here
 			await registerService(values);
 			router.push("/otpVerification");

@@ -14,8 +14,6 @@ interface Props {
 }
 
 export default function Detail({ params }: Props) {
-	console.log("params", params);
-
 	const [userModalVisible, setUserModalVisible] = useState(false);
 	const [partsModalVisible, setPartsModalVisible] = useState(false);
 	const [moreInfoModalVisible, setMoreInfoModalVisible] = useState(false);

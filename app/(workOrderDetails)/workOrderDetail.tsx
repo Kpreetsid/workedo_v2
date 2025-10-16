@@ -15,8 +15,6 @@ export default function WorkOrderDetail() {
 
 	const [workOrderData, setWorkOrderData] = useState(work_order_data);
 
-	console.log("work_order_data = ", work_order_data);
-
 	return (
 		<>
 			<Header title="Work Order Details" />

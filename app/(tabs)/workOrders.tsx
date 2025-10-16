@@ -7,17 +7,18 @@ import CreateFAB from "@/components/global/CreateFAB";
 import { useRouter } from "expo-router";
 
 export default function WorkOrders() {
-    const router = useRouter();
+	const router = useRouter();
 
-    return (
-        <>
-            <Header title="Work Orders" />
+	return (
+		<>
+			<Header title="Work Orders" />
 
-            <SegmentedPager tabs={[
-                { label: "To Do", icon: <ToDoIcon />, component: <ToDoTab /> },
-                { label: "Done", icon: <DoneIcon />, component: <DoneTab /> }]} />
+			<SegmentedPager tabs={[
+				{ label: "To Do", icon: <ToDoIcon />, component: () => <ToDoTab /> },
+				{ label: "Done", icon: <DoneIcon />, component: () => <DoneTab /> }]}
+			/>
 
-            <CreateFAB label="Create Work Order" onPress={() => router.push("/newWorkOrder")} />
-        </>
-    );
+			<CreateFAB label="Create Work Order" onPress={() => router.push("/newWorkOrder")} />
+		</>
+	);
 }
