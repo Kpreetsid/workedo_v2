@@ -1,8 +1,11 @@
 import { Image, TouchableOpacity, View, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Drawer, PrevisionLogo } from "@/constants/IconProvider";
+import { useRouter } from "expo-router";
 
 export default function OverviewHeader() {
+    const router = useRouter();
+    
     return (
         <SafeAreaView edges={["top"]} style={styles.safeArea}>
             <View style={styles.headerContainer}>
@@ -13,7 +16,7 @@ export default function OverviewHeader() {
 
                 <PrevisionLogo/>
 
-                <TouchableOpacity style={styles.iconButton} activeOpacity={0.8}>
+                <TouchableOpacity style={styles.iconButton} activeOpacity={0.8} onPress={() => router.push("/myAccount")}>
                     <Image source={require("../../assets/images/UserAvatar.png")} style={styles.avatar} resizeMode="cover"/>
                 </TouchableOpacity>
             </View>
