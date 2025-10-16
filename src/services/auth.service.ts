@@ -34,3 +34,7 @@ export const registerService = async (payload: Record<string, any>) => {
 export const getProfileService = async () => {
     return await sendRequest('GET', '/user/profile');
 };
+
+export const OTPVerificationService = async (payload: Record<string, any>) => {
+    return await sendRequest('POST', endpoints.auth.verifyOTP, payload);
+};

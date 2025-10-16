@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, ToastAndroid, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
 import { Logo } from "@/constants/IconProvider";
@@ -25,15 +25,15 @@ type RegisterFormValues = {
 export default function RegisterScreen() {
 	const { control, handleSubmit, watch, formState: { isSubmitting } } = useForm<RegisterFormValues>({
 		defaultValues: {
-			companyName: "",
-			industryType: "",
-			fullName: "",
-			email: "",
-			phone: "",
-			username: "",
-			password: "",
-			confirmPassword: "",
-			description: "",
+			companyName: "Presage1",
+			industryType: "Insights1",
+			fullName: "tester",
+			email: "vozax.waleed@gmail.com",
+			phone: "03316363051",
+			username: "paksales1",
+			password: "aaaaaa",
+			confirmPassword: "aaaaaa",
+			description: "description test",
 		},
 	});
 
@@ -42,33 +42,43 @@ export default function RegisterScreen() {
 	const onSubmit = async (values: RegisterFormValues) => {
 		try {
 			console.log('form values = ', values);
-			
+
 			let payload = {
-				"firstName": "vbhjsbjjcvhbhj",
-				"lastName": "bhjvbsjb",
-				"username": "qawsedvsjmrbchscvjhsftg1",
-				"email": "pawangtm2419+4@gmail.com",
+				"firstName": values.fullName.split(' ')[0],
+				"lastName": values.fullName.split(' ')[1],
+				"username": values.username,
+				"email": values.email,
 				"isFirstUser": true,
 				"phone_no": {
-					"number": "01234 567 891",
-					"internationalNumber": "+91 1234 567 891",
-					"nationalNumber": "01234 567 891",
-					"e164Number": "+911234567891",
+					"number": values.phone,
+					"internationalNumber": values.phone,
+					"nationalNumber": values.phone,
+					"e164Number": values.phone,
 					"countryCode": "IN",
 					"dialCode": "+91"
 				},
-				"password": "Password@123",
-				"account_name": "bhvjsbdvskjbcjhsvnjksdhbhj",
-				"type": "bhjsbjcbhj",
-				"description": "xrgfhvbjhn"
+				"password": values.password,
+				"account_name": values.companyName,
+				"type": values.industryType,
+				"description": values.description
 			}
 			console.log('payload sign up = ', payload);
 
-
-
 			// You can send the data to your registerService here
-			await registerService(values);
-			router.push("/otpVerification");
+			try {
+				const res = await registerService(payload);
+				console.log('res sign up = ', res);
+				if(res?.status) {
+					ToastAndroid.show(res.message, ToastAndroid.LONG);
+					router.push({
+						pathname: "/otpVerification",
+						params: {data: JSON.stringify(payload)}
+					});
+				}
+			} catch (e: any) {
+				console.log('error in sign up = ', e);
+				ToastAndroid.show(e.message, ToastAndroid.LONG);
+			}
 		} catch (err: any) {
 			console.error("Register failed:", err?.message || err);
 		}

@@ -8,6 +8,7 @@ export const endpoints = {
     details: 'users/',
     logout: '/',
     profile: 'users/profile',
+    verifyOTP: 'registration/verifyOTP'
   },
   overview: {
     kpi: 'master/locations/kpi-filter',
