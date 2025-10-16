@@ -78,7 +78,7 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 										setWorkForm("location", item);
 									} else if (comingFrom === "newWorkRequest") {
 										setWorkRequestForm("location", item);
-									} else if(comingFrom === "createPart") {
+									} else if (comingFrom === "createPart") {
 										setPartFormValue("location", item);
 									} else {
 										setFormValue("location", item);

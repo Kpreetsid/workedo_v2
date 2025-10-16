@@ -28,6 +28,7 @@ export const endpoints = {
   },
   location: {
     tree: 'master/locations/tree',
+    get: 'master/locations',
     topLevelAssets: 'master/assets',
     assetsHealthLocation: 'get_asset_health_location_api/'
   },
@@ -50,5 +51,11 @@ export const endpoints = {
     requests: 'work/requests',
     approveRequest: 'work/requests/approve',
     rejectRequest: 'work/requests/reject'
+  },
+  gateways: {
+    sensorsList: 'master/locations/sensor-list',
+    get: 'get_gateway_list/',
+    validate: 'validate_sensor/',
+    save: 'save_gateway_devices/'
   }
 };

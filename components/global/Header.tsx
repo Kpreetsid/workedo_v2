@@ -6,13 +6,15 @@ import {router} from "expo-router";
 
 interface HeaderProps {
     title: string;
+    modal?: boolean;
+    dismiss?: () => void | null;
 }
 
-export default function Header({ title }: HeaderProps) {
+export default function Header({ title, modal = false, dismiss }: HeaderProps) {
     return (
         <SafeAreaView edges={["top"]} style={styles.safeArea}>
             <View style={styles.headerContainer}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <TouchableOpacity onPress={() => modal ? dismiss!() : router.back()} style={styles.backButton}>
                     <ArrowBack />
                 </TouchableOpacity>
                 <Text style={styles.title}>{title}</Text>
