@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>workedo</string>
-          <string>com.anonymous.Workedo</string>
+          <string>com.app.workedo</string>
         </array>
       </dict>
     </array>

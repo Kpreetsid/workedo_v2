@@ -28,7 +28,7 @@
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.anonymous.Workedo"
+      "package": "com.app.workedo"
     },
     "web": {
       "favicon": "./assets/images/splash.png"
