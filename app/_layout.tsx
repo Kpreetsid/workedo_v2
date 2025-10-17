@@ -31,6 +31,5 @@ export default function RootLayout() {
 				navigationBarColor: "#742BDE", animation: "flip", animationTypeForReplace: "push"
 			}} />
 		</KeyboardProvider>
-
 	)
 }

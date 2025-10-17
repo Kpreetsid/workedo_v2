@@ -3,48 +3,51 @@ import { create } from "zustand";
 export interface WorkRequestFormData {
 	title: string;
 	message: string;
-	location: any | null; // full location object
+	location: any | null;
 	selected_asset: any | null;
-	nature_of_work: string; // Problem Type
+	nature_of_work: string;
 	priority: string;
-	completion_days: string; // Estimation Duration
+	completion_days: string;
 	files: any[];
 }
 
 interface WorkRequestStore {
-	workRequestForm: WorkRequestFormData;
+	title: string;
+	message: string;
+	location: any | null;
+	selected_asset: any | null;
+	nature_of_work: string;
+	priority: string;
+	completion_days: string;
+	files: any[];
 	setWorkRequestForm: (key: keyof WorkRequestFormData, value: any) => void;
 	resetWorkRequestForm: () => void;
 }
 
 export const useWorkRequestStore = create<WorkRequestStore>((set) => ({
-	workRequestForm: {
-		title: "",
-		message: "",
-		location: null,
-		selected_asset: null,
-		nature_of_work: "",
-		priority: "",
-		completion_days: "",
-		files: [],
-	},
+	title: "",
+	message: "",
+	location: null,
+	selected_asset: null,
+	nature_of_work: "",
+	priority: "",
+	completion_days: "",
+	files: [],
 
 	setWorkRequestForm: (key, value) =>
 		set((state) => ({
-			workRequestForm: { ...state.workRequestForm, [key]: value },
+			...state, [key]: value
 		})),
 
 	resetWorkRequestForm: () =>
 		set({
-			workRequestForm: {
-				title: "",
-				message: "",
-				location: null,
-				selected_asset: null,
-				nature_of_work: "",
-				priority: "",
-				completion_days: "",
-				files: [],
-			},
+			title: "",
+			message: "",
+			location: null,
+			selected_asset: null,
+			nature_of_work: "",
+			priority: "",
+			completion_days: "",
+			files: [],
 		}),
 }));

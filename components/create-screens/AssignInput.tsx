@@ -23,28 +23,28 @@ const AssignInput: FC<AssignInputProps> = ({ label, comingFrom, required = true,
 
 	// console.log('coming from in assign input = ', label, comingFrom);
 
-	const selectedPartLocation = usePreventiveStore((state) => state.formData.location);
-	const assignedUsers = usePreventiveStore((state) => state.formData.assigned_users);
-	const startDate = usePreventiveStore((state) => state.formData.start_date);
-	const selectedAsset = usePreventiveStore((state) => state.formData.selected_asset);
+	const selectedPartLocation = usePreventiveStore((state) => state.location);
+	const assignedUsers = usePreventiveStore((state) => state.assigned_users);
+	const startDate = usePreventiveStore((state) => state.start_date);
+	const selectedAsset = usePreventiveStore((state) => state.selected_asset);
 
 
 	// newWorkOrder
-	const workOrderLocation = useWorkOrderStore((state) => state.workForm.location);
-	const workOrderUsers = useWorkOrderStore((state) => state.workForm.assigned_users);
-	const workOrderStartDate = useWorkOrderStore((state) => state.workForm.start_date);
-	const workOrderEndDate = useWorkOrderStore((state) => state.workForm.end_date);
-	const workOrderAsset = useWorkOrderStore((state) => state.workForm.selected_asset);
+	const workOrderLocation = useWorkOrderStore((state) => state.location);
+	const workOrderUsers = useWorkOrderStore((state) => state.assigned_users);
+	const workOrderStartDate = useWorkOrderStore((state) => state.start_date);
+	const workOrderEndDate = useWorkOrderStore((state) => state.end_date);
+	const workOrderAsset = useWorkOrderStore((state) => state.selected_asset);
 
 	// newWorkRequest
-	const workRequestLocation = useWorkRequestStore((state) => state.workRequestForm.location);
-	const workRequestAsset = useWorkRequestStore((state) => state.workRequestForm.selected_asset);
+	const workRequestLocation = useWorkRequestStore((state) => state.location);
+	const workRequestAsset = useWorkRequestStore((state) => state.selected_asset);
 
 	// create Part
-	const partLocation = usePartFormStore((state) => state.partForm.location);
+	const partLocation = usePartFormStore((state) => state.location);
 
 	return (
-		<View style={[styles.container, containerStyle]}>
+		<Pressable style={[styles.container, containerStyle]} onPress={onPress}>
 			<View style={styles.labelContainer}>
 				<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
 					<Text style={[styles.labelText, labelStyle]}>{label}</Text>
@@ -131,11 +131,11 @@ const AssignInput: FC<AssignInputProps> = ({ label, comingFrom, required = true,
 					</View>
 				)}
 			</View>
-			<Pressable style={[styles.buttonContainer, buttonStyle]} onPress={onPress}>
+			<View style={[styles.buttonContainer, buttonStyle]}>
 				<Text style={[styles.buttonText, buttonTextStyle]}>Assign</Text>
 				<ArrowRight />
-			</Pressable>
-		</View>
+			</View>
+		</Pressable>
 	);
 };
 

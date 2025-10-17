@@ -15,7 +15,9 @@ const ASSIGN_OPTIONS: RadioOption[] = [
 ];
 
 export default function AssignSchedule() {
-  const { formData, setFormValue } = usePreventiveStore();
+  const { setPreventiveValue } = usePreventiveStore();
+  const assign_to = usePreventiveStore((s) => s.assign_to);
+  const schedule = usePreventiveStore((s) => s.schedule);
 
   return (
     <View style={styles.scheduleAssign}>
@@ -28,8 +30,8 @@ export default function AssignSchedule() {
           </View>
           <RadioGroup
             options={ASSIGN_OPTIONS}
-            selectedValue={formData.assign_to}
-            onChange={(option) => setFormValue("assign_to", option)}
+            selectedValue={assign_to}
+            onChange={(option) => setPreventiveValue("assign_to", option)}
           />
         </View>
 
@@ -41,8 +43,8 @@ export default function AssignSchedule() {
           </View>
           <RadioGroup
             options={SCHEDULE_OPTIONS}
-            selectedValue={formData.schedule}
-            onChange={(option) => setFormValue("schedule", option)}
+            selectedValue={schedule}
+            onChange={(option) => setPreventiveValue("schedule", option)}
           />
         </View>
       </View>

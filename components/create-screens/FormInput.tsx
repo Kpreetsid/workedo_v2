@@ -17,6 +17,7 @@ interface FormInputProps extends TextInputProps {
 }
 
 const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", selectedPart, setSelectedPart, containerStyle, labelStyle, inputStyle, inputContainer, ...textInputProps }) => {
+
 	return (
 		<>
 			{
@@ -29,7 +30,7 @@ const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", 
 
 						<View style={[styles.field, inputContainer]}>
 							<TextInput
-								style={[styles.inputField, inputStyle]}
+								style={[styles.inputField, inputStyle, label === "Message" && styles.messageInput]}
 								placeholderTextColor="#6B788899"
 								{...textInputProps}
 							/>
@@ -56,9 +57,9 @@ const styles = StyleSheet.create({
 	},
 	labelText: {
 		fontSize: 12,
-		fontFamily: Fonts.regular,
+		fontFamily: Fonts.semiBold,
+		color: "#201f23",
 		lineHeight: 20,
-		color: "#1C1C1C",
 	},
 	asterisk: {
 		color: "#D63928",
@@ -79,5 +80,9 @@ const styles = StyleSheet.create({
 		fontSize: 12,
 		color: "#1C1C1C",
 		fontFamily: Fonts.light,
+	},
+	messageInput: {
+		height: 80,
+		textAlignVertical: "top"
 	},
 });

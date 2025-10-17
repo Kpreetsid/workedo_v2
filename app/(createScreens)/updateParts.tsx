@@ -24,7 +24,8 @@ export default function UpdateParts() {
 
 	const [parts, setParts] = useState<any[]>([]);
 	const { formData, setFormValue } = usePreventiveStore();
-	const { workForm, setWorkForm } = useWorkOrderStore();
+	const { setWorkForm } = useWorkOrderStore();
+	const workOrderParts = useWorkOrderStore((state) => state.parts);
 	const quantityNeeded = useRef(0);
 
 	useEffect(() => {
@@ -136,8 +137,8 @@ export default function UpdateParts() {
 				{
 					comingFrom === "newWorkOrder" ?
 						<View style={styles.partsContainer}>
-							{workForm.parts.length > 0 &&
-								workForm.parts.map((part: any, index: number) => (
+							{workOrderParts.length > 0 &&
+								workOrderParts.map((part: any, index: number) => (
 									<View style={styles.partItem} key={index}>
 										<Text style={styles.partText}>{part?.part_name}</Text>
 										<Text style={styles.partText}>({part?.estimatedQuantity})</Text>

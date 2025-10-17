@@ -6,7 +6,7 @@ import Fonts from "@/constants/Typography";
 import { DropDownIcon } from "@/constants/IconProvider";
 import ActionButton from "@/components/create-screens/ActionButton";
 import AssignInputContainer from "@/components/new-work-order/AssignInputContainer";
-import { useWorkOrderStore, WorkOrderFormData } from "@/src/store/useWorkOrderStore";
+import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import DropDownInput from "@/components/create-screens/DropDownInput";
 import { Ionicons } from "@expo/vector-icons";
 import { approveWorkRequest, createWorkOrder } from "@/src/services/work-request.service";
@@ -18,17 +18,14 @@ import moment from "moment";
 import { AssignSection } from "@/components/new-work-order/AssignSection";
 import { useRouter } from "expo-router";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
+import { FormField } from "@/components/global/FormField";
 
 export default function NewWorkOrder() {
 	const router = useRouter();
-	const { workForm, setWorkForm } = useWorkOrderStore();
+	const { setWorkForm } = useWorkOrderStore();
 	const [forms, setForms] = useState<any>([]);
-	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-	const [activeDateField, setActiveDateField] = useState<"start_date" | "end_date" | null>(null);
 
-	useEffect(() => {
-		console.log("Work form title = ", workForm.title);
-	}, [workForm.title]);
+	const parts = useWorkOrderStore((state) => state.parts);
 
 	useEffect(() => {
 		const fetchForms = async () => {
@@ -46,21 +43,18 @@ export default function NewWorkOrder() {
 	}, []);
 
 	const handleRemovePart = (partId: string) => {
-		const updatedParts = workForm.parts.filter(
+		const updatedParts = parts.filter(
 			(p: any) => p.id !== partId && p._id !== partId
 		);
 		setWorkForm("parts", updatedParts);
 	};
 
 	const handleSubmit = async () => {
-		const { workForm } = useWorkOrderStore.getState();
-		console.log("Work Order Form =", workForm);
-
-		// setWorkForm("title", titleRef.current);
-		// setWorkForm("message", messageRef.current);
+		const data: any = useWorkOrderStore.getState();
+		console.log("Work Order Form =", data);
 
 		// ✅ Basic validation
-		const required: (keyof typeof workForm)[] = [
+		const required: (keyof typeof data)[] = [
 			"title",
 			"message",
 			"assigned_users",
@@ -75,7 +69,7 @@ export default function NewWorkOrder() {
 		];
 
 		for (const field of required) {
-			if (!workForm[field]) {
+			if (!data[field]) {
 				const label = (field as string)
 					.replace(/_/g, " ")
 					.replace(/\b\w/g, (c) => c.toUpperCase());
@@ -86,30 +80,30 @@ export default function NewWorkOrder() {
 
 		// ✅ Build final payload matching your structure
 		let payload = {
-			createdFrom: workForm.work_request_id ? "Work Request" : "Work Order",
-			description: workForm.message,
-			end_date: workForm.end_date || new Date().toISOString().split("T")[0],
-			estimated_time: workForm.completion_days, // using completion_days for hours/days input
-			files: workForm.files || [],
-			parts: workForm.parts?.map((p: any) => ({
+			createdFrom: data.work_request_id ? "Work Request" : "Work Order",
+			description: data.message,
+			end_date: data.end_date || new Date().toISOString().split("T")[0],
+			estimated_time: data.completion_days, // using completion_days for hours/days input
+			files: data.files || [],
+			parts: data.parts?.map((p: any) => ({
 				part_id: p.part_id || p._id,
 				part_name: p.part_name,
 				part_type: p.part_type,
 				estimatedQuantity: p.quantity_needed || 1,
 			})) || [],
-			priority: workForm.priority,
+			priority: data.priority,
 			sop_form_id: null,
-			// sop_form_id: workForm.sop_form_id || null,
-			start_date: workForm.start_date || new Date().toISOString().split("T")[0],
+			// sop_form_id: data.sop_form_id || null,
+			start_date: data.start_date || new Date().toISOString().split("T")[0],
 			status: "Open",
-			title: workForm.title,
-			type: workForm.nature_of_work,
-			userIdList: workForm.assigned_users?.map((u: any) => u.id) || [],
-			wo_asset_id: workForm.selected_asset?.id || "",
-			wo_location_id: workForm.location?.id || "",
+			title: data.title,
+			type: data.nature_of_work,
+			userIdList: data.assigned_users?.map((u: any) => u.id) || [],
+			wo_asset_id: data.selected_asset?.id || "",
+			wo_location_id: data.location?.id || "",
 
 			// ✅ Conditionally include work_request_id
-			...(workForm.work_request_id && { work_request_id: workForm.work_request_id }),
+			...(data.work_request_id && { work_request_id: data.work_request_id }),
 		};
 
 		console.log("📦 Final Work Order Payload:", payload);
@@ -119,10 +113,10 @@ export default function NewWorkOrder() {
 			console.log("✅ Response:", res);
 			if (res?.status) {
 
-				if(workForm.work_request_id) {
-					const approveRes = await approveWorkRequest(workForm.work_request_id);
+				if (data.work_request_id) {
+					const approveRes = await approveWorkRequest(data.work_request_id);
 					console.log("✅ Approve Response:", approveRes);
-					if(approveRes.status) {
+					if (approveRes.status) {
 						ToastAndroid.show("Work Order created successfully and Work Request approved!", ToastAndroid.SHORT);
 						useWorkRequestStore.getState().resetWorkRequestForm();
 						router.replace("/requests")
@@ -130,7 +124,7 @@ export default function NewWorkOrder() {
 				}
 
 				useWorkOrderStore.getState().resetForm();
-				if(!workForm.work_request_id) {
+				if (!data.work_request_id) {
 					ToastAndroid.show("Work Order created successfully!", ToastAndroid.SHORT);
 					router.back();
 				}
@@ -141,7 +135,6 @@ export default function NewWorkOrder() {
 		}
 	};
 
-
 	return (
 		<>
 			<Header title="New Work Order" />
@@ -149,24 +142,21 @@ export default function NewWorkOrder() {
 			<KeyboardAwareScrollView bottomOffset={30}>
 				<ScrollView style={styles.container}>
 					<View style={styles.subContainer}>
-						<FormInput
+
+						<FormField
 							label="Title"
 							placeholder="Enter Title"
-							value={workForm.title}
-							labelStyle={styles.label}
-							inputStyle={styles.value}
-							inputContainer={styles.inputContainer}
-							onChangeText={(text) => setWorkForm("title", text)}
+							field="title"
+							store={useWorkOrderStore}
+							setterName="setWorkForm"
 						/>
 
-						<FormInput
+						<FormField
 							label="Message"
 							placeholder="Enter a message"
-							value={workForm.message}
-							labelStyle={styles.label}
-							inputStyle={styles.messageInput}
-							inputContainer={styles.inputContainer}
-							onChangeText={(text) => setWorkForm("message", text)}
+							field="message"
+							store={useWorkOrderStore}
+							setterName="setWorkForm"
 						/>
 
 					</View>
@@ -177,85 +167,33 @@ export default function NewWorkOrder() {
 
 					<View style={styles.row}>
 
-						<DropDownInput
+						<FormField
 							label="Problem Type"
-							value={workForm.nature_of_work}
+							type="dropdown"
+							field="nature_of_work"
 							options={["Preventive", "Electrical", "Break Down", "Inspection", "Corrective", "Safety", "Upgrade", "Meter Reading", "Mechanical", "Other"]}
-							containerStyle={[styles.inputContainer, { flex: 1 }]}
-							onSelect={(val) => {
-								setWorkForm("nature_of_work", val);
-							}}
+							store={useWorkOrderStore}
+							setterName="setWorkForm"
 						/>
 
-						<DropDownInput
+						<FormField
 							label="Priority"
-							value={workForm.priority}
+							type="dropdown"
+							field="priority"
 							options={["None", "Low", "Medium", "High"]}
-							containerStyle={[styles.inputContainer, { flex: 1 }]}
-							onSelect={(val) => {
-								setWorkForm("priority", val);
-							}}
+							store={useWorkOrderStore}
+							setterName="setWorkForm"
 						/>
 
 					</View>
 
-					<FormInput
+					<FormField
 						label="Estimation Duration"
-						labelStyle={styles.label}
-						placeholder="Estimation Hours"
-						containerStyle={styles.inputContainer}
-						value={workForm.completion_days}
-						onChangeText={(text) => setWorkForm("completion_days", text)}
+						placeholder="Enter Estimation Duration"
+						field="completion_days"
+						store={useWorkOrderStore}
+						setterName="setWorkForm"
 					/>
-
-					{/* <View style={styles.row}>
-
-						<DropDownInput
-							label="Select SOP Form"
-							value={workForm.sop_form_id}
-							options={forms?.map((form: any) => form.name)}
-							containerStyle={styles.inputContainer}
-							onSelect={(val) => { setWorkForm("sop_form_id", val); }}
-						/>
-
-						<FormInput
-							label="Estimation Duration"
-							labelStyle={styles.label}
-							placeholder="Estimation Hours"
-							containerStyle={styles.inputContainer}
-							value={workForm.completion_days}
-							onChangeText={(text) => setWorkForm("completion_days", text)}
-						/>
-
-					</View> */}
-
-
-					{/* <View style={styles.subContainer}>
-					<View style={styles.dropdownsRow}>
-						<View style={styles.dropdownContainer}>
-							<Text style={styles.dropdownTitle}>Problem Type</Text>
-							<Pressable style={styles.dropdown}>
-								<Text style={styles.dropdownItemText}>General</Text>
-								<DropDownIcon />
-							</Pressable>
-						</View>
-						<View style={styles.dropdownContainer}>
-							<Text style={styles.dropdownTitle}>Priority</Text>
-							<Pressable style={styles.dropdown}>
-								<Text style={styles.dropdownItemText}>None</Text>
-								<DropDownIcon />
-							</Pressable>
-						</View>
-
-						<View style={styles.dropdownContainer}>
-							<Text style={styles.dropdownTitle} numberOfLines={1} adjustsFontSizeToFit>Estimation Duration</Text>
-							<Pressable style={styles.dropdown}>
-								<Text style={styles.dropdownItemText}>Hours</Text>
-								<DropDownIcon />
-							</Pressable>
-						</View>
-					</View>
-				</View> */}
 
 					<View style={{ marginHorizontal: 0 }}>
 						<AssignInput label="Add Parts" comingFrom="newWorkOrder" onPress={() => router.push({
@@ -265,8 +203,8 @@ export default function NewWorkOrder() {
 					</View>
 
 					<View style={styles.partsContainer}>
-						{workForm.parts.length > 0 &&
-							workForm.parts.map((part: any, index: number) => (
+						{parts.length > 0 &&
+							parts.map((part: any, index: number) => (
 								<View style={styles.partItem} key={index}>
 									<Text style={styles.partText}>{part?.part_name}</Text>
 									<Text style={styles.partText}>({part?.estimatedQuantity})</Text>
@@ -276,22 +214,6 @@ export default function NewWorkOrder() {
 								</View>
 							))}
 					</View>
-
-					<DatePicker
-						visible={isDatePickerVisible}
-						onClose={() => setIsDatePickerVisible(false)}
-						onDateSelect={(date) => {
-							const formattedDate = moment(date).format("YYYY-MM-DD");
-
-							// ✅ Save to correct field in Zustand store
-							if (activeDateField) {
-								setWorkForm(activeDateField, formattedDate);
-							}
-
-							setIsDatePickerVisible(false);
-							setActiveDateField(null);
-						}}
-					/>
 
 					<Pressable style={styles.uploadBtn}>
 						<Text style={styles.uploadBtnText}>Upload or Capture Photos</Text>

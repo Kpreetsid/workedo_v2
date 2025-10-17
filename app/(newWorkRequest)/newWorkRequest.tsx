@@ -6,7 +6,7 @@ import Fonts from "@/constants/Typography";
 import { DropDownIcon } from "@/constants/IconProvider";
 import ActionButton from "@/components/create-screens/ActionButton";
 import AssignInputContainer from "@/components/new-work-order/AssignInputContainer";
-import { useWorkOrderStore, WorkOrderFormData } from "@/src/store/useWorkOrderStore";
+import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import DropDownInput from "@/components/create-screens/DropDownInput";
 import { Ionicons } from "@expo/vector-icons";
 import { createWorkOrder, createWorkRequest } from "@/src/services/work-request.service";
@@ -18,19 +18,20 @@ import moment from "moment";
 import { AssignSection } from "@/components/new-work-order/AssignSection";
 import { useRouter } from "expo-router";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
+import { FormField } from "@/components/global/FormField";
 
 export default function NewWorkRequest() {
 	const router = useRouter();
-	const { workRequestForm, setWorkRequestForm } = useWorkRequestStore();
+	const { setWorkRequestForm } = useWorkRequestStore();
 	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 	const [activeDateField, setActiveDateField] = useState<"start_date" | "end_date" | null>(null);
 
 	const handleSubmit = async () => {
-		const { workRequestForm } = useWorkRequestStore.getState();
-		console.log("Work request Form =", workRequestForm);
+		const data: any = useWorkRequestStore.getState();
+		console.log("Work request Form =", data);
 
 		// ✅ Basic validation
-		const required: (keyof typeof workRequestForm)[] = [
+		const required: (keyof typeof data)[] = [
 			"title",
 			"message",
 			"location",
@@ -40,7 +41,7 @@ export default function NewWorkRequest() {
 		];
 
 		for (const field of required) {
-			if (!workRequestForm[field]) {
+			if (!data[field]) {
 				const label = (field as string)
 					.replace(/_/g, " ")
 					.replace(/\b\w/g, (c) => c.toUpperCase());
@@ -51,14 +52,14 @@ export default function NewWorkRequest() {
 
 		// ✅ Build final payload matching your structure
 		const payload = {
-			asset_id: workRequestForm.selected_asset?.id || "",
-			description: workRequestForm.message,
-			files: workRequestForm.files || [],
-			location_id: workRequestForm.location?.id || "",
-			priority: workRequestForm.priority,
-			problemType: workRequestForm.nature_of_work,
+			asset_id: data.selected_asset?.id || "",
+			description: data.message,
+			files: data.files || [],
+			location_id: data.location?.id || "",
+			priority: data.priority,
+			problemType: data.nature_of_work,
 			status: "Open",
-			title: workRequestForm.title
+			title: data.title
 		};
 
 		console.log("📦 Final Work Request Payload:", payload);
@@ -84,24 +85,21 @@ export default function NewWorkRequest() {
 			<KeyboardAwareScrollView bottomOffset={30}>
 				<ScrollView style={styles.container}>
 					<View style={styles.subContainer}>
-						<FormInput
+
+						<FormField
 							label="Title"
 							placeholder="Enter Title"
-							value={workRequestForm.title}
-							labelStyle={styles.label}
-							inputStyle={styles.value}
-							inputContainer={styles.inputContainer}
-							onChangeText={(text) => setWorkRequestForm("title", text)}
+							field="title"
+							store={useWorkRequestStore}
+							setterName="setWorkRequestForm"
 						/>
 
-						<FormInput
+						<FormField
 							label="Message"
 							placeholder="Enter a message"
-							value={workRequestForm.message}
-							labelStyle={styles.label}
-							inputStyle={styles.messageInput}
-							inputContainer={styles.inputContainer}
-							onChangeText={(text) => setWorkRequestForm("message", text)}
+							field="message"
+							store={useWorkRequestStore}
+							setterName="setWorkRequestForm"
 						/>
 
 					</View>
@@ -112,24 +110,22 @@ export default function NewWorkRequest() {
 
 					<View style={styles.row}>
 
-						<DropDownInput
+						<FormField
 							label="Problem Type"
-							value={workRequestForm.nature_of_work}
+							type="dropdown"
+							field="nature_of_work"
 							options={["Preventive", "Electrical", "Break Down", "Inspection", "Corrective", "Safety", "Upgrade", "Meter Reading", "Mechanical", "Other"]}
-							containerStyle={[styles.inputContainer, { flex: 1 }]}
-							onSelect={(val) => {
-								setWorkRequestForm("nature_of_work", val);
-							}}
+							store={useWorkRequestStore}
+							setterName="setWorkRequestForm"
 						/>
 
-						<DropDownInput
+						<FormField
 							label="Priority"
-							value={workRequestForm.priority}
+							type="dropdown"
+							field="priority"
 							options={["None", "Low", "Medium", "High"]}
-							containerStyle={[styles.inputContainer, { flex: 1 }]}
-							onSelect={(val) => {
-								setWorkRequestForm("priority", val);
-							}}
+							store={useWorkRequestStore}
+							setterName="setWorkRequestForm"
 						/>
 
 					</View>

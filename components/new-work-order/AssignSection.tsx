@@ -6,11 +6,14 @@ import AssignInput from "../create-screens/AssignInput";
 import DatePicker from "../global/DatePicker";
 import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
+import { FormField } from "../global/FormField";
 
 export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => {
 	const router = useRouter();
-	const { workForm, setWorkForm } = useWorkOrderStore();
-	const { workRequestForm } = useWorkRequestStore();
+	const { setWorkForm } = useWorkOrderStore();
+
+	const workOrderLocation = useWorkOrderStore((state) => state.location);
+	const workRequestLocation = useWorkRequestStore((state) => state.location);
 
 	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 	const [activeDateField, setActiveDateField] = useState<"start_date" | "end_date" | null>(null);
@@ -20,51 +23,51 @@ export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => 
 			{/* --- Location --- */}
 			{
 				type === "requests" ?
-					<AssignInput
+					<FormField
 						label="Location"
+						type="location"
+						field="location"
+						router={router}
 						comingFrom="newWorkRequest"
-						onPress={() =>
-							router.push({
-								pathname: "/selectLocation",
-								params: { comingFrom: "newWorkRequest" },
-							})
-						}
+						store={useWorkRequestStore}
+						setterName="setWorkRequestForm"
 					/>
 					:
-					<AssignInput
+					<FormField
 						label="Location"
+						type="location"
+						field="location"
+						router={router}
 						comingFrom="newWorkOrder"
-						onPress={() =>
-							router.push({
-								pathname: "/selectLocation",
-								params: { comingFrom: "newWorkOrder" },
-							})
-						}
+						store={useWorkOrderStore}
+						setterName="setWorkForm"
 					/>
 			}
 
 
 			{
 				type === "requests" ?
-					workRequestForm.location && (
-						<AssignInput
+					workRequestLocation && (
+						<FormField
 							label="Asset"
+							type="asset"
+							field="selected_asset"
+							router={router}
 							comingFrom="newWorkRequest"
-							onPress={() => router.push({
-								pathname: "/selectAsset",
-								params: { comingFrom: "newWorkRequest" }
-							})}
+							store={useWorkRequestStore}
+							setterName="setWorkRequestForm"
 						/>
 					)
 					:
-					workForm.location && (
-						<AssignInput
+					workOrderLocation && (
+						<FormField
 							label="Asset"
+							type="asset"
+							field="selected_asset"
+							router={router}
 							comingFrom="newWorkOrder"
-							onPress={() => router.push({
-								pathname: "/selectAsset",
-								params: { comingFrom: "newWorkOrder" }
-							})}
+							store={useWorkOrderStore}
+							setterName="setWorkForm"
 						/>
 					)
 			}
@@ -74,35 +77,39 @@ export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => 
 				<View>
 
 					{/* --- Assign User --- */}
-					<AssignInput
+					<FormField
 						label="Assign User"
+						type="user"
+						field="assigned_users"
+						router={router}
 						comingFrom="newWorkOrder"
-						onPress={() =>
-							router.push({
-								pathname: "/selectUser",
-								params: { comingFrom: "newWorkOrder" },
-							})
-						}
-					/>
+						store={useWorkOrderStore}
+						setterName="setWorkForm" />
 
 					{/* --- Start Date --- */}
-					<AssignInput
+					<FormField
 						label="Start Date"
+						type="date"
+						field="start_date"
+						router={router}
 						comingFrom="newWorkOrder"
-						onPress={() => {
-							setActiveDateField("start_date");
-							setIsDatePickerVisible(true);
-						}}
+						store={useWorkOrderStore}
+						setterName="setWorkForm"
+						setActiveDateField={setActiveDateField}
+						setIsDatePickerVisible={setIsDatePickerVisible}
 					/>
 
 					{/* --- End Date --- */}
-					<AssignInput
+					<FormField
 						label="End Date"
+						type="date"
+						field="end_date"
+						router={router}
 						comingFrom="newWorkOrder"
-						onPress={() => {
-							setActiveDateField("end_date");
-							setIsDatePickerVisible(true);
-						}}
+						store={useWorkOrderStore}
+						setterName="setWorkForm"
+						setActiveDateField={setActiveDateField}
+						setIsDatePickerVisible={setIsDatePickerVisible}
 					/>
 
 					{/* --- Date Picker --- */}

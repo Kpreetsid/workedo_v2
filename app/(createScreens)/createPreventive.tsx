@@ -16,11 +16,13 @@ import DropDownInput from "@/components/create-screens/DropDownInput";
 import Fonts from "@/constants/Typography";
 import { Ionicons } from "@expo/vector-icons";
 import { createPreventive, getSOPs } from "@/src/services/preventive.service";
+import { FormField } from "@/components/global/FormField";
 
 export default function CreatePreventive() {
 	const router = useRouter();
 	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-	const { formData, setFormValue, resetForm } = usePreventiveStore();
+	const { setPreventiveValue, resetForm } = usePreventiveStore();
+	const preventiveLocation = usePreventiveStore((s) => s.location);
 	const [forms, setForms] = useState<any>([]);
 
 	useEffect(() => {
@@ -39,8 +41,8 @@ export default function CreatePreventive() {
 	}, []);
 
 	const handleSubmit = async () => {
-		const { formData } = usePreventiveStore.getState();
-		console.log("formData", formData);
+		const data: any = usePreventiveStore.getState();
+		console.log("formData", data);
 
 		// ✅ Basic validation (optional)
 		const required: (keyof PreventiveFormData)[] = [
@@ -58,7 +60,7 @@ export default function CreatePreventive() {
 		];
 
 		for (const field of required) {
-			if (!formData[field]) {
+			if (!data[field]) {
 				const label = (field as string)
 					.replace(/_/g, " ")
 					.replace(/\b\w/g, (c) => c.toUpperCase());
@@ -69,36 +71,36 @@ export default function CreatePreventive() {
 
 		// ✅ Prepare payload
 		const payload = {
-			title: formData.title.trim(),
-			description: formData.description.trim(),
+			title: data.title.trim(),
+			description: data.description.trim(),
 
 			schedule: {
-				mode: formData.schedule || "daily",
+				mode: data.schedule || "daily",
 				enabled: true,
 				no_of_repetition: 12, // default (can make dynamic)
-				start_date: formData.start_date,
+				start_date: data.start_date,
 				end_date: "", // can later compute based on repetition
-				[formData.schedule || "daily"]: {}, // dynamic key
+				[data.schedule || "daily"]: {}, // dynamic key
 			},
 
 			work_order: {
-				title: formData.title.trim(),
-				description: formData.description.trim(),
-				type: formData.nature_of_work || "Preventive",
+				title: data.title.trim(),
+				description: data.description.trim(),
+				type: data.nature_of_work || "Preventive",
 				status: "Open",
-				priority: formData.priority || "Low",
-				wo_location_id: formData.location?.id || formData.location?._id || "",
-				wo_asset_id: formData.selected_asset?.id || formData.selected_asset?._id || "",
-				estimated_time: Number(formData.completion_days) || 0,
-				start_date: formData.start_date,
+				priority: data.priority || "Low",
+				wo_location_id: data.location?.id || data.location?._id || "",
+				wo_asset_id: data.selected_asset?.id || data.selected_asset?._id || "",
+				estimated_time: Number(data.completion_days) || 0,
+				start_date: data.start_date,
 				end_date: null,
 				createdFrom: "Preventive",
-				userIdList: formData.assigned_users
-					? formData.assigned_users.map((user: any) => user.id || user._id)
+				userIdList: data.assigned_users
+					? data.assigned_users.map((user: any) => user.id || user._id)
 					: [],
-				sop_form_id: forms?.find((f: any) => f.name === formData.sop_form_id)?.id,
+				sop_form_id: forms?.find((f: any) => f.name === data.sop_form_id)?.id,
 				parts:
-					formData.parts?.map((p) => ({
+					data.parts?.map((p: any) => ({
 						part_id: p.id || p._id,
 						part_name: p.part_name,
 						part_type: p.part_type,
@@ -123,10 +125,10 @@ export default function CreatePreventive() {
 	};
 
 	const handleRemovePart = (partId: string) => {
-		const updatedParts = formData.parts.filter(
+		const updatedParts = usePreventiveStore.getState().parts.filter(
 			(p: any) => p.id !== partId && p._id !== partId
 		);
-		setFormValue("parts", updatedParts);
+		setPreventiveValue("parts", updatedParts);
 	};
 
 	return (
@@ -135,103 +137,119 @@ export default function CreatePreventive() {
 			<KeyboardAwareScrollView bottomOffset={30}>
 				<View style={{ marginVertical: 5 }} />
 
-				<FormInput
-					label="Part Name"
-					placeholder="Enter Title"
-					value={formData.title}
-					onChangeText={(text) => setFormValue("title", text)}
+				<FormField
+					label="Title"
+					placeholder="Enter Title Name"
+					field="title"
+					store={usePreventiveStore}
+					setterName="setPreventiveValue"
 				/>
 
-				<FormInput
+				<FormField
 					label="Description"
-					placeholder="Enter a message"
-					inputStyle={styles.descriptionInput}
-					value={formData.description}
-					onChangeText={(text) => setFormValue("description", text)}
+					placeholder="Enter Description"
+					field="description"
+					store={usePreventiveStore}
+					setterName="setPreventiveValue"
 				/>
 
-				<AssignInput
+				<FormField
 					label="Location"
-					onPress={() => router.push({
-						pathname: "/selectLocation",
-						params: { comingFrom: "" }
-					})}
+					placeholder="Enter Location"
+					field="location"
+					router={router}
+					comingFrom="createPreventive"
+					store={usePreventiveStore}
+					setterName="setPreventiveValue"
 				/>
 
 				{
-					formData.location && (
-						<AssignInput
+					preventiveLocation && (
+						<FormField
 							label="Asset"
-							onPress={() => router.push({
-								pathname: "/selectAsset",
-								params: { comingFrom: "" }
-							})}
+							placeholder="Enter Asset"
+							field="asset"
+							router={router}
+							comingFrom="createPreventive"
+							store={usePreventiveStore}
+							setterName="setPreventiveValue"
 						/>
 					)
 				}
 
-				<AssignInput
+				<FormField
 					label="Assign User"
-					onPress={() => router.push({
-						pathname: "/selectUser",
-						params: { comingFrom: "" }
-					})}
+					type="user"
+					field="assigned_users"
+					router={router}
+					comingFrom="createPreventive"
+					store={usePreventiveStore}
+					setterName="setPreventiveValue"
 				/>
 
-				<AssignInput label="Start Date" onPress={() => setIsDatePickerVisible(true)} />
+				<FormField
+					label="Start Date"
+					type="date"
+					field="start_date"
+					router={router}
+					comingFrom="createPreventive"
+					store={usePreventiveStore}
+					setterName="setPreventiveValue"
+				/>
 
 				<AssignSchedule />
 
 				<View style={styles.row}>
 
-					<DropDownInput
+					<FormField
 						label="Select SOP Form"
-						value={formData.sop_form_id}
-						options={forms?.map((form: any) => form.name)}
-						containerStyle={styles.inputContainer}
-						onSelect={(val) => { setFormValue("sop_form_id", val); }}
+						type="dropdown"
+						field="sop_form_id"
+						router={router}
+						comingFrom="createPreventive"
+						store={usePreventiveStore}
+						setterName="setPreventiveValue"
 					/>
 
-					<DropDownInput
+					<FormField
 						label="Nature of Work"
-						value={formData.nature_of_work}
-						options={["Preventive", "Electrical", "Break Down", "Inspection", "Corrective", "Safety", "Upgrade", "Meter Reading", "Mechanical", "Other"]}
-						containerStyle={styles.inputContainer}
-						onSelect={(val) => {
-							setFormValue("nature_of_work", val);
-						}}
+						type="dropdown"
+						field="nature_of_work"
+						router={router}
+						comingFrom="createPreventive"
+						store={usePreventiveStore}
+						setterName="setPreventiveValue"
 					/>
 
 				</View>
 
 				<View style={styles.row}>
-					<DropDownInput
+					<FormField
 						label="Priority"
-						value={formData.priority}
-						options={["None", "Low", "Medium", "High"]}
-						containerStyle={styles.inputContainer}
-						onSelect={(val) => {
-							setFormValue("priority", val);
-						}}
+						type="dropdown"
+						field="priority"
+						router={router}
+						comingFrom="createPreventive"
+						store={usePreventiveStore}
+						setterName="setPreventiveValue"
 					/>
 
-					<FormInput
+					<FormField
 						label="No. of Days"
-						labelStyle={styles.label}
-						placeholder="dd-mm-yyyy"
-						containerStyle={styles.inputContainer}
-						value={formData.completion_days}
-						onChangeText={(text) => setFormValue("completion_days", text)}
+						field="completion_days"
+						router={router}
+						comingFrom="createPreventive"
+						store={usePreventiveStore}
+						setterName="setPreventiveValue"
 					/>
 
 				</View>
 
 				<AssignInput label="Add Parts" onPress={() => router.push("/updateParts")} />
-				{/* <AssignInput label="Add Parts" onPress={() => router.push("/selectPart")} /> */}
 
 				<View style={styles.partsContainer}>
-					{formData.parts.length > 0 &&
-						formData.parts.map((part: any, index: number) => (
+					{usePreventiveStore.getState().parts.length > 0 &&
+						usePreventiveStore.getState().parts.map((part: any, index: number) => (
 							<View style={styles.partItem} key={index}>
 								<Text style={styles.partText}>{part?.part_name}</Text>
 								<Text style={styles.partText}>({part?.quantity_needed})</Text>
@@ -250,7 +268,7 @@ export default function CreatePreventive() {
 					onDateSelect={(date) => {
 						// ✅ Format the date before saving
 						const formattedDate = moment(date).format("YYYY-MM-DD");
-						setFormValue("start_date", formattedDate);
+						usePreventiveStore.getState().setPreventiveValue("start_date", formattedDate);
 						setIsDatePickerVisible(false);
 					}}
 				/>

@@ -6,17 +6,20 @@ import ActionButton from "@/components/create-screens/ActionButton";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { router, useRouter } from "expo-router";
 import DropDownInput from "@/components/create-screens/DropDownInput";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocationStore } from "@/src/store/useLocationStore";
 import { usePartFormStore } from "@/src/store/usePartFormStore";
 import { createPart } from "@/src/services/part.service";
+import { FormField } from "@/components/global/FormField";
 
 export default function CreatePart() {
 	const router = useRouter();
-	const { partForm, setPartFormValue, resetPartForm } = usePartFormStore();
+	const { setPartFormValue, resetPartForm } = usePartFormStore();
 
 	const handleSubmit = async () => {
-		const data: any = { ...partForm };
+		console.log('in handle submit');
+		const data: any = usePartFormStore.getState();
+		console.log("📦 Data:", data);
 
 		// ✅ Basic validation
 		const required = ["part_name", "description", "location", "part_number", "available_quantity", "min_stock_quantity", "unit_cost"];
@@ -66,68 +69,24 @@ export default function CreatePart() {
 			<Header title="Create Part" />
 
 			<KeyboardAwareScrollView bottomOffset={30}>
+
 				<View style={{ marginVertical: 5 }} />
 
-				<FormInput
-					label="Part Name"
-					placeholder="Enter Title"
-					value={partForm.part_name}
-					onChangeText={(text) => setPartFormValue("part_name", text)}
-				/>
-
-				<FormInput
-					label="Description"
-					placeholder="Enter a message"
-					inputStyle={styles.descriptionInput}
-					value={partForm.description}
-					onChangeText={(text) => setPartFormValue("description", text)}
-				/>
-
-				<AssignInput
-					label="Location"
-					comingFrom="createPart"
-					onPress={() => router.push({
-						pathname: "/selectLocation",
-						params: { comingFrom: "createPart" }
-					})}
-				/>
-
-				<DropDownInput
+				<FormField label="Part Name" placeholder="Enter Title" field="part_name" store={usePartFormStore} setterName="setPartFormValue" />
+				<FormField label="Description" placeholder="Enter a message" field="description" store={usePartFormStore} setterName="setPartFormValue" />
+				<FormField label="Location" type="location" field="location" router={router} comingFrom="createPart" store={usePartFormStore} setterName="setPartFormValue" />
+				<FormField
 					label="Select Spare Type"
-					value={partForm.selected_part}
+					type="dropdown"
+					field="selected_part"
 					options={["Spare 1", "Spare 2", "Spare 3"]}
-					onSelect={(val) => {
-						setPartFormValue("selected_part", val);
-					}}
+					store={usePartFormStore}
+					setterName="setPartFormValue"
 				/>
-
-				<FormInput
-					label="Part Number"
-					placeholder="Type Number"
-					value={partForm.part_number}
-					onChangeText={(text) => setPartFormValue("part_number", text)}
-				/>
-
-				<FormInput
-					label="Available Quantity"
-					placeholder="Enter Quantity"
-					value={partForm.available_quantity}
-					onChangeText={(text) => setPartFormValue("available_quantity", text)}
-				/>
-
-				<FormInput
-					label="Minimum Stock Quantity"
-					placeholder="Enter Quantity"
-					value={partForm.min_stock_quantity}
-					onChangeText={(text) => setPartFormValue("min_stock_quantity", text)}
-				/>
-
-				<FormInput
-					label="Unit Cost"
-					placeholder="Enter Cost"
-					value={partForm.unit_cost}
-					onChangeText={(text) => setPartFormValue("unit_cost", text)}
-				/>
+				<FormField label="Part Number" placeholder="Type Number" field="part_number" store={usePartFormStore} setterName="setPartFormValue" />
+				<FormField label="Available Quantity" placeholder="Enter Quantity" field="available_quantity" store={usePartFormStore} setterName="setPartFormValue" />
+				<FormField label="Minimum Stock Quantity" placeholder="Enter Quantity" field="min_stock_quantity" store={usePartFormStore} setterName="setPartFormValue" />
+				<FormField label="Unit Cost" placeholder="Enter Cost" field="unit_cost" store={usePartFormStore} setterName="setPartFormValue" />
 
 				<ActionButton label="Submit" onPress={handleSubmit} />
 			</KeyboardAwareScrollView>
@@ -141,4 +100,3 @@ const styles = StyleSheet.create({
 		textAlignVertical: "top"
 	}
 })
-

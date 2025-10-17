@@ -1,68 +1,57 @@
 import { create } from "zustand";
 
-export interface WorkOrderFormData {
+interface WorkOrderStore {
 	title: string;
 	message: string;
-	location: any | null; // full location object
-	assigned_users: any[]; // full user object
+	location: any | null;
+	assigned_users: any[];
 	selected_asset: any | null;
 	start_date: string;
 	end_date: string;
-	nature_of_work: string; // Problem Type
+	nature_of_work: string;
 	sop_form_id: string;
 	priority: string;
-	completion_days: string; // Estimation Duration
+	completion_days: string;
 	parts: any[];
 	files: any[];
 	work_request_id?: string;
-}
-
-interface WorkOrderStore {
-	workForm: WorkOrderFormData;
-	setWorkForm: (key: keyof WorkOrderFormData, value: any) => void;
+	setWorkForm: (key: keyof Omit<WorkOrderStore, "setWorkForm" | "resetForm">, value: any) => void;
 	resetForm: () => void;
 }
 
 export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
-	workForm: {
-		title: "",
-		message: "",
-		location: null,
-		assigned_users: [],
-		selected_asset: null,
-		start_date: "",
-		end_date: "",
-		nature_of_work: "",
-		sop_form_id: "",
-		priority: "",
-		completion_days: "",
-		parts: [],
-		files: [],
-		work_request_id: "",
-	},
+	title: "",
+	message: "",
+	location: null,
+	assigned_users: [],
+	selected_asset: null,
+	start_date: "",
+	end_date: "",
+	nature_of_work: "",
+	sop_form_id: "",
+	priority: "",
+	completion_days: "",
+	parts: [],
+	files: [],
+	work_request_id: "",
 
-	setWorkForm: (key, value) =>
-		set((state) => ({
-			workForm: { ...state.workForm, [key]: value },
-		})),
+	setWorkForm: (key, value) => set({ [key]: value } as any),
 
 	resetForm: () =>
 		set({
-			workForm: {
-				title: "",
-				message: "",
-				location: null,
-				assigned_users: [],
-				selected_asset: null,
-				start_date: "",
-				end_date: "",
-				nature_of_work: "",
-				sop_form_id: "",
-				priority: "",
-				completion_days: "",
-				parts: [],
-				files: [],
-				work_request_id: "",
-			},
+			title: "",
+			message: "",
+			location: null,
+			assigned_users: [],
+			selected_asset: null,
+			start_date: "",
+			end_date: "",
+			nature_of_work: "",
+			sop_form_id: "",
+			priority: "",
+			completion_days: "",
+			parts: [],
+			files: [],
+			work_request_id: "",
 		}),
 }));

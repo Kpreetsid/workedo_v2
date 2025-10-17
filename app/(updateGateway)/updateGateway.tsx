@@ -33,11 +33,11 @@ export default function UpdateGateways() {
 	};
 
 	useEffect(() => {
-		if(params?.data) {
+		if (params?.data) {
 			const data = JSON.parse(params?.data) || "";
 			console.log(data)
 			setmacID(data?.gateway_mac_id)
-			
+
 			fetchLocationById(data?.location_id)
 		}
 		fetchLocations();
@@ -46,7 +46,7 @@ export default function UpdateGateways() {
 	const fetchLocationById = async (id: string) => {
 		const locationData = await getLocationById(id)
 		console.log('locationData = ', locationData)
-		if(locationData?.status) {
+		if (locationData?.status) {
 			setLocation(locationData?.data[0]);
 		}
 	}

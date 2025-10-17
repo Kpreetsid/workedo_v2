@@ -29,7 +29,7 @@ export default function DropDownInput({ label, required = true, value, options, 
 
 	return (
 		<>
-			<View style={[styles.container, containerStyle]}>
+			<View style={[styles.container, containerStyle, label === "Select Spare Type" && { paddingHorizontal: 25 }]}>
 
 				<View style={styles.labelContainer}>
 					<Text style={styles.labelText}>{label}</Text>
@@ -66,7 +66,8 @@ export default function DropDownInput({ label, required = true, value, options, 
 
 const styles = StyleSheet.create({
 	container: {
-		paddingHorizontal: 25,
+		flex: 1,
+		// paddingHorizontal: 25,
 		paddingVertical: 7.5,
 	},
 	labelContainer: {
