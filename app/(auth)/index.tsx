@@ -1,5 +1,4 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, ToastAndroid } from "react-native";
-import { router } from "expo-router";
 import AuthHeader from "@/components/auth-screens/AuthHeader";
 import { Logo } from "@/constants/IconProvider";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,6 +12,7 @@ import { loginService, userDetails } from "@/src/services/auth.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { storage } from "@/src/storage/mmkv";
 import { useEffect } from "react";
+import { useRouter } from "expo-router";
 
 type LoginFormValues = {
 	username: string;
@@ -20,6 +20,7 @@ type LoginFormValues = {
 };
 
 export default function Login() {
+	const router = useRouter();
 	const {
 		control,
 		handleSubmit,
@@ -124,12 +125,15 @@ export default function Login() {
 						onPress={handleSubmit(onSubmit)}
 						disabled={isSubmitting}
 					/>
-					{/* <ActionButton label="Login" onPress={() => router.push("/overview")} /> */}
 
-					<TouchableOpacity style={styles.forgotBtn}>
+					<TouchableOpacity style={styles.forgotBtn} onPress={() => {
+						router.push("/(auth)/forgotPassword")
+					}}>
 						<Text style={styles.forgotText}>Forgot Your Password?</Text>
 					</TouchableOpacity>
+
 				</View>
+
 				<Image source={require("../../assets/images/presage.png")} style={styles.image} />
 			</KeyboardAwareScrollView>
 		</SafeAreaView>
@@ -182,6 +186,7 @@ const styles = StyleSheet.create({
 	},
 	forgotBtn: {
 		marginVertical: 20,
+		zIndex: 1,
 	},
 	forgotText: {
 		fontFamily: Fonts.regular,

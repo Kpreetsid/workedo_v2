@@ -1,6 +1,6 @@
-import {GestureResponderEvent, StyleSheet, Text, TouchableOpacity} from "react-native";
+import { GestureResponderEvent, StyleSheet, Text, TouchableOpacity } from "react-native";
 import Fonts from "@/constants/Typography";
-import {FontAwesome6} from "@expo/vector-icons";
+import { FontAwesome6 } from "@expo/vector-icons";
 
 interface ActionButtonProps {
     label: string;
@@ -9,11 +9,11 @@ interface ActionButtonProps {
     disabled?: boolean;
 }
 
-export default function ActionButton({label, onPress, icon, disabled}: ActionButtonProps) {
+export default function ActionButton({ label, onPress, icon, disabled }: ActionButtonProps) {
     return (
         <TouchableOpacity style={styles.registerBtn} onPress={onPress} activeOpacity={0.8} disabled={disabled}>
             <Text style={styles.registerText}>{label}</Text>
-            {icon && <FontAwesome6 name="arrow-right-long" size={18} color="#fff"/>}
+            {icon && <FontAwesome6 name="arrow-right-long" size={18} color="#fff" />}
         </TouchableOpacity>
     );
 }

@@ -11,12 +11,22 @@ import { OTPVerificationService } from "@/src/services/auth.service";
 
 export default function OTPVerification() {
 	const params: any = useLocalSearchParams();
-	const payload = JSON.parse(params?.data);
-	console.log(payload);
+	let payload: any = null;
+	let type: any = null;
 
 	const [otp, setOtp] = useState(["", "", "", "", "", ""]);
 	const [timer, setTimer] = useState(59);
 	const inputs = useRef<TextInput[]>([]);
+
+	useEffect(() => {
+		if (params?.data) {
+			payload = JSON.parse(params?.data);
+		}
+		if (params?.type) {
+			type = params?.type;
+			console.log(type);
+		}
+	}, []);
 
 	useEffect(() => {
 		if (timer > 0) {
@@ -43,13 +53,14 @@ export default function OTPVerification() {
 	};
 
 	const verifyPin = async () => {
-		if(otp.join('') === '') {
+		console.log('in verify pin');
+		if (otp.join('') === '') {
 			ToastAndroid.show('Please enter OTP', ToastAndroid.LONG);
 			return;
 		}
 
 		// check 6 digit condition
-		if(otp.join('').length < 6) {
+		if (otp.join('').length < 6) {
 			ToastAndroid.show('Please enter 6 digit OTP', ToastAndroid.LONG);
 			return;
 		}
@@ -116,7 +127,18 @@ export default function OTPVerification() {
 					Resend OTP : <Text style={styles.timer}>00:{timer.toString().padStart(2, "0")}</Text>
 				</Text>
 
-				<ActionButton label="Verify OTP" icon={true} onPress={verifyPin} />
+				<ActionButton
+					label={type === "resetPassword" ? "Continue" : "Verify OTP"}
+					icon={true}
+					onPress={() => {
+						if (type === "resetPassword") {
+							console.log('in reset')
+							router.push("/changePassword")
+							return;
+						}
+						verifyPin()
+					}}
+				/>
 
 				<Text style={styles.bottomText}>
 					If you didn't receive code!{" "}

@@ -7,79 +7,94 @@ import Fonts from "../../constants/Typography";
 import ActionButton from "@/components/auth-screens/ActionButton";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Field from "@/components/auth-screens/InputField";
+import { useForm } from "react-hook-form";
+
+interface ForgotPasswordFormValues {
+	email: string;
+}
 
 export default function ForgotPassword() {
-    return (
-        <SafeAreaView style={styles.container}>
-            <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-                <AuthHeader />
-                <View style={styles.logoContainer}><Logo /></View>
-                <View style={styles.card}>
-                    <View style={styles.handle} />
-                    <Text style={styles.title}>Reset Password</Text>
-                    <Text style={styles.subtitle}>Enter your registered email to receive verification code.</Text>
+	const {
+		control,
+		handleSubmit,
+		formState: { isSubmitting }
+	} = useForm<ForgotPasswordFormValues>({
+		defaultValues: {
+			email: "",
+		},
+	});
 
-                    <View style={styles.col}>
-                        <Field icon="email" placeholder="Email ID" />
-                    </View>
+	return (
+		<SafeAreaView style={styles.container}>
+			<KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+				<AuthHeader />
+				<View style={styles.logoContainer}><Logo /></View>
+				<View style={styles.card}>
+					<View style={styles.handle} />
+					<Text style={styles.title}>Reset Password</Text>
+					<Text style={styles.subtitle}>Enter your registered email to receive verification code.</Text>
 
-                    <ActionButton label="Submit Now" onPress={() => router.push({pathname: "/otpVerification", params: {type: "resetPassword"}})} />
+					<View style={styles.col}>
+						<Field icon="email" placeholder="Email ID" name="email" control={control} rules={{ required: "Email is required" }} />
+					</View>
 
-                </View>
-                <Image source={require("../../assets/images/presage.png")} style={styles.image} />
-            </KeyboardAwareScrollView>
-        </SafeAreaView>
-    )
+					<ActionButton label="Submit Now" onPress={() => router.push({ pathname: "/otpVerification", params: { type: "resetPassword" } })} />
+
+				</View>
+				<Image source={require("../../assets/images/presage.png")} style={styles.image} />
+			</KeyboardAwareScrollView>
+		</SafeAreaView>
+	)
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#742BDE",
-    },
-    logoContainer: {
-        alignSelf: "center",
-        marginVertical: 70,
-    },
-    card: {
-        flex: 1,
-        backgroundColor: "#fff",
-        borderTopLeftRadius: 40,
-        borderTopRightRadius: 40,
-        paddingHorizontal: 16,
-        paddingTop: 20,
-    },
-    handle: {
-        width: 75,
-        height: 5,
-        borderRadius: 2,
-        backgroundColor: "#D9D9D9",
-        alignSelf: "center",
-        marginBottom: 15,
-    },
-    title: {
-        fontSize: 20,
-        fontFamily: Fonts.semiBold,
-        textAlign: "center",
-        color: "#742BDE",
-    },
-    subtitle: {
-        fontSize: 12,
-        textAlign: "center",
-        color: "#00000099",
-        fontFamily: Fonts.light,
-        marginBottom: 40,
-        paddingHorizontal: 30
-    },
-    col: {
-        flexDirection: "column",
-        justifyContent: "space-between",
-        gap: 12,
-        marginBottom: 15,
-    },
-    image: {
-        position: "absolute",
-        bottom: 0,
-        right: 0,
-    }
+	container: {
+		flex: 1,
+		backgroundColor: "#742BDE",
+	},
+	logoContainer: {
+		alignSelf: "center",
+		marginVertical: 70,
+	},
+	card: {
+		flex: 1,
+		backgroundColor: "#fff",
+		borderTopLeftRadius: 40,
+		borderTopRightRadius: 40,
+		paddingHorizontal: 16,
+		paddingTop: 20,
+	},
+	handle: {
+		width: 75,
+		height: 5,
+		borderRadius: 2,
+		backgroundColor: "#D9D9D9",
+		alignSelf: "center",
+		marginBottom: 15,
+	},
+	title: {
+		fontSize: 20,
+		fontFamily: Fonts.semiBold,
+		textAlign: "center",
+		color: "#742BDE",
+	},
+	subtitle: {
+		fontSize: 12,
+		textAlign: "center",
+		color: "#00000099",
+		fontFamily: Fonts.light,
+		marginBottom: 40,
+		paddingHorizontal: 30
+	},
+	col: {
+		flexDirection: "column",
+		justifyContent: "space-between",
+		gap: 12,
+		marginBottom: 15,
+	},
+	image: {
+		position: "absolute",
+		bottom: 0,
+		right: 0,
+	}
 })
