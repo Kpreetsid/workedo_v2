@@ -96,8 +96,8 @@ export default function Login() {
 									message: "Username must be at least 3 characters",
 								},
 								maxLength: {
-									value: 20,
-									message: "Username must be less than 20 characters",
+									value: 30,
+									message: "Username must be less than 30 characters",
 								},
 								pattern: {
 									value: /^[a-zA-Z0-9_]+$/,

@@ -14,7 +14,7 @@ type CustomTabBarProps = {
 export default function CustomTabBar({state, descriptors, navigation, onMorePress}: CustomTabBarProps) {
     const icons: Record<string, (props: { color: string }) => JSX.Element> = {
         overview: (props) => <Overview {...props} />,
-        test: (props) => <Overview {...props} />,
+        // test: (props) => <Overview {...props} />,
         workOrders: (props) => <WorkOrders {...props} />,
         assets: (props) => <Assets {...props} />,
         scanner: (props) => <Scanner {...props} />,

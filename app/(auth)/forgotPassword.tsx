@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, ToastAndroid } from "react-native";
 import { router } from "expo-router";
 import AuthHeader from "@/components/auth-screens/AuthHeader";
 import { Logo } from "@/constants/IconProvider";
@@ -8,21 +8,46 @@ import ActionButton from "@/components/auth-screens/ActionButton";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Field from "@/components/auth-screens/InputField";
 import { useForm } from "react-hook-form";
+import { sendPasswordResetEmail } from "@/src/services/auth.service";
+import { useAuthFlowStore } from "@/src/store/useAuthFlowStore";
 
 interface ForgotPasswordFormValues {
 	email: string;
 }
 
 export default function ForgotPassword() {
+	const { setAuthFlow } = useAuthFlowStore();
+
 	const {
 		control,
 		handleSubmit,
 		formState: { isSubmitting }
 	} = useForm<ForgotPasswordFormValues>({
 		defaultValues: {
-			email: "",
+			email: "waleedimtiaz30@gmail.com",
 		},
 	});
+
+	const onSubmit = async (data: ForgotPasswordFormValues) => {
+		console.log('on submit', data);
+
+		try {
+			let obj = {
+				"email": data.email
+			}
+			console.log(obj);
+			const userRes = await sendPasswordResetEmail(obj);
+			console.log('userRes in forgot password = ', userRes);
+			if (userRes.status) {
+				ToastAndroid.show(userRes?.message, ToastAndroid.SHORT);
+				setAuthFlow("resetPassword", obj);
+				router.push("/otpVerification");
+			}
+		} catch (e: any) {
+			console.log('e in forgot password = ', e);
+			ToastAndroid.show(e?.message, ToastAndroid.SHORT);
+		}
+	}
 
 	return (
 		<SafeAreaView style={styles.container}>
@@ -35,10 +60,16 @@ export default function ForgotPassword() {
 					<Text style={styles.subtitle}>Enter your registered email to receive verification code.</Text>
 
 					<View style={styles.col}>
-						<Field icon="email" placeholder="Email ID" name="email" control={control} rules={{ required: "Email is required" }} />
+						<Field icon="email" placeholder="Email ID" name="email" control={control} rules={{
+							required: "Email is required",
+							pattern: {
+								value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, // standard email regex
+								message: "Please enter a valid email address",
+							},
+						}} />
 					</View>
 
-					<ActionButton label="Submit Now" onPress={() => router.push({ pathname: "/otpVerification", params: { type: "resetPassword" } })} />
+					<ActionButton label={isSubmitting ? "Sending..." : "Submit Now"} onPress={handleSubmit(onSubmit)} disabled={isSubmitting} />
 
 				</View>
 				<Image source={require("../../assets/images/presage.png")} style={styles.image} />

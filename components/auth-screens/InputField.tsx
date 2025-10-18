@@ -52,7 +52,6 @@ export default function Field({
 	);
 }
 
-
 const styles = StyleSheet.create({
 	wrapper: {
 		width: "100%",

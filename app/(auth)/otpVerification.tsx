@@ -7,33 +7,27 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Fonts from "@/constants/Typography";
 import { router, useLocalSearchParams } from "expo-router";
 import ActionButton from "@/components/auth-screens/ActionButton";
-import { OTPVerificationService } from "@/src/services/auth.service";
+import { OTPVerificationService, resetPasswordOTPSendService } from "@/src/services/auth.service";
+import { useAuthFlowStore } from "@/src/store/useAuthFlowStore";
 
 export default function OTPVerification() {
-	const params: any = useLocalSearchParams();
-	let payload: any = null;
-	let type: any = null;
-
 	const [otp, setOtp] = useState(["", "", "", "", "", ""]);
 	const [timer, setTimer] = useState(59);
 	const inputs = useRef<TextInput[]>([]);
+	const [userData, setUserData] = useState<any>(null);
 
-	useEffect(() => {
-		if (params?.data) {
-			payload = JSON.parse(params?.data);
-		}
-		if (params?.type) {
-			type = params?.type;
-			console.log(type);
-		}
-	}, []);
+	const payload = useAuthFlowStore((state) => state.payload);
+	const flowType = useAuthFlowStore((state) => state.flowType);
 
-	useEffect(() => {
-		if (timer > 0) {
-			const interval = setInterval(() => setTimer((t) => t - 1), 1000);
-			return () => clearInterval(interval);
-		}
-	}, [timer]);
+	console.log('payload otp verification = ', payload);
+	console.log('flowType otp verification = ', flowType);
+
+	// useEffect(() => {
+	// 	if (timer > 0) {
+	// 		const interval = setInterval(() => setTimer((t) => t - 1), 1000);
+	// 		return () => clearInterval(interval);
+	// 	}
+	// }, [timer]);
 
 	const handleChange = (text: string, index: number) => {
 		const newOtp = [...otp];
@@ -65,25 +59,52 @@ export default function OTPVerification() {
 			return;
 		}
 
-		try {
-			console.log('form values = ', payload);
+		console.log('flow type = ', flowType);
 
-			let finalPayload = { ...payload, verificationCode: otp.join('') };
-			console.log('payload verify OTP = ', finalPayload);
-
+		if (flowType === "resetPassword") {
 			try {
-				const res = await OTPVerificationService(finalPayload);
-				console.log('res otp = ', res);
-				if (res?.status) {
-					ToastAndroid.show(res.message, ToastAndroid.LONG);
-					router.push("/registrationComplete")
+				console.log('form values = ', payload);
+
+				let finalPayload = { ...payload, verificationCode: otp.join('') };
+				console.log('payload verify OTP = ', finalPayload);
+
+				try {
+					const res = await resetPasswordOTPSendService(finalPayload);
+					console.log('res otp = ', res);
+					if (res?.status) {
+						ToastAndroid.show(res.message, ToastAndroid.LONG);
+						router.push({ pathname: "/changePassword", params: { type: "resetPassword", payload: JSON.stringify(userData) } });
+					}
+				} catch (e: any) {
+					console.log('error in otp = ', e);
+					ToastAndroid.show(e.message, ToastAndroid.LONG);
 				}
-			} catch (e: any) {
-				console.log('error in otp = ', e);
-				ToastAndroid.show(e.message, ToastAndroid.LONG);
+			} catch (err: any) {
+				console.error("Register failed:", err?.message || err);
 			}
-		} catch (err: any) {
-			console.error("Register failed:", err?.message || err);
+
+
+		} else {
+			try {
+				console.log('form values = ', payload);
+
+				let finalPayload = { ...payload, verificationCode: otp.join('') };
+				console.log('payload verify OTP = ', finalPayload);
+
+				try {
+					const res = await OTPVerificationService(finalPayload);
+					console.log('res otp = ', res);
+					if (res?.status) {
+						ToastAndroid.show(res.message, ToastAndroid.LONG);
+						router.push("/registrationComplete")
+					}
+				} catch (e: any) {
+					console.log('error in otp = ', e);
+					ToastAndroid.show(e.message, ToastAndroid.LONG);
+				}
+			} catch (err: any) {
+				console.error("Register failed:", err?.message || err);
+			}
 		}
 	}
 
@@ -102,7 +123,7 @@ export default function OTPVerification() {
 
 				<Text style={styles.subtitle}>
 					One Time Password (OTP) has been sent via Email to{" "}
-					<Text style={styles.email}>parwez.alam@presageinsights.ai</Text>
+					<Text style={styles.email}>{userData?.email}</Text>
 				</Text>
 
 				<Text style={styles.instruction}>Enter the OTP below to verify it.</Text>
@@ -128,14 +149,9 @@ export default function OTPVerification() {
 				</Text>
 
 				<ActionButton
-					label={type === "resetPassword" ? "Continue" : "Verify OTP"}
+					label={flowType === "resetPassword" ? "Continue" : "Verify OTP"}
 					icon={true}
 					onPress={() => {
-						if (type === "resetPassword") {
-							console.log('in reset')
-							router.push("/changePassword")
-							return;
-						}
 						verifyPin()
 					}}
 				/>

@@ -1,17 +1,21 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import AuthHeader from "../../components/auth-screens/AuthHeader";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { Logo } from "../../constants/IconProvider";
 import Field from "../../components/auth-screens/InputField";
 import ActionButton from "../../components/auth-screens/ActionButton";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import Fonts from "../../constants/Typography";
 import { useForm } from "react-hook-form";
+import { useEffect } from "react";
+import { changePassword } from "@/src/services/auth.service";
+import { useAuthFlowStore } from "@/src/store/useAuthFlowStore";
 
 export default function ChangePassword() {
 	const {
 		control,
+		handleSubmit
 	} = useForm({
 		defaultValues: {
 			password: "",
@@ -19,18 +23,47 @@ export default function ChangePassword() {
 		},
 	});
 
-	// const onSubmit = (data: any) => {
-	// 	if (data.password !== data.confirmPassword) {
-	// 		Alert.alert("Error", "Passwords do not match!");
-	// 		return;
-	// 	}
+	const payload = useAuthFlowStore((state) => state.payload);
+	const flowType = useAuthFlowStore((state) => state.flowType);
 
-	// 	console.log("Submitted Data:", data);
-	// 	router.push({
-	// 		pathname: "/registrationComplete",
-	// 		params: { type: "resetPassword" },
-	// 	});
-	// };
+	const onSubmit = async (data: any) => {
+		if (data.password !== data.confirmPassword) {
+			ToastAndroid.show("Passwords do not match!", ToastAndroid.LONG);
+			return;
+		}
+
+		console.log("Submitted Data:", data);
+
+		if (flowType !== "resetPassword") {
+			router.push({
+				pathname: "/registrationComplete",
+				params: { type: "resetPassword" },
+			});
+		} else {
+			try {
+				let finalPayload = {
+					"email": payload?.email,
+					"newPassword": data.password,
+					"confirmNewPassword": data.confirmPassword
+				}
+				console.log('form values = ', finalPayload);
+
+				try {
+					const res = await changePassword(finalPayload);
+					console.log('res otp = ', res);
+					if (res?.status) {
+						ToastAndroid.show(res.message, ToastAndroid.LONG);
+						router.replace("/");
+					}
+				} catch (e: any) {
+					console.log('error in otp = ', e);
+					ToastAndroid.show(e.message, ToastAndroid.LONG);
+				}
+			} catch (err: any) {
+				console.error("Register failed:", err?.message || err);
+			}
+		}
+	};
 
 	return (
 		<SafeAreaView style={styles.container}>
@@ -70,7 +103,7 @@ export default function ChangePassword() {
 
 					<ActionButton
 						label="Submit"
-						onPress={() => router.push({ pathname: "/registrationComplete", params: { type: "resetPassword" } })}
+						onPress={handleSubmit(onSubmit)}
 					/>
 
 					<TouchableOpacity style={styles.cancelButton} onPress={() => router.replace("/")}>

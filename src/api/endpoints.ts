@@ -8,7 +8,15 @@ export const endpoints = {
     details: 'users/',
     logout: '/',
     profile: 'users/profile',
-    verifyOTP: 'registration/verifyOTP'
+    verifyOTP: 'registration/verifyOTP',
+    resetPassword: 'reset-password/send-verification-email',
+    verifyOTPResetPassword: 'reset-password/verify-otp',
+    changePassword: 'reset-password/change-password',
+  },
+  user: {
+    uploadProfileImage: 'upload/user_profile_img',
+    updateUser: 'master/users',
+    profile: 'master/users',
   },
   overview: {
     kpi: 'master/locations/kpi-filter',

@@ -9,6 +9,7 @@ import { router } from "expo-router";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useForm } from "react-hook-form";
 import { registerService } from "@/src/services/auth.service";
+import { AuthPayload, useAuthFlowStore } from "@/src/store/useAuthFlowStore";
 
 type RegisterFormValues = {
 	companyName: string;
@@ -39,11 +40,13 @@ export default function RegisterScreen() {
 
 	const password = watch("password");
 
+	const { setAuthFlow } = useAuthFlowStore();
+
 	const onSubmit = async (values: RegisterFormValues) => {
 		try {
 			console.log('form values = ', values);
 
-			let payload = {
+			let payload: AuthPayload = {
 				"firstName": values.fullName.split(' ')[0],
 				"lastName": values.fullName.split(' ')[1],
 				"username": values.username,
@@ -60,20 +63,19 @@ export default function RegisterScreen() {
 				"password": values.password,
 				"account_name": values.companyName,
 				"type": values.industryType,
-				"description": values.description
+				"description": values.description ?? ""
 			}
 			console.log('payload sign up = ', payload);
+			
+			setAuthFlow("signUp", payload);
 
 			// You can send the data to your registerService here
 			try {
 				const res = await registerService(payload);
 				console.log('res sign up = ', res);
-				if(res?.status) {
+				if (res?.status) {
 					ToastAndroid.show(res.message, ToastAndroid.LONG);
-					router.push({
-						pathname: "/otpVerification",
-						params: {data: JSON.stringify(payload)}
-					});
+					router.push("/otpVerification");
 				}
 			} catch (e: any) {
 				console.log('error in sign up = ', e);
