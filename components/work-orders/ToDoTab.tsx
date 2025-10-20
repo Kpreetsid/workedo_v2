@@ -1,4 +1,4 @@
-import { Pressable, Text, View, StyleSheet, ToastAndroid, FlatList } from "react-native";
+import { Pressable, Text, View, StyleSheet, ToastAndroid, FlatList, ActivityIndicator } from "react-native";
 import Fonts from "@/constants/Typography";
 import { useCallback, useEffect, useState } from "react";
 import WorkOrderCard from "@/components/work-orders/WorkOrderCard";
@@ -15,10 +15,13 @@ export default function ToDoTab() {
 	const [openForAllWorkOrders, setOpenForAllWorkOrders] = useState<WorkOrder[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
 
+	const [loading, setLoading] = useState(false)
+
 	const loggedInUser = useAuthStore((state) => state.user);
 	console.log('user in state = ', loggedInUser);
 
 	useEffect(() => {
+		setLoading(true)
 		fetchWorkOrders();
 	}, [])
 
@@ -50,10 +53,12 @@ export default function ToDoTab() {
 
 				console.log("assignedToUser =", assignedToUser.length);
 				console.log("createdByUser =", createdByUser.length);
+				setLoading(false)
 			}
 		} catch (error: any) {
 			console.log("error =", error);
 			ToastAndroid.show(error?.message || "Something went wrong", ToastAndroid.LONG);
+			setLoading(false)
 		}
 	};
 
@@ -85,6 +90,12 @@ export default function ToDoTab() {
 				))}
 			</View>
 
+			{
+				loading && <View style={{marginTop: 20}}>
+					<ActivityIndicator size={28} />
+				</View>
+			}
+
 			<FlatList
 				data={
 					(selectedButton === 0
@@ -93,7 +104,7 @@ export default function ToDoTab() {
 							? createdByMeWorkOrders
 							: openForAllWorkOrders)
 				}
-				keyExtractor={(item) => item.id.toString()} // ensure string
+				keyExtractor={(item) => item.id.toString()}
 				renderItem={renderWorkOrderItem}
 				removeClippedSubviews={false}
 				refreshing={refreshing}

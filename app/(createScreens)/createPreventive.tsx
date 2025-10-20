@@ -20,7 +20,11 @@ import { FormField } from "@/components/global/FormField";
 
 export default function CreatePreventive() {
 	const router = useRouter();
+
 	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+	const [activeDateField, setActiveDateField] = useState<any>(null);
+
+
 	const { setPreventiveValue, resetForm } = usePreventiveStore();
 	const preventiveLocation = usePreventiveStore((s) => s.location);
 	const [forms, setForms] = useState<any>([]);
@@ -30,6 +34,7 @@ export default function CreatePreventive() {
 			try {
 				const res = await getSOPs();
 				if (res?.status) {
+					console.log('forms = ', res?.data);
 					setForms(res?.data);
 				}
 			} catch (error) {
@@ -155,6 +160,7 @@ export default function CreatePreventive() {
 
 				<FormField
 					label="Location"
+					type="location"
 					placeholder="Enter Location"
 					field="location"
 					router={router}
@@ -167,8 +173,9 @@ export default function CreatePreventive() {
 					preventiveLocation && (
 						<FormField
 							label="Asset"
+							type="asset"
 							placeholder="Enter Asset"
-							field="asset"
+							field="selected_asset"
 							router={router}
 							comingFrom="createPreventive"
 							store={usePreventiveStore}
@@ -195,7 +202,10 @@ export default function CreatePreventive() {
 					comingFrom="createPreventive"
 					store={usePreventiveStore}
 					setterName="setPreventiveValue"
+					setIsDatePickerVisible={setIsDatePickerVisible}
+					setActiveDateField={setActiveDateField}
 				/>
+
 
 				<AssignSchedule />
 
@@ -205,6 +215,7 @@ export default function CreatePreventive() {
 						label="Select SOP Form"
 						type="dropdown"
 						field="sop_form_id"
+						options={forms?.map((form: any) => form.name)}
 						router={router}
 						comingFrom="createPreventive"
 						store={usePreventiveStore}
@@ -215,6 +226,7 @@ export default function CreatePreventive() {
 						label="Nature of Work"
 						type="dropdown"
 						field="nature_of_work"
+						options={["Preventive", "Electrical", "Break Down", "Inspection", "Corrective", "Safety", "Upgrade", "Meter Reading", "Mechanical", "Other"]}
 						router={router}
 						comingFrom="createPreventive"
 						store={usePreventiveStore}
@@ -228,6 +240,7 @@ export default function CreatePreventive() {
 						label="Priority"
 						type="dropdown"
 						field="priority"
+						options={["None", "Low", "Medium", "High"]}
 						router={router}
 						comingFrom="createPreventive"
 						store={usePreventiveStore}
@@ -245,7 +258,7 @@ export default function CreatePreventive() {
 
 				</View>
 
-				<AssignInput label="Add Parts" onPress={() => router.push("/updateParts")} />
+				<AssignInput label="Add Parts" comingFrom="createPreventive" onPress={() => router.push("/updateParts")} />
 
 				<View style={styles.partsContainer}>
 					{usePreventiveStore.getState().parts.length > 0 &&
@@ -261,6 +274,17 @@ export default function CreatePreventive() {
 				</View>
 
 				<ActionButton label="Submit" onPress={handleSubmit} />
+
+				<DatePicker
+					visible={isDatePickerVisible}
+					onClose={() => setIsDatePickerVisible(false)}
+					onDateSelect={(date) => {
+						const formatted = moment(date).format("YYYY-MM-DD");
+						if (activeDateField)
+							usePreventiveStore.getState().setPreventiveValue(activeDateField, formatted);
+						setIsDatePickerVisible(false);
+					}}
+				/>
 
 				<DatePicker
 					visible={isDatePickerVisible}

@@ -72,21 +72,76 @@ export default function CreatePart() {
 
 				<View style={{ marginVertical: 5 }} />
 
-				<FormField label="Part Name" placeholder="Enter Title" field="part_name" store={usePartFormStore} setterName="setPartFormValue" />
-				<FormField label="Description" placeholder="Enter a message" field="description" store={usePartFormStore} setterName="setPartFormValue" />
-				<FormField label="Location" type="location" field="location" router={router} comingFrom="createPart" store={usePartFormStore} setterName="setPartFormValue" />
+				<FormField
+					label="Part Name"
+					placeholder="Enter Title"
+					field="part_name"
+					store={usePartFormStore}
+					setterName="setPartFormValue"
+				/>
+
+				<FormField
+					label="Description"
+					placeholder="Enter a message"
+					field="description"
+					store={usePartFormStore}
+					setterName="setPartFormValue"
+				/>
+
+				<FormField
+					label="Location"
+					type="location"
+					placeholder="Enter Location"
+					field="location"
+					router={router}
+					comingFrom="createPart"
+					store={usePartFormStore}
+					setterName="setPartFormValue"
+				/>
+
+
 				<FormField
 					label="Select Spare Type"
 					type="dropdown"
 					field="selected_part"
 					options={["Spare 1", "Spare 2", "Spare 3"]}
+					router={router}
+					comingFrom="createPart"
 					store={usePartFormStore}
 					setterName="setPartFormValue"
 				/>
-				<FormField label="Part Number" placeholder="Type Number" field="part_number" store={usePartFormStore} setterName="setPartFormValue" />
-				<FormField label="Available Quantity" placeholder="Enter Quantity" field="available_quantity" store={usePartFormStore} setterName="setPartFormValue" />
-				<FormField label="Minimum Stock Quantity" placeholder="Enter Quantity" field="min_stock_quantity" store={usePartFormStore} setterName="setPartFormValue" />
-				<FormField label="Unit Cost" placeholder="Enter Cost" field="unit_cost" store={usePartFormStore} setterName="setPartFormValue" />
+
+				<FormField
+					label="Part Number"
+					placeholder="Type Number"
+					field="part_number"
+					store={usePartFormStore}
+					setterName="setPartFormValue"
+				/>
+
+				<FormField
+					label="Available Quantity"
+					placeholder="Enter Quantity"
+					field="available_quantity"
+					store={usePartFormStore}
+					setterName="setPartFormValue"
+				/>
+
+				<FormField
+					label="Minimum Stock Quantity"
+					placeholder="Enter Quantity"
+					field="min_stock_quantity"
+					store={usePartFormStore}
+					setterName="setPartFormValue"
+				/>
+
+				<FormField
+					label="Unit Cost"
+					placeholder="Enter Cost"
+					field="unit_cost"
+					store={usePartFormStore}
+					setterName="setPartFormValue"
+				/>
 
 				<ActionButton label="Submit" onPress={handleSubmit} />
 			</KeyboardAwareScrollView>

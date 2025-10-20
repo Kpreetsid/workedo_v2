@@ -17,7 +17,7 @@ export default function SelectUser() {
 
 	const [users, setUsers] = useState<any[]>([]);
 	const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
-	const { setFormValue } = usePreventiveStore();
+	const { setPreventiveValue } = usePreventiveStore();
 	const { setWorkForm } = useWorkOrderStore();
 
 	useEffect(() => {
@@ -61,7 +61,7 @@ export default function SelectUser() {
 			console.log('selected users in select user = ', selectedUsers);
 			setWorkForm("assigned_users", selectedUsers);
 		} else {
-			setFormValue("assigned_users", selectedUsers);
+			setPreventiveValue("assigned_users", selectedUsers);
 		}
 		router.back();
 	};

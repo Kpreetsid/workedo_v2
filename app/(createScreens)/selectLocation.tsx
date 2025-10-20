@@ -31,10 +31,10 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 	const user = useAuthStore((state) => state.user);
 	const [locations, setLocations] = useState<Location[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
-	const { setFormValue } = usePreventiveStore();
 	const { setWorkForm } = useWorkOrderStore();
 	const { setWorkRequestForm } = useWorkRequestStore();
 	const { setPartFormValue } = usePartFormStore();
+	const { setPreventiveValue } = usePreventiveStore();
 
 	useEffect(() => {
 		fetchLocations();
@@ -74,6 +74,7 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 								if (selection) {
 									setSelectedLocation(item);
 									// updating selected location in zustand store while creating part
+									console.log('in selection = ', comingFrom)
 									if (comingFrom === "newWorkOrder") {
 										setWorkForm("location", item);
 									} else if (comingFrom === "newWorkRequest") {
@@ -81,7 +82,7 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 									} else if (comingFrom === "createPart") {
 										setPartFormValue("location", item);
 									} else {
-										setFormValue("location", item);
+										setPreventiveValue("location", item);
 									}
 									router.back();
 								} else {

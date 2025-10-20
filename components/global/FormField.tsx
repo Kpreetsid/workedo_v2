@@ -38,8 +38,10 @@ export const FormField = React.memo(
 			return (
 				<DropDownInput
 					label={label}
-					value={value}
+					field={field}
+					store={store}
 					options={options || []}
+					displayKey={field}
 					onSelect={(val) => setValue(field, val)}
 				/>
 			);
@@ -49,7 +51,10 @@ export const FormField = React.memo(
 			return (
 				<AssignInput
 					label={label}
+					field={field}
 					comingFrom={comingFrom}
+					store={store}
+					displayKey="location_name"
 					onPress={() =>
 						router.push({
 							pathname: "/selectLocation",
@@ -65,6 +70,9 @@ export const FormField = React.memo(
 				<AssignInput
 					label={label}
 					comingFrom={comingFrom}
+					field={field}
+					store={store}
+					displayKey="asset_name"
 					onPress={() =>
 						router.push({
 							pathname: "/selectAsset",
@@ -80,6 +88,9 @@ export const FormField = React.memo(
 				<AssignInput
 					label={label}
 					comingFrom={comingFrom}
+					field={field}
+					store={store}
+					displayKey="username"
 					onPress={() =>
 						router.push({
 							pathname: "/selectUser",
@@ -95,6 +106,8 @@ export const FormField = React.memo(
 				<AssignInput
 					label={label}
 					comingFrom={comingFrom}
+					field={field}
+					store={store}
 					onPress={() => {
 						setActiveDateField(field);
 						setIsDatePickerVisible(true);

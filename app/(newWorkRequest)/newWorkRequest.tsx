@@ -79,7 +79,7 @@ export default function NewWorkRequest() {
 	};
 
 	return (
-		<>
+		<View style={{backgroundColor: "#f9f9ff", flex: 1}}>
 			<Header title="New Work Request" />
 
 			<KeyboardAwareScrollView bottomOffset={30}>
@@ -108,13 +108,15 @@ export default function NewWorkRequest() {
 
 					{/* <AssignInputContainer /> */}
 
-					<View style={styles.row}>
+					<View style={[styles.row, { paddingHorizontal: 25, gap: 10 }]}>
 
 						<FormField
 							label="Problem Type"
 							type="dropdown"
 							field="nature_of_work"
 							options={["Preventive", "Electrical", "Break Down", "Inspection", "Corrective", "Safety", "Upgrade", "Meter Reading", "Mechanical", "Other"]}
+							router={router}
+							comingFrom="createPart"
 							store={useWorkRequestStore}
 							setterName="setWorkRequestForm"
 						/>
@@ -124,6 +126,8 @@ export default function NewWorkRequest() {
 							type="dropdown"
 							field="priority"
 							options={["None", "Low", "Medium", "High"]}
+							router={router}
+							comingFrom="createPart"
 							store={useWorkRequestStore}
 							setterName="setWorkRequestForm"
 						/>
@@ -137,7 +141,7 @@ export default function NewWorkRequest() {
 					<ActionButton onPress={handleSubmit} label="Create Work Request" buttonStyle={styles.submitBtn} />
 				</ScrollView>
 			</KeyboardAwareScrollView>
-		</>
+		</View>
 	)
 }
 

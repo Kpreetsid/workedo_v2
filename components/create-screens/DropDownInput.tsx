@@ -6,17 +6,50 @@ import Fonts from "@/constants/Typography";
 interface DropDownInputProps {
 	label: string;
 	required?: boolean;
-	value?: string;
+	value?: any; // string or object
 	options: string[];
-	onSelect: (value: string) => void;
+	onSelect?: (value: string) => void;
 	containerStyle?: object;
 	fieldStyle?: object;
+
+	// 🔽 optional for dynamic store binding
+	field?: string;
+	store?: any;
+	displayKey?: string;
+	comingFrom?: string;
 }
 
-export default function DropDownInput({ label, required = true, value, options, onSelect, containerStyle, fieldStyle }: DropDownInputProps) {
+export default function DropDownInput({
+	label,
+	required = true,
+	value,
+	options,
+	onSelect,
+	containerStyle,
+	fieldStyle,
+	field,
+	store,
+	displayKey,
+}: DropDownInputProps) {
 	const [visible, setVisible] = useState(false);
 	const [fieldLayout, setFieldLayout] = useState<LayoutRectangle | null>(null);
 	const fieldRef = useRef<View>(null);
+
+	// ✅ If store & field are passed, read from store
+	let storeValue: any = null;
+	if (store && field) {
+		try {
+			storeValue = store((state: any) => state[field]);
+		} catch (err) {
+			storeValue = null;
+		}
+	}
+
+	// ✅ Derive the actual value to display
+	const actualValue =
+		value ||
+		(storeValue && (storeValue[displayKey || "name"] || storeValue)) ||
+		"Select";
 
 	const toggleDropdown = () => {
 		if (fieldRef.current) {
@@ -27,32 +60,77 @@ export default function DropDownInput({ label, required = true, value, options, 
 		}
 	};
 
+	// ✅ If no onSelect provided but store exists, update store directly
+	const handleSelect = (selected: string) => {
+		if (onSelect) {
+			onSelect(selected);
+		} else if (store && field) {
+			try {
+				const setValue = store((state: any) => state.setPreventiveValue || state.setPartFormValue);
+				setValue?.(field, selected);
+			} catch (err) {
+				console.warn("Unable to set store value for dropdown:", err);
+			}
+		}
+		setVisible(false);
+	};
+
 	return (
 		<>
-			<View style={[styles.container, containerStyle, label === "Select Spare Type" && { paddingHorizontal: 25 }]}>
-
+			<View
+				style={[
+					styles.container,
+					containerStyle,
+					label === "Select Spare Type" && { paddingHorizontal: 25 },
+				]}
+			>
 				<View style={styles.labelContainer}>
 					<Text style={styles.labelText}>{label}</Text>
 					{required && <Text style={styles.asterisk}>*</Text>}
 				</View>
 
-				<Pressable style={[styles.field, fieldStyle]} onPress={toggleDropdown} ref={fieldRef}>
-					<Text style={styles.inputText}>{value || "Select"}</Text>
+				<Pressable
+					style={[styles.field, fieldStyle]}
+					onPress={toggleDropdown}
+					ref={fieldRef}
+				>
+					<Text
+						style={[
+							styles.inputText,
+							actualValue === "Select" && { color: "#888" },
+						]}
+						numberOfLines={1}
+					>
+						{actualValue}
+					</Text>
 					<DateDropDownIcon />
 				</Pressable>
 			</View>
 
 			{visible && fieldLayout && (
 				<Modal transparent animationType="fade">
-					<Pressable style={StyleSheet.absoluteFill} onPress={() => setVisible(false)} />
+					<Pressable
+						style={StyleSheet.absoluteFill}
+						onPress={() => setVisible(false)}
+					/>
 
-					<View style={[styles.dropdownContainer, { top: fieldLayout.y + 12, left: fieldLayout.x, width: fieldLayout.width }]}>
+					<View
+						style={[
+							styles.dropdownContainer,
+							{
+								top: fieldLayout.y + 12,
+								left: fieldLayout.x,
+								width: fieldLayout.width,
+							},
+						]}
+					>
 						<ScrollView nestedScrollEnabled style={{ maxHeight: 200 }}>
 							{options.map((option) => (
-								<Pressable key={option} style={styles.dropdownItem} onPress={() => {
-									onSelect(option);
-									setVisible(false);
-								}}>
+								<Pressable
+									key={option}
+									style={styles.dropdownItem}
+									onPress={() => handleSelect(option)}
+								>
 									<Text style={styles.dropdownItemText}>{option}</Text>
 								</Pressable>
 							))}

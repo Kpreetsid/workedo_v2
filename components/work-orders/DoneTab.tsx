@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 import WorkOrderCard from "@/components/work-orders/WorkOrderCard";
 import { useEffect, useState } from "react";
 import { FlashList } from "@shopify/flash-list";
@@ -11,7 +11,10 @@ export default function DoneTab() {
 	const [workorders, setWorkOrders] = useState<WorkOrder[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
 
+	const [loading, setLoading] = useState(false)
+
 	useEffect(() => {
+		setLoading(true)
 		fetchWorkOrders();
 	}, [])
 
@@ -24,9 +27,11 @@ export default function DoneTab() {
 			if (res?.status && res?.data) {
 				const allWorkOrders = res.data as WorkOrder[];
 				setWorkOrders(allWorkOrders);
+				setLoading(false)
 			}
 		} catch (error: any) {
 			console.log("error =", error);
+			setLoading(false)
 			ToastAndroid.show(error?.message || "Something went wrong", ToastAndroid.LONG);
 		}
 	};
@@ -36,6 +41,12 @@ export default function DoneTab() {
 		await fetchWorkOrders();
 		setRefreshing(false);
 	};
+
+	if (loading) {
+		<View style={{ marginTop: 20 }}>
+			<ActivityIndicator size={28} />
+		</View>
+	}
 
 	return (
 		<FlatList

@@ -26,6 +26,7 @@ export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => 
 					<FormField
 						label="Location"
 						type="location"
+						placeholder="Enter Location"
 						field="location"
 						router={router}
 						comingFrom="newWorkRequest"
@@ -36,6 +37,7 @@ export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => 
 					<FormField
 						label="Location"
 						type="location"
+						placeholder="Enter Location"
 						field="location"
 						router={router}
 						comingFrom="newWorkOrder"

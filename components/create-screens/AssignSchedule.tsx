@@ -53,36 +53,36 @@ export default function AssignSchedule() {
 }
 
 const styles = StyleSheet.create({
-	scheduleAssign: {
-		backgroundColor: "#fff",
-		borderWidth: 1,
-		borderColor: "#E1E8EE",
-		marginHorizontal: 25,
-		marginVertical: 7.5,
-		borderRadius: 8,
-		height: 70,
-		justifyContent: "center",
-		paddingTop: 12,
-	},
-	container: {
-		flexDirection: "row",
-		paddingHorizontal: 25,
-		justifyContent: "space-around",
-	},
-	row: {
-		flexDirection: "row",
-	},
-	title: {
-		color: "#6B7888",
-		fontSize: 12,
-		fontFamily: Fonts.semiBold,
-		lineHeight: 20
-	},
-	asterisk: {
-		color: "#D63928",
-		fontSize: 12,
-		fontFamily: Fonts.regular,
-		marginTop: -2,
-		marginLeft: 2,
-	},
+  scheduleAssign: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#E1E8EE",
+    marginHorizontal: 25,
+    marginVertical: 7.5,
+    borderRadius: 8,
+    height: 70,
+    justifyContent: "center",
+    paddingTop: 12,
+  },
+  container: {
+    flexDirection: "row",
+    paddingHorizontal: 25,
+    justifyContent: "space-around",
+  },
+  row: {
+    flexDirection: "row",
+  },
+  title: {
+    color: "#6B7888",
+    fontSize: 12,
+    fontFamily: Fonts.semiBold,
+    lineHeight: 20
+  },
+  asterisk: {
+    color: "#D63928",
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    marginTop: -2,
+    marginLeft: 2,
+  },
 })

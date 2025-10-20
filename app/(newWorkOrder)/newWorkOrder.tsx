@@ -49,6 +49,10 @@ export default function NewWorkOrder() {
 		setWorkForm("parts", updatedParts);
 	};
 
+	useEffect(() => {
+		console.log('parts changed in work order', useWorkOrderStore.getState().parts);
+	}, [useWorkOrderStore.getState().parts])
+
 	const handleSubmit = async () => {
 		const data: any = useWorkOrderStore.getState();
 		console.log("Work Order Form =", data);
@@ -89,7 +93,7 @@ export default function NewWorkOrder() {
 				part_id: p.part_id || p._id,
 				part_name: p.part_name,
 				part_type: p.part_type,
-				estimatedQuantity: p.quantity_needed || 1,
+				estimatedQuantity: p.estimatedQuantity || 1,
 			})) || [],
 			priority: data.priority,
 			sop_form_id: null,
@@ -165,7 +169,7 @@ export default function NewWorkOrder() {
 
 					{/* <AssignInputContainer /> */}
 
-					<View style={styles.row}>
+					<View style={[styles.row, { paddingHorizontal: 25, gap: 10 }]}>
 
 						<FormField
 							label="Problem Type"
@@ -203,8 +207,8 @@ export default function NewWorkOrder() {
 					</View>
 
 					<View style={styles.partsContainer}>
-						{parts.length > 0 &&
-							parts.map((part: any, index: number) => (
+						{useWorkOrderStore.getState().parts.length > 0 &&
+							useWorkOrderStore.getState().parts.map((part: any, index: number) => (
 								<View style={styles.partItem} key={index}>
 									<Text style={styles.partText}>{part?.part_name}</Text>
 									<Text style={styles.partText}>({part?.estimatedQuantity})</Text>

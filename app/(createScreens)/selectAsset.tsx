@@ -30,9 +30,11 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 	const user = useAuthStore((state) => state.user);
 	const [assets, setAssets] = useState<Asset[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
-	const { formData, setFormValue } = usePreventiveStore();
+	const { setPreventiveValue } = usePreventiveStore();
 	const { setWorkForm } = useWorkOrderStore();
 	const { setWorkRequestForm } = useWorkRequestStore();
+
+	const preventiveSelectedLocation = usePreventiveStore((state) => state.location);
 
 	useEffect(() => {
 		fetchAssets();
@@ -42,9 +44,11 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 		try {
 			const payload = {
 				"locationList": [
-					formData.location?.id || formData.location?._id
+					preventiveSelectedLocation?.id || preventiveSelectedLocation?._id
 				]
 			}
+
+			console.log('preventive selected location = ', preventiveSelectedLocation);
 			const res = await getFilteredAssets(payload);
 
 			if (res.status) {
@@ -81,7 +85,7 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 									} else if (comingFrom === "newWorkRequest") {
 										setWorkRequestForm("selected_asset", item);
 									} else {
-										setFormValue("selected_asset", item);
+										setPreventiveValue("selected_asset", item);
 									}
 									router.back();
 								}
