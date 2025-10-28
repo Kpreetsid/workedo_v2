@@ -42,6 +42,7 @@ export const endpoints = {
     assetsHealthLocation: 'get_asset_health_location_api/'
   },
   asset: {
+    assetData: 'master/assets',
     tree: 'master/assets/tree',
     children: 'asset_master/get_children',
     asset_endpoints: 'getAllEndPoints/',

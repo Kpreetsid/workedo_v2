@@ -28,7 +28,8 @@ const styles = StyleSheet.create({
         marginTop: 8,
         flexDirection: "row",
         justifyContent: "center",
-        gap: 8
+        gap: 8,
+		zIndex: 1,
     },
     registerText: {
         color: "#fff",

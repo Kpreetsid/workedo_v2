@@ -79,7 +79,8 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 								onPress={() => {
 									router.push({
 										pathname: "/assetDetail",
-										params: { data: JSON.stringify(item) },
+										params: { id: item.id },
+										// params: { data: JSON.stringify(item) },
 									});
 								}}
 							>

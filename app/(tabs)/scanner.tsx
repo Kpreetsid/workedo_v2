@@ -1,14 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import ActionButton from "@/components/create-screens/ActionButton";
 import Fonts from "@/constants/Typography";
 import Header from "@/components/global/Header";
+import { useRouter } from "expo-router";
 
 export default function ScannerScreen() {
+	const router = useRouter();
 	const [permission, requestPermission] = useCameraPermissions();
 	const [scanned, setScanned] = useState(false);
-	const [scannedData, setScannedData] = useState<string | null>(null);
+	const [scannedData, setScannedData] = useState<string | null>("63985ee010c33e75c823292b");
+
+	useEffect(() => {
+		if (scannedData) {
+			router.push({
+				pathname: "/assetDetail",
+				params: { id: scannedData },
+			});
+		}
+	}, [scannedData]);
 
 	if (!permission) {
 		return (

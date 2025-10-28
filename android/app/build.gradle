@@ -105,10 +105,13 @@ android {
             keyPassword 'android'
         }
         release {
-            storeFile file('releasekey.keystore')
-            storePassword 'Qwerty33#'
-            keyAlias 'presage'
-            keyPassword 'Qwerty33#'
+            storeFile file('naasta.keystore')
+            storePassword 'Waleed123!'
+            keyAlias 'alias_name'
+            keyPassword 'Waleed123!'
+            // storePassword 'Qwerty33#'
+            // keyAlias 'presage'
+            // keyPassword 'Qwerty33#'
         }
     }
     buildTypes {

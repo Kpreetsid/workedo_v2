@@ -3,19 +3,71 @@ import SegmentedPager from "@/components/global/SegmentPager";
 import AssetInfoTab from "@/components/asset-detail/AssetInfoTab";
 import AssetSensorsTab from "@/components/asset-detail/AssetSensorsTab";
 import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
+import { Asset } from "@/src/types/asset";
+import { StyleSheet, Text, ToastAndroid, View } from "react-native";
+import { getAssetData } from "@/src/services/asset.service";
+import Fonts from "@/constants/Typography";
 
 export default function AssetDetailScreen() {
 	const params: any = useLocalSearchParams();
-	const asset_data = JSON.parse(params?.data);
+	console.log('params = ', params);
+	// const asset_data = JSON.parse(params?.data);
+
+	const id = params?.id;
+
+	const [assetData, setAssetData] = useState<Asset | null>(null);
+
+	useEffect(() => {
+		console.log('id = ', id);
+		fetchAssetData();
+	}, [id])
+
+	const fetchAssetData = async () => {
+		console.log('fetching asset details', id);
+		try {
+			const assetDataRes = await getAssetData(id);
+			console.log('res asset details = ', assetDataRes);
+			if (assetDataRes.status) {
+				setAssetData(assetDataRes.data[0]);
+			}
+		} catch (err) {
+			console.error("Error fetching asset details:", err);
+			ToastAndroid.show("Failed to load asset details.", ToastAndroid.SHORT);
+		}
+	}
 
 	return (
 		<>
-			<Header title={asset_data?.asset_name} />
+			<Header title={assetData?.asset_name || ""} />
 
-			<SegmentedPager tabs={[
-				{ label: "Info", component: <AssetInfoTab asset_data={asset_data} /> },
-				{ label: "Sensors", component: <AssetSensorsTab asset_data={asset_data} /> }
-			]} />
+			{
+				assetData ? (
+					<SegmentedPager tabs={[
+						{ label: "Info", component: <AssetInfoTab asset_data={assetData!} /> },
+						{ label: "Sensors", component: <AssetSensorsTab asset_data={assetData!} /> }
+					]} />
+				) : (
+					<View style={styles.center}>
+						<Text style={styles.resultText}>No asset data available</Text>
+					</View>
+				)
+			}
 		</>
 	);
 }
+
+const styles = StyleSheet.create({
+	center: {
+		flex: 1,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	resultText: {
+		fontSize: 14,
+		fontFamily: Fonts.medium,
+		color: "#201F23",
+		textAlign: "center",
+		paddingHorizontal: 20,
+	},
+});

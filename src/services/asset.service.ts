@@ -11,6 +11,11 @@ export const getChildren = async (assetId: string) => {
     return await sendRequest('GET', url);
 };
 
+export const getAssetData = async (assetId: string) => {
+    const url = `${endpoints.asset.assetData}/${assetId}`;
+    return await sendRequest('GET', url);
+}
+
 export const getAllEndpoints = async (payload: string[]) => {
     const url = `${endpoints.asset.asset_endpoints}`;
     console.log('final payload = ', { asset_id: payload });

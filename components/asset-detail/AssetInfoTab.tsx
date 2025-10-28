@@ -7,47 +7,19 @@ import { ArrowRight } from "@/constants/IconProvider";
 import InfoCards from "@/components/overview-screen/InfoCards";
 import SelectEndpoint from "@/components/asset-detail/SelectEndpoint";
 import { useLocalSearchParams } from "expo-router";
-import { getAllEndpoints, getChildren, getGraphTrendData, getSingleAssetHealthHistory } from "@/src/services/asset.service";
+import { getAllEndpoints, getAssetData, getChildren, getGraphTrendData, getSingleAssetHealthHistory } from "@/src/services/asset.service";
 import { Asset } from "@/src/types/asset";
 import { AssetEndpoint } from "@/src/types/assetEndpoint";
 import AssetFilter from "./AssetFilter";
 import { useAssetStore } from "@/src/store/useAssetStore";
-
-const dataAxial = [
-	{ value: 0.05 },
-	{ value: 0.07 },
-	{ value: 0.09 },
-	{ value: 0.03 },
-	{ value: 0.08 },
-	{ value: 0.06 },
-	{ value: 0.07 },
-];
-
-const dataHorizontal = [
-	{ value: 0.04 },
-	{ value: 0.06 },
-	{ value: 0.03 },
-	{ value: 0.08 },
-	{ value: 0.06 },
-	{ value: 0.07 },
-	{ value: 0.09 },
-];
-
-const dataVertical = [
-	{ value: 0.03 },
-	{ value: 0.05 },
-	{ value: 0.04 },
-	{ value: 0.06 },
-	{ value: 0.07 },
-	{ value: 0.05 },
-	{ value: 0.06 },
-];
+import { formatGraphData } from "@/src/utils/helper";
 
 interface AssetInfoTabProps {
 	asset_data: Asset;
 }
 
 export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
+	console.log('inside info tab', asset_data);
 	const [activeTab, setActiveTab] = useState("Horizontal");
 	const {
 		endpoints,
@@ -189,22 +161,6 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 			console.error("Error fetching graph trend data:", err);
 			ToastAndroid.show("Failed to load graph trend data.", ToastAndroid.SHORT);
 		}
-	};
-
-	// 2) formatter for the API shape you showed
-	const formatGraphData = (arr: any[]) => {
-		return arr.map((item) => ({
-			axis: item.axis, // Horizontal / Vertical / Axial
-			points: item.data.map(([ts, amp]: [number, number]) => ({
-				value: amp,
-				label: new Date(ts).toLocaleTimeString("en-GB", {
-					hour12: false,
-					hour: "2-digit",
-					minute: "2-digit",
-					second: "2-digit",
-				}),
-			})),
-		}));
 	};
 
 	// 3) whenever graphData (your store value) changes → format for chart

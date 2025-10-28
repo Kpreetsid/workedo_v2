@@ -26,15 +26,25 @@ type RegisterFormValues = {
 export default function RegisterScreen() {
 	const { control, handleSubmit, watch, formState: { isSubmitting } } = useForm<RegisterFormValues>({
 		defaultValues: {
-			companyName: "Presage1",
-			industryType: "Insights1",
-			fullName: "tester",
-			email: "vozax.waleed@gmail.com",
-			phone: "03316363051",
-			username: "paksales1",
-			password: "aaaaaa",
-			confirmPassword: "aaaaaa",
-			description: "description test",
+			companyName: "",
+			industryType: "",
+			fullName: "",
+			email: "",
+			phone: "",
+			username: "",
+			password: "",
+			confirmPassword: "",
+			description: "",
+
+			// companyName: "Presage1",
+			// industryType: "Insights1",
+			// fullName: "tester",
+			// email: "vozax.waleed@gmail.com",
+			// phone: "03316363051",
+			// username: "paksales1",
+			// password: "aaaaaa",
+			// confirmPassword: "aaaaaa",
+			// description: "description test",
 		},
 	});
 
@@ -312,6 +322,7 @@ const styles = StyleSheet.create({
 		marginTop: 4,
 		flexWrap: "wrap",
 		paddingHorizontal: 16,
+		marginBottom: 20,
 	},
 	link: {
 		fontSize: 12,
