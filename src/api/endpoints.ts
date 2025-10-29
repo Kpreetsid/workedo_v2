@@ -22,7 +22,8 @@ export const endpoints = {
     kpi: 'master/locations/kpi-filter',
     locationDetails: 'master/locations',
     childAssets: 'master/locations/child-assets',
-    assetHealthKPIHistory: 'get_asset_health_kpi_summary/'
+    assetHealthKPIHistory: 'get_asset_health_kpi_summary/',
+    alarmsHistory: 'get_alarm_history_data/'
   },
   parts: {
     createPart: 'master/parts',

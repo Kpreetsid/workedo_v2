@@ -8,6 +8,9 @@ import AssetHealthStatus from "@/components/overview-screen/AssetHealthStatus";
 import { router } from "expo-router";
 import CreateAlertBox from "@/components/overview-screen/CreateAlertBox";
 import { useEffect, useState } from "react";
+import AlarmSummary from "@/components/overview-screen/AlarmSummary";
+import Top10BadAssets from "@/components/overview-screen/Top10BadAssets";
+import Alarms from "@/components/overview-screen/Alarms";
 
 export default function Overview() {
 	const [createAlertBoxVisible, setCreateAlertBoxVisible] = useState(false);
@@ -35,6 +38,12 @@ export default function Overview() {
 				<AssetHealth />
 
 				<AssetHealthStatus />
+
+				<AlarmSummary />
+
+				<Top10BadAssets />
+
+				<Alarms />
 
 			</ScrollView>
 
