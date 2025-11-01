@@ -117,7 +117,7 @@ export default function UpdateParts() {
 	return (
 		<>
 			<Header title="Update Parts" />
-			<KeyboardAwareScrollView bottomOffset={30}>
+			<KeyboardAwareScrollView bottomOffset={30} style={{ backgroundColor: '#F5F7FA' }}>
 				<View style={{ marginVertical: 5 }} />
 
 				{/* ✅ Dynamic Dropdown */}

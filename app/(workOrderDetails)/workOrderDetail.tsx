@@ -16,7 +16,7 @@ export default function WorkOrderDetail() {
 	const [workOrderData, setWorkOrderData] = useState(work_order_data);
 
 	return (
-		<>
+		<View style={styles.container}>
 			<Header title="Work Order Details" />
 			<View style={styles.headerContainer}>
 				<View style={styles.header}>
@@ -86,11 +86,15 @@ export default function WorkOrderDetail() {
 				{ label: "Details", component: <Detail params={workOrderData} /> },
 				{ label: "Comments", component: <Comments comments={workOrderData?.comments} /> }
 			]} />
-		</>
+		</View>
 	);
 }
 
 const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		backgroundColor: "#F5F7FA"
+	},
 	headerContainer: {
 		paddingTop: 12,
 		paddingHorizontal: 15,

@@ -81,6 +81,7 @@ export default function Login() {
 				<AuthHeader title="Don't have an account yet?" btnText="Get Started" onPress={() => router.push("/signUp")} />
 				<View style={styles.logoContainer}><Logo /></View>
 				<View style={styles.card}>
+					<View style={styles.cardShadow} />
 					<View style={styles.handle} />
 					<Text style={styles.title}>Welcome Back! 👋</Text>
 					<Text style={styles.subtitle}>Enter Your Details Below</Text>
@@ -158,6 +159,18 @@ const styles = StyleSheet.create({
 		borderTopRightRadius: 40,
 		paddingHorizontal: 16,
 		paddingTop: 20,
+		position: "relative",
+	},
+	cardShadow: {
+		width: '92%',
+		height: 30,
+		backgroundColor: '#D6B8FF',
+		alignSelf: "center",
+		borderTopLeftRadius: 100,
+		borderTopRightRadius: 100,
+		position: 'absolute',
+		top: -10,
+		zIndex: -1,
 	},
 	handle: {
 		width: 75,

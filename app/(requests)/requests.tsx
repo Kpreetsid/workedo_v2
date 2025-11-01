@@ -6,10 +6,11 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import CreateFAB from "@/components/global/CreateFAB";
 import { router } from "expo-router";
 import DoneRequests from "@/components/requests/DoneRequests";
+import { View } from "react-native";
 
 export default function Requests() {
 	return (
-		<>
+		<View style={{flex: 1, backgroundColor: "#F5F7FA"}}>
 			<Header title="Work Request" />
 			<SegmentedPager tabs={[
 				{ label: "Pending", icon: <FontAwesome6 name="circle-exclamation" size={12} />, component: <PendingRequests /> },
@@ -17,6 +18,6 @@ export default function Requests() {
 			/>
 
 			<CreateFAB label="Create Request" onPress={() => router.push("/newWorkRequest")} />
-		</>
+		</View>
 	)
 }

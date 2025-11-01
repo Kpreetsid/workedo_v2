@@ -139,7 +139,7 @@ export default function CreatePreventive() {
 	return (
 		<>
 			<Header title="Create Preventive" />
-			<KeyboardAwareScrollView bottomOffset={30}>
+			<KeyboardAwareScrollView bottomOffset={30} style={{ backgroundColor: '#F5F7FA' }}>
 				<View style={{ marginVertical: 5 }} />
 
 				<FormField

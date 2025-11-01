@@ -14,7 +14,7 @@ export default function WorkRequestDetail() {
 	const params: any = useLocalSearchParams();
 	const item = JSON.parse(params?.data);
 
-	const { workForm, setWorkForm } = useWorkOrderStore();
+	const { setWorkForm } = useWorkOrderStore();
 	const [rejectVisible, setRejectVisible] = useState(false);
 
 	const router = useRouter();
@@ -109,7 +109,7 @@ export default function WorkRequestDetail() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: "#fff",
+		backgroundColor: "#F5F7FA",
 		padding: 20
 	},
 	card: {

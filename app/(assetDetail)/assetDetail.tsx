@@ -38,7 +38,7 @@ export default function AssetDetailScreen() {
 	}
 
 	return (
-		<>
+		<View style={styles.container}>
 			<Header title={assetData?.asset_name || ""} />
 
 			{
@@ -53,11 +53,15 @@ export default function AssetDetailScreen() {
 					</View>
 				)
 			}
-		</>
+		</View>
 	);
 }
 
 const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		backgroundColor: '#F5F7FA'
+	},
 	center: {
 		flex: 1,
 		justifyContent: "center",

@@ -135,6 +135,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 18,
 		paddingTop: 12,
 		paddingBottom: 30,
+		backgroundColor: '#F5F7FA'
 	},
 	headerCard: {
 		backgroundColor: "#742BDE02",

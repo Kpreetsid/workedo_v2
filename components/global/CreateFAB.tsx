@@ -1,23 +1,26 @@
-import {GestureResponderEvent, Pressable, StyleSheet, Text, ViewStyle} from "react-native";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { GestureResponderEvent, Pressable, StyleSheet, Text, ViewStyle } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Fonts from "@/constants/Typography";
-import {FC, ReactNode} from "react";
-import {AddNewGatewayIcon} from "@/constants/IconProvider";
+import { FC, ReactNode } from "react";
+import { Ionicons } from "@expo/vector-icons";
 
 interface FABProps {
     label?: string;
-    icon?: ReactNode;
     onPress: (event: GestureResponderEvent) => void;
     backgroundColor?: string;
     style?: ViewStyle;
 }
 
-const CreateFAB: FC<FABProps> = ({label, icon = <AddNewGatewayIcon/>, onPress, backgroundColor = "#742BDE", style}) => {
+const CreateFAB: FC<FABProps> = ({ label, onPress, backgroundColor = "#742BDE", style }) => {
     const insets = useSafeAreaInsets();
 
     return (
-        <Pressable onPress={onPress} style={[styles.fab, label === "Create Work Order" ? {width: 200} : null, {bottom: insets.bottom + 20, backgroundColor}, style,]}>
-            {icon}
+        <Pressable onPress={onPress} style={[styles.fab, label === "Create Work Order" ? { width: 200 } : null,
+        {
+            // bottom: insets.bottom,
+            backgroundColor
+        }, style,]}>
+            <Ionicons name="add-circle" size={24} color="white" />
             {label && <Text style={styles.label}>{label}</Text>}
         </Pressable>
     );
@@ -27,21 +30,31 @@ export default CreateFAB;
 
 const styles = StyleSheet.create({
     fab: {
-        flexDirection: "row",
+        width: 50,
+        height: 50,
+        borderRadius: 30,
+        position: 'absolute',
+        bottom: "2%",
+        right: "6%",
+        backgroundColor: "#742BDE",
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 24,
-        position: "absolute",
-        alignSelf: "flex-end",
-        width: 160,
-        height: 40,
+
+
+        flexDirection: "row",
         gap: 8,
-        right: 20,
-        shadowColor: "#742BDE",
-        shadowOpacity: 0.3,
-        shadowOffset: {width: 0, height: 2},
-        shadowRadius: 4,
-        elevation: 4,
+        // borderRadius: 30,
+        // position: "absolute",
+        // alignSelf: "flex-end",
+        // width: 160,
+        // height: 50,
+        // bottom: "2%",
+        // right: "6%",
+        // shadowColor: "#742BDE",
+        // shadowOpacity: 0.3,
+        // shadowOffset: { width: 0, height: 2 },
+        // shadowRadius: 4,
+        // elevation: 4,
     },
     label: {
         color: "#fff",

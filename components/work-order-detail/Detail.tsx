@@ -1,6 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, Image, Pressable } from "react-native";
 import Fonts from "@/constants/Typography";
-import { AssignUserRightIcon } from "@/constants/IconProvider";
 import { useState } from "react";
 import AssignedUsersModal from "./AssignUserModal";
 import PartsInfoModal from "./PartsInfoModal";
@@ -8,12 +7,14 @@ import MoreInfoModal from "./MoreInfoModal";
 import { WorkOrder } from "@/src/types/workOrder";
 import { endpoints } from "@/src/api/endpoints";
 import moment from "moment";
+import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
 	params: WorkOrder;
 }
 
 export default function Detail({ params }: Props) {
+	console.log('params = ', params);
 	const [userModalVisible, setUserModalVisible] = useState(false);
 	const [partsModalVisible, setPartsModalVisible] = useState(false);
 	const [moreInfoModalVisible, setMoreInfoModalVisible] = useState(false);
@@ -22,7 +23,7 @@ export default function Detail({ params }: Props) {
 
 			{/* Assigned Section */}
 			<View style={styles.card}>
-				<View style={styles.makeRow}>
+				<View style={[styles.makeRow, { backgroundColor: '#FAFAFB', paddingVertical: 10, paddingHorizontal: 8 }]}>
 					<Text style={styles.cardTitle}>Assigned to</Text>
 					<Pressable style={styles.avatarRow} onPress={() => setUserModalVisible(true)}>
 						<View style={styles.avatars}>
@@ -55,7 +56,7 @@ export default function Detail({ params }: Props) {
 							})}
 						</View>
 
-						<AssignUserRightIcon />
+						<Ionicons name="chevron-forward" size={18} color="#742BDE" />
 					</Pressable>
 				</View>
 				<View style={styles.rowBetween}>
@@ -67,7 +68,7 @@ export default function Detail({ params }: Props) {
 
 			{/* Priority Section */}
 			<View style={styles.card}>
-				<View style={styles.rowBetween}>
+				<View style={[styles.rowBetween, { backgroundColor: '#FAFAFB', paddingVertical: 10, paddingHorizontal: 8 }]}>
 					<Text style={styles.cardTitle}>Priority</Text>
 					<Text style={[styles.badge, params?.priority === "Low" && styles.badgeLow, params?.priority === "Medium" && styles.badgeMedium, params?.priority === "High" && styles.badgeHigh]}>
 						#{params?.priority}
@@ -87,7 +88,7 @@ export default function Detail({ params }: Props) {
 			<Pressable style={styles.card} onPress={() => setMoreInfoModalVisible(true)}>
 				<View style={styles.rowBetween}>
 					<Text style={styles.cardTitle}>More Info</Text>
-					<AssignUserRightIcon />
+					<Ionicons name="chevron-forward" size={18} color="#742BDE" />
 				</View>
 			</Pressable>
 
@@ -97,7 +98,7 @@ export default function Detail({ params }: Props) {
 					<Text style={styles.cardTitle}>Parts</Text>
 					<View style={styles.avatarRow}>
 						<Text style={styles.linkText}>{params?.parts?.length || 0} Parts</Text>
-						<AssignUserRightIcon />
+						<Ionicons name="chevron-forward" size={18} color="#742BDE" />
 					</View>
 				</View>
 			</Pressable>
@@ -132,12 +133,12 @@ const styles = StyleSheet.create({
 		borderRadius: 8,
 		padding: 14,
 		marginBottom: 10,
-		shadowColor: "#00000099",
-		shadowOpacity: 0.05,
-		shadowRadius: 4,
-		elevation: 2,
-		borderWidth: 0.1,
-		borderColor: "#00000099",
+		// shadowColor: "#00000099",
+		// shadowOpacity: 0.05,
+		// shadowRadius: 4,
+		// elevation: 2,
+		borderWidth: 0.3,
+		borderColor: "rgba(0, 0, 0, 0.60)",
 		gap: 5
 	},
 	cardTitle: {
@@ -153,22 +154,22 @@ const styles = StyleSheet.create({
 	avatarRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 10,
+		gap: 2,
 	},
 	avatars: {
 		flexDirection: "row",
 	},
 	avatar: {
-		width: 25,
-		height: 25,
+		width: 28,
+		height: 28,
 		borderRadius: 16,
 		borderWidth: 1,
 		borderColor: "#fff",
 	},
 	cardSubtitle: {
 		fontSize: 10,
-		fontFamily: Fonts.light,
-		color: "#666",
+		fontFamily: Fonts.medium,
+		color: "#000",
 	},
 	cardValue: {
 		fontSize: 10,
@@ -186,11 +187,13 @@ const styles = StyleSheet.create({
 		borderRadius: 4,
 		fontSize: 10,
 		fontFamily: Fonts.regular,
-		color: "#fff",
+		color: "#742BDE",
+		borderColor: "#742BDE",
+		borderWidth: 1,
 	},
-	badgeLow: { backgroundColor: "#9BE7FF" },
-	badgeMedium: { backgroundColor: "#FFD580" },
-	badgeHigh: { backgroundColor: "#FF9B9B" },
+	badgeLow: { backgroundColor: "rgba(116, 43, 222, 0.14);" },
+	badgeMedium: { backgroundColor: "rgba(255, 213, 128, 0.14);" },
+	badgeHigh: { backgroundColor: "rgba(255, 155, 155, 0.14);" },
 	linkText: {
 		fontSize: 10,
 		fontFamily: Fonts.medium,
@@ -202,8 +205,8 @@ const styles = StyleSheet.create({
 		color: "#444",
 	},
 	avatarContainer: {
-		width: 25,
-		height: 25,
+		width: 28,
+		height: 28,
 		borderRadius: 35 / 2,
 		overflow: "hidden",
 		alignItems: "center",
@@ -217,10 +220,7 @@ const styles = StyleSheet.create({
 		backgroundColor: "#9999FF", // or any accent color
 		alignItems: "center",
 		justifyContent: "center",
-		borderWidth: 1,
-		borderColor: "#fff",
 	},
-
 	avatarInitials: {
 		color: "#fff",
 		fontWeight: "600",

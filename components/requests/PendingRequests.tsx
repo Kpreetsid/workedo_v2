@@ -70,7 +70,7 @@ export default function PendingRequests() {
 const styles = StyleSheet.create({
 	listContainer: {
 		flexGrow: 1,
-		backgroundColor: "#F7F7F9",
+		backgroundColor: "#F5F7FA",
 		paddingHorizontal: 20,
 	},
 	card: {

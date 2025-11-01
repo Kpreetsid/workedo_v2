@@ -66,11 +66,11 @@ export default function MyAccount() {
 		try {
 			const profileUpdate = await updateUser(updatedUser?.user_profile_img, user?.id);
 			console.log('profileUpdate user: ', profileUpdate);
-			if(profileUpdate.status) {
+			if (profileUpdate.status) {
 				setUser(profileUpdate.data);
 				const latestUser = await getProfileService(user?.id);
 				console.log('latest user = ', latestUser);
-				if(latestUser?.status) {
+				if (latestUser?.status) {
 					setUser(latestUser?.data[0]);
 				}
 			}
@@ -146,6 +146,7 @@ export default function MyAccount() {
 			</View>
 
 			<View style={styles.card}>
+				<View style={styles.cardShadow} />
 				<View style={styles.handle} />
 
 				<View style={styles.sheetContainer}>
@@ -201,7 +202,11 @@ export default function MyAccount() {
 					</View>
 				</View>
 			</View>
-			<Image source={require("../../assets/images/presage.png")} style={styles.image} />
+			{
+				activeTab !== "Account" && (
+					<Image source={require("../../assets/images/presage.png")} style={styles.image} />
+				)
+			}
 		</SafeAreaView>
 	)
 }
@@ -278,6 +283,17 @@ const styles = StyleSheet.create({
 		borderTopRightRadius: 40,
 		paddingHorizontal: 16,
 		paddingTop: 20,
+	},
+	cardShadow: {
+		width: '92%',
+		height: 30,
+		backgroundColor: '#D6B8FF',
+		alignSelf: "center",
+		borderTopLeftRadius: 100,
+		borderTopRightRadius: 100,
+		position: 'absolute',
+		top: -10,
+		zIndex: -1,
 	},
 	handle: {
 		width: 75,

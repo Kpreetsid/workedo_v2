@@ -11,7 +11,7 @@ export default function Comments({ comments }: { comments: WorkOrderComment[] })
 		<View style={styles.container}>
 			<View style={styles.inputContainer}>
 				<TextInput
-					placeholder="Comment"
+					placeholder="Comments"
 					placeholderTextColor="#00000050"
 					style={styles.commentInput}
 					multiline
@@ -50,13 +50,13 @@ const styles = StyleSheet.create({
 	},
 	inputContainer: {
 		height: 70,
-		backgroundColor: "#F0EDFF",
+		backgroundColor: "rgba(240, 237, 255, 0.40)",
 		borderRadius: 8,
 		marginBottom: 10,
 		flexDirection: "row",
 		alignItems: "center",
 		borderWidth: StyleSheet.hairlineWidth,
-		borderColor: "#000000"
+		borderColor: "#000"
 	},
 	commentInput: {
 		flex: 1,

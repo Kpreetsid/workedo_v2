@@ -38,7 +38,8 @@ export default function MonitoringTabs() {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1
+        flex: 1,
+        backgroundColor: "#F5F7FA"
     },
     connectBtn: {
         position: "absolute",

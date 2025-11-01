@@ -4,6 +4,7 @@ import { WorkOrderCardLogo } from "@/constants/IconProvider";
 import { WorkOrder } from "@/src/types/workOrder";
 import moment from "moment";
 import { router } from "expo-router";
+import { Image } from "expo-image";
 
 const getPriorityColor = (priority: WorkOrder["priority"]) => {
 	switch (priority) {
@@ -32,22 +33,22 @@ const WorkOrderCard = ({
 		// isSelected && 
 		router.push({
 			pathname: "/workOrderDetail",
-			params: {data: JSON.stringify(item)}
+			params: { data: JSON.stringify(item) }
 		});
 	}
-	
+
 	return (
 		<Pressable style={[styles.card, isSelected && styles.selectedCard]} onPress={onCardPress}>
 
 			<View style={styles.leftSection}>
 				<Text style={styles.id}>#{item?.order_no}</Text>
-				<Text style={styles.title}>{item?.title}</Text>
-				{/* <Text style={styles.subText}>Requested By : {item?.requestedBy}</Text> */}
+				<Text style={styles.title} numberOfLines={2}>{item?.title}</Text>
 				<Text style={styles.subText}>Created On : {moment(item?.createdAt).format("DD MMM, YYYY")}</Text>
 			</View>
 
 			<View style={styles.rightSection}>
-				<WorkOrderCardLogo />
+				{/* <WorkOrderCardLogo /> */}
+				<Image source={require("../../assets/images/work_order.svg")} style={{ width: 40, height: 40 }} />
 
 				<View style={styles.badgesRow}>
 					<View style={[styles.statusBadge, { backgroundColor: item?.status === "Completed" ? "#00B227" : "#FFFFFF" }]}>
@@ -99,6 +100,7 @@ const styles = StyleSheet.create({
 	title: {
 		fontFamily: Fonts.bold,
 		fontSize: 12,
+		height: 35,
 		marginBottom: 2,
 		color: "#000000",
 	},

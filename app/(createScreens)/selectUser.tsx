@@ -121,7 +121,7 @@ export default function SelectUser() {
 const styles = StyleSheet.create({
 	contentContainer: {
 		flexGrow: 1,
-		backgroundColor: "#fff",
+		backgroundColor: "#F5F7FA",
 		paddingHorizontal: 25,
 		paddingTop: 15,
 		paddingBottom: 105,

@@ -4,9 +4,10 @@ import { useCallback, useState } from "react";
 import { StyleSheet, View, Text, Pressable, FlatList } from "react-native";
 import { Entypo, FontAwesome } from "@expo/vector-icons";
 import Fonts from "@/constants/Typography";
-import CreateFAB from "@/components/global/CreateFAB";
 import { router, useFocusEffect } from "expo-router";
 import { getParts } from "@/src/services/part.service";
+import FAB from "@/components/overview-screen/FAB";
+import CreateFAB from "@/components/global/CreateFAB";
 
 export default function PartsInventory() {
 	const [searchQuery, setSearchQuery] = useState("");
@@ -80,6 +81,7 @@ export default function PartsInventory() {
 			</View>
 
 			<CreateFAB label="Create Part" onPress={() => router.push("/createPart")} />
+
 		</>
 	)
 }
@@ -88,15 +90,21 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		paddingVertical: 20,
+		backgroundColor: "#F5F7FA"
 	},
 	partInfoCard: {
-		backgroundColor: "#ffffff70",
+		backgroundColor: "rgba(255, 255, 255, 0.90)",
 		borderRadius: 8,
 		paddingHorizontal: 20,
 		paddingVertical: 10,
 		marginHorizontal: 20,
-		borderWidth: 0.3,
-		borderColor: "#E1E8EE40",
+		borderWidth: 0.6,
+		borderColor: "rgba(225, 232, 238, 0.40)",
+		shadowColor: "#d3d3d3",
+		shadowOpacity: 0.06,
+		shadowOffset: { width: 0, height: 2 },
+		shadowRadius: 3,
+		elevation: 2,
 	},
 	makeRow: {
 		flexDirection: "row",

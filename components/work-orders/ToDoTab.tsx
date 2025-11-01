@@ -91,7 +91,7 @@ export default function ToDoTab() {
 			</View>
 
 			{
-				loading && <View style={{marginTop: 20}}>
+				loading && <View style={{ marginTop: 20 }}>
 					<ActivityIndicator size={28} />
 				</View>
 			}

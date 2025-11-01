@@ -153,7 +153,8 @@ export default function Gateways() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		paddingVertical: 20
+		paddingVertical: 20,
+		backgroundColor: '#F5F7FA'
 	},
 	listContainer: {
 		paddingVertical: 10,

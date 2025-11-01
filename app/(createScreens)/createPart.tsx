@@ -68,7 +68,7 @@ export default function CreatePart() {
 		<>
 			<Header title="Create Part" />
 
-			<KeyboardAwareScrollView bottomOffset={30}>
+			<KeyboardAwareScrollView bottomOffset={30} style={{ backgroundColor: '#F5F7FA' }}>
 
 				<View style={{ marginVertical: 5 }} />
 

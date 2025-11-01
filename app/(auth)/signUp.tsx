@@ -76,7 +76,7 @@ export default function RegisterScreen() {
 				"description": values.description ?? ""
 			}
 			console.log('payload sign up = ', payload);
-			
+
 			setAuthFlow("signUp", payload);
 
 			// You can send the data to your registerService here
@@ -103,6 +103,7 @@ export default function RegisterScreen() {
 				<View style={styles.logoContainer}><Logo /></View>
 
 				<View style={styles.card}>
+					<View style={styles.cardShadow} />
 					<View style={styles.handle} />
 					<Text style={styles.title}>Join Us Today! 🚀</Text>
 					<Text style={styles.subtitle}>Create Your Account Below</Text>
@@ -277,6 +278,17 @@ const styles = StyleSheet.create({
 		borderTopRightRadius: 40,
 		paddingHorizontal: 16,
 		paddingTop: 20,
+	},
+	cardShadow: {
+		width: '92%',
+		height: 30,
+		backgroundColor: '#D6B8FF',
+		alignSelf: "center",
+		borderTopLeftRadius: 100,
+		borderTopRightRadius: 100,
+		position: 'absolute',
+		top: -10,
+		zIndex: -1,
 	},
 	title: {
 		fontSize: 20,

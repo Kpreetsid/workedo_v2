@@ -7,7 +7,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Fonts from "@/constants/Typography";
 import { router, useLocalSearchParams } from "expo-router";
 import ActionButton from "@/components/auth-screens/ActionButton";
-import { OTPVerificationService, resetPasswordOTPSendService } from "@/src/services/auth.service";
+import { OTPVerificationService, resetPasswordOTPSendService, sendPasswordResetEmail } from "@/src/services/auth.service";
 import { useAuthFlowStore } from "@/src/store/useAuthFlowStore";
 
 export default function OTPVerification() {
@@ -15,6 +15,7 @@ export default function OTPVerification() {
 	const [timer, setTimer] = useState(59);
 	const inputs = useRef<TextInput[]>([]);
 	const [userData, setUserData] = useState<any>(null);
+	const [loading, setLoading] = useState(false);
 
 	const payload = useAuthFlowStore((state) => state.payload);
 	const flowType = useAuthFlowStore((state) => state.flowType);
@@ -22,12 +23,24 @@ export default function OTPVerification() {
 	console.log('payload otp verification = ', payload);
 	console.log('flowType otp verification = ', flowType);
 
+	useEffect(() => {
+		if (userData) {
+			return;
+		}
+		setUserData(payload);
+	}, []);
+
 	// useEffect(() => {
+	// 	setUserData({email: payload});
 	// 	if (timer > 0) {
 	// 		const interval = setInterval(() => setTimer((t) => t - 1), 1000);
 	// 		return () => clearInterval(interval);
 	// 	}
 	// }, [timer]);
+
+	useEffect(() => {
+		console.log('user data = ', userData)
+	}, [userData])
 
 	const handleChange = (text: string, index: number) => {
 		const newOtp = [...otp];
@@ -41,9 +54,30 @@ export default function OTPVerification() {
 		}
 	};
 
-	const handleResend = () => {
-		setTimer(59);
-		setOtp(["", "", "", "", "", ""]);
+	const handleResend = async () => {
+		console.log('on resend = ', payload);
+		setLoading(true)
+
+		try {
+			let obj = {
+				"email": payload?.email
+			}
+			console.log(obj);
+			const userRes = await sendPasswordResetEmail(obj);
+			console.log('userRes in forgot password = ', userRes);
+			if (userRes.status) {
+				ToastAndroid.show(userRes?.message, ToastAndroid.SHORT);
+
+				// reset the timer and otp fields
+				setTimer(59);
+				setOtp(["", "", "", "", "", ""]);
+			}
+			setLoading(false)
+		} catch (e: any) {
+			console.log('e in forgot password = ', e);
+			ToastAndroid.show(e?.message, ToastAndroid.SHORT);
+			setLoading(false)
+		}
 	};
 
 	const verifyPin = async () => {
@@ -114,52 +148,63 @@ export default function OTPVerification() {
 			<View style={styles.logoContainer}><Logo /></View>
 
 			<KeyboardAwareScrollView contentContainerStyle={styles.sheetContainer} keyboardShouldPersistTaps="handled" bottomOffset={30}>
-				<View style={styles.handle} />
-				<View style={styles.iconContainer}>
-					<OTPEmailIcon />
+				<View style={styles.card}>
+					<View style={styles.cardShadow} />
+					<View style={styles.handle} />
+					<View style={styles.iconContainer}>
+						<OTPEmailIcon />
+					</View>
+
+					<Text style={styles.title}>OTP Verification</Text>
+
+					<Text style={styles.subtitle}>
+						One Time Password (OTP) has been sent via Email to{" "}
+						{
+							userData && <Text style={styles.email}>{userData?.email}</Text>
+						}
+					</Text>
+
+					<Text style={styles.instruction}>Enter the 6 digit Verification Code!</Text>
+
+					<View style={styles.otpContainer}>
+						{otp.map((digit, index) => (
+							<TextInput
+								key={index}
+								ref={(ref) => {
+									if (ref) inputs.current[index] = ref;
+								}}
+								style={styles.otpBox}
+								maxLength={1}
+								keyboardType="numeric"
+								value={digit}
+								onChangeText={(text) => handleChange(text, index)}
+							/>
+						))}
+					</View>
+
+					<Text style={styles.resendText}>
+						Resend OTP : <Text style={styles.timer}>00:{timer.toString().padStart(2, "0")}</Text>
+					</Text>
+
+					<ActionButton
+						label={flowType === "resetPassword" ? "Continue" : "Verify OTP"}
+						icon={flowType === "resetPassword" ? false : true}
+						onPress={() => {
+							verifyPin()
+						}}
+					/>
+
+					<Text style={styles.bottomText}>
+						If you didn't receive code!{" "}
+						{
+							loading ? (
+								<Text style={styles.resendLink}>Resending...</Text>
+							) : (
+								<Text style={styles.resendLink} onPress={handleResend}>Resend</Text>
+							)
+						}
+					</Text>
 				</View>
-
-				<Text style={styles.title}>OTP Verification</Text>
-
-				<Text style={styles.subtitle}>
-					One Time Password (OTP) has been sent via Email to{" "}
-					<Text style={styles.email}>{userData?.email}</Text>
-				</Text>
-
-				<Text style={styles.instruction}>Enter the OTP below to verify it.</Text>
-
-				<View style={styles.otpContainer}>
-					{otp.map((digit, index) => (
-						<TextInput
-							key={index}
-							ref={(ref) => {
-								if (ref) inputs.current[index] = ref;
-							}}
-							style={styles.otpBox}
-							maxLength={1}
-							keyboardType="numeric"
-							value={digit}
-							onChangeText={(text) => handleChange(text, index)}
-						/>
-					))}
-				</View>
-
-				<Text style={styles.resendText}>
-					Resend OTP : <Text style={styles.timer}>00:{timer.toString().padStart(2, "0")}</Text>
-				</Text>
-
-				<ActionButton
-					label={flowType === "resetPassword" ? "Continue" : "Verify OTP"}
-					icon={true}
-					onPress={() => {
-						verifyPin()
-					}}
-				/>
-
-				<Text style={styles.bottomText}>
-					If you didn't receive code!{" "}
-					<Text style={styles.resendLink} onPress={handleResend}>Resend</Text>
-				</Text>
 			</KeyboardAwareScrollView>
 		</SafeAreaView>
 	)
@@ -174,6 +219,27 @@ const styles = StyleSheet.create({
 		alignSelf: "center",
 		marginVertical: 70,
 	},
+	card: {
+		flex: 1,
+		width: "100%",
+		alignItems: "center",
+		backgroundColor: "#fff",
+		borderTopLeftRadius: 40,
+		borderTopRightRadius: 40,
+		paddingHorizontal: 16,
+		paddingTop: 20,
+	},
+	cardShadow: {
+		width: '92%',
+		height: 30,
+		backgroundColor: '#D6B8FF',
+		alignSelf: "center",
+		borderTopLeftRadius: 100,
+		borderTopRightRadius: 100,
+		position: 'absolute',
+		top: -10,
+		zIndex: -1,
+	},
 	handle: {
 		width: 75,
 		height: 5,
@@ -183,16 +249,15 @@ const styles = StyleSheet.create({
 	},
 	sheetContainer: {
 		flexGrow: 1,
-		backgroundColor: "#fff",
+		// backgroundColor: "#fff",
 		alignItems: "center",
-		paddingHorizontal: 20,
 		borderTopLeftRadius: 40,
 		borderTopRightRadius: 40,
 		paddingTop: 20,
 	},
 	iconContainer: {
 		padding: 20,
-		marginVertical: 15
+		// marginVertical: 15
 	},
 	title: {
 		fontSize: 18,
@@ -225,26 +290,34 @@ const styles = StyleSheet.create({
 		marginVertical: 15,
 	},
 	otpBox: {
-		width: 45,
-		height: 40,
+		width: 35,
+		height: 35,
 		borderRadius: 4,
-		borderWidth: 0.8,
-		borderColor: "#656566",
+		borderWidth: 0.4,
+		borderColor: "#665566",
 		textAlign: "center",
 		fontSize: 16,
 		fontFamily: Fonts.semiBold,
 		color: "#000",
 		backgroundColor: "#fff",
-		elevation: 5,
+		elevation: 2,
+		shadowColor: "#b6b6b6ff",
+		shadowOffset: {
+			width: 0,
+			height: 2,
+		},
+		shadowOpacity: 0.25,
+		shadowRadius: 3.84,
 		textAlignVertical: "center",
 		includeFontPadding: false,
 		paddingTop: 0,
 		paddingBottom: 0,
 	},
 	resendText: {
+		width: "80%",
 		fontSize: 9,
 		color: "#666",
-		marginBottom: 25,
+		marginBottom: 5,
 		fontFamily: Fonts.light,
 		textAlign: "right",
 	},

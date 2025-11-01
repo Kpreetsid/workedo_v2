@@ -15,6 +15,7 @@ interface AssignedUsersModalProps {
 const { height } = Dimensions.get("window");
 
 const AssignedUsersModal: FC<AssignedUsersModalProps> = ({ visible, onClose, users }) => {
+	console.log('users = ', users);
 	const [search, setSearch] = useState("");
 
 	const filteredUsers = users?.filter((u) => u?.user?.firstName?.toLowerCase().includes(search.toLowerCase()));
@@ -44,9 +45,9 @@ const AssignedUsersModal: FC<AssignedUsersModalProps> = ({ visible, onClose, use
 						data={users}
 						keyExtractor={(item) => item.id || item._id}
 						renderItem={({ item, index }: { item: any; index: number }) => {
-							const profileImg = item?.user_profile_img;
-							const first = item?.firstName?.[0] || "";
-							const last = item?.lastName?.[0] || "";
+							const profileImg = item?.user?.user_profile_img;
+							const first = item?.user?.firstName?.[0] || "";
+							const last = item?.user?.lastName?.[0] || "";
 							const initials = (first + last).toUpperCase();
 
 							return (
@@ -61,7 +62,7 @@ const AssignedUsersModal: FC<AssignedUsersModalProps> = ({ visible, onClose, use
 											<Text style={styles.avatarInitials}>{initials}</Text>
 										</View>
 									)}
-									<Text style={styles.userName}>{item?.firstName}</Text>
+									<Text style={styles.userName}>{item?.user?.firstName}</Text>
 								</TouchableOpacity>
 							);
 						}}
@@ -127,6 +128,7 @@ const styles = StyleSheet.create({
 		width: 26,
 		height: 26,
 		borderRadius: 18,
+		objectFit: "cover",
 	},
 	userName: {
 		fontFamily: Fonts.regular,

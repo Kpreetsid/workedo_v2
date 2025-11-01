@@ -58,6 +58,5 @@ const styles = StyleSheet.create({
 	container: {
 		// flexGrow: 1,
 		justifyContent: "flex-start",
-		backgroundColor: "#F5F7FA",
 	}
 })

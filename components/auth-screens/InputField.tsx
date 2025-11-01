@@ -1,7 +1,9 @@
-import { TextInput, View, StyleSheet, TextInputProps, ViewStyle, Text } from "react-native";
+import { TextInput, View, StyleSheet, TextInputProps, ViewStyle, Text, Pressable } from "react-native";
 import Fonts from "../../constants/Typography";
 import { Icons } from "@/constants/IconProvider";
 import { Controller } from "react-hook-form";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useState } from "react";
 
 interface FieldProps extends Omit<TextInputProps, "secureTextEntry" | "placeholder"> {
 	icon?: keyof typeof Icons;
@@ -25,6 +27,7 @@ export default function Field({
 	...rest
 }: FieldProps) {
 	const IconComponent = Icons[icon!];
+	const [showPassword, setShowPassword] = useState(false);
 
 	return (
 		<Controller
@@ -39,11 +42,18 @@ export default function Field({
 							placeholder={placeholder}
 							placeholderTextColor="#999"
 							style={styles.inputField}
-							secureTextEntry={secure}
+							secureTextEntry={secure && !showPassword}
 							value={value}
 							onChangeText={onChange}
 							multiline={name == "description" ? true : false}
 						/>
+						{
+							secure && (
+								<Pressable onPress={() => setShowPassword(!showPassword)} style={styles.icon}>
+									<Ionicons name={showPassword ? "eye" : "eye-off"} size={18} color="#999" />
+								</Pressable>
+							)
+						}
 					</View>
 					{error && <Text style={styles.error}>{error.message}</Text>}
 				</View>
@@ -77,4 +87,8 @@ const styles = StyleSheet.create({
 		fontSize: 11,
 		marginTop: 2,
 	},
+	icon: {
+		alignSelf: "center",
+		marginRight: 20
+	}
 })

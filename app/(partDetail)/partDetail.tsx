@@ -76,7 +76,7 @@ export default function partDetail() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: "#F5F7FA",
+		backgroundColor: "#F5F7FA"
 	},
 	addBtnContainer: {
 		backgroundColor: "#fff",

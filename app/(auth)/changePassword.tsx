@@ -71,6 +71,7 @@ export default function ChangePassword() {
 				<AuthHeader />
 				<View style={styles.logoContainer}><Logo /></View>
 				<View style={styles.card}>
+					<View style={styles.cardShadow} />
 					<View style={styles.handle} />
 					<Text style={styles.title}>Change Password</Text>
 					<Text style={styles.subtitle}>Enter your new password.</Text>
@@ -133,6 +134,17 @@ const styles = StyleSheet.create({
 		borderTopRightRadius: 40,
 		paddingHorizontal: 16,
 		paddingTop: 20,
+	},
+	cardShadow: {
+		width: '92%',
+		height: 30,
+		backgroundColor: '#D6B8FF',
+		alignSelf: "center",
+		borderTopLeftRadius: 100,
+		borderTopRightRadius: 100,
+		position: 'absolute',
+		top: -10,
+		zIndex: -1,
 	},
 	handle: {
 		width: 75,

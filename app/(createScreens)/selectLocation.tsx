@@ -62,7 +62,7 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 	return (
 		<>
 			{showHeader && <Header title="Select Location" />}
-			<View style={{ flex: 1 }}>
+			<>
 				<SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText} />
 
 				<FlatList
@@ -106,7 +106,7 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 				/>
 
 				{selection && <ActionButton onPress={() => router.back()} label="Confirm Location" buttonStyle={styles.actionButton} />}
-			</View>
+			</>
 		</>
 	)
 }
@@ -128,10 +128,9 @@ const styles = StyleSheet.create({
 	},
 	container: {
 		flexGrow: 1,
-		backgroundColor: "#F5F7FA",
 		paddingHorizontal: 25,
 		paddingTop: 15,
-		paddingBottom: 105,
+		paddingBottom: '30%',
 		gap: 10
 	},
 	locationButton: {
@@ -156,8 +155,8 @@ const styles = StyleSheet.create({
 	},
 	actionButton: {
 		position: "absolute",
-		bottom: 20,
+		width: width - 50,
+		bottom: 0,
 		alignSelf: "center",
-		width: width - 50
 	}
 })

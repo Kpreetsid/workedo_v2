@@ -145,6 +145,14 @@ const styles = StyleSheet.create({
 		justifyContent: "center",
 		gap: 5,
 		borderRadius: 5,
+		elevation: 5,
+		shadowColor: "rgba(116, 43, 222, 0.80)",
+		shadowOffset: {
+			width: 2,
+			height: 2,
+		},
+		shadowOpacity: 0.60,
+		shadowRadius: 2,
 	},
 	buttonText: {
 		fontSize: 10,

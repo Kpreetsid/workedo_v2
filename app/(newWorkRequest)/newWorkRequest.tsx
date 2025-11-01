@@ -79,10 +79,10 @@ export default function NewWorkRequest() {
 	};
 
 	return (
-		<View style={{backgroundColor: "#f9f9ff", flex: 1}}>
+		<View style={{backgroundColor: "#F5F7FA", flex: 1}}>
 			<Header title="New Work Request" />
 
-			<KeyboardAwareScrollView bottomOffset={30}>
+			<KeyboardAwareScrollView bottomOffset={30} style={{backgroundColor: "#F5F7FA"}}>
 				<ScrollView style={styles.container}>
 					<View style={styles.subContainer}>
 
