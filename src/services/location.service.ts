@@ -26,8 +26,10 @@ export const fetchParentLocationDetails = async (data: any, type: string) => {
     let url = '';
     if (type === 'parent') {
         url = `${endpoints.overview.locationDetails}?parent_id=${data}`;
+        console.log('url parent = ', url);
     } else {
         url = `${endpoints.overview.locationDetails}?locationId=${data}`;
+        console.log('url child = ', url);
     }
     console.log('url = ', url);
     return await sendRequest('GET', url);

@@ -30,6 +30,7 @@ export default function Location() {
 	// 🧩 Fetch all locations initially and select first parent
 	const fetchLocations = async () => {
 		const res = await fetchKPIFilterLocations();
+		console.log('res kpi = ', res);
 		if (res.status) {
 			setParentLocations(res.data.levelOneLocations);
 
@@ -45,6 +46,7 @@ export default function Location() {
 		const fetchChildsForParent = async () => {
 			try {
 				const childs = await fetchParentLocationDetails(parentSelectionId, "parent");
+				console.log('childs = ', childs);
 
 				// 🧠 CASE 1: API returns success but "status": false (no data found)
 				if (!childs?.status || !Array.isArray(childs.data) || childs.data.length === 0) {
@@ -64,7 +66,16 @@ export default function Location() {
 
 			} catch (error: any) {
 				console.error("fetchParentLocationDetails failed:", error);
-				handleNoChildData();
+				if (!error.status) {
+					ToastAndroid.show("No Data Found", ToastAndroid.SHORT);
+					// Select ALL child IDs by default
+					const allChildIds: string[] = []
+					setChildSelectionIds(allChildIds);
+
+					// Fetch assets for selected children
+					fetchChildAssets(parentSelectionId ?? undefined, allChildIds);
+				}
+				// handleNoChildData();
 			}
 		};
 
@@ -99,7 +110,10 @@ export default function Location() {
 			levelTwoLocations: childIds || childLocations.map((i) => i.id),
 		};
 
+		console.log('payload = ', payload);
+
 		const childAssetsRes = await childAssetsAgainstLocation(payload);
+		console.log('childAssetsRes = ', childAssetsRes);
 		if (childAssetsRes.status) {
 			setChildAssets(childAssetsRes.data.assetList);
 		}
