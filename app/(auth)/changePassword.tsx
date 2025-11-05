@@ -112,7 +112,11 @@ export default function ChangePassword() {
 					</TouchableOpacity>
 
 				</View>
-				<Image source={require("../../assets/images/presage.png")} style={styles.image} />
+
+				<View style={styles.imageContainer}>
+					<Image source={require("../../assets/images/presage.png")} style={styles.image} />
+				</View>
+
 			</KeyboardAwareScrollView>
 		</SafeAreaView>
 	)
@@ -129,6 +133,7 @@ const styles = StyleSheet.create({
 	},
 	card: {
 		flex: 1,
+		height: "75%",
 		backgroundColor: "#fff",
 		borderTopLeftRadius: 40,
 		borderTopRightRadius: 40,
@@ -192,9 +197,14 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.medium,
 		lineHeight: 18,
 	},
+	imageContainer: {
+		width: "100%",
+		height: "25%",
+		backgroundColor: "#fff",
+	},
 	image: {
-		position: "absolute",
-		bottom: 0,
-		right: 0,
-	}
+		width: "100%",
+		height: "100%",
+		backgroundColor: '#fff'
+	},
 })

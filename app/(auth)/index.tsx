@@ -79,7 +79,10 @@ export default function Login() {
 		<SafeAreaView style={styles.container}>
 			<KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
 				<AuthHeader title="Don't have an account yet?" btnText="Get Started" onPress={() => router.push("/signUp")} />
-				<View style={styles.logoContainer}><Logo /></View>
+				<View style={styles.logoContainer}>
+					<Logo />
+				</View>
+				
 				<View style={styles.card}>
 					<View style={styles.cardShadow} />
 					<View style={styles.handle} />
@@ -137,7 +140,9 @@ export default function Login() {
 
 				</View>
 
-				<Image source={require("../../assets/images/presage.png")} style={styles.image} />
+				<View style={styles.imageContainer}>
+					<Image source={require("../../assets/images/presage.png")} style={styles.image} />
+				</View>
 			</KeyboardAwareScrollView>
 		</SafeAreaView>
 	)
@@ -146,6 +151,7 @@ export default function Login() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
+		height: "100%",
 		backgroundColor: "#742BDE",
 	},
 	logoContainer: {
@@ -154,11 +160,12 @@ const styles = StyleSheet.create({
 	},
 	card: {
 		flex: 1,
+		height: "75%",
 		backgroundColor: "#fff",
 		borderTopLeftRadius: 40,
 		borderTopRightRadius: 40,
 		paddingHorizontal: 16,
-		paddingTop: 20,
+		paddingTop: 10,
 		position: "relative",
 	},
 	cardShadow: {
@@ -208,10 +215,15 @@ const styles = StyleSheet.create({
 		fontSize: 12,
 		textAlign: "center",
 	},
+	imageContainer: {
+		width: "100%",
+		height: "25%",
+		backgroundColor: "#fff",
+	},
 	image: {
-		position: "absolute",
-		bottom: 0,
-		right: 0,
+		width: "100%",
+		height: "100%",
+		backgroundColor: '#fff'
 	},
 	errorText: {
 		color: "red",

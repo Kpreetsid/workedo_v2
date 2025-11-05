@@ -74,7 +74,10 @@ export default function ForgotPassword() {
 					<ActionButton label={isSubmitting ? "Sending..." : "Submit Now"} onPress={handleSubmit(onSubmit)} disabled={isSubmitting} />
 
 				</View>
-				<Image source={require("../../assets/images/presage.png")} style={styles.image} />
+
+				<View style={styles.imageContainer}>
+					<Image source={require("../../assets/images/presage.png")} style={styles.image} />
+				</View>
 			</KeyboardAwareScrollView>
 		</SafeAreaView>
 	)
@@ -83,6 +86,7 @@ export default function ForgotPassword() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
+		height: "100%",
 		backgroundColor: "#742BDE",
 	},
 	logoContainer: {
@@ -91,6 +95,7 @@ const styles = StyleSheet.create({
 	},
 	card: {
 		flex: 1,
+		height: "75%",
 		backgroundColor: "#fff",
 		borderTopLeftRadius: 40,
 		borderTopRightRadius: 40,
@@ -136,9 +141,14 @@ const styles = StyleSheet.create({
 		gap: 12,
 		marginBottom: 15,
 	},
+	imageContainer: {
+		width: "100%",
+		height: "25%",
+		backgroundColor: "#fff",
+	},
 	image: {
-		position: "absolute",
-		bottom: 0,
-		right: 0,
-	}
+		width: "100%",
+		height: "100%",
+		backgroundColor: '#fff'
+	},
 })

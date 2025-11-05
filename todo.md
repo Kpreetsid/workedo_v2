@@ -25,3 +25,5 @@ UI changes to modify:
 15. Opening More options from tab bar, now all other tabs will still be clickable.
 16. Datepicker popover is opening Year and Months correctly.
 17. Login, Signup, Forgot password card shadow added as per figma.
+18. Alarms Health Status API implemented.
+19. Alarm Summary API implemented.

@@ -187,6 +187,7 @@ export default function OTPVerification() {
 					</Text>
 
 					<ActionButton
+						style={styles.actionButton}
 						label={flowType === "resetPassword" ? "Continue" : "Verify OTP"}
 						icon={flowType === "resetPassword" ? false : true}
 						onPress={() => {
@@ -222,11 +223,11 @@ const styles = StyleSheet.create({
 	card: {
 		flex: 1,
 		width: "100%",
+		paddingHorizontal: 16,
 		alignItems: "center",
 		backgroundColor: "#fff",
 		borderTopLeftRadius: 40,
 		borderTopRightRadius: 40,
-		paddingHorizontal: 16,
 		paddingTop: 20,
 	},
 	cardShadow: {
@@ -337,4 +338,8 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.semiBold,
 		fontSize: 12
 	},
+	actionButton: {
+		width: "90%",
+		paddingHorizontal: 16,
+	}
 })
