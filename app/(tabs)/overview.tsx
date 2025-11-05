@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import AlarmSummary from "@/components/overview-screen/AlarmSummary";
 import Top10BadAssets from "@/components/overview-screen/Top10BadAssets";
 import Alarms from "@/components/overview-screen/Alarms";
+import { FlashList } from "@shopify/flash-list";
 
 export default function Overview() {
 	const [createAlertBoxVisible, setCreateAlertBoxVisible] = useState(false);
@@ -29,7 +30,24 @@ export default function Overview() {
 		<>
 			<OverviewHeader />
 
-			<ScrollView contentContainerStyle={styles.container}>
+			<FlashList
+				data={[{}]} // dummy single item
+				renderItem={() => (
+					<>
+						<Location />
+						<InfoCards />
+						<AssetHealth />
+						<AssetHealthStatus />
+						<AlarmSummary />
+						<Top10BadAssets />
+						<Alarms />
+					</>
+				)}
+			/>
+
+
+
+			{/* <ScrollView contentContainerStyle={styles.container}>
 
 				<Location />
 
@@ -45,7 +63,7 @@ export default function Overview() {
 
 				<Alarms />
 
-			</ScrollView>
+			</ScrollView> */}
 
 			<FAB onPress={() => setCreateAlertBoxVisible(true)} />
 

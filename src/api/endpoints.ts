@@ -23,7 +23,8 @@ export const endpoints = {
     locationDetails: 'master/locations',
     childAssets: 'master/locations/child-assets',
     assetHealthKPIHistory: 'get_asset_health_kpi_summary/',
-    alarmsHistory: 'get_alarm_history_data/'
+    alarmsHistory: 'get_alarm_history_data/',
+    alarmsSummary: 'get_alarm_history_summary/'
   },
   parts: {
     createPart: 'master/parts',
