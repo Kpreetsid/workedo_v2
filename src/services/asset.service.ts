@@ -58,3 +58,8 @@ export const deleteEndpoint = async (id: string) => {
     const url = `${endpoints.asset.deleteEndpoint}/${id}`;
     return await sendRequestDemo("DELETE", url);
 };
+
+export const assetHealthStatus = async (payload: any) => {
+    const url = `${endpoints.asset.assetHealthStatus}`;
+    return await sendRequestDemo('POST', url, payload);
+};

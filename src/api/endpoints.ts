@@ -24,7 +24,7 @@ export const endpoints = {
     childAssets: 'master/locations/child-assets',
     assetHealthKPIHistory: 'get_asset_health_kpi_summary/',
     alarmsHistory: 'get_alarm_history_data/',
-    alarmsSummary: 'get_alarm_history_summary/'
+    alarmsSummary: 'get_alarm_history_summary/',
   },
   parts: {
     createPart: 'master/parts',
@@ -54,7 +54,8 @@ export const endpoints = {
     bearingDetails: 'get_bearing_details/',
     createEndpoint: 'endPointApi/',
     updateEndpoint: 'update_endpoint/',
-    deleteEndpoint: 'deleteEndPointApi/'
+    deleteEndpoint: 'deleteEndPointApi/',
+    assetHealthStatus: 'asset_health_status_summary/'
   },
   workOrders: {
     workOrders: 'work/orders',
