@@ -25,6 +25,9 @@ const width = Dimensions.get("window").width;
 export default function SelectAsset({ showHeader = true, selection = true }: AssetInterface) {
 	const params: any = useLocalSearchParams();
 	const comingFrom = params?.comingFrom;
+
+	console.log('comingFrom in select asset = ', comingFrom);
+
 	const [selectedAsset, setSelectedAsset] = useState<Asset>();
 	const [searchText, setSearchText] = useState("");
 	const user = useAuthStore((state) => state.user);
@@ -34,7 +37,10 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 	const { setWorkForm } = useWorkOrderStore();
 	const { setWorkRequestForm } = useWorkRequestStore();
 
-	const preventiveSelectedLocation = usePreventiveStore((state) => state.location);
+	// const preventiveSelectedLocation = usePreventiveStore((state) => state.location);
+	const locationsList = comingFrom === "newWorkOrder" ? 
+												useWorkOrderStore((state) => state.location) : (comingFrom === 'newWorkRequest' ? useWorkRequestStore((state) => state.location) : (comingFrom === 'createPreventive' ? usePreventiveStore((state) => state.location) : null));
+
 
 	useEffect(() => {
 		fetchAssets();
@@ -42,13 +48,16 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 
 	const fetchAssets = async () => {
 		try {
+			if (!locationsList) {
+				return;
+			}
 			const payload = {
 				"locationList": [
-					preventiveSelectedLocation?.id || preventiveSelectedLocation?._id
+					locationsList?.id || locationsList?._id
 				]
 			}
 
-			console.log('preventive selected location = ', preventiveSelectedLocation);
+			console.log('locationsList = ', locationsList);
 			const res = await getFilteredAssets(payload);
 
 			if (res.status) {
