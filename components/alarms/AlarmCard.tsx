@@ -4,7 +4,7 @@ import { AlarmItem } from '@/src/types/alarm';
 import Fonts from '@/constants/Typography';
 import moment from 'moment';
 
-const AlarmCard = (item: AlarmItem) => (
+const AlarmCard = ({ item }: { item: AlarmItem }) => (
 	<View key={item.id} style={styles.card}>
 		<View style={styles.cardHeader}>
 			<View>
@@ -37,7 +37,7 @@ const AlarmCard = (item: AlarmItem) => (
 			</View>
 		</View>
 
-		<Text style={styles.timestamp}>{moment(item.timestamp).format("MMM DD, YYYY, h:mm A")}</Text>
+		<Text style={styles.timestamp}>{moment(item.timestamp).format("MMM DD, YYYY, h:mm:ss")}</Text>
 	</View>
 );
 

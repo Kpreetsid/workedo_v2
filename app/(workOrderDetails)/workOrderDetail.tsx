@@ -6,14 +6,31 @@ import SegmentedPager from "@/components/global/SegmentPager";
 import { Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { WorkOrderCompleteIcon, WorkOrderInProgressIcon, WorkOrderOnHoldIcon, WorkOrderOpenIcon } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
-import { updateWorkOrderStatus } from "@/src/services/work-order.service";
-import { useState } from "react";
+import { getWorkOrderDetails, updateWorkOrderStatus } from "@/src/services/work-order.service";
+import { useEffect, useState } from "react";
 
 export default function WorkOrderDetail() {
 	const params: any = useLocalSearchParams();
 	const work_order_data = JSON.parse(params?.data);
 
-	const [workOrderData, setWorkOrderData] = useState(work_order_data);
+	const [workOrderData, setWorkOrderData] = useState<any>(work_order_data);
+
+	useEffect(() => {
+		fetchWorkOrderDetails();
+	}, [])
+
+	const fetchWorkOrderDetails = async () => {
+		try {
+			console.log('work order id = ', work_order_data.id);
+			const res = await getWorkOrderDetails(work_order_data.id);
+			console.log('work order details = ', res);
+			if (res?.status) {
+				setWorkOrderData(res?.data[0]);
+			}
+		} catch (e) {
+			console.log('e = ', e);
+		}
+	}
 
 	return (
 		<View style={styles.container}>
@@ -84,7 +101,7 @@ export default function WorkOrderDetail() {
 
 			<SegmentedPager tabs={[
 				{ label: "Details", component: <Detail params={workOrderData} /> },
-				{ label: "Comments", component: <Comments comments={workOrderData?.comments} /> }
+				{ label: "Comments", component: <Comments params={workOrderData} /> }
 			]} />
 		</View>
 	);

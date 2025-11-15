@@ -1,5 +1,5 @@
 import Header from "@/components/global/Header";
-import { Dimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Dimensions, FlatList, Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import ActionButton from "@/components/create-screens/ActionButton";
 import { router, useLocalSearchParams } from "expo-router";
 import Fonts from "@/constants/Typography";
@@ -38,9 +38,8 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 	const { setWorkRequestForm } = useWorkRequestStore();
 
 	// const preventiveSelectedLocation = usePreventiveStore((state) => state.location);
-	const locationsList = comingFrom === "newWorkOrder" ? 
-												useWorkOrderStore((state) => state.location) : (comingFrom === 'newWorkRequest' ? useWorkRequestStore((state) => state.location) : (comingFrom === 'createPreventive' ? usePreventiveStore((state) => state.location) : null));
-
+	const locationsList = comingFrom === "newWorkOrder" ?
+		useWorkOrderStore((state) => state.location) : (comingFrom === 'newWorkRequest' ? useWorkRequestStore((state) => state.location) : (comingFrom === 'createPreventive' ? usePreventiveStore((state) => state.location) : null));
 
 	useEffect(() => {
 		fetchAssets();
@@ -66,6 +65,12 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 			}
 		} catch (err: any) {
 			console.error("Login failed:", err);
+			if (!err.status) {
+				if (err.message === "No data found") {
+					ToastAndroid.show("No assets found", ToastAndroid.SHORT);
+					setAssets([]);
+				}
+			}
 		}
 	};
 
@@ -109,6 +114,11 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 					contentContainerStyle={styles.container}
 					refreshing={refreshing}
 					onRefresh={handleRefresh}
+					ListEmptyComponent={() => (
+						<View style={styles.emptyContainer}>
+							<Text style={styles.assetsText}>No assets found</Text>
+						</View>
+					)}
 				/>
 
 				{selection && <ActionButton onPress={() => router.back()} label="Confirm Asset" buttonStyle={styles.actionButton} />}
@@ -165,5 +175,21 @@ const styles = StyleSheet.create({
 		bottom: 20,
 		alignSelf: "center",
 		width: width - 50
+	},
+	emptyContainer: {
+		flex: 1,
+		justifyContent: "center",
+		alignItems: "center",
+		backgroundColor: "#F5F7FA",
+		paddingHorizontal: 25,
+		paddingTop: 15,
+		paddingBottom: 105,
+		gap: 10
+	},
+	assetsText: {
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
+		color: "#201F23",
+		lineHeight: 20
 	}
 })

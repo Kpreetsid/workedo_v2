@@ -61,9 +61,9 @@ export default function NewWorkOrder() {
 		const required: (keyof typeof data)[] = [
 			"title",
 			"message",
-			"assigned_users",
 			"location",
 			"selected_asset",
+			"assigned_users",
 			"start_date",
 			"end_date",
 			"parts",
@@ -72,15 +72,44 @@ export default function NewWorkOrder() {
 			"completion_days",
 		];
 
+		// Fields that must not be empty arrays
+		const requireNonEmptyArrays: (keyof typeof data)[] = [
+			"assigned_users",
+			"parts",
+		];
+
 		for (const field of required) {
-			if (!data[field]) {
+			const value = data[field];
+
+			// Handle array fields (must NOT be empty)
+			if (requireNonEmptyArrays.includes(field)) {
+				if (!Array.isArray(value) || value.length === 0) {
+					const label = (field as string)
+						.replace(/_/g, " ")
+						.replace(/\b\w/g, (c) => c.toUpperCase());
+
+					ToastAndroid.show(`${label} is required`, ToastAndroid.SHORT);
+					return;
+				}
+				continue;
+			}
+
+			// Handle normal fields
+			if (!value) {
+				if (field === "completion_days") {
+					ToastAndroid.show(`Estimation Duration is required`, ToastAndroid.SHORT);
+					return;
+				}
+
 				const label = (field as string)
 					.replace(/_/g, " ")
 					.replace(/\b\w/g, (c) => c.toUpperCase());
+
 				ToastAndroid.show(`${label} is required`, ToastAndroid.SHORT);
 				return;
 			}
 		}
+
 
 		// ✅ Build final payload matching your structure
 		let payload = {
@@ -192,7 +221,7 @@ export default function NewWorkOrder() {
 					</View>
 
 					<FormField
-						label="Estimation Duration"
+						label="Estimation Duration (Hours)"
 						placeholder="Enter Estimation Duration"
 						field="completion_days"
 						store={useWorkOrderStore}
@@ -200,7 +229,7 @@ export default function NewWorkOrder() {
 					/>
 
 					<View style={{ marginHorizontal: 0 }}>
-						<AssignInput label="Add Parts" comingFrom="newWorkOrder" onPress={() => router.push({
+						<AssignInput label="Add Parts" comingFrom="newWorkOrder" required={false} onPress={() => router.push({
 							pathname: "/updateParts",
 							params: { comingFrom: "newWorkOrder" }
 						})} />

@@ -6,6 +6,7 @@ import { FlashList, ListRenderItem } from "@shopify/flash-list";
 import { getWorkOrders } from "@/src/services/work-order.service";
 import { AssignedUser, WorkOrder } from "@/src/types/workOrder";
 import { useAuthStore } from "@/src/store/useAuthStore";
+import { useFocusEffect } from "expo-router";
 
 export default function ToDoTab() {
 	const [selectedButton, setSelectedButton] = useState<number>(0);
@@ -20,10 +21,12 @@ export default function ToDoTab() {
 	const loggedInUser = useAuthStore((state) => state.user);
 	console.log('user in state = ', loggedInUser);
 
-	useEffect(() => {
-		setLoading(true)
-		fetchWorkOrders();
-	}, [])
+	useFocusEffect(
+		useCallback(() => {
+			setLoading(true)
+			fetchWorkOrders();
+		}, [])
+	);
 
 	const fetchWorkOrders = async () => {
 		console.log("fetch work orders");
@@ -62,9 +65,9 @@ export default function ToDoTab() {
 		}
 	};
 
-	useEffect(() => {
-		console.log('work orders final = ', createdByMeWorkOrders);
-	}, [createdByMeWorkOrders])
+	// useEffect(() => {
+	// 	console.log('work orders final = ', createdByMeWorkOrders);
+	// }, [createdByMeWorkOrders])
 
 	const handleRefresh = async () => {
 		setRefreshing(true);

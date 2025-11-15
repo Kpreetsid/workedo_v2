@@ -10,6 +10,15 @@ import { useAuthStore } from "@/src/store/useAuthStore";
 import { endpoints } from "@/src/api/endpoints";
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { getProfileService, updateUser, uploadImage } from "@/src/services/auth.service";
+import { useOverviewStore } from "@/src/store/useOverviewStore";
+import { useAssetStore } from "@/src/store/useAssetStore";
+import { useGatewayStore } from "@/src/store/useGatewayStore";
+import { useLocationStore } from "@/src/store/useLocationStore";
+import { usePartFormStore } from "@/src/store/usePartFormStore";
+import { usePreventiveStore } from "@/src/store/usePreventiveStore";
+import { useUserFormStore } from "@/src/store/useUserFormStore";
+import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
+import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 
 const accountSettingsData = [
 	{ id: "1", icon: "notifications-none", label: "Notification Settings" },
@@ -95,6 +104,16 @@ export default function MyAccount() {
 		storage.delete('token');
 		storage.delete('user');
 		router.replace("/");
+
+		useOverviewStore.getState().clearOverview();
+		useAssetStore.getState().clearAssetState();
+		useGatewayStore.getState().resetGatewayForm();
+		useLocationStore.getState().clearPartLocation();
+		usePartFormStore.getState().resetPartForm();
+		usePreventiveStore.getState().resetForm();
+		useUserFormStore.getState().resetForm();
+		useWorkOrderStore.getState().resetForm();
+		useWorkRequestStore.getState().resetWorkRequestForm();
 		setUser(null);
 	}
 

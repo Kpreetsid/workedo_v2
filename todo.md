@@ -27,3 +27,26 @@ UI changes to modify:
 17. Login, Signup, Forgot password card shadow added as per figma.
 18. Alarms Health Status API implemented.
 19. Alarm Summary API implemented.
+
+
+
+Functionality modifications:
+1. Info cards should be clickable.
+2. Asset Health graph y axis should be dynamic. Right now its scale is set to 10.
+3. Alarm summary alert, critical, danger should be clickable.
+4. Alarms time should be upto seconds as well - fixed
+5. Parent and child locations keeps appearing from the previous account - fixed
+6. Creating work order - Assets should be fetched for a specific location selected - fixed
+7. Creating work order - If assets are not available for a location, it should show a message - fixed.
+8. Creating work order - Estimation duration is in hours - fixed
+9. Creating work order - Add Parts is not mandatory, so remove red staric from Add Parts field - fixed.
+10. Creating work order - Users should be selected already on the basis of selected asset.
+11. Creating work order - Selecting a user is mandatory on form - fixed.
+12. Work order details - Comments are not visible, and replies are also visible - fixed.
+13. Work order details - Should be able to post comments and comment replies - fixed.
+14. Work order details - Should be able to delete comments and comment replies - fixed.
+15. Work order details - Not returning the new status - fixed.
+16. Create work order new design implementation
+17. Edit Work Order functionality
+18. Location details screen is showing all assets which is wrong - fixed
+19. Show Child Locations on location cards - fixed

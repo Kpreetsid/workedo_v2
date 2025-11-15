@@ -1,46 +1,185 @@
 import { Comment } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
-import { WorkOrderComment } from "@/src/types/workOrder";
+import { endpoints } from "@/src/api/endpoints";
+import { deleteWorkOrderComment, getWorkOrderComments, postComments } from "@/src/services/work-order.service";
+import { useAuthStore } from "@/src/store/useAuthStore";
+import { WorkOrder, WorkOrderComment, WorkOrderCommentReply } from "@/src/types/workOrder";
 import moment from "moment";
-import { StyleSheet, TextInput, View, Image, Text, FlatList } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { StyleSheet, TextInput, View, Image, Text, FlatList, TouchableOpacity, ToastAndroid } from "react-native";
 
-export default function Comments({ comments }: { comments: WorkOrderComment[] }) {
-	console.log('comments = ', comments);
+interface Props {
+	params: WorkOrder;
+}
 
-	return (
-		<View style={styles.container}>
-			<View style={styles.inputContainer}>
-				<TextInput
-					placeholder="Comments"
-					placeholderTextColor="#00000050"
-					style={styles.commentInput}
-					multiline
+export default function Comments({ params }: Props) {
+	const [comments, setComments] = useState<WorkOrderComment[]>([]);
+	const [userComment, setUserComment] = useState<string>("");
+	const commentRef = useRef<any>(null);
+	const [parentCommentId, setParentCommentId] = useState<string | null>(null);
+
+	const { user } = useAuthStore();
+
+	useEffect(() => {
+		fetchComments();
+	}, []);
+
+	const fetchComments = async () => {
+		try {
+			const res = await getWorkOrderComments(params?.id);
+			console.log('res comments = ', res);
+			if (res?.status) {
+				setComments(res?.data);
+			}
+		} catch (e: any) {
+			console.log('error fetching comments = ', e);
+			if(!e.status) {
+				if(e.message === 'No data found') {
+					setComments([]);
+				}
+			}
+		}
+	}
+
+	const handleComment = async () => {
+		try {
+			console.log('handleComment = ', userComment);
+			const text = userComment?.trim();
+			if (!text) return;
+
+			let payload: any = {
+				comments: userComment,
+			}
+
+			if (parentCommentId) {
+				payload.parentCommentId = parentCommentId;
+			}
+
+			console.log('payload = ', payload)
+
+			const res = await postComments(
+				params?.id,
+				payload
+			)
+			console.log('res = ', res);
+			if (res?.status) {
+				ToastAndroid.show("Comment added successfully!", ToastAndroid.SHORT);
+				fetchComments();
+				setUserComment("");
+				// setParentCommentId(null);
+			}
+		} catch (e) {
+			console.log('error adding comment = ', e);
+		}
+	}
+
+	const onReplyPress = (id: string) => {
+		setParentCommentId(id);
+		commentRef.current?.focus();
+	};
+
+	const onDeletePress = async (id: string) => {
+		console.log('onDeletePress = ', id);
+		try {
+			const res = await deleteWorkOrderComment(
+				params?.id,
+				id
+			)
+			console.log('res = ', res);
+			if (res?.status) {
+				ToastAndroid.show("Comment deleted successfully!", ToastAndroid.SHORT);
+				fetchComments();
+			}
+		} catch (e) {
+			console.log('error deleting comment = ', e);
+		}
+	};
+
+	const CommentItem = ({ item, level = 0, onReplyPress, onDeletePress }: { item: WorkOrderComment | WorkOrderCommentReply; level: number; onReplyPress?: (id: string) => void; onDeletePress?: (id: string) => void }) => {
+		return (
+			<View style={[styles.commentCard, { marginLeft: level * 40 }]}>
+				<Image
+					source={{ uri: `${endpoints.baseURL}user_profile_img/${item?.createdBy?.user_profile_img}` }}
+					style={styles.avatar}
+					resizeMode="cover"
 				/>
-				<View style={styles.iconWrapper}>
-					<Comment />
+
+				<View style={styles.content}>
+					<View style={styles.row}>
+						<Text style={styles.name}>
+							{item?.createdBy?.firstName} {item?.createdBy?.lastName}
+						</Text>
+						<Text style={styles.date}>{moment(item?.createdAt).format("DD/MM/YYYY")}</Text>
+					</View>
+
+					<Text style={styles.comment}>{item?.comments}</Text>
+
+					{/* reply button */}
+					{
+						level === 0 && (
+							<TouchableOpacity
+								onPress={() => onReplyPress?.(item.id)}
+								style={styles.replyButton}
+							>
+								<Text style={styles.replyText}>Reply</Text>
+							</TouchableOpacity>
+						)
+					}
+
+					{
+						item.account_id === user?.account_id && (
+							<TouchableOpacity
+								onPress={() => onDeletePress?.(item.id)}
+								style={styles.deleteButton}
+							>
+								<Text style={styles.deleteText}>Delete</Text>
+							</TouchableOpacity>
+						)
+					}
+
 				</View>
 			</View>
+		);
+	};
 
 
-			<FlatList
-				data={comments}
-				keyExtractor={(item) => item.id}
-				renderItem={({ item }) => <View style={styles.commentCard}>
-					<Image source={{ uri: "https://randomuser.me/api/portraits/men/32.jpg" }} style={styles.avatar} resizeMode="cover" />
-
-					<View style={styles.content}>
-						<View style={styles.row}>
-							<Text style={styles.name}>{item?.createdBy?.firstName} {item?.createdBy?.lastName}</Text>
-							<Text style={styles.date}>{moment(item?.createdAt).format("DD/MM/YYYY")}</Text>
-						</View>
-						<Text style={styles.comment}>{item?.comments}</Text>
-					</View>
+	return (
+		<FlatList
+			contentContainerStyle={styles.container}
+			data={comments}
+			keyExtractor={(item) => item.id}
+			showsVerticalScrollIndicator={false}
+			ListHeaderComponent={
+				<View style={styles.inputContainer}>
+					<TextInput
+						ref={commentRef}
+						value={userComment}
+						placeholder="Comments"
+						onChangeText={setUserComment}
+						placeholderTextColor="#00000050"
+						style={styles.commentInput}
+						multiline
+					/>
+					<TouchableOpacity style={styles.iconWrapper} onPress={handleComment}>
+						<Comment />
+					</TouchableOpacity>
 				</View>
-				}
-				showsVerticalScrollIndicator={false}
-			/>
+			}
+			renderItem={({ item }) => (
+				<View>
+					<CommentItem
+						item={item}
+						level={0}
+						onReplyPress={onReplyPress}
+						onDeletePress={onDeletePress}
+					/>
 
-		</View>
+					{item.replies?.map(reply => (
+						<CommentItem key={reply.id} item={reply} level={1} onDeletePress={onDeletePress} />
+					))}
+				</View>
+			)}
+		/>
 	)
 }
 
@@ -63,6 +202,7 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.regular,
 		fontSize: 11,
 		height: "100%",
+		color: "#000",
 		textAlignVertical: "top",
 		paddingHorizontal: 8,
 	},
@@ -110,5 +250,23 @@ const styles = StyleSheet.create({
 		fontSize: 10,
 		lineHeight: 14,
 		color: "#333",
+	},
+	replyButton: {
+		alignSelf: "flex-end",
+		marginTop: 6,
+	},
+	replyText: {
+		color: "#3399ff",
+		fontSize: 12,
+		fontWeight: "500",
+	},
+	deleteButton: {
+		alignSelf: "flex-end",
+		marginTop: 6,
+	},
+	deleteText: {
+		color: "#ff0000",
+		fontSize: 12,
+		fontWeight: "500",
 	},
 })

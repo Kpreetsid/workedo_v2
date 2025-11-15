@@ -26,7 +26,12 @@ export default function Detail({ params }: Props) {
 				<View style={[styles.makeRow, { backgroundColor: '#FAFAFB', paddingVertical: 10, paddingHorizontal: 8 }]}>
 					<Text style={styles.cardTitle}>Assigned to</Text>
 					<Pressable style={styles.avatarRow} onPress={() => setUserModalVisible(true)}>
-						<View style={styles.avatars}>
+						<ScrollView
+							horizontal
+							showsHorizontalScrollIndicator={false}
+							contentContainerStyle={{ alignItems: "center" }}
+							style={{ maxWidth: 150 }}   // optional if you want it capped
+						>
 							{params?.assignedUsers?.map((user, i) => {
 								const profileImg = user?.user?.user_profile_img;
 								const first = user?.user?.firstName?.[0] || "";
@@ -54,7 +59,7 @@ export default function Detail({ params }: Props) {
 									</View>
 								);
 							})}
-						</View>
+						</ScrollView>
 
 						<Ionicons name="chevron-forward" size={18} color="#742BDE" />
 					</Pressable>
@@ -142,6 +147,7 @@ const styles = StyleSheet.create({
 		gap: 5
 	},
 	cardTitle: {
+		width: '50%',
 		fontSize: 11,
 		fontFamily: Fonts.regular,
 		color: "#000000",
@@ -155,9 +161,11 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		gap: 2,
+		flexShrink: 1,
 	},
 	avatars: {
 		flexDirection: "row",
+		backgroundColor: 'red'
 	},
 	avatar: {
 		width: 28,

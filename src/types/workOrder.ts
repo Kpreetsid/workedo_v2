@@ -77,6 +77,7 @@ export interface WorkOrderComment {
         _id: string;
         firstName: string;
         lastName: string;
+        user_profile_img: string;
     };
     createdAt: string;
     updatedAt: string;
@@ -95,6 +96,7 @@ export interface WorkOrderCommentReply {
         _id: string;
         firstName: string;
         lastName: string;
+        user_profile_img: string;
     };
     createdAt: string;
     updatedAt: string;

@@ -1,10 +1,11 @@
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 import WorkOrderCard from "@/components/work-orders/WorkOrderCard";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FlashList } from "@shopify/flash-list";
 import { getWorkOrders } from "@/src/services/work-order.service";
 import { WorkOrder } from "@/src/types/workOrder";
 import { ToastAndroid } from "react-native";
+import { useFocusEffect } from "expo-router";
 
 export default function DoneTab() {
 	const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -13,10 +14,12 @@ export default function DoneTab() {
 
 	const [loading, setLoading] = useState(false)
 
-	useEffect(() => {
-		setLoading(true)
+	useFocusEffect(
+		useCallback(() => {
+			setLoading(true)
 		fetchWorkOrders();
-	}, [])
+		}, [])
+	);
 
 	const fetchWorkOrders = async () => {
 		console.log("fetch work orders");

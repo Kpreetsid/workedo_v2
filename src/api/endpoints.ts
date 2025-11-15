@@ -63,7 +63,8 @@ export const endpoints = {
     createWorkOrder: 'work/orders',
     requests: 'work/requests',
     approveRequest: 'work/requests/approve',
-    rejectRequest: 'work/requests/reject'
+    rejectRequest: 'work/requests/reject',
+    postComments: 'comments',
   },
   gateways: {
     sensorsList: 'master/locations/sensor-list',

@@ -4,6 +4,7 @@ import Dropdown from "@/components/overview-screen/DropDown";
 import { assetHealthKPIHistory, childAssetsAgainstLocation, fetchKPIFilterLocations, fetchParentLocationDetails } from "@/src/services/location.service";
 import { AssetHealthSummary } from "@/src/types/assetHistory";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
+import { useAuthStore } from "@/src/store/useAuthStore";
 
 export default function Location() {
 	const {
@@ -20,6 +21,8 @@ export default function Location() {
 		setChildSelectionIds,
 		setAssetKPIHistory,
 	} = useOverviewStore();
+
+	const { user } = useAuthStore();
 
 	const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
@@ -127,9 +130,10 @@ export default function Location() {
 
 	const fetchAssetHealthKPIHistory = async () => {
 		const payload = {
-			org_id: "68e5f3b3a2ba64a5ef4d23d0",
+			org_id: user?.account_id,
 			asset_list: childAssets.map((item) => item.id),
 		};
+		console.log('payload = ', payload);
 		const res = await assetHealthKPIHistory(payload);
 		setAssetKPIHistory(res.data);
 	};

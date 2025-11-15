@@ -147,7 +147,7 @@ export default function Alarms() {
 					<FlashList
 						data={data}
 						keyExtractor={(i) => String(i.id)}
-						renderItem={({ item }) => AlarmCard(item)}
+						renderItem={({ item }) => <AlarmCard item={item} />}
 						onEndReached={handleEndReached}
 						onEndReachedThreshold={0.4}
 						// onMomentumScrollBegin={onMomentumScrollBegin}

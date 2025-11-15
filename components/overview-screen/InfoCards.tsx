@@ -4,7 +4,7 @@ import Fonts from "@/constants/Typography";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
 
 export default function InfoCards() {
-	const { childAssets, assetKPIHistory } = useOverviewStore();
+	const { assetKPIHistory } = useOverviewStore();
 	console.log("assetKPIHistory", assetKPIHistory);
 
 	const Critical = assetKPIHistory?.Critical ?? 0;
@@ -13,13 +13,13 @@ export default function InfoCards() {
 	const Healthy = assetKPIHistory?.Healthy ?? 0;
 	const NotDefined = assetKPIHistory?.["Not Defined"] ?? 0;
 	const openAlarms = assetKPIHistory?.openAlarms ?? 0;
-	const total_live_sensors = assetKPIHistory?.total_live_sensors ?? 0;
+	const total_live_sensors = assetKPIHistory?.["total_live_sensors"] ?? 0;
 
 	const infoCardsData = [
 		{
 			id: 1,
 			title: `Assets\nMonitored`,
-			value: childAssets.length,
+			value: Alert + Critical + Danger + Healthy + NotDefined,
 			color: "#3b82f6",
 		},
 		{

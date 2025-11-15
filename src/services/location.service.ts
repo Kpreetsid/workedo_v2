@@ -8,7 +8,7 @@ export const locationTree = async () => {
 };
 
 export const topLevelAssets = async (location_id: string) => {
-    const url = `${endpoints.location.topLevelAssets}?location_id=${location_id}&top_level=true`;
+    const url = `${endpoints.location.topLevelAssets}?locationId=${location_id}&top_level=true`;
     return await sendRequest('GET', url);
 }
 
