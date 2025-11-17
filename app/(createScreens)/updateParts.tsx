@@ -121,7 +121,7 @@ export default function UpdateParts() {
 				<View style={{ marginVertical: 5 }} />
 
 				{/* ✅ Dynamic Dropdown */}
-				<View style={{ paddingHorizontal: 25 }}>
+				<View>
 					<DropDownInput
 						label="Part Name"
 						value={selectedPart?.part_name}

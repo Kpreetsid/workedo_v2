@@ -82,7 +82,7 @@ export default function Login() {
 				<View style={styles.logoContainer}>
 					<Logo />
 				</View>
-				
+
 				<View style={styles.card}>
 					<View style={styles.cardShadow} />
 					<View style={styles.handle} />

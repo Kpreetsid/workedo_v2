@@ -2,6 +2,7 @@ import AssignInput from "@/components/create-screens/AssignInput";
 import DropDownInput from "@/components/create-screens/DropDownInput";
 import FormInput from "@/components/create-screens/FormInput";
 import React from "react";
+import AssignInputNew from "../create-screens/AssignInputNew";
 
 export const FormField = React.memo(
 	({
@@ -20,7 +21,7 @@ export const FormField = React.memo(
 		label: string;
 		placeholder?: string;
 		field: string;
-		type?: "text" | "dropdown" | "location" | "asset" | "user" | "date";
+		type?: "text" | "dropdown" | "location" | "new-location" | "asset" | "new-asset" | "user" | "new-user" | "date";
 		options?: string[];
 		router?: any;
 		comingFrom?: string;
@@ -33,6 +34,66 @@ export const FormField = React.memo(
 		const setValue = store((s: any) => s[setterName]);
 
 		console.log(`Render → ${label}`, value);
+
+		if (type === "new-location") {
+			return (
+				<AssignInputNew
+					label={label}
+					field={field}
+					placeholder={placeholder}
+					comingFrom={comingFrom}
+					store={store}
+					displayKey="location_name"
+					onPress={() =>
+						router.push({
+							pathname: "/selectLocation",
+							params: { comingFrom },
+						})
+					}
+				/>
+			);
+		}
+
+		if (type === "new-asset") {
+			return (
+				<AssignInputNew
+					label={label}
+					field={field}
+					placeholder={placeholder}
+					comingFrom={comingFrom}
+					store={store}
+					displayKey="asset_name"
+					onPress={() =>
+						router.push({
+							pathname: "/selectAsset",
+							params: { comingFrom },
+						})
+					}
+				/>
+			);
+		}
+
+
+		if (type === "new-user") {
+			return (
+				<AssignInputNew
+					label={label}
+					field={field}
+					placeholder={placeholder}
+					comingFrom={comingFrom}
+					store={store}
+					setterName={setterName}
+					required={false}
+					displayKey="username"
+					onPress={() =>
+						router.push({
+							pathname: "/selectUser",
+							params: { comingFrom },
+						})
+					}
+				/>
+			);
+		}
 
 		if (type === "dropdown") {
 			return (

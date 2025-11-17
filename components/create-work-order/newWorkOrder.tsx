@@ -5,26 +5,26 @@ import AssignInput from "@/components/create-screens/AssignInput";
 import Fonts from "@/constants/Typography";
 import { DropDownIcon } from "@/constants/IconProvider";
 import ActionButton from "@/components/create-screens/ActionButton";
-import AssignInputContainer from "@/components/new-work-order/AssignInputContainer";
+import AssignInputContainer from "@/components/create-work-order/AssignInputContainer";
 import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import DropDownInput from "@/components/create-screens/DropDownInput";
 import { Ionicons } from "@expo/vector-icons";
 import { approveWorkRequest, createWorkOrder } from "@/src/services/work-request.service";
 import { useEffect, useRef, useState } from "react";
-import { getSOPs } from "@/src/services/preventive.service";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import DatePicker from "@/components/global/DatePicker";
 import moment from "moment";
-import { AssignSection } from "@/components/new-work-order/AssignSection";
+import { AssignSection } from "@/components/create-work-order/AssignSection";
 import { useRouter } from "expo-router";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 import { FormField } from "@/components/global/FormField";
+import AssignSectionNew from "@/components/create-work-order/AssignSectionNew";
+import { getSOPs } from "@/src/services/preventive.service";
 
 export default function NewWorkOrder() {
 	const router = useRouter();
-	const { setWorkForm } = useWorkOrderStore();
+	const { setWorkForm, resetForm } = useWorkOrderStore();
 	const [forms, setForms] = useState<any>([]);
-
 	const parts = useWorkOrderStore((state) => state.parts);
 
 	useEffect(() => {
@@ -32,6 +32,7 @@ export default function NewWorkOrder() {
 			try {
 				const res = await getSOPs();
 				if (res?.status) {
+					console.log('res?.data - ', res.data);
 					setForms(res?.data);
 				}
 			} catch (error) {
@@ -40,6 +41,10 @@ export default function NewWorkOrder() {
 		};
 
 		fetchForms();
+
+		return () => {
+			resetForm();
+		}
 	}, []);
 
 	const handleRemovePart = (partId: string) => {
@@ -66,7 +71,7 @@ export default function NewWorkOrder() {
 			"assigned_users",
 			"start_date",
 			"end_date",
-			"parts",
+			// "parts",
 			"nature_of_work",
 			"priority",
 			"completion_days",
@@ -75,7 +80,7 @@ export default function NewWorkOrder() {
 		// Fields that must not be empty arrays
 		const requireNonEmptyArrays: (keyof typeof data)[] = [
 			"assigned_users",
-			"parts",
+			// "parts",
 		];
 
 		for (const field of required) {
@@ -125,8 +130,8 @@ export default function NewWorkOrder() {
 				estimatedQuantity: p.estimatedQuantity || 1,
 			})) || [],
 			priority: data.priority,
-			sop_form_id: null,
-			// sop_form_id: data.sop_form_id || null,
+			// sop_form_id: null,
+			sop_form_id: forms?.find((f: any) => f.name === data.sop_form_id)?.id || null,
 			start_date: data.start_date || new Date().toISOString().split("T")[0],
 			status: "Open",
 			title: data.title,
@@ -170,8 +175,6 @@ export default function NewWorkOrder() {
 
 	return (
 		<>
-			<Header title="New Work Order" />
-
 			<KeyboardAwareScrollView bottomOffset={30}>
 				<ScrollView style={styles.container}>
 					<View style={styles.subContainer}>
@@ -194,31 +197,28 @@ export default function NewWorkOrder() {
 
 					</View>
 
-					<AssignSection type="workOrders" />
+					{/* <AssignSection type="workOrders" /> */}
+					<AssignSectionNew type="workOrders" />
 
 					{/* <AssignInputContainer /> */}
 
-					<View style={[styles.row, { paddingHorizontal: 25, gap: 10 }]}>
+					<FormField
+						label="Nature of Work"
+						type="dropdown"
+						field="nature_of_work"
+						options={["Preventive", "Electrical", "Break Down", "Inspection", "Corrective", "Safety", "Upgrade", "Meter Reading", "Mechanical", "Other"]}
+						store={useWorkOrderStore}
+						setterName="setWorkForm"
+					/>
 
-						<FormField
-							label="Problem Type"
-							type="dropdown"
-							field="nature_of_work"
-							options={["Preventive", "Electrical", "Break Down", "Inspection", "Corrective", "Safety", "Upgrade", "Meter Reading", "Mechanical", "Other"]}
-							store={useWorkOrderStore}
-							setterName="setWorkForm"
-						/>
-
-						<FormField
-							label="Priority"
-							type="dropdown"
-							field="priority"
-							options={["None", "Low", "Medium", "High"]}
-							store={useWorkOrderStore}
-							setterName="setWorkForm"
-						/>
-
-					</View>
+					<FormField
+						label="Priority"
+						type="dropdown"
+						field="priority"
+						options={["None", "Low", "Medium", "High"]}
+						store={useWorkOrderStore}
+						setterName="setWorkForm"
+					/>
 
 					<FormField
 						label="Estimation Duration (Hours)"

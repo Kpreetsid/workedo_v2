@@ -96,6 +96,7 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 									// updating selected asset in zustand store while creating preventive
 									if (comingFrom === "newWorkOrder") {
 										setWorkForm("selected_asset", item);
+										setWorkForm("assigned_users", item.userList);
 									} else if (comingFrom === "newWorkRequest") {
 										setWorkRequestForm("selected_asset", item);
 									} else {

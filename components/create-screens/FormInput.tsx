@@ -30,7 +30,7 @@ const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", 
 
 						<View style={[styles.field, inputContainer]}>
 							<TextInput
-								style={[styles.inputField, inputStyle, label === "Message" && styles.messageInput]}
+								style={[styles.inputField, inputStyle, (label === "Message" || label === "Description") && styles.messageInput]}
 								placeholderTextColor="#6B788899"
 								{...textInputProps}
 							/>

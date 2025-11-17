@@ -96,7 +96,7 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 												setExpandedAssetId(isExpanded ? null : item.id);
 											}}>
 												<Text style={styles.childLabel}>
-													Child locations
+													Child Assets
 													{isExpanded ? " ▲" : " ▼"}
 												</Text>
 											</Pressable>

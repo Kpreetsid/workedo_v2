@@ -18,7 +18,7 @@ export default function WorkOrders() {
 				{ label: "Done", icon: <DoneIcon />, component: () => <DoneTab /> }]}
 			/>
 
-			<CreateFAB label="Create Work Order" onPress={() => router.push("/newWorkOrder")} />
+			<CreateFAB label="Create Work Order" onPress={() => router.push("/createWorkOrder")} />
 		</>
 	);
 }

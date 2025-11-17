@@ -46,7 +46,10 @@ Functionality modifications:
 13. Work order details - Should be able to post comments and comment replies - fixed.
 14. Work order details - Should be able to delete comments and comment replies - fixed.
 15. Work order details - Not returning the new status - fixed.
-16. Create work order new design implementation
-17. Edit Work Order functionality
-18. Location details screen is showing all assets which is wrong - fixed
-19. Show Child Locations on location cards - fixed
+16. Create work order new design implementation - Done
+17. Create new work order - adding tasks, adding forms - Done
+18. Edit Work Order functionality
+19. Location details screen is showing all assets which is wrong - fixed
+20. Show Child Locations on location cards - fixed
+21. Search Locations - fixed.
+22. Search Assets - fixed.

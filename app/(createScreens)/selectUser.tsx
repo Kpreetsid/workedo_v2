@@ -20,9 +20,23 @@ export default function SelectUser() {
 	const { setPreventiveValue } = usePreventiveStore();
 	const { setWorkForm } = useWorkOrderStore();
 
+	const workOrderAssignedUsers: any = useWorkOrderStore((state) => state.assigned_users);
+
 	useEffect(() => {
 		fetchUsers();
 	}, []);
+
+	useEffect(() => {
+		if (!users.length) return;
+
+		const preselected = users.filter((u) =>
+			(workOrderAssignedUsers || []).some(
+				(sel: any) => (sel._id || sel.id) === (u._id || u.id)
+			)
+		);
+
+		setSelectedUsers(preselected);
+	}, [users, workOrderAssignedUsers]);
 
 	const fetchUsers = async () => {
 		try {
@@ -50,7 +64,6 @@ export default function SelectUser() {
 			setSelectedUsers([...selectedUsers, user]);
 		}
 	};
-
 
 	// ✅ Confirm selection
 	const handleConfirm = () => {

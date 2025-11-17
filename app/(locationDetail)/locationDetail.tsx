@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, TextInput, View, } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View, } from "react-native";
 import Header from "@/components/global/Header";
 import Fonts from "@/constants/Typography";
 import { useEffect, useState } from "react";
@@ -19,39 +19,51 @@ const blurhash =
 export default function LocationDetail() {
 	const params: any = useLocalSearchParams();
 	const location = JSON.parse(params?.data);
+	console.log('location = ', location);
 	const { user } = useAuthStore();
-	const [assets, setAssets] = useState<LocationAsset[]>([]);
+	const [assets, setAssets] = useState<LocationAsset[] | null>(null);
 
 	useEffect(() => {
 		fetchTopLevelAssets();
 	}, []);
 
 	const fetchTopLevelAssets = async () => {
-		const res = await topLevelAssets(location.id);
-		console.log("res top level assets = ", res);
-		if (res.status) {
-			let assets: LocationAsset[] = res?.data;
+		try {
+			const res = await topLevelAssets(location.id);
+			console.log("res top level assets = ", res);
+			if (res.status) {
+				let assets: LocationAsset[] = res?.data;
 
-			// fetching each asset health
-			const obj: { org_id: string, asset_list: string[] } = {
-				org_id: user?.account_id,
-				asset_list: assets?.map((asset: LocationAsset) => asset.id),
-			};
+				// fetching each asset health
+				const obj: { org_id: string, asset_list: string[] } = {
+					org_id: user?.account_id,
+					asset_list: assets?.map((asset: LocationAsset) => asset.id),
+				};
 
-			console.log("obj = ", obj);
-			// return;
-			const resp = await assetsHealthLocation(obj);
-			console.log("resp = ", resp);
-			if (resp?.data && assets?.length) {
-				for (const asset of assets) {
-					const match = resp.data.find((r: AssetHealth) => r.asset_id === asset.id);
-					if (match) {
-						asset.status = match.asset_status;
-						asset.lastData = moment.unix(match.last_data).format("YYYY-MM-DD HH:mm:ss");
+				console.log("obj = ", obj);
+				// return;
+				const resp = await assetsHealthLocation(obj);
+				console.log("resp = ", resp);
+				if (resp?.data && assets?.length) {
+					for (const asset of assets) {
+						const match = resp.data.find((r: AssetHealth) => r.asset_id === asset.id);
+						if (match) {
+							asset.status = match.asset_status;
+							if (match.last_data === 0) {
+								asset.lastData = 'Not Collected Yet';
+							} else {
+								asset.lastData = moment.unix(match.last_data).format("YYYY-MM-DD HH:mm:ss");
+							}
+						}
 					}
+					console.log("final assets =", assets);
+					setAssets(assets);
 				}
-				console.log("final assets =", assets);
-				setAssets(assets);
+			}
+		} catch (e: any) {
+			if(!e.status) {
+				ToastAndroid.show(e.message, ToastAndroid.SHORT);
+				setAssets([]);
 			}
 		}
 	}
@@ -65,7 +77,8 @@ export default function LocationDetail() {
 				<View style={styles.headerCard}>
 					<Image
 						style={styles.image}
-						source={{ uri: `${endpoints.baseURL}locations/${location?.image_path}` }}
+						// source={{ uri: `${endpoints.baseURL}locations/${location?.image_path}` }}
+						source={{ uri: 'https://new.presageinsights.ai/cmms/assets/images/company.jpg' }}
 						placeholder={{ blurhash }}
 						contentFit="cover"
 						transition={1000}
@@ -87,8 +100,24 @@ export default function LocationDetail() {
 					</View>
 				</View>
 
+				{
+					assets === null && (
+						<View style={styles.noDataContainer}>
+							<ActivityIndicator size="large" color="#742BDE" />
+						</View>
+					)
+				}
 
-				{assets.map((asset, index) => (
+				{
+					assets && assets.length === 0 && (
+						<View style={styles.noDataContainer}>
+							<Text style={styles.noDataText}>No Asset Health data found for selected location.</Text>
+						</View>
+					)
+				}
+
+
+				{assets && assets.map((asset, index) => (
 					<View key={index} style={[styles.assetCard, statusWrapper(asset.status)]}>
 						<View style={[styles.column, { flex: 1 }]}>
 							<Text style={styles.assetLabel} numberOfLines={1} ellipsizeMode="tail">Asset Name</Text>
@@ -206,7 +235,6 @@ const styles = StyleSheet.create({
 		color: "#000000",
 		marginBottom: 4,
 		textAlign: "center",
-
 	},
 	assetValue: {
 		fontSize: 9,
@@ -216,5 +244,16 @@ const styles = StyleSheet.create({
 		lineHeight: 16,
 		flexShrink: 1,
 		flexWrap: "wrap",
-	}
+	},
+	noDataContainer: {
+		flex: 1,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	noDataText: {
+		fontSize: 16,
+		fontFamily: Fonts.bold,
+		color: "#000069",
+		textAlign: "center",
+	},
 });

@@ -4,7 +4,7 @@ import ActionButton from "@/components/create-screens/ActionButton";
 import { router, useLocalSearchParams } from "expo-router";
 import Fonts from "@/constants/Typography";
 import { ArrowRight, MapIcon } from "@/constants/IconProvider";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import SearchBar from "@/components/global/SearchBar";
 import { locationTree } from "@/src/services/location.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
@@ -32,10 +32,35 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 	const user = useAuthStore((state) => state.user);
 	const [locations, setLocations] = useState<Location[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
+
 	const { setWorkForm } = useWorkOrderStore();
 	const { setWorkRequestForm } = useWorkRequestStore();
 	const { setPartFormValue } = usePartFormStore();
 	const { setPreventiveValue } = usePreventiveStore();
+
+	const flattenLocations = (list: Location[]) => {
+		const out: Location[] = [];
+		const walk = (items: Location[]) => {
+			items.forEach(i => {
+				out.push(i);
+				if (i.childs && i.childs.length) walk(i.childs);
+			});
+		};
+		walk(list || []);
+		return out;
+	};
+
+	const flatLocations = useMemo(() => flattenLocations(locations), [locations]);
+	const filteredLocations = useMemo(() => {
+		const q = (searchText || "").trim().toLowerCase();
+		if (!q) return flatLocations;
+		return flatLocations.filter(l => (l.location_name || "").toLowerCase().includes(q));
+	}, [searchText, flatLocations]);
+
+	useEffect(()=>{
+		console.log('filtered locations = ', filteredLocations);
+	}, [filteredLocations])
+
 
 	useEffect(() => {
 		fetchLocations();
@@ -67,7 +92,7 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 				<SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText} />
 
 				<FlatList
-					data={locations}
+					data={searchText ? filteredLocations : locations}
 					keyExtractor={(_, index) => index.toString()}
 					renderItem={({ item }) => {
 						const isExpanded = expandedAssetId === item.id;
