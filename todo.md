@@ -53,3 +53,5 @@ Functionality modifications:
 20. Show Child Locations on location cards - fixed
 21. Search Locations - fixed.
 22. Search Assets - fixed.
+23. Profile Image not updating - fixed.
+24. Profile information edit modal - Done.

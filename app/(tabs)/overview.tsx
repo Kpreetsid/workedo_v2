@@ -12,9 +12,12 @@ import AlarmSummary from "@/components/overview-screen/AlarmSummary";
 import Top10BadAssets from "@/components/overview-screen/Top10BadAssets";
 import Alarms from "@/components/overview-screen/Alarms";
 import { FlashList } from "@shopify/flash-list";
+import { getProfileService } from "@/src/services/auth.service";
+import { useAuthStore } from "@/src/store/useAuthStore";
 
 export default function Overview() {
 	const [createAlertBoxVisible, setCreateAlertBoxVisible] = useState(false);
+	const { user, setUser } = useAuthStore();
 
 	const onSelect = (option: string) => {
 		option === "parts" && router.push("/createPart");
@@ -24,7 +27,16 @@ export default function Overview() {
 
 	useEffect(() => {
 		console.log('createAlertBoxVisible = ', createAlertBoxVisible)
+		fetchProfile();
 	}, [createAlertBoxVisible])
+
+	const fetchProfile = async () => {
+		const latestUser = await getProfileService(user?.id);
+		console.log('latest user = ', latestUser);
+		if (latestUser?.status) {
+			setUser(latestUser?.data[0]);
+		}
+	}
 
 	return (
 		<>

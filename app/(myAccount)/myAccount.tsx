@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Image, FlatList, Alert, ToastAndroid } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Image, FlatList, Alert, ToastAndroid, Modal } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
@@ -9,7 +9,7 @@ import { storage } from "@/src/storage/mmkv";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { endpoints } from "@/src/api/endpoints";
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import { getProfileService, updateUser, uploadImage } from "@/src/services/auth.service";
+import { getProfileService, updateUser, updateUserInfo, uploadImage } from "@/src/services/auth.service";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
 import { useAssetStore } from "@/src/store/useAssetStore";
 import { useGatewayStore } from "@/src/store/useGatewayStore";
@@ -19,6 +19,9 @@ import { usePreventiveStore } from "@/src/store/usePreventiveStore";
 import { useUserFormStore } from "@/src/store/useUserFormStore";
 import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
+import FormInput from "@/components/create-screens/FormInput";
+import ActionButton from "@/components/create-screens/ActionButton";
+import Header from "@/components/global/Header";
 
 const accountSettingsData = [
 	{ id: "1", icon: "notifications-none", label: "Notification Settings" },
@@ -35,6 +38,7 @@ const supportData = [
 
 export default function MyAccount() {
 	const [activeTab, setActiveTab] = useState<"Profile" | "Account" | "Support">("Profile");
+	const [editVisible, setEditVisible] = useState(false);
 	const { user, setUser } = useAuthStore();
 
 	console.log('my account = ', user);
@@ -117,6 +121,46 @@ export default function MyAccount() {
 		setUser(null);
 	}
 
+	function handleEdit() {
+		console.log("Edit");
+		setEditVisible(true);
+	}
+
+	const onSubmit = async (formValues: any) => {
+		const payload = buildUpdatePayload(formValues, user);
+		console.log('payload to update = ', payload);
+		// return;
+		const res = await updateUserInfo(payload, user?.id);
+		console.log('res = ', res);
+		if(res.status){
+			setUser(res.data);
+			setEditVisible(false);
+		}
+
+	};
+
+	const buildUpdatePayload = (form: any, originalUser: any) => {
+		return {
+			firstName: form.firstName?.trim() ?? originalUser.firstName,
+			lastName: form.lastName?.trim() ?? originalUser.lastName,
+			phone_no: form.phone_no ? form.phone_no : originalUser.phone_no
+		};
+	};
+
+	const parsePhone = (input: string) => {
+		const cleaned = input.replace(/\D/g, ""); // remove spaces, dashes, etc.
+
+		return {
+			number: input,
+			internationalNumber: `+91 ${input}`,
+			nationalNumber: input,
+			e164Number: `+91${cleaned}`,
+			countryCode: "IN",
+			dialCode: "+91",
+		};
+	};
+
+
 	return (
 		<SafeAreaView style={styles.container}>
 			<View style={styles.headerContainer}>
@@ -128,7 +172,7 @@ export default function MyAccount() {
 					<TouchableOpacity style={styles.iconBtn}>
 						<Ionicons name="notifications-off-sharp" size={15} color="#fff" />
 					</TouchableOpacity>
-					<TouchableOpacity style={styles.iconBtn}>
+					<TouchableOpacity style={styles.iconBtn} onPress={handleEdit}>
 						<Entypo name="edit" size={15} color="#fff" />
 					</TouchableOpacity>
 					<TouchableOpacity style={styles.iconBtn} onPress={logout}>
@@ -136,6 +180,54 @@ export default function MyAccount() {
 					</TouchableOpacity>
 				</View>
 			</View>
+
+
+
+			<Modal
+				animationType="slide"
+				transparent={true}
+				visible={editVisible}
+				onRequestClose={() => setEditVisible(false)}
+			>
+				<View style={styles.modalWrapper}>
+					<Header title="Edit Profile" />
+					<View style={styles.modalBox}>
+
+						<FormInput label="Full Name" value={user?.firstName} onChangeText={(text) => setUser({ ...user, firstName: text })} />
+						<FormInput label="Last Name" value={user?.lastName} onChangeText={(text) => setUser({ ...user, lastName: text })} />
+						<FormInput label="Username" value={user?.username} readOnly />
+						<FormInput label="Email" value={user?.email} readOnly />
+						<FormInput label="Status" value={user?.user_status} readOnly />
+						<FormInput label="Role" value={user?.user_role} readOnly />
+
+						{/* phone input */}
+						<FormInput label="Phone" value={user?.phone_no?.internationalNumber} readOnly onChangeText={(text) => {
+							const parsed = parsePhone(text);
+							setUser({ ...user, phone_no: parsed });
+						}} />
+
+						{/* buttons */}
+						<View style={styles.btnRow}>
+							<ActionButton
+								label="Close"
+								buttonStyle={styles.closeBtn}
+								onPress={() => setEditVisible(false)}
+							/>
+
+							<ActionButton
+								label="Update User"
+								buttonStyle={styles.updateBtn}
+								onPress={onSubmit}
+							/>
+						</View>
+
+					</View>
+				</View>
+			</Modal>
+
+
+
+
 
 			<View style={styles.userInfoContainer}>
 
@@ -146,7 +238,13 @@ export default function MyAccount() {
 							{ text: 'Gallery', onPress: () => pickImage(false) },
 							{ text: 'Cancel', style: 'cancel' },
 						])}>
-							<Image source={{ uri: `${endpoints.baseURL}user_profile_img/${user?.user_profile_img}` }} style={styles.profilePhotoImage} resizeMode="contain" />
+							<Image
+								// source={{ uri: `${endpoints.baseURL}user_profile_img/${user?.user_profile_img}` }}
+
+								source={{ uri: `${endpoints.baseURL}user_profile_img/${user?.user_profile_img}?t=${Date.now()}` }}
+
+								style={styles.profilePhotoImage} resizeMode="contain"
+							/>
 						</TouchableOpacity>
 						:
 						<TouchableOpacity style={styles.profilePhoto} onPress={() => Alert.alert('Upload Photo', 'Select source', [
@@ -403,5 +501,29 @@ const styles = StyleSheet.create({
 		color: "#fff",
 		fontWeight: "600",
 		fontSize: 20,
+	},
+	modalWrapper: {
+		flex: 1,
+		backgroundColor: "rgba(0,0,0,0.4)",
+		justifyContent: "center",
+		padding: 20,
+	},
+	modalBox: {
+		backgroundColor: "#fff",
+		borderRadius: 10,
+		padding: 20,
+	},
+	btnRow: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		marginTop: 20,
+	},
+	closeBtn: {
+		backgroundColor: "#71767B",
+		paddingHorizontal: 20,
+	},
+	updateBtn: {
+		backgroundColor: "#A259FF",
+		paddingHorizontal: 20,
 	},
 })

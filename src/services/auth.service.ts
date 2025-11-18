@@ -63,6 +63,11 @@ export const updateUser = async (user_profile_img: string, id: string) => {
 	return await sendRequest('PUT', `${endpoints.user.updateUser}/${id}`, { user_profile_img: user_profile_img });
 };
 
+export const updateUserInfo = async (payload: any, id: string) => {
+	console.log('payload to update = ', payload);
+	return await sendRequest('PUT', `${endpoints.user.updateUser}/${id}`, payload);
+}
+
 export const uploadImage = async (asset: any, user: any) => {
 	console.log('Uploading image...', asset);
 	try {
