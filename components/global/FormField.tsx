@@ -16,12 +16,13 @@ export const FormField = React.memo(
 		store,
 		setterName = "setPartFormValue",
 		setActiveDateField,
-		setIsDatePickerVisible
+		setIsDatePickerVisible,
+		required = true
 	}: {
 		label: string;
 		placeholder?: string;
 		field: string;
-		type?: "text" | "dropdown" | "location" | "new-location" | "asset" | "new-asset" | "user" | "new-user" | "date";
+		type?: "text" | "dropdown" | "location" | "new-location" | "asset" | "new-asset" | "user" | "new-user" | "date" | "attachments";
 		options?: string[];
 		router?: any;
 		comingFrom?: string;
@@ -29,11 +30,27 @@ export const FormField = React.memo(
 		setterName?: string; // optional: in case your setter name differs (like setWorkRequestForm)
 		setActiveDateField?: any;
 		setIsDatePickerVisible?: any;
+		required?: boolean;
 	}) => {
 		const value = store((s: any) => s[field]);
 		const setValue = store((s: any) => s[setterName]);
 
 		console.log(`Render → ${label}`, value);
+
+
+		if (type === "attachments") {
+			return (
+				<AssignInputNew
+					label={label}
+					field={field}
+					placeholder={placeholder}
+					comingFrom={comingFrom}
+					store={store}
+					displayKey="attachments"
+					onPress={() => {}}
+				/>
+			);
+		}
 
 		if (type === "new-location") {
 			return (
@@ -181,6 +198,7 @@ export const FormField = React.memo(
 			<FormInput
 				label={label}
 				placeholder={placeholder}
+				required={required}
 				value={value}
 				onChangeText={(text) => setValue(field, text)}
 			/>

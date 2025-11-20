@@ -1,10 +1,10 @@
 import Header from "@/components/global/Header";
-import { Dimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Dimensions, FlatList, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ActionButton from "@/components/create-screens/ActionButton";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import Fonts from "@/constants/Typography";
 import { ArrowRight, MapIcon } from "@/constants/IconProvider";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import SearchBar from "@/components/global/SearchBar";
 import { locationTree } from "@/src/services/location.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
@@ -14,6 +14,7 @@ import { usePreventiveStore } from "@/src/store/usePreventiveStore";
 import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 import { usePartFormStore } from "@/src/store/usePartFormStore";
+import { Ionicons } from "@expo/vector-icons";
 
 interface LocationInterface {
 	showHeader?: boolean,
@@ -57,14 +58,15 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 		return flatLocations.filter(l => (l.location_name || "").toLowerCase().includes(q));
 	}, [searchText, flatLocations]);
 
-	useEffect(()=>{
+	useEffect(() => {
 		console.log('filtered locations = ', filteredLocations);
 	}, [filteredLocations])
 
-
-	useEffect(() => {
-		fetchLocations();
-	}, []);
+	useFocusEffect(
+		useCallback(() => {
+			fetchLocations();
+		}, [])
+	);
 
 	const fetchLocations = async () => {
 		try {
@@ -89,9 +91,18 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 		<>
 			{showHeader && <Header title="Select Location" />}
 			<>
-				<SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText} />
-
 				<FlatList
+					ListHeaderComponent={() => {
+						return (
+							<>
+								<SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText} />
+
+								<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createLocation")}>
+									<Text style={styles.buttonText}>Create Location</Text>
+								</TouchableOpacity>
+							</>
+						);
+					}}
 					data={searchText ? filteredLocations : locations}
 					keyExtractor={(_, index) => index.toString()}
 					renderItem={({ item }) => {
@@ -137,7 +148,6 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 										}
 									}}
 								>
-
 									<View style={{ flexDirection: "column", alignItems: "flex-start", justifyContent: "center" }}>
 										<View style={styles.textRow}>
 											<Text style={styles.locationText}>{item.location_name}</Text>
@@ -157,7 +167,8 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 										)}
 
 									</View>
-									<MapIcon />
+									{/* <MapIcon /> */}
+									<Ionicons name="ellipsis-vertical" size={18} color="#201F23CC" />
 								</Pressable>
 
 								{/* 👇 Show child assets if expanded */}
@@ -263,5 +274,30 @@ const styles = StyleSheet.create({
 		width: width - 50,
 		bottom: 0,
 		alignSelf: "center",
-	}
+	},
+
+	/* Add Task Button */
+	buttonContainer: {
+		marginTop: 5,
+		alignSelf: "flex-start",
+		flexDirection: "row",
+		alignItems: "center",
+		backgroundColor: "#742BDE",
+		justifyContent: "center",
+		gap: 5,
+		paddingHorizontal: 12,
+		paddingVertical: 5,
+		borderRadius: 5,
+		elevation: 5,
+		shadowColor: "rgba(116, 43, 222, 0.80)",
+		shadowOffset: { width: 2, height: 2 },
+		shadowOpacity: 0.60,
+		shadowRadius: 2,
+	},
+	buttonText: {
+		fontSize: 10,
+		fontFamily: Fonts.regular,
+		color: "#FFFFFF",
+		lineHeight: 20,
+	},
 })

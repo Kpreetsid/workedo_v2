@@ -1,13 +1,15 @@
-import { Dimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Dimensions, FlatList, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import SearchBar from "@/components/global/SearchBar";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { MapIcon } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
 import ActionButton from "@/components/create-screens/ActionButton";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { assetTree } from "@/src/services/asset.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { Asset } from "@/src/types/asset";
+import AssetsCard from "./AssetsCard";
+import { FlashList } from "@shopify/flash-list";
 
 const width = Dimensions.get("window").width;
 
@@ -19,7 +21,6 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 	console.log('rendering assets');
 	const [searchText, setSearchText] = useState("");
 	const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
-	const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
 
 	const { user } = useAuthStore();
 	const [assets, setAssets] = useState<Asset[]>([]);
@@ -27,9 +28,11 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 
 	const filteredAssets = assets.filter((asset) => asset.asset_name.toLowerCase().includes(searchText.toLowerCase()) || asset?.locationData?.location_name?.toLowerCase().includes(searchText.toLowerCase()));
 
-	useEffect(() => {
-		fetchAssets();
-	}, []);
+	useFocusEffect(
+		useCallback(() => {
+			fetchAssets();
+		}, [])
+	);
 
 	const fetchAssets = async () => {
 		try {
@@ -52,9 +55,29 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 
 	return (
 		<>
-			<SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText} />
+			<FlashList
+				ListHeaderComponent={() => {
+					return (
+						<>
+							<SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText} />
+							<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createAsset")}>
+								<Text style={styles.buttonText}>Create Asset</Text>
+							</TouchableOpacity>
+						</>
+					);
+				}}
+				data={filteredAssets}
+				keyExtractor={(item) => item.id}
+				renderItem={({ item }: { item: Asset }) => <AssetsCard asset={item} />}
+				contentContainerStyle={styles.listContainer}
+				refreshing={refreshing}
+				onRefresh={handleRefresh}
+			/>
 
-			<FlatList
+
+
+			{/* old code */}
+			{/* <FlatList
 				data={filteredAssets}
 				keyExtractor={(item) => item.id}
 				renderItem={({ item }: { item: Asset }) => {
@@ -106,7 +129,6 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 								<MapIcon />
 							</Pressable>
 
-							{/* 👇 Show child assets if expanded */}
 							{isExpanded && hasChildren && (
 								<View style={styles.childContainer}>
 									{item?.childs?.map((child) => (
@@ -131,7 +153,7 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 				contentContainerStyle={styles.listContainer}
 				refreshing={refreshing}
 				onRefresh={handleRefresh}
-			/>
+			/> */}
 
 
 			{selection && <ActionButton onPress={() => console.info("Confirm Pressed")} label="Confirm Location" buttonStyle={styles.actionButton} />}
@@ -152,7 +174,7 @@ const styles = StyleSheet.create({
 	assetButton: {
 		// borderWidth: 0.6,
 		borderRadius: 7,
-		height: 65,
+		// height: 65,
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "space-between",
@@ -162,11 +184,6 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		gap: 5,
 		alignItems: "center",
-	},
-	assetText: {
-		fontSize: 12,
-		fontFamily: Fonts.semiBold,
-		color: "#201F23",
 	},
 	assetLocations: {
 		fontFamily: Fonts.regular,
@@ -201,4 +218,28 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.light,
 	},
 
+	/* Add Task Button */
+	buttonContainer: {
+		marginTop: 5,
+		alignSelf: "flex-start",
+		flexDirection: "row",
+		alignItems: "center",
+		backgroundColor: "#742BDE",
+		justifyContent: "center",
+		gap: 5,
+		paddingHorizontal: 12,
+		paddingVertical: 5,
+		borderRadius: 5,
+		elevation: 5,
+		shadowColor: "rgba(116, 43, 222, 0.80)",
+		shadowOffset: { width: 2, height: 2 },
+		shadowOpacity: 0.60,
+		shadowRadius: 2,
+	},
+	buttonText: {
+		fontSize: 10,
+		fontFamily: Fonts.regular,
+		color: "#FFFFFF",
+		lineHeight: 20,
+	},
 });

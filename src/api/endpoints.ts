@@ -38,12 +38,15 @@ export const endpoints = {
     preventives: 'master/schedulers'
   },
   location: {
+    createNewLocation: 'master/locations',
     tree: 'master/locations/tree',
     get: 'master/locations',
     topLevelAssets: 'master/assets',
-    assetsHealthLocation: 'get_asset_health_location_api/'
+    assetsHealthLocation: 'get_asset_health_location_api/',
+    mapUserToLocations: 'map/userToLocations',
   },
   asset: {
+    add: 'master/assets/old',
     assetData: 'master/assets',
     tree: 'master/assets/tree',
     children: 'asset_master/get_children',

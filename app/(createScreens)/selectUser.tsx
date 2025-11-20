@@ -9,6 +9,8 @@ import { router, useLocalSearchParams } from "expo-router";
 import { getUsers } from "@/src/services/preventive.service";
 import { usePreventiveStore } from "@/src/store/usePreventiveStore";
 import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
+import { useCreateAssetStore } from "@/src/store/useCreateAsset";
+import { useCreateLocationStore } from "@/src/store/useCreateLocationStore";
 
 const width = Dimensions.get("window").width;
 export default function SelectUser() {
@@ -20,7 +22,12 @@ export default function SelectUser() {
 	const { setPreventiveValue } = usePreventiveStore();
 	const { setWorkForm } = useWorkOrderStore();
 
+	const {setCreateAssetValue} = useCreateAssetStore();
+	const {setCreateLocationValue} = useCreateLocationStore();
+
 	const workOrderAssignedUsers: any = useWorkOrderStore((state) => state.assigned_users);
+	const createAssetAssignedUsers: any = useCreateAssetStore((state) => state.assigned_users);
+	const createLocationAssignedUsers: any = useCreateLocationStore((state) => state.assigned_users);
 
 	useEffect(() => {
 		fetchUsers();
@@ -29,13 +36,37 @@ export default function SelectUser() {
 	useEffect(() => {
 		if (!users.length) return;
 
-		const preselected = users.filter((u) =>
-			(workOrderAssignedUsers || []).some(
-				(sel: any) => (sel._id || sel.id) === (u._id || u.id)
-			)
-		);
+		if (comingFrom === "createAsset") {
+			console.log('in select user = ', createAssetAssignedUsers);
+			const preselected = users.filter((u) =>
+				(createAssetAssignedUsers || []).some(
+					(sel: any) => (sel.user?.id || sel.id) === (u._id || u.id)
+				)
+			);
 
-		setSelectedUsers(preselected);
+			setSelectedUsers(preselected);
+
+		} else if(comingFrom === "createLocation") {
+			// no need to preselect because its a new location, so no user will be preselected
+			
+			// const preselected = users.filter((u) =>
+			// 	(createLocationAssignedUsers || []).some(
+			// 		(sel: any) => (sel.user?.id || sel.id) === (u._id || u.id)
+			// 	)
+			// );
+
+			// setSelectedUsers(preselected);
+		}
+		else {
+			const preselected = users.filter((u) =>
+				(workOrderAssignedUsers || []).some(
+					(sel: any) => (sel._id || sel.id) === (u._id || u.id)
+				)
+			);
+
+			setSelectedUsers(preselected);
+		}
+
 	}, [users, workOrderAssignedUsers]);
 
 	const fetchUsers = async () => {
@@ -73,6 +104,10 @@ export default function SelectUser() {
 		if (comingFrom === "newWorkOrder") {
 			console.log('selected users in select user = ', selectedUsers);
 			setWorkForm("assigned_users", selectedUsers);
+		} else if(comingFrom === "createAsset") {
+			setCreateAssetValue("assigned_users", selectedUsers);
+		} else if(comingFrom === "createLocation") {
+			setCreateLocationValue("assigned_users", selectedUsers);
 		} else {
 			setPreventiveValue("assigned_users", selectedUsers);
 		}

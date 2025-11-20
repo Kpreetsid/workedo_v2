@@ -7,6 +7,7 @@ import {
 	TextStyle,
 	GestureResponderEvent,
 	TextInput,
+	TouchableOpacity,
 } from "react-native";
 import Fonts from "@/constants/Typography";
 import { ArrowRight } from "@/constants/IconProvider";
@@ -45,9 +46,12 @@ const AssignInputNew: FC<AssignInputProps> = ({
 	buttonTextStyle,
 }) => {
 	let assignedUsers = [];
-	if (comingFrom === "newWorkOrder") {
-		assignedUsers = store((state: any) => state.assigned_users);
-	}
+	assignedUsers = store((state: any) => state.assigned_users);
+	// if (comingFrom === "newWorkOrder") {
+	// assignedUsers = store((state: any) => state.assigned_users);
+	// } else {
+	// 	assignedUsers = store((state: any) => state.assigned_users);
+	// }
 	// ✅ Call Zustand hook only if both store and field exist
 	let value: any = null;
 	if (store && field) {
@@ -102,47 +106,66 @@ const AssignInputNew: FC<AssignInputProps> = ({
 				{required && <Text style={styles.asterisk}>*</Text>}
 			</View>
 
-			<View style={styles.outerInputContainer}>
-				<View style={[styles.field, field === 'assigned_users' ? {width: '100%'} : {width: '75%'}]}>
+			{
+				field === "attachments" ?
+					<View style={styles.container1}>
+						<View style={styles.inputRow1}>
+							<TouchableOpacity style={styles.button1} onPress={() => { }}>
+								<Text style={styles.buttonText1}>Choose File</Text>
+							</TouchableOpacity>
 
-					{field === "assigned_users" ? (
-						<View style={styles.userChipsContainer}>
-							{assignedUsers?.map((u: any) => (
-								<View key={u._id || u.id} style={styles.chip}>
-									<Text style={styles.chipText}>
-										{u.firstName || u.username}
-									</Text>
-
-									<Pressable
-										style={styles.closeIconContainer}
-										onPress={() => onRemoveUser(u)}
-									>
-										<Ionicons name="close" size={16} color="black" style={styles.closeIcon} />
-									</Pressable>
-								</View>
-							))}
+							<Text style={styles.fileName1}>
+								No File Chosen
+							</Text>
 						</View>
-					) : (
-						<TextInput
-							readOnly
-							value={displayValue || ""}
-							style={[styles.inputField]}
-							placeholderTextColor="#6B788899"
-						/>
-					)}
-
-				</View>
-
-
-				{
-					field !== "assigned_users" &&
-					<View style={[styles.buttonContainer, buttonStyle]}>
-						<Text style={[styles.buttonText, buttonTextStyle]}>{placeholder}</Text>
-						<ArrowRight />
 					</View>
-				}
 
-			</View>
+					:
+					<View style={styles.outerInputContainer}>
+						<View style={[styles.field, field === 'assigned_users' ? { width: '100%' } : { width: '75%' }]}>
+
+							{field === "assigned_users" ? (
+								<View style={styles.userChipsContainer}>
+									{assignedUsers?.map((u: any) => (
+										<View key={u._id || u.id} style={styles.chip}>
+											<Text style={styles.chipText}>
+												{u.firstName || u.username || u.user?.firstName || u.user?.username}
+											</Text>
+
+											<Pressable
+												style={styles.closeIconContainer}
+												onPress={() => onRemoveUser(u)}
+											>
+												<Ionicons name="close" size={16} color="black" style={styles.closeIcon} />
+											</Pressable>
+										</View>
+									))}
+								</View>
+							) : (
+								<TextInput
+									readOnly
+									value={displayValue || ""}
+									style={[styles.inputField]}
+									placeholderTextColor="#6B788899"
+								/>
+							)}
+
+						</View>
+
+
+						{
+							field !== "assigned_users" &&
+							<View style={[styles.buttonContainer, buttonStyle]}>
+								<Text style={[styles.buttonText, buttonTextStyle]}>{placeholder}</Text>
+								<ArrowRight />
+							</View>
+						}
+
+					</View>
+
+			}
+
+
 		</Pressable>
 	);
 };
@@ -288,4 +311,41 @@ const styles = StyleSheet.create({
 		fontWeight: "bold",
 	},
 
+
+
+	container1: {
+		marginVertical: 10,
+	},
+	label1: {
+		fontSize: 14,
+		color: "#000",
+		marginBottom: 6,
+		fontWeight: "500",
+	},
+	inputRow1: {
+		backgroundColor: '#fff',
+		borderWidth: 1,
+		borderColor: "#E1E8EE",
+		borderRadius: 6,
+		flexDirection: "row",
+		alignItems: "center",
+		overflow: "hidden",
+	},
+	button1: {
+		backgroundColor: "#F3F4F6",
+		paddingVertical: 10,
+		paddingHorizontal: 14,
+		borderRightWidth: 1,
+		borderRightColor: "#E1E8EE",
+	},
+	buttonText1: {
+		fontSize: 12,
+		color: "#111827",
+	},
+	fileName1: {
+		flex: 1,
+		paddingHorizontal: 10,
+		color: "#6B7280",
+		fontSize: 12,
+	},
 });

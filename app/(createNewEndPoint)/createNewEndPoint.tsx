@@ -176,14 +176,14 @@ export default function CreateNewEndPoint() {
 				/>
 
 				<FormInput
-					readOnly
+					readOnly={selectedEndpointToEdit ? true : false}
 					label="RPM"
 					placeholder="Input machine RPM"
 					onChangeText={(text) => (rpmRef.current = text)}
 				/>
 
 				<View style={styles.row}>
-					<FormInput readOnly label="Bearing Number" placeholder="Bearing No. of Measuring Point" containerStyle={styles.inputContainer} onChangeText={(text) => (bearingNoRef.current = text)} />
+					<FormInput readOnly={selectedEndpointToEdit ? true : false} label="Bearing Number" placeholder="Bearing No. of Measuring Point" containerStyle={styles.inputContainer} onChangeText={(text) => (bearingNoRef.current = text)} />
 					<Pressable style={styles.buttonContainer} onPress={fetchBearingDetails}>
 						<Text style={styles.buttonText}>Get Details</Text>
 					</Pressable>

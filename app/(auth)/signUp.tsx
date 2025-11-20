@@ -226,7 +226,7 @@ export default function RegisterScreen() {
 						control={control}
 						placeholder="Description"
 						rules={{
-							required: "Company Name is required",
+							required: "Description is required",
 							maxLength: { value: 200, message: "Description too long" },
 						}}
 						style={{ width: "100%", ...styles.input, ...styles.description }}

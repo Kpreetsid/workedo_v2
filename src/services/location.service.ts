@@ -46,3 +46,13 @@ export const assetHealthKPIHistory = async (data: {org_id: string, asset_list: s
     console.log('url = ', url);
     return await sendRequestDemo('POST', url, data);
 }
+
+export const mapUserToLocation = async (location_id: string) => {
+    const url = `${endpoints.location.mapUserToLocations}?locationId=${location_id}`;
+    return await sendRequest('GET', url);
+}
+
+export const createNewLocation = async (payload: any) => {
+    const url = `${endpoints.location.createNewLocation}`;
+    return await sendRequest('POST', url, payload);
+}

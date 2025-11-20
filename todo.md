@@ -55,3 +55,8 @@ Functionality modifications:
 22. Search Assets - fixed.
 23. Profile Image not updating - fixed.
 24. Profile information edit modal - Done.
+25. Create new endpoint - RPM input field and Bearing Number input field issue - fixed.
+26. Assets Tab > Assets - New design - Done
+27. Create Assets page design + functionality - Done (needs testing)
+28. Create Location page design + functionalty - Done (needs testing)
+29. Sign Up Page - Description error should be corrected - Fixed

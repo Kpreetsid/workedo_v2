@@ -34,13 +34,13 @@ const SearchBar: FC<SearchBarProps> = ({placeholder = "Search...", value, onChan
 
 const styles = StyleSheet.create({
     searchContainer: {
-        marginTop: 20,
+        // marginTop: 20,
         backgroundColor: "#fff",
         borderRadius: 8,
         alignItems: "center",
         flexDirection: "row",
         paddingHorizontal: 12,
-        marginHorizontal: 20,
+        // marginHorizontal: 20,
         marginBottom: 10,
         gap: 10,
     },

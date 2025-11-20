@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { TouchableOpacity, View, StyleSheet, ToastAndroid } from "react-native";
 import Dropdown from "@/components/overview-screen/DropDown";
-import { assetHealthKPIHistory, childAssetsAgainstLocation, fetchKPIFilterLocations, fetchParentLocationDetails } from "@/src/services/location.service";
+import { assetHealthKPIHistory, childAssetsAgainstLocation, fetchKPIFilterLocations, fetchParentLocationDetails, locationTree } from "@/src/services/location.service";
 import { AssetHealthSummary } from "@/src/types/assetHistory";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
 import { useAuthStore } from "@/src/store/useAuthStore";
+import { useGlobalStore } from "@/src/store/useGlobal";
 
 export default function Location() {
 	const {
@@ -24,11 +25,27 @@ export default function Location() {
 
 	const { user } = useAuthStore();
 
+	const setLocationsTree = useGlobalStore((state) => state.setLocationsTree);
+
 	const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
 	useEffect(() => {
 		fetchLocations();
+		fetchLocationsTree();
 	}, []);
+
+	const fetchLocationsTree = async () => {
+		try {
+			const res = await locationTree();
+
+			if (res.status) {
+				console.log('res locations = ', res?.data);
+				setLocationsTree(res.data);
+			}
+		} catch (err: any) {
+			console.error("Login failed:", err);
+		}
+	};
 
 	// 🧩 Fetch all locations initially and select first parent
 	const fetchLocations = async () => {
