@@ -68,3 +68,13 @@ export const createNewAsset = async (payload: any) => {
     const url = `${endpoints.asset.add}`;
     return await sendRequest('POST', url, payload);
 }
+
+export const singleAssetData = async (assetId: string) => {
+    const url = `${endpoints.asset.assetData}/${assetId}`;
+    return await sendRequest('GET', url);
+}
+
+export const deleteAsset = async (assetId: string) => {
+    const url = `${endpoints.asset.assetData}/${assetId}`;
+    return await sendRequest('DELETE', url);
+}

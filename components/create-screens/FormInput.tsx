@@ -32,6 +32,8 @@ const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", 
 							<TextInput
 								style={[styles.inputField, inputStyle, (label === "Message" || label === "Description") && styles.messageInput]}
 								placeholderTextColor="#6B788899"
+								multiline={label === "Message" || label === "Description"}
+								textAlignVertical="top"
 								{...textInputProps}
 							/>
 						</View>

@@ -53,6 +53,10 @@ export default function Field({
 							{/* Phone input container */}
 							<View style={styles.phoneContainer}>
 
+								<Text style={styles.floatingLabel}>
+									{placeholder} {rules?.required && <Text style={{ color: "red" }}>*</Text>}
+								</Text>
+
 								{/* Country Picker */}
 								<Pressable
 									style={styles.flagBox}
@@ -70,7 +74,7 @@ export default function Field({
 								{/* Phone Input */}
 								<TextInput
 									style={styles.phoneInput}
-									placeholder={placeholder}
+									// placeholder={placeholder}
 									keyboardType="phone-pad"
 									placeholderTextColor="#222"
 									onChangeText={(text) => {
@@ -124,10 +128,15 @@ export default function Field({
 				// 🔥 DEFAULT UI (unchanged)
 				return (
 					<View style={[styles.wrapper, style]}>
-						<View style={styles.field}>
+						<View style={[styles.field, name=="description" ? {height: 83} : {height: 50}]}>
+
+							<Text style={styles.floatingLabel}>
+								{placeholder} {rules?.required && <Text style={{ color: "red" }}>*</Text>}
+							</Text>
+
 							{IconComponent && <IconComponent />}
 							<TextInput
-								placeholder={placeholder}
+								// placeholder={placeholder}
 								placeholderTextColor="#222"
 								style={styles.inputField}
 								secureTextEntry={secure && !showPassword}
@@ -157,6 +166,17 @@ export default function Field({
 }
 
 const styles = StyleSheet.create({
+	floatingLabel: {
+		position: "absolute",
+		top: -8,
+		left: 16,
+		backgroundColor: "#fff",
+		paddingHorizontal: 6,
+		fontSize: 10,
+		color: "#1C1C1C",
+		zIndex: 10,
+	},
+
 	wrapper: {
 		width: "100%",
 	},
@@ -195,10 +215,16 @@ const styles = StyleSheet.create({
 		height: 50,
 		flexDirection: "row",
 		alignItems: "center",
-		backgroundColor: "#F6F4FF",
+		// backgroundColor: "orange",
+		// backgroundColor: "#F6F4FF",
+		backgroundColor: "#fff",
 		borderRadius: 12,
 		gap: 8,
 		paddingLeft: 20,
+		borderWidth: 1,
+		// borderColor: 'red',
+		// borderWidth: StyleSheet.hairlineWidth,
+		borderColor: '#F0EDFF'
 	},
 
 	inputField: {
@@ -210,7 +236,7 @@ const styles = StyleSheet.create({
 
 	error: {
 		color: "red",
-		fontSize: 11,
+		fontSize: 10,
 		marginTop: 2,
 	},
 
@@ -223,11 +249,14 @@ const styles = StyleSheet.create({
 	phoneContainer: {
 		flexDirection: "row",
 		alignItems: "center",
-		backgroundColor: "#F6F4FF",
+		// backgroundColor: "#F6F4FF",
+		backgroundColor: "#fff",
 		borderRadius: 12,
 		paddingHorizontal: 12,
 		height: 50,
 		gap: 10,
+		borderWidth: 1,
+		borderColor: '#F0EDFF'
 	},
 
 	flagBox: {

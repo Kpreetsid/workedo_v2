@@ -140,7 +140,7 @@ export default function RegisterScreen() {
 							control={control}
 							placeholder="Last Name"
 							rules={{
-								required: "Last name is required",
+								// required: "Last name is required",
 								// minLength: {
 								// 	value: 2,
 								// 	message: "Username must be at least 2 characters",
@@ -340,6 +340,7 @@ const styles = StyleSheet.create({
 	},
 	description: {
 		height: 83,
+		backgroundColor: '#fff',
 		textAlignVertical: "top",
 	},
 	terms: {

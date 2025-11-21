@@ -46,6 +46,7 @@ export const FormField = React.memo(
 					placeholder={placeholder}
 					comingFrom={comingFrom}
 					store={store}
+					setterName={setterName}
 					displayKey="attachments"
 					onPress={() => {}}
 				/>

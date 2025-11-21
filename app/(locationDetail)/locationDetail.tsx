@@ -1,10 +1,10 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View, } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View, } from "react-native";
 import Header from "@/components/global/Header";
 import Fonts from "@/constants/Typography";
 import { useEffect, useState } from "react";
 import { assetsHealthLocation, topLevelAssets } from "@/src/services/location.service";
 import { useLocationStore } from "@/src/store/useLocationStore";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import moment from "moment";
 import { AssetHealth } from "@/src/types/assetHealth";
@@ -17,6 +17,7 @@ const blurhash =
 	'|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 export default function LocationDetail() {
+	const router = useRouter();
 	const params: any = useLocalSearchParams();
 	const location = JSON.parse(params?.data);
 	console.log('location = ', location);
@@ -61,7 +62,7 @@ export default function LocationDetail() {
 				}
 			}
 		} catch (e: any) {
-			if(!e.status) {
+			if (!e.status) {
 				ToastAndroid.show(e.message, ToastAndroid.SHORT);
 				setAssets([]);
 			}
@@ -77,8 +78,7 @@ export default function LocationDetail() {
 				<View style={styles.headerCard}>
 					<Image
 						style={styles.image}
-						// source={{ uri: `${endpoints.baseURL}locations/${location?.image_path}` }}
-						source={{ uri: 'https://new.presageinsights.ai/cmms/assets/images/company.jpg' }}
+						source={{ uri: location?.image_path ? `${endpoints.baseURL}locations/${location?.image_path}` : 'https://new.presageinsights.ai/cmms/assets/images/company.jpg' }}
 						placeholder={{ blurhash }}
 						contentFit="cover"
 						transition={1000}
@@ -118,7 +118,12 @@ export default function LocationDetail() {
 
 
 				{assets && assets.map((asset, index) => (
-					<View key={index} style={[styles.assetCard, statusWrapper(asset.status)]}>
+					<Pressable key={index} style={[styles.assetCard, statusWrapper(asset.status)]} onPress={() => {
+						router.push({
+							pathname: "/assetDetail",
+							params: { id: asset.id },
+						});
+					}}>
 						<View style={[styles.column, { flex: 1 }]}>
 							<Text style={styles.assetLabel} numberOfLines={1} ellipsizeMode="tail">Asset Name</Text>
 							<Text style={styles.assetValue}>{asset.asset_name}</Text>
@@ -138,7 +143,7 @@ export default function LocationDetail() {
 							<Text style={styles.assetLabel} numberOfLines={1} ellipsizeMode="tail">Last Data Collected</Text>
 							<Text style={styles.assetValue}>{asset.lastData}</Text>
 						</View>
-					</View>
+					</Pressable>
 				))}
 			</ScrollView>
 		</>

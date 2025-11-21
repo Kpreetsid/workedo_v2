@@ -8,11 +8,15 @@ import {
 	GestureResponderEvent,
 	TextInput,
 	TouchableOpacity,
+	Alert,
 } from "react-native";
 import Fonts from "@/constants/Typography";
 import { ArrowRight } from "@/constants/IconProvider";
 import { FC } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { launchCamera, launchImageLibrary } from "react-native-image-picker";
+import { locationImageUpload } from "@/src/services/location.service";
+import { useAuthStore } from "@/src/store/useAuthStore";
 
 interface AssignInputProps {
 	label: string;
@@ -47,6 +51,9 @@ const AssignInputNew: FC<AssignInputProps> = ({
 }) => {
 	let assignedUsers = [];
 	assignedUsers = store((state: any) => state.assigned_users);
+
+	const { user, setUser } = useAuthStore();
+
 	// if (comingFrom === "newWorkOrder") {
 	// assignedUsers = store((state: any) => state.assigned_users);
 	// } else {
@@ -99,6 +106,45 @@ const AssignInputNew: FC<AssignInputProps> = ({
 		setter("assigned_users", updated);
 	};
 
+
+	const pickImage = (fromCamera = false) => {
+		const options: any = {
+			mediaType: 'photo' as const,
+			quality: 0.8,
+		};
+
+		if (fromCamera) {
+			launchCamera(options, handleImageResponse);
+		} else {
+			launchImageLibrary(options, handleImageResponse);
+		}
+	};
+
+	const handleImageResponse = async (response: any) => {
+		if (response.didCancel) return;
+		if (response.errorCode) {
+			Alert.alert('Error', response.errorMessage || 'Image selection failed');
+			return;
+		}
+
+		const asset = response.assets?.[0];
+		if (!asset) return;
+
+		console.log('Selected image: ', asset.uri);
+
+		const updatedLocationImage = await locationImageUpload(asset, user);
+		console.log('Updated location image: ', updatedLocationImage);
+
+		console.log('coming from value = ', comingFrom)
+
+		if(comingFrom === "createLocation") {
+			const setter = store.getState()[setterName!];
+			console.log('setter = ', setter);
+			setter("attachments", [updatedLocationImage]);
+			console.log('attachments set to: ', [updatedLocationImage]);
+		}
+	};
+
 	return (
 		<Pressable style={styles.outerContainer} onPress={onPress}>
 			<View style={styles.labelContainer}>
@@ -108,7 +154,11 @@ const AssignInputNew: FC<AssignInputProps> = ({
 
 			{
 				field === "attachments" ?
-					<View style={styles.container1}>
+					<Pressable style={styles.container1} onPress={() => Alert.alert('Upload Attachment', 'Select source', [
+						{ text: 'Camera', onPress: () => pickImage(true) },
+						{ text: 'Gallery', onPress: () => pickImage(false) },
+						{ text: 'Cancel', style: 'cancel' },
+					])}>
 						<View style={styles.inputRow1}>
 							<TouchableOpacity style={styles.button1} onPress={() => { }}>
 								<Text style={styles.buttonText1}>Choose File</Text>
@@ -118,7 +168,7 @@ const AssignInputNew: FC<AssignInputProps> = ({
 								No File Chosen
 							</Text>
 						</View>
-					</View>
+					</Pressable>
 
 					:
 					<View style={styles.outerInputContainer}>

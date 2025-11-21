@@ -1,11 +1,11 @@
-import { Dimensions, FlatList, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, FlatList, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import SearchBar from "@/components/global/SearchBar";
 import { useCallback, useState } from "react";
 import { MapIcon } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
 import ActionButton from "@/components/create-screens/ActionButton";
 import { router, useFocusEffect } from "expo-router";
-import { assetTree } from "@/src/services/asset.service";
+import { assetTree, deleteAsset } from "@/src/services/asset.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { Asset } from "@/src/types/asset";
 import AssetsCard from "./AssetsCard";
@@ -53,6 +53,23 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 		setRefreshing(false);
 	};
 
+	const handleDeleteAsset = async (item: Asset) => {
+		console.log('deleting asset = ', item);
+		// setDeleteLoading(true)
+		try {
+			const resp = await deleteAsset(item?.id);
+			console.log('resp = ', resp);
+			if (resp?.status) {
+				ToastAndroid.show("Asset Deleted", ToastAndroid.SHORT);
+				fetchAssets();
+				// setDeleteLoading(false)
+			}
+		} catch (e) {
+			// setDeleteLoading(false)
+			console.log('error deleting = ', e);
+		}
+	}
+
 	return (
 		<>
 			<FlashList
@@ -68,7 +85,11 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 				}}
 				data={filteredAssets}
 				keyExtractor={(item) => item.id}
-				renderItem={({ item }: { item: Asset }) => <AssetsCard asset={item} />}
+				renderItem={
+					({ item }: { item: Asset }) => <AssetsCard
+						asset={item}
+						handleDeleteAsset={handleDeleteAsset}
+					/>}
 				contentContainerStyle={styles.listContainer}
 				refreshing={refreshing}
 				onRefresh={handleRefresh}

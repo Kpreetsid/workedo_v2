@@ -5,6 +5,7 @@ export interface BaseAsset {
 	asset_id: string;
 	asset_type: string | null;
 	asset_model?: string;
+	model?: string;
 	visible: boolean;
 	asset_build_type?: string;
 	account_id: string;

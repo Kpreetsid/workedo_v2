@@ -49,13 +49,13 @@ export default function SelectUser() {
 		} else if(comingFrom === "createLocation") {
 			// no need to preselect because its a new location, so no user will be preselected
 			
-			// const preselected = users.filter((u) =>
-			// 	(createLocationAssignedUsers || []).some(
-			// 		(sel: any) => (sel.user?.id || sel.id) === (u._id || u.id)
-			// 	)
-			// );
+			const preselected = users.filter((u) =>
+				(createLocationAssignedUsers || []).some(
+					(sel: any) => (sel.user?.id || sel.id) === (u._id || u.id)
+				)
+			);
 
-			// setSelectedUsers(preselected);
+			setSelectedUsers(preselected);
 		}
 		else {
 			const preselected = users.filter((u) =>

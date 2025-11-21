@@ -44,6 +44,7 @@ export const endpoints = {
     topLevelAssets: 'master/assets',
     assetsHealthLocation: 'get_asset_health_location_api/',
     mapUserToLocations: 'map/userToLocations',
+    uploadImage: 'upload/locations'
   },
   asset: {
     add: 'master/assets/old',

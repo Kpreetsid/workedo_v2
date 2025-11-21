@@ -1,28 +1,117 @@
-import { ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import { Pressable, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native'
+import React, { useEffect } from 'react'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import Header from '@/components/global/Header'
 import { FormField } from '@/components/global/FormField'
 import { useCreateLocationStore } from '@/src/store/useCreateLocationStore'
-import { useRouter } from 'expo-router'
-import { createNewLocation } from '@/src/services/location.service'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { createNewLocation, singleLocationData } from '@/src/services/location.service'
 import Fonts from '@/constants/Typography'
+import { Location } from '@/src/types/location'
+import { DateDropDownIcon } from '@/constants/IconProvider'
+import { Image } from 'expo-image'
+import { endpoints } from '@/src/api/endpoints'
+
+interface createLocationParams {
+	location_data: Location;
+	mode?: string;
+	isEdit: string | any;
+}
 
 const createLocation = () => {
+	const { location_data, isEdit, mode } = useLocalSearchParams();
+	const { resetForm, setCreateLocationValue } = useCreateLocationStore();
+
+	// typed, parsed object
+	const data: createLocationParams = {
+		location_data: location_data ? JSON.parse(location_data as string) : null,
+		isEdit: isEdit,
+		mode: mode as string | undefined
+	};
+
+	console.log("Parsed Data:", data);
+
 	const router = useRouter();
-	const { resetForm } = useCreateLocationStore();
+
+	useEffect(() => {
+		// for testing
+		// useCreateLocationStore.setState({
+		// 	attachments: [{
+		// 		"image_path": "2025-11-21T21-27-03.364Z_2756.jpg"
+		// 	}]
+		// });
+
+		if (data.isEdit === "true") {
+			setCreateLocationValue("title", data?.location_data?.location_name);
+			setCreateLocationValue("location_type", data?.location_data?.location_type);
+			setCreateLocationValue("description", data?.location_data?.description);
+
+			fetchLocationData();
+		}
+
+		if (data.mode === 'child' && data.location_data) {
+			setCreateLocationValue("parent_location", {
+				id: data?.location_data?.id,
+				location_name: data?.location_data?.location_name
+			} as any);
+
+			fetchLocationData();
+		}
+
+		return () => {
+			resetForm();
+		}
+	}, []);
+
+	const fetchLocationData = async () => {
+		try {
+			const res = await singleLocationData(data.location_data?.id);
+			console.log(res);
+			if (res?.status) {
+				setCreateLocationValue("assigned_users", res?.data[0]?.userList);
+			}
+		} catch (e) {
+			console.log('error = ', e);
+		}
+	}
 
 	const handleCreateLocation = async () => {
-		console.log('create location = ', useCreateLocationStore.getState());
+		const values = useCreateLocationStore.getState();
+		console.log('values = ', values);
 
-		const payload = {
-			top_level: true,
-			top_level_location_id: "",
-			location_name: useCreateLocationStore.getState().title,
-			description: useCreateLocationStore.getState().description,
-			location_type: useCreateLocationStore.getState().location_type,
-			userIdList: useCreateLocationStore.getState().assigned_users.map((u: any) => u.id),
+		if (values.title === "") {
+			ToastAndroid.show("Please enter location name", ToastAndroid.SHORT);
+			return;
+		}
+
+		if (values.location_type === "") {
+			ToastAndroid.show("Please select location type", ToastAndroid.SHORT);
+			return;
+		}
+
+		if (values.description === "") {
+			ToastAndroid.show("Please enter description", ToastAndroid.SHORT);
+			return;
+		}
+
+		if (values.assigned_users.length === 0) {
+			ToastAndroid.show("Please assign users", ToastAndroid.SHORT);
+			return;
+		}
+
+		let payload: any = {
+			top_level: data?.mode === 'child' ? false : true,
+			top_level_location_id: data?.mode === 'child' ? data?.location_data?.id : "",
+			location_name: values.title,
+			description: values.description,
+			location_type: values.location_type,
+			userIdList: values.assigned_users.map((u: any) => u.id),
+			image_path: values.attachments.length > 0 ? values.attachments[0].image_path : "",
 		};
+
+		if (data?.mode === 'child') {
+			payload.parent_id = data?.location_data?.id;
+		}
 
 		console.log('payload = ', payload);
 
@@ -42,7 +131,7 @@ const createLocation = () => {
 	return (
 		<KeyboardAwareScrollView bottomOffset={30} style={styles.container}>
 			<ScrollView style={styles.container}>
-				<Header title="Add New Location" />
+				<Header title={data?.isEdit === "true" ? "Update Location Details" : "Add New Location"} />
 
 				<FormField
 					label="Title"
@@ -80,6 +169,37 @@ const createLocation = () => {
 				/>
 
 
+
+				{
+					data?.mode === 'child' &&
+					<View
+						style={[
+							styles.locationSelector
+						]}
+					>
+						<View style={styles.labelContainer}>
+							<Text style={styles.labelText}>Parent Location</Text>
+							<Text style={styles.asterisk}>*</Text>
+						</View>
+
+						<View
+							style={[styles.field]}
+						>
+							<Text
+								style={[
+									styles.inputText,
+									{ color: "#222" },
+								]}
+								numberOfLines={1}
+							>
+								{
+									useCreateLocationStore.getState().parent_location?.location_name
+								}
+							</Text>
+						</View>
+					</View>
+				}
+
 				<FormField
 					label="Select users to assign to location"
 					type="new-user"
@@ -103,9 +223,25 @@ const createLocation = () => {
 					setterName="setCreateLocationValue"
 				/>
 
+				{
+					useCreateLocationStore.getState().attachments.length > 0 &&
+					<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
+						<Image
+							source={{
+								uri: `${endpoints.baseURL}locations/${useCreateLocationStore.getState().attachments[0].image_path}?t=${Date.now()}`
+							}}
+							style={{ width: 200, height: 200, borderRadius: 8 }}
+						/>
+					</View>
+				}
+
 
 				<TouchableOpacity style={styles.createBtn} onPress={handleCreateLocation}>
-					<Text style={styles.createBtnText}>Create Location</Text>
+					<Text style={styles.createBtnText}>
+						{
+							data?.isEdit === "true" ? "Update Location" : "Create Location"
+						}
+					</Text>
 				</TouchableOpacity>
 
 			</ScrollView>
@@ -145,5 +281,43 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		fontFamily: Fonts.regular,
 		lineHeight: 18,
+	},
+	locationSelector: {
+		marginHorizontal: 20,
+		marginVertical: 10,
+	},
+	labelContainer: {
+		flexDirection: "row",
+		alignItems: "center",
+		marginBottom: 5,
+	},
+	labelText: {
+		fontSize: 12,
+		fontFamily: Fonts.regular,
+		lineHeight: 20,
+		color: "#1C1C1C",
+	},
+	asterisk: {
+		color: "#D63928",
+		fontSize: 14,
+		fontFamily: Fonts.regular,
+		marginTop: -3,
+		marginLeft: 2,
+	},
+	field: {
+		backgroundColor: "#FFFFFF",
+		borderRadius: 8,
+		paddingHorizontal: 20,
+		borderWidth: 1,
+		borderColor: "#E1E8EE",
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+	},
+	inputText: {
+		paddingVertical: 10,
+		fontSize: 12,
+		color: "#1C1C1C",
+		fontFamily: Fonts.light,
 	},
 })

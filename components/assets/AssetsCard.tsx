@@ -1,19 +1,22 @@
-import { Pressable, StyleSheet, Text, ToastAndroid, View } from 'react-native'
+import { ActivityIndicator, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import Fonts from '@/constants/Typography'
 import { Ionicons } from '@expo/vector-icons'
 import { Asset } from '@/src/types/asset'
 import { getSingleAssetHealthHistory } from '@/src/services/asset.service'
 import { useRouter } from 'expo-router'
+import Popover from 'react-native-popover-view'
 
 interface AssetsCardInterface {
 	asset: Asset;
 	isChild?: boolean;
 	level?: number;
+	handleDeleteAsset?: (asset: Asset) => void;
 }
 
-const AssetsCard = ({ asset, isChild = false, level = 0 }: AssetsCardInterface) => {
+const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: AssetsCardInterface) => {
 	const router = useRouter();
+	const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 	const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
 	const [assetHealth, setAssetHealth] = useState<any>(null);
 
@@ -32,7 +35,7 @@ const AssetsCard = ({ asset, isChild = false, level = 0 }: AssetsCardInterface) 
 					setAssetHealth(assetHealthRes?.data);
 				}
 			} else {
-				ToastAndroid.show("No Sensor is mapped against this endpoint.", ToastAndroid.SHORT);
+				ToastAndroid.show("No Sensor is mapped against this asset.", ToastAndroid.SHORT);
 			}
 		} catch (err) {
 			console.error("Error fetching asset health:", err);
@@ -58,18 +61,18 @@ const AssetsCard = ({ asset, isChild = false, level = 0 }: AssetsCardInterface) 
 				{/* ROW 1 */}
 				< View style={styles.cardRow} >
 
-					<View style={[styles.cardRowTexts, {width: '50%'}]}>
+					<View style={[styles.cardRowTexts, { width: '50%' }]}>
 						<Text style={styles.assetHeading}>Asset Name</Text>
 						<Text style={styles.assetText} numberOfLines={2}>{asset?.asset_name}</Text>
 					</View>
 
-					<View style={[styles.cardRowTexts, {width: '40%'}]}>
+					<View style={[styles.cardRowTexts, { width: '40%' }]}>
 						<Text style={styles.assetHeading}>Asset Type</Text>
 						<Text style={styles.assetText} numberOfLines={2}>{asset?.asset_type}</Text>
 					</View>
 
 					{/* ONLY SHOW EXPAND TOGGLE ON PARENT */}
-					<View style={[styles.cardRowIcons, {width: '10%'}]}>
+					<View style={[styles.cardRowIcons, { width: '10%' }]}>
 						{!isChild && hasChildren && (
 							<Pressable
 								onPress={() => {
@@ -85,7 +88,69 @@ const AssetsCard = ({ asset, isChild = false, level = 0 }: AssetsCardInterface) 
 							</Pressable>
 						)}
 
-						<Ionicons name="ellipsis-vertical" size={18} color="black" />
+						{/* <Ionicons name="ellipsis-vertical" size={18} color="black" /> */}
+						<Popover
+							isVisible={openPopoverId === asset.id}
+							onRequestClose={() => setOpenPopoverId(null)}
+							from={(
+								<TouchableOpacity style={{ padding: 6 }} onPress={() => setOpenPopoverId(asset.id)}>
+									<Ionicons name="ellipsis-vertical" size={18} color="#201F23CC" />
+								</TouchableOpacity>
+							)}>
+							<View style={styles.popoverContent}>
+								{
+									[
+										{ icon: 'add', text: 'Add' },
+										{ icon: 'pencil', text: 'Edit' },
+										{ icon: 'copy', text: 'Copy' },
+										{ icon: 'trash', text: 'Delete' }
+									].map((option, index) => {
+										return (
+											<Pressable
+												style={styles.popoverItem}
+												key={index}
+												onPress={async () => {
+													if (index === 0) {
+														router.push({
+															pathname: "/createAsset",
+															params: {
+																asset_data: JSON.stringify(asset),
+																mode: 'child',
+																isEdit: 'false'
+															},
+														});
+													} else if (index === 1) {
+														router.push({
+															pathname: "/createAsset",
+															params: {
+																asset_data: JSON.stringify(asset),
+																isEdit: 'true'
+															},
+														});
+													} else if (index === 3) {
+														console.log('in it delete = ', asset);
+														handleDeleteAsset?.(asset);
+													}
+													setOpenPopoverId(null)
+												}}
+											>
+												<View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'flex-start' }}>
+													<Ionicons name={option.icon as any} size={16} color="#71717A" />
+
+													<Text style={{ color: "#71717A", fontFamily: Fonts.regular }}>
+														{option.text}
+													</Text>
+
+													{/* {
+														(deleteLoading && index === 3) && <ActivityIndicator size={"small"} color={"#71717A"} />
+													} */}
+												</View>
+											</Pressable>
+										);
+									})
+								}
+							</View>
+						</Popover>
 
 						{/* {!isChild && hasChildren && (
 							<Ionicons
@@ -134,6 +199,7 @@ const AssetsCard = ({ asset, isChild = false, level = 0 }: AssetsCardInterface) 
 								asset={child}
 								isChild={true}
 								level={level + 1}
+								handleDeleteAsset={() => handleDeleteAsset?.(child)}
 							/>
 						))}
 					</View>
@@ -179,5 +245,14 @@ const styles = StyleSheet.create({
 	cardRowIcons: {
 		flexDirection: 'row',
 		alignItems: 'center',
+	},
+	popoverContent: {
+		borderRadius: 20,
+		backgroundColor: "#fff",
+		padding: 10,
+	},
+	popoverItem: {
+		width: 150,
+		padding: 10,
 	},
 })

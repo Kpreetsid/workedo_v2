@@ -7,17 +7,25 @@ import Header from '@/components/global/Header'
 import Fonts from '@/constants/Typography'
 import Dropdown from '@/components/overview-screen/DropDown'
 import { useOverviewStore } from '@/src/store/useOverviewStore'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import LocationSelector from '@/components/create-asset/LocationSelector'
 import { DateDropDownIcon } from '@/constants/IconProvider'
 import moment from "moment-timezone";
-import { createNewAsset } from '@/src/services/asset.service'
+import { createNewAsset, singleAssetData } from '@/src/services/asset.service'
 import { locationTree, mapUserToLocation } from '@/src/services/location.service'
 import { Location } from '@/src/types/location'
 import { useGlobalStore } from '@/src/store/useGlobal'
+import { Asset } from '@/src/types/asset'
+
+interface createAssetParams {
+	asset_data: Asset;
+	mode?: string;
+	isEdit: string | any;
+}
 
 const createAsset = () => {
 	const router = useRouter();
+	const { asset_data, isEdit, mode } = useLocalSearchParams();
 	const parentLocations = useGlobalStore((state) => state.locationsTree);
 	console.log('parentLocations = ', parentLocations);
 	const { resetForm, setCreateAssetValue } = useCreateAssetStore();
@@ -29,13 +37,64 @@ const createAsset = () => {
 	const [open, setOpen] = useState<boolean | null>(false);
 	const [timezones, setTimezones] = useState<string[]>([]);
 
+	// typed, parsed object
+	const data: createAssetParams = {
+		asset_data: asset_data ? JSON.parse(asset_data as string) : null,
+		isEdit: isEdit,
+		mode: mode as string | undefined
+	};
+
+	console.log("Parsed Data:", data);
+
 	useEffect(() => {
 		fetchAllTimezones();
 
+		if (data.isEdit === "true") {
+			setCreateAssetValue("title", data?.asset_data?.asset_name);
+			setCreateAssetValue("asset_id", data?.asset_data?.id);
+			setCreateAssetValue("asset_type", data?.asset_data?.asset_type);
+			setCreateAssetValue("timezone", data?.asset_data?.asset_timezone ?? "");
+			setCreateAssetValue("location", data?.asset_data?.locationData?.id);
+			setCreateAssetValue("locationObject", data?.asset_data?.locationData);
+			setCreateAssetValue("manufacturer", data?.asset_data?.manufacturer ?? null);
+			setCreateAssetValue("model", data?.asset_data?.model ?? "");
+			setCreateAssetValue("year", data?.asset_data?.year ?? "");
+			setCreateAssetValue("description", data?.asset_data?.description ?? "");
+
+			fetchAssetData();
+		} else {
+			setCreateAssetValue("timezone", "Asia/Kolkata");
+		}
+
+
+		if (data.mode === 'child' && data.asset_data) {
+			setCreateAssetValue("parent_asset", {
+				id: data?.asset_data?.id,
+				asset_name: data?.asset_data?.asset_name,
+			} as any);
+
+			setCreateAssetValue("parent_location", data?.asset_data?.locationData);
+
+			fetchAssetData();
+			setCreateAssetValue("timezone", data?.asset_data?.asset_timezone ?? "");
+			setCreateAssetValue("locationObject", data?.asset_data?.locationData);
+		}
 		return () => {
 			resetForm();
 		}
 	}, [])
+
+	const fetchAssetData = async () => {
+		try {
+			const res = await singleAssetData(data.asset_data?.id);
+			console.log('single asset data = ', res);
+			if (res?.status) {
+				setCreateAssetValue("assigned_users", res?.data[0]?.userList);
+			}
+		} catch (e) {
+			console.log('error = ', e);
+		}
+	}
 
 	useEffect(() => {
 		if (locationObject) {
@@ -67,23 +126,63 @@ const createAsset = () => {
 	}
 
 	const handleCreateAsset = async () => {
-		console.log('create asset = ', useCreateAssetStore.getState());
+		const values = useCreateAssetStore.getState();
+		console.log('values = ', values);
 
-		const payload = {
-			top_level: true,
-			top_level_asset_id: "",
-			asset_name: useCreateAssetStore.getState().title,
-			asset_timezone: useCreateAssetStore.getState().timezone,
-			description: useCreateAssetStore.getState().description,
-			asset_model: useCreateAssetStore.getState().model,
-			manufacturer: useCreateAssetStore.getState().manufacturer,
-			asset_type: useCreateAssetStore.getState().asset_type,
-			year: useCreateAssetStore.getState().year,
-			asset_id: useCreateAssetStore.getState().asset_id,
+		if (values.title === "") {
+			ToastAndroid.show("Please enter asset name", ToastAndroid.SHORT);
+			return;
+		}
+
+		if (values.asset_id === "") {
+			ToastAndroid.show("Please enter asset id", ToastAndroid.SHORT);
+			return;
+		}
+
+		if (values.asset_type === "") {
+			ToastAndroid.show("Please enter asset type", ToastAndroid.SHORT);
+			return;
+		}
+
+		if (!values.locationObject) {
+			ToastAndroid.show("Please select parent location", ToastAndroid.SHORT);
+			return;
+		}
+
+
+		if (values.assigned_users.length === 0) {
+			ToastAndroid.show("Please assign users", ToastAndroid.SHORT);
+			return;
+		}
+
+		if (data?.mode === 'child') {
+			if (values.asset_build_type === "") {
+				ToastAndroid.show("Please select circuit type", ToastAndroid.SHORT);
+				return;
+			}
+		}
+
+		let payload: any = {
+			top_level: data?.mode === 'child' ? false : true,
+			top_level_asset_id: data?.mode === 'child' ? data?.asset_data?.id : "",
+			asset_name: values.title,
+			asset_timezone: values.timezone,
+			description: values.description,
+			asset_model: values.model,
+			manufacturer: values.manufacturer,
+			asset_type: values.asset_type,
+			year: values.year,
+			asset_id: values.asset_id,
 			asset_build_type: "Not Defined",
-			locationId: useCreateAssetStore.getState().locationObject?.id,
-			userIdList: useCreateAssetStore.getState().assigned_users,
+			locationId: values.locationObject?.id,
+			userIdList: values.assigned_users.map((u: any) => u.id),
 		};
+
+		if (data?.mode === 'child') {
+			payload.asset_build_type = values.asset_build_type == "Electric" ? "electric" : "non_electric";
+
+			payload.parent_id = data?.asset_data?.id;
+		}
 
 		console.log('payload = ', payload);
 
@@ -103,7 +202,7 @@ const createAsset = () => {
 	return (
 		<KeyboardAwareScrollView bottomOffset={30} style={styles.container}>
 			<ScrollView style={styles.container}>
-				<Header title="Add New Asset" />
+				<Header title={data?.isEdit === "true" ? "Update Asset" : "Add New Asset"} />
 
 				<FormField
 					label="Title"
@@ -140,38 +239,98 @@ const createAsset = () => {
 					setterName="setCreateAssetValue"
 				/>
 
-				<Pressable onPress={() => setOpen(!open)}>
+				{
+					data?.mode === 'child' ?
+						<View
+							style={[
+								styles.locationSelector
+							]}
+						>
+							<View style={styles.labelContainer}>
+								<Text style={styles.labelText}>Parent Location</Text>
+								<Text style={styles.asterisk}>*</Text>
+							</View>
+
+							<View
+								style={[styles.field]}
+							>
+								<Text
+									style={[
+										styles.inputText,
+										{ color: "#222" },
+									]}
+									numberOfLines={1}
+								>
+									{
+										useCreateAssetStore.getState().parent_location?.location_name
+									}
+								</Text>
+							</View>
+						</View>
+						:
+						<Pressable onPress={() => setOpen(!open)}>
+							<View
+								style={[
+									styles.locationSelector
+								]}
+							>
+								<View style={styles.labelContainer}>
+									<Text style={styles.labelText}>Parent Location</Text>
+									<Text style={styles.asterisk}>*</Text>
+								</View>
+
+								<Pressable
+									style={[styles.field]}
+									onPress={() => setOpen(!open)}
+								>
+									<Text
+										style={[
+											styles.inputText,
+											open === false && { color: "#222" },
+										]}
+										numberOfLines={1}
+									>
+										{
+											locationObject ? locationObject?.location_name : "Select"
+										}
+									</Text>
+									<DateDropDownIcon />
+								</Pressable>
+							</View>
+						</Pressable>
+				}
+
+				{open && data?.mode != 'child' && <LocationSelector />}
+
+				{
+					data?.mode === 'child' &&
 					<View
 						style={[
 							styles.locationSelector
 						]}
 					>
 						<View style={styles.labelContainer}>
-							<Text style={styles.labelText}>Parent Location</Text>
+							<Text style={styles.labelText}>Parent Asset</Text>
 							<Text style={styles.asterisk}>*</Text>
 						</View>
 
-						<Pressable
+						<View
 							style={[styles.field]}
-							onPress={() => setOpen(!open)}
 						>
 							<Text
 								style={[
 									styles.inputText,
-									open === false && { color: "#888" },
+									{ color: "#222" },
 								]}
 								numberOfLines={1}
 							>
 								{
-									locationObject ? locationObject?.location_name : "Select"
+									useCreateAssetStore.getState().parent_asset?.asset_name
 								}
 							</Text>
-							<DateDropDownIcon />
-						</Pressable>
+						</View>
 					</View>
-				</Pressable>
-
-				{open && <LocationSelector />}
+				}
 
 				{
 					locationObject &&
@@ -182,6 +341,18 @@ const createAsset = () => {
 						field="assigned_users"
 						router={router}
 						comingFrom="createAsset"
+						store={useCreateAssetStore}
+						setterName="setCreateAssetValue"
+					/>
+				}
+
+				{
+					data?.mode === 'child' &&
+					<FormField
+						label="Circuit Type"
+						type="dropdown"
+						field="asset_build_type"
+						options={["Electric", "Non Electric"]}
 						store={useCreateAssetStore}
 						setterName="setCreateAssetValue"
 					/>
@@ -224,7 +395,11 @@ const createAsset = () => {
 				/>
 
 				<TouchableOpacity style={styles.createBtn} onPress={handleCreateAsset}>
-					<Text style={styles.createBtnText}>Create Asset</Text>
+					<Text style={styles.createBtnText}>
+						{
+							data?.isEdit === "true" ? "Update Asset" : "Create Asset"
+						}
+					</Text>
 				</TouchableOpacity>
 
 			</ScrollView>

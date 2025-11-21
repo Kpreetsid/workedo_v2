@@ -62,3 +62,16 @@ Functionality modifications:
 29. Sign Up Page - Description error should be corrected - Fixed
 29. New sign up page design implemented - Country code implemented - Done
 30. Validation checks removed from both login and sign up pages - Done
+31. Edit Location Functionality - Done (needs testing)
+32. Delete Location Functionality - Done
+33. Edit Asset Functionality - Done
+34. Delete Asset Functionality - Done
+35. Sign Up and Login new design for input fields - Done.
+36. Assets Tab > Location - new design - Done
+37. Add a child across each location - Done
+38. Add a child across each asset - Done
+39. Remove *Last Name* from the mandatory/required fields. In sign up - Done
+40. While creating an asset, the *default time zone* should be set to *Kolkata*, with a dropdown selection option for other time zones. - Done
+41. From the location page the asset should *redirect automatically to the Asset page*. - Done
+42. In *Create Location, the **Choose File* option for image upload is not working. Please fix this - Fixed
+42. Search feature for location and assets

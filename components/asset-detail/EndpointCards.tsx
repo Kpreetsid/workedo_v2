@@ -101,7 +101,7 @@ export default function EndpointCards({ asset_data }: Props) {
 									isVisible={openPopoverId === Number(ep.id)}
 									onRequestClose={() => setOpenPopoverId(null)}
 									from={(
-										<TouchableOpacity style={{padding: 6}} onPress={() => setOpenPopoverId(Number(ep.id))}>
+										<TouchableOpacity style={{ padding: 6 }} onPress={() => setOpenPopoverId(Number(ep.id))}>
 											<Fontisto name="more-v-a" size={15} color="#201F23" />
 										</TouchableOpacity>
 									)}>
@@ -114,7 +114,7 @@ export default function EndpointCards({ asset_data }: Props) {
 														key={index}
 														onPress={async () => {
 															setOpenPopoverId(null);
-															
+
 															if (index === 2) {
 																const re = await deleteEndpoint(ep?.id?.toString() || "")
 																console.log('re = ', re);
