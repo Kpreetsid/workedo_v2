@@ -97,18 +97,18 @@ export default function Login() {
 							placeholder="Username"
 							rules={{
 								required: "Username is required",
-								minLength: {
-									value: 3,
-									message: "Username must be at least 3 characters",
-								},
-								maxLength: {
-									value: 30,
-									message: "Username must be less than 30 characters",
-								},
-								pattern: {
-									value: /^[a-zA-Z0-9_]+$/,
-									message: "Only letters, numbers, and underscores are allowed",
-								},
+								// minLength: {
+								// 	value: 2,
+								// 	message: "Username must be at least 2 characters",
+								// },
+								// maxLength: {
+								// 	value: 1000,
+									// message: "Username must be less than 1000 characters",
+								// },
+								// pattern: {
+								// 	value: /^[a-zA-Z0-9_]+$/,
+								// 	message: "Only letters, numbers, and underscores are allowed",
+								// },
 							}}
 						/>
 
@@ -121,7 +121,7 @@ export default function Login() {
 							secure
 							rules={{
 								required: "Password is required",
-								minLength: { value: 5, message: "At least 5 characters" },
+								minLength: { value: 8, message: "At least 8 characters" },
 							}}
 						/>
 					</View>

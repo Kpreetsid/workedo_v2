@@ -24,7 +24,7 @@ export default function ForgotPassword() {
 		formState: { isSubmitting }
 	} = useForm<ForgotPasswordFormValues>({
 		defaultValues: {
-			email: "waleedimtiaz30@gmail.com",
+			email: "",
 		},
 	});
 
@@ -65,7 +65,7 @@ export default function ForgotPassword() {
 						<Field icon="email" placeholder="Email ID" name="email" control={control} rules={{
 							required: "Email is required",
 							pattern: {
-								value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, // standard email regex
+								value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
 								message: "Please enter a valid email address",
 							},
 						}} />

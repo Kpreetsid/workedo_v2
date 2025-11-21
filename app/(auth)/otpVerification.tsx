@@ -30,13 +30,13 @@ export default function OTPVerification() {
 		setUserData(payload);
 	}, []);
 
-	// useEffect(() => {
-	// 	setUserData({email: payload});
-	// 	if (timer > 0) {
-	// 		const interval = setInterval(() => setTimer((t) => t - 1), 1000);
-	// 		return () => clearInterval(interval);
-	// 	}
-	// }, [timer]);
+	useEffect(() => {
+		// setUserData({email: payload});
+		if (timer > 0) {
+			const interval = setInterval(() => setTimer((t) => t - 1), 1000);
+			return () => clearInterval(interval);
+		}
+	}, [timer]);
 
 	useEffect(() => {
 		console.log('user data = ', userData)

@@ -6,7 +6,7 @@ import {SafeAreaView} from "react-native-safe-area-context";
 import ActionButton from "@/components/auth-screens/ActionButton";
 import Fonts from "@/constants/Typography";
 
-export default function Login() {
+export default function RegistrationComplete() {
     return (
         <SafeAreaView style={styles.container}>
             <AuthHeader/>

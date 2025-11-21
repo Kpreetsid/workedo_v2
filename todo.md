@@ -60,3 +60,5 @@ Functionality modifications:
 27. Create Assets page design + functionality - Done (needs testing)
 28. Create Location page design + functionalty - Done (needs testing)
 29. Sign Up Page - Description error should be corrected - Fixed
+29. New sign up page design implemented - Country code implemented - Done
+30. Validation checks removed from both login and sign up pages - Done

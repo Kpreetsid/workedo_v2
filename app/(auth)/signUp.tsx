@@ -14,9 +14,10 @@ import { AuthPayload, useAuthFlowStore } from "@/src/store/useAuthFlowStore";
 type RegisterFormValues = {
 	companyName: string;
 	industryType: string;
-	fullName: string;
+	firstName: string;
+	lastName: string;
 	email: string;
-	phone: string;
+	phone: any;
 	username: string;
 	password: string;
 	confirmPassword: string;
@@ -28,23 +29,14 @@ export default function RegisterScreen() {
 		defaultValues: {
 			companyName: "",
 			industryType: "",
-			fullName: "",
+			firstName: "",
+			lastName: "",
 			email: "",
 			phone: "",
 			username: "",
 			password: "",
 			confirmPassword: "",
 			description: "",
-
-			// companyName: "Presage1",
-			// industryType: "Insights1",
-			// fullName: "tester",
-			// email: "vozax.waleed@gmail.com",
-			// phone: "03316363051",
-			// username: "paksales1",
-			// password: "aaaaaa",
-			// confirmPassword: "aaaaaa",
-			// description: "description test",
 		},
 	});
 
@@ -57,18 +49,18 @@ export default function RegisterScreen() {
 			console.log('form values = ', values);
 
 			let payload: AuthPayload = {
-				"firstName": values.fullName.split(' ')[0],
-				"lastName": values.fullName.split(' ')[1],
+				"firstName": values.firstName,
+				"lastName": values.lastName,
 				"username": values.username,
 				"email": values.email,
 				"isFirstUser": true,
 				"phone_no": {
-					"number": values.phone,
-					"internationalNumber": values.phone,
-					"nationalNumber": values.phone,
-					"e164Number": values.phone,
-					"countryCode": "IN",
-					"dialCode": "+91"
+					"number": values.phone.number,
+					"internationalNumber": values.phone.full,
+					"nationalNumber": values.phone.number,
+					"e164Number": values.phone.full,
+					"countryCode": values.phone.country,
+					"dialCode": values.phone.countryCode
 				},
 				"password": values.password,
 				"account_name": values.companyName,
@@ -130,15 +122,43 @@ export default function RegisterScreen() {
 					<View style={styles.row}>
 						<Field
 							icon="person"
-							name="fullName"
+							name="firstName"
 							control={control}
-							placeholder="Full Name"
+							placeholder="First Name"
 							rules={{
-								required: "Full Name is required",
-								minLength: { value: 3, message: "Enter at least 3 characters" },
+								required: "First name is required",
+								// pattern: {
+								// 	value: /^[0-9]{10,15}$/,
+								// 	message: "Enter a valid phone number",
+								// },
 							}}
 							style={{ flex: 1 }}
 						/>
+						<Field
+							icon="person"
+							name="lastName"
+							control={control}
+							placeholder="Last Name"
+							rules={{
+								required: "Last name is required",
+								// minLength: {
+								// 	value: 2,
+								// 	message: "Username must be at least 2 characters",
+								// },
+								// maxLength: {
+								// 	value: 10000,
+								// 	message: "Username must be less than 10000 characters",
+								// },
+								// pattern: {
+								// 	value: /^[a-zA-Z0-9_]+$/,
+								// 	message: "Only letters, numbers, and underscores are allowed",
+								// },
+							}}
+							style={{ flex: 1 }}
+						/>
+					</View>
+
+					<View style={styles.row}>
 						<Field
 							icon="email"
 							name="email"
@@ -153,23 +173,6 @@ export default function RegisterScreen() {
 							}}
 							style={{ flex: 1 }}
 						/>
-					</View>
-
-					<View style={styles.row}>
-						<Field
-							icon="phone"
-							name="phone"
-							control={control}
-							placeholder="Phone Number"
-							rules={{
-								required: "Phone number is required",
-								pattern: {
-									value: /^[0-9]{10,15}$/,
-									message: "Enter a valid phone number",
-								},
-							}}
-							style={{ flex: 1 }}
-						/>
 						<Field
 							icon="person"
 							name="username"
@@ -177,22 +180,23 @@ export default function RegisterScreen() {
 							placeholder="Username"
 							rules={{
 								required: "Username is required",
-								minLength: {
-									value: 3,
-									message: "Username must be at least 3 characters",
-								},
-								maxLength: {
-									value: 20,
-									message: "Username must be less than 20 characters",
-								},
-								pattern: {
-									value: /^[a-zA-Z0-9_]+$/,
-									message: "Only letters, numbers, and underscores are allowed",
-								},
+								// minLength: {
+								// 	value: 2,
+								// 	message: "Username must be at least 2 characters",
+								// },
+								// maxLength: {
+								// 	value: 10000,
+								// 	message: "Username must be less than 10000 characters",
+								// },
+								// pattern: {
+								// 	value: /^[a-zA-Z0-9_]+$/,
+								// 	message: "Only letters, numbers, and underscores are allowed",
+								// },
 							}}
 							style={{ flex: 1 }}
 						/>
 					</View>
+
 
 					<View style={styles.row}>
 						<Field
@@ -203,7 +207,7 @@ export default function RegisterScreen() {
 							secure
 							rules={{
 								required: "Password is required",
-								minLength: { value: 6, message: "Password must be at least 6 characters" },
+								minLength: { value: 8, message: "Password must be at least 8 characters" },
 							}}
 							style={{ flex: 1 }}
 						/>
@@ -216,6 +220,23 @@ export default function RegisterScreen() {
 							rules={{
 								required: "Please confirm your password",
 								validate: (value: any) => value === password || "Passwords do not match",
+							}}
+							style={{ flex: 1 }}
+						/>
+					</View>
+
+
+					<View style={styles.row}>
+						<Field
+							name="phone"
+							control={control}
+							placeholder="Phone Number"
+							rules={{
+								required: "Phone number is required",
+								// pattern: {
+								// 	value: /^[0-9]{10,15}$/,
+								// 	message: "Enter a valid phone number",
+								// },
 							}}
 							style={{ flex: 1 }}
 						/>
