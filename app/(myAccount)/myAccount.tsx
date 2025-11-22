@@ -2,8 +2,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable, Image, FlatList, A
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
-import { ArrowBack } from "@/constants/IconProvider";
-import { Entypo, Feather, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { ArrowBack, CalendarIcon, Calender, StatusIcon } from "@/constants/IconProvider";
+import { Entypo, EvilIcons, Feather, Ionicons, MaterialIcons, Octicons, SimpleLineIcons } from "@expo/vector-icons";
 import { useState } from "react";
 import { storage } from "@/src/storage/mmkv";
 import { useAuthStore } from "@/src/store/useAuthStore";
@@ -22,6 +22,11 @@ import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 import FormInput from "@/components/create-screens/FormInput";
 import ActionButton from "@/components/create-screens/ActionButton";
 import Header from "@/components/global/Header";
+import moment from "moment";
+import { useCreateAssetStore } from "@/src/store/useCreateAsset";
+import { useCreateLocationStore } from "@/src/store/useCreateLocationStore";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { useGlobal } from "@/hooks/useGlobal";
 
 const accountSettingsData = [
 	{ id: "1", icon: "notifications-none", label: "Notification Settings" },
@@ -40,58 +45,15 @@ export default function MyAccount() {
 	const [activeTab, setActiveTab] = useState<"Profile" | "Account" | "Support">("Profile");
 	const [editVisible, setEditVisible] = useState(false);
 	const { user, setUser } = useAuthStore();
-
 	console.log('my account = ', user);
+
+	const { pickImage } = useImageUpload();
+	const { logout } = useGlobal();
 
 	const first = user?.firstName?.[0] || "";
 	const last = user?.lastName?.[0] || "";
 	const initials = (first + last).toUpperCase();
 
-	const pickImage = (fromCamera = false) => {
-		const options: any = {
-			mediaType: 'photo' as const,
-			quality: 0.8,
-		};
-
-		if (fromCamera) {
-			launchCamera(options, handleImageResponse);
-		} else {
-			launchImageLibrary(options, handleImageResponse);
-		}
-	};
-
-	const handleImageResponse = async (response: any) => {
-		if (response.didCancel) return;
-		if (response.errorCode) {
-			Alert.alert('Error', response.errorMessage || 'Image selection failed');
-			return;
-		}
-
-		const asset = response.assets?.[0];
-		if (!asset) return;
-
-		console.log('Selected image: ', asset.uri);
-
-		const updatedUser = await uploadImage(asset, user);
-		console.log('Updated user: ', updatedUser);
-		setUser(updatedUser);
-
-		try {
-			const profileUpdate = await updateUser(updatedUser?.user_profile_img, user?.id);
-			console.log('profileUpdate user: ', profileUpdate);
-			if (profileUpdate.status) {
-				setUser(profileUpdate.data);
-				const latestUser = await getProfileService(user?.id);
-				console.log('latest user = ', latestUser);
-				if (latestUser?.status) {
-					setUser(latestUser?.data[0]);
-				}
-			}
-		} catch (error) {
-			console.error('Error updating user:', error);
-			Alert.alert('Error', 'Failed to update user profile image');
-		}
-	};
 
 	const renderListItem = (item: { id: string; icon: string; label: string }) => (
 		<Pressable style={styles.listItem}>
@@ -103,27 +65,10 @@ export default function MyAccount() {
 		</Pressable>
 	);
 
-	const logout = () => {
-		console.log("Logout");
-		storage.delete('token');
-		storage.delete('user');
-		router.replace("/");
-
-		useOverviewStore.getState().clearOverview();
-		useAssetStore.getState().clearAssetState();
-		useGatewayStore.getState().resetGatewayForm();
-		useLocationStore.getState().clearPartLocation();
-		usePartFormStore.getState().resetPartForm();
-		usePreventiveStore.getState().resetForm();
-		useUserFormStore.getState().resetForm();
-		useWorkOrderStore.getState().resetForm();
-		useWorkRequestStore.getState().resetWorkRequestForm();
-		setUser(null);
-	}
-
 	function handleEdit() {
 		console.log("Edit");
-		setEditVisible(true);
+		router.push('editProfile')
+		// setEditVisible(true);
 	}
 
 	const onSubmit = async (formValues: any) => {
@@ -132,11 +77,10 @@ export default function MyAccount() {
 		// return;
 		const res = await updateUserInfo(payload, user?.id);
 		console.log('res = ', res);
-		if(res.status){
+		if (res.status) {
 			setUser(res.data);
 			setEditVisible(false);
 		}
-
 	};
 
 	const buildUpdatePayload = (form: any, originalUser: any) => {
@@ -160,7 +104,6 @@ export default function MyAccount() {
 		};
 	};
 
-
 	return (
 		<SafeAreaView style={styles.container}>
 			<View style={styles.headerContainer}>
@@ -182,53 +125,6 @@ export default function MyAccount() {
 			</View>
 
 
-
-			<Modal
-				animationType="slide"
-				transparent={true}
-				visible={editVisible}
-				onRequestClose={() => setEditVisible(false)}
-			>
-				<View style={styles.modalWrapper}>
-					<Header title="Edit Profile" />
-					<View style={styles.modalBox}>
-
-						<FormInput label="Full Name" value={user?.firstName} onChangeText={(text) => setUser({ ...user, firstName: text })} />
-						<FormInput label="Last Name" value={user?.lastName} onChangeText={(text) => setUser({ ...user, lastName: text })} />
-						<FormInput label="Username" value={user?.username} readOnly />
-						<FormInput label="Email" value={user?.email} readOnly />
-						<FormInput label="Status" value={user?.user_status} readOnly />
-						<FormInput label="Role" value={user?.user_role} readOnly />
-
-						{/* phone input */}
-						<FormInput label="Phone" value={user?.phone_no?.internationalNumber} readOnly onChangeText={(text) => {
-							const parsed = parsePhone(text);
-							setUser({ ...user, phone_no: parsed });
-						}} />
-
-						{/* buttons */}
-						<View style={styles.btnRow}>
-							<ActionButton
-								label="Close"
-								buttonStyle={styles.closeBtn}
-								onPress={() => setEditVisible(false)}
-							/>
-
-							<ActionButton
-								label="Update User"
-								buttonStyle={styles.updateBtn}
-								onPress={onSubmit}
-							/>
-						</View>
-
-					</View>
-				</View>
-			</Modal>
-
-
-
-
-
 			<View style={styles.userInfoContainer}>
 
 				{
@@ -239,19 +135,18 @@ export default function MyAccount() {
 							{ text: 'Cancel', style: 'cancel' },
 						])}>
 							<Image
-								// source={{ uri: `${endpoints.baseURL}user_profile_img/${user?.user_profile_img}` }}
-
 								source={{ uri: `${endpoints.baseURL}user_profile_img/${user?.user_profile_img}?t=${Date.now()}` }}
-
 								style={styles.profilePhotoImage} resizeMode="contain"
 							/>
 						</TouchableOpacity>
 						:
-						<TouchableOpacity style={styles.profilePhoto} onPress={() => Alert.alert('Upload Photo', 'Select source', [
-							{ text: 'Camera', onPress: () => pickImage(true) },
-							{ text: 'Gallery', onPress: () => pickImage(false) },
-							{ text: 'Cancel', style: 'cancel' },
-						])}>
+						<TouchableOpacity
+							style={styles.profilePhoto}
+							onPress={() => Alert.alert('Upload Photo', 'Select source', [
+								{ text: 'Camera', onPress: () => pickImage(true) },
+								{ text: 'Gallery', onPress: () => pickImage(false) },
+								{ text: 'Cancel', style: 'cancel' },
+							])}>
 							<View style={{ width: '100%', height: '100%', backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center' }}>
 								<Text style={styles.avatarInitials}>{initials}</Text>
 							</View>
@@ -268,22 +163,6 @@ export default function MyAccount() {
 
 				<View style={styles.sheetContainer}>
 
-					<View style={styles.tabContainer}>
-
-						<Pressable style={[styles.tabButton, activeTab === "Profile" && styles.activeTab]} onPress={() => setActiveTab("Profile")}>
-							<Text style={[styles.tabText, activeTab === "Profile" && styles.activeTabText]}>Profile</Text>
-						</Pressable>
-
-						<Pressable style={[styles.tabButton, activeTab === "Account" && styles.activeTab]} onPress={() => setActiveTab("Account")}>
-							<Text style={[styles.tabText, activeTab === "Account" && styles.activeTabText]}>Account Settings</Text>
-						</Pressable>
-
-						<Pressable style={[styles.tabButton, activeTab === "Support" && styles.activeTab]} onPress={() => setActiveTab("Support")}>
-							<Text style={[styles.tabText, activeTab === "Support" && styles.activeTabText]}>Support</Text>
-						</Pressable>
-					</View>
-
-
 					<View style={styles.contentContainer}>
 						{activeTab === "Profile" && (
 							<>
@@ -294,7 +173,27 @@ export default function MyAccount() {
 
 								<View style={styles.infoBox}>
 									<Feather name="phone" size={18} color="#000" />
-									<Text style={styles.infoText}>{user?.phone_no?.internationalNumber}</Text>
+									<Text style={styles.infoText}>{user?.phone_no?.internationalNumber || user?.mobileNumber?.internationalNumber}</Text>
+								</View>
+
+								<View style={styles.infoBox}>
+									<Octicons name="person" size={18} color="#000" />
+									<Text style={styles.infoText}>{`${user?.firstName} ${user?.lastName}`}</Text>
+								</View>
+
+								<View style={styles.infoBox}>
+									<SimpleLineIcons name="briefcase" size={18} color="#000" />
+									<Text style={styles.infoText}>{user?.user_role}</Text>
+								</View>
+
+								<View style={styles.infoBox}>
+									<StatusIcon />
+									<Text style={styles.infoText}>{user?.user_status}</Text>
+								</View>
+
+								<View style={styles.infoBox}>
+									<CalendarIcon />
+									<Text style={styles.infoText}>{moment(user?.createdOn).format('DD/MM/YYYY')}</Text>
 								</View>
 							</>
 						)}
@@ -319,11 +218,11 @@ export default function MyAccount() {
 					</View>
 				</View>
 			</View>
-			{
+			{/* {
 				activeTab !== "Account" && (
 					<Image source={require("../../assets/images/presage.png")} style={styles.image} />
 				)
-			}
+			} */}
 		</SafeAreaView>
 	)
 }
@@ -423,7 +322,7 @@ const styles = StyleSheet.create({
 	sheetContainer: {
 		flex: 1,
 		backgroundColor: "#FFFFFF",
-		paddingTop: 40,
+		paddingTop: 10,
 	},
 	tabContainer: {
 		flexDirection: "row",
@@ -469,7 +368,7 @@ const styles = StyleSheet.create({
 		fontSize: 13,
 		fontFamily: Fonts.regular,
 		color: "#000000",
-		lineHeight: 16
+		lineHeight: 16,
 	},
 	listItem: {
 		backgroundColor: "#F0EDFF80",

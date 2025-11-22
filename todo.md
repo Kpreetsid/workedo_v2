@@ -74,4 +74,9 @@ Functionality modifications:
 40. While creating an asset, the *default time zone* should be set to *Kolkata*, with a dropdown selection option for other time zones. - Done
 41. From the location page the asset should *redirect automatically to the Asset page*. - Done
 42. In *Create Location, the **Choose File* option for image upload is not working. Please fix this - Fixed
-42. Search feature for location and assets
+42. Search feature for location and assets - Fixed
+43. Accepting work request will now take the user to create a work order with new design - Done
+44. FAB component had different margin bottom for different pages - Fixed
+45. *Session management* issue is still not resolved. - not done
+46. Profile Page new design - Done
+47. Edit Profile new design + functionality - Done

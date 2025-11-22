@@ -72,14 +72,21 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 
 	return (
 		<>
+			<SearchBar placeholder="Search Asset..." value={searchText} onChangeText={setSearchText} />
 			<FlashList
 				ListHeaderComponent={() => {
 					return (
 						<>
-							<SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText} />
-							<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createAsset")}>
-								<Text style={styles.buttonText}>Create Asset</Text>
-							</TouchableOpacity>
+
+							{
+
+								!selection && (
+									<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createAsset")}>
+										<Text style={styles.buttonText}>Create Asset</Text>
+									</TouchableOpacity>
+								)
+							}
+
 						</>
 					);
 				}}
@@ -190,7 +197,7 @@ const styles = StyleSheet.create({
 		flexGrow: 1,
 		paddingHorizontal: 20,
 		gap: 10,
-		marginTop: 5
+		// marginTop: 5
 	},
 	assetButton: {
 		// borderWidth: 0.6,

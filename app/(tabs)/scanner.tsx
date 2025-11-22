@@ -10,7 +10,8 @@ export default function ScannerScreen() {
 	const router = useRouter();
 	const [permission, requestPermission] = useCameraPermissions();
 	const [scanned, setScanned] = useState(false);
-	const [scannedData, setScannedData] = useState<string | null>("63985ee010c33e75c823292b");
+	const [scannedData, setScannedData] = useState<string | null>("");
+	// const [scannedData, setScannedData] = useState<string | null>("63985ee010c33e75c823292b");
 
 	useEffect(() => {
 		if (scannedData) {

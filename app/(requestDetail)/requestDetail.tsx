@@ -21,6 +21,7 @@ export default function WorkRequestDetail() {
 
 	const acceptRequest = async () => {
 		console.log('accept request', item);
+
 		setWorkForm("title", item?.title);
 		setWorkForm("message", item?.description);
 		setWorkForm("location", item?.location_id);
@@ -29,7 +30,8 @@ export default function WorkRequestDetail() {
 		setWorkForm("priority", item?.priority);
 		setWorkForm("work_request_id", item?.id);
 
-		router.push("/newWorkOrder");
+		// router.push("/newWorkOrder");
+		router.push("/createWorkOrder");
 	}
 
 	return (
@@ -91,13 +93,13 @@ export default function WorkRequestDetail() {
 					setRejectVisible(false);
 					try {
 						const response = await rejectWorkRequest(item?.id, reason);
-						if(response?.status) {
+						if (response?.status) {
 							ToastAndroid.show("Request Rejected Successfully", ToastAndroid.LONG);
 							router.back();
 						}
 					} catch (error: any) {
 						console.error("Error rejecting work request:", error);
-						if(!error?.status) {
+						if (!error?.status) {
 							ToastAndroid.show(error?.message, ToastAndroid.LONG);
 						}
 					}

@@ -107,15 +107,19 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 		<>
 			{showHeader && <Header title="Select Location" />}
 			<>
+				<SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText} />
 				<FlatList
 					ListHeaderComponent={() => {
 						return (
 							<>
-								<SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText} />
+								{
+									!selection && (
+										<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createLocation")}>
+											<Text style={styles.buttonText}>Create Location</Text>
+										</TouchableOpacity>
+									)
+								}
 
-								<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createLocation")}>
-									<Text style={styles.buttonText}>Create Location</Text>
-								</TouchableOpacity>
 							</>
 						);
 					}}
@@ -304,7 +308,7 @@ const styles = StyleSheet.create({
 	container: {
 		flexGrow: 1,
 		paddingHorizontal: 25,
-		paddingTop: 15,
+		// paddingTop: 15,
 		paddingBottom: '30%',
 		gap: 10
 	},

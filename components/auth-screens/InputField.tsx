@@ -15,6 +15,7 @@ interface FieldProps extends Omit<TextInputProps, "secureTextEntry" | "placehold
 	name: string;
 	control: any;
 	rules?: any;
+	readonly?: boolean;
 }
 
 export default function Field({
@@ -25,6 +26,7 @@ export default function Field({
 	name,
 	control,
 	rules,
+	readonly = false,
 	...rest
 }: FieldProps) {
 	const IconComponent = Icons[icon!];
@@ -128,7 +130,7 @@ export default function Field({
 				// 🔥 DEFAULT UI (unchanged)
 				return (
 					<View style={[styles.wrapper, style]}>
-						<View style={[styles.field, name=="description" ? {height: 83} : {height: 50}]}>
+						<View style={[styles.field, name == "description" ? { height: 83 } : { height: 50 }]}>
 
 							<Text style={styles.floatingLabel}>
 								{placeholder} {rules?.required && <Text style={{ color: "red" }}>*</Text>}
@@ -136,6 +138,7 @@ export default function Field({
 
 							{IconComponent && <IconComponent />}
 							<TextInput
+								readOnly={readonly}
 								// placeholder={placeholder}
 								placeholderTextColor="#222"
 								style={styles.inputField}

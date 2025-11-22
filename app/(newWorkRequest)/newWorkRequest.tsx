@@ -19,12 +19,19 @@ import { AssignSection } from "@/components/create-work-order/AssignSection";
 import { useRouter } from "expo-router";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 import { FormField } from "@/components/global/FormField";
+import AssignSectionNew from "@/components/create-work-order/AssignSectionNew";
 
 export default function NewWorkRequest() {
 	const router = useRouter();
-	const { setWorkRequestForm } = useWorkRequestStore();
+	const { setWorkRequestForm, resetWorkRequestForm } = useWorkRequestStore();
 	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 	const [activeDateField, setActiveDateField] = useState<"start_date" | "end_date" | null>(null);
+
+	useEffect(() => {
+		return () => {
+			resetWorkRequestForm();
+		}
+	}, [])
 
 	const handleSubmit = async () => {
 		const data: any = useWorkRequestStore.getState();
@@ -79,10 +86,10 @@ export default function NewWorkRequest() {
 	};
 
 	return (
-		<View style={{backgroundColor: "#F5F7FA", flex: 1}}>
+		<View style={{ backgroundColor: "#F5F7FA", flex: 1 }}>
 			<Header title="New Work Request" />
 
-			<KeyboardAwareScrollView bottomOffset={30} style={{backgroundColor: "#F5F7FA"}}>
+			<KeyboardAwareScrollView bottomOffset={30} style={{ backgroundColor: "#F5F7FA" }}>
 				<ScrollView style={styles.container}>
 					<View style={styles.subContainer}>
 
@@ -105,6 +112,7 @@ export default function NewWorkRequest() {
 					</View>
 
 					<AssignSection type="requests" />
+					{/* <AssignSectionNew type="requests" /> */}
 
 					{/* <AssignInputContainer /> */}
 

@@ -176,7 +176,7 @@ export default function NewWorkOrder() {
 	return (
 		<>
 			<KeyboardAwareScrollView bottomOffset={30}>
-				<Header title="Create Work Order" />
+				{/* <Header title="Create Work Order" /> */}
 				<ScrollView style={styles.container}>
 					<View style={styles.subContainer}>
 
