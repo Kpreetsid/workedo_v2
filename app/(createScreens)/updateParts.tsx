@@ -127,6 +127,7 @@ export default function UpdateParts() {
 						value={selectedPart?.part_name}
 						options={parts.map((p: any) => p.part_name)}
 						onSelect={handlePartSelect}
+						containerStyle={{ paddingHorizontal: 25 }}
 					/>
 				</View>
 

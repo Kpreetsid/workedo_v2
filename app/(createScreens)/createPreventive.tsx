@@ -43,6 +43,10 @@ export default function CreatePreventive() {
 		};
 
 		fetchForms();
+
+		return () => {
+			resetForm();
+		}
 	}, []);
 
 	const handleSubmit = async () => {

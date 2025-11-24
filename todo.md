@@ -80,3 +80,9 @@ Functionality modifications:
 45. *Session management* issue is still not resolved. - not done
 46. Profile Page new design - Done
 47. Edit Profile new design + functionality - Done
+48. - Removed password validation on both login and sign up (only one validation check is there, which will check if password and confirm password match or not). - Done
+49. - Now you can select child locations as well while creating new work order, new work request, new part, new preventive - Done
+50. Home page - Asset Health Graph on home page clickable - Done
+51. Home page - Asset Health Status graph clickable - Done
+52. Info page - Info cards clickable - Done (needs more testing)
+53. Create work order - Only show other fields like name, category, location when form is selected - Done

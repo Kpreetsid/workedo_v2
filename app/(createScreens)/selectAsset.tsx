@@ -15,6 +15,8 @@ import { getFilteredAssets } from "@/src/services/preventive.service";
 import { Asset } from "@/src/types/asset";
 import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
+import { Ionicons } from "@expo/vector-icons";
+import SelectAssetsCard from "@/components/assets/SelectAssetsCard";
 
 interface AssetInterface {
 	showHeader?: boolean,
@@ -27,15 +29,10 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 	const comingFrom = params?.comingFrom;
 
 	console.log('comingFrom in select asset = ', comingFrom);
-
-	const [selectedAsset, setSelectedAsset] = useState<Asset>();
 	const [searchText, setSearchText] = useState("");
 	const user = useAuthStore((state) => state.user);
 	const [assets, setAssets] = useState<Asset[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
-	const { setPreventiveValue } = usePreventiveStore();
-	const { setWorkForm } = useWorkOrderStore();
-	const { setWorkRequestForm } = useWorkRequestStore();
 
 	// const preventiveSelectedLocation = usePreventiveStore((state) => state.location);
 	const locationsList = comingFrom === "newWorkOrder" ?
@@ -88,30 +85,72 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 				<FlatList
 					data={assets}
 					keyExtractor={(_, index) => index.toString()}
-					renderItem={({ item }) => (
-						<Pressable style={[styles.locationButton, { backgroundColor: selectedAsset === item ? "#FFBF0080" : "#fff", borderColor: selectedAsset === item ? "#FFC1074D" : "#99999933" }]}
-							onPress={() => {
-								if (selection) {
-									setSelectedAsset(item);
-									// updating selected asset in zustand store while creating preventive
-									if (comingFrom === "newWorkOrder") {
-										setWorkForm("selected_asset", item);
-										setWorkForm("assigned_users", item.userList);
-									} else if (comingFrom === "newWorkRequest") {
-										setWorkRequestForm("selected_asset", item);
-									} else {
-										setPreventiveValue("selected_asset", item);
-									}
-									router.back();
-								}
-							}}
-						>
-							<View style={styles.textRow}>
-								<Text style={styles.locationText}>{item.asset_name}</Text>
-								<ArrowRight color={"#201F23CC"} />
-							</View>
-							<MapIcon />
-						</Pressable>)}
+					renderItem={
+						({ item }: { item: Asset }) => <SelectAssetsCard
+							item={item}
+							comingFrom={comingFrom}
+						/>
+					}
+					// renderItem={({ item }) => {
+
+					// 	const isExpanded = expandedAssetId === item.id;
+					// 	const hasChildren = item.childs && item.childs.length > 0;
+
+
+					// 	return (
+					// 		<Pressable style={[styles.locationButton, { backgroundColor: selectedAsset === item ? "#FFBF0080" : "#fff", borderColor: selectedAsset === item ? "#FFC1074D" : "#99999933" }]}
+					// 			onPress={() => {
+					// 				if (selection) {
+					// 					setSelectedAsset(item);
+					// 					// updating selected asset in zustand store while creating preventive
+					// 					if (comingFrom === "newWorkOrder") {
+					// 						setWorkForm("selected_asset", item);
+					// 						setWorkForm("assigned_users", item.userList);
+					// 					} else if (comingFrom === "newWorkRequest") {
+					// 						setWorkRequestForm("selected_asset", item);
+					// 					} else {
+					// 						setPreventiveValue("selected_asset", item);
+					// 					}
+					// 					router.back();
+					// 				}
+					// 			}}
+					// 		>
+					// 			<View style={{ flexDirection: "column", alignItems: "flex-start", justifyContent: "center" }}>
+					// 				<View style={[
+					// 					styles.textRow,
+					// 					{
+					// 						marginLeft: 20
+					// 					}
+					// 				]}>
+					// 					{hasChildren && (
+					// 						<Pressable
+					// 							onPress={() => {
+					// 								console.log('expanding')
+					// 								setExpandedAssetId(isExpanded ? null : item.id);
+					// 							}}
+					// 						>
+					// 							<Ionicons
+					// 								name={isExpanded ? "chevron-down" : "chevron-forward"}
+					// 								size={14}
+					// 								color="black"
+					// 								style={hasChildren ? { display: 'flex' } : (isChild ? { display: 'none' } : { display: 'flex' })}
+					// 							/>
+					// 						</Pressable>
+					// 					)}
+
+					// 					<Text style={styles.locationText}>{item.location_name}</Text>
+					// 				</View>
+
+					// 			</View>
+
+					// 			<View style={styles.textRow}>
+					// 				<Text style={styles.locationText}>{item.asset_name}</Text>
+					// 				{/* <ArrowRight color={"#201F23CC"} /> */}
+					// 			</View>
+					// 			{/* <MapIcon /> */}
+					// 		</Pressable>
+					// 	);
+					// }}
 					contentContainerStyle={styles.container}
 					refreshing={refreshing}
 					onRefresh={handleRefresh}

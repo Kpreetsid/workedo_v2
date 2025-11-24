@@ -13,14 +13,17 @@ import { AssetEndpoint } from "@/src/types/assetEndpoint";
 import AssetFilter from "./AssetFilter";
 import { useAssetStore } from "@/src/store/useAssetStore";
 import { formatGraphData } from "@/src/utils/helper";
+import AssetUserInfo from "./AssetUserInfo";
 
 interface AssetInfoTabProps {
 	asset_data: Asset;
 }
 
 export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
-	console.log('inside info tab', asset_data);
+	// console.log('inside info tab', asset_data);
 	const [activeTab, setActiveTab] = useState("Horizontal");
+	const [tooltip, setTooltip] = useState<any>(null);
+	const [yMaxValue, setYMaxValue] = useState<number>(0);
 	const {
 		endpoints,
 		endpointSelected,
@@ -55,7 +58,9 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 		(axis) => chartSeries.find((s) => s.axis === axis)
 	);
 
-	console.log('asset_data in info = ', asset_data)
+	console.log('orderedSeries = ', orderedSeries);
+
+	// console.log('asset_data in info = ', asset_data)
 
 	useEffect(() => {
 		fetchEndpoints();
@@ -69,7 +74,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 		console.log('fetching endpoints');
 		try {
 			console.log('endpointSelected = ', endpointSelected);
-			console.log('asset_data = ', asset_data);
+			// console.log('asset_data = ', asset_data);
 
 			let payload: string[] = [asset_data?.id];
 			console.log('payload for endpoints = ', payload);
@@ -169,11 +174,47 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 			const formatted = formatGraphData(graphData);
 			setChartSeries(formatted);
 
-			// optional: derive shared labels from the first dataset
-			const labels = formatted[0].points.map((p: any) => p.label);
-			setXLabels(labels);
+			const points = formatted[0].points;
+
+			// X-axis labels: show every 15th point
+			const thinnedLabels = points
+				.map((p: any, index: number) => (index % 15 === 0 ? p.fullDate : null))
+				.filter(Boolean);
+
+			setXLabels(thinnedLabels);
+
+			// Y-axis: get max across ALL existing axes
+			const allValues = formatted.flatMap((series: any) =>
+				series.points.map((p: any) => p.value)
+			);
+
+			const rawMax = Math.max(...allValues);
+			const yMax = Math.ceil(rawMax);
+
+			setYMaxValue(yMax);
 		}
 	}, [graphData]);
+
+
+	// useEffect(() => {
+	// 	if (graphData && Array.isArray(graphData)) {
+	// 		const formatted = formatGraphData(graphData);
+	// 		console.log('formatted = ', formatted);
+	// 		setChartSeries(formatted);
+
+	// 		const points = formatted[0].points;
+	// 		console.log('points = ', points);
+
+	// 		const labels = points.map((p: any, index: number) => {
+	// 			// Keep only every 15th point
+	// 			return index % 15 === 0 ? p.label : "";
+	// 		});
+
+	// 		console.log("labels =", labels);
+
+	// 		setXLabels(labels.filter((label: string) => label !== ""));
+	// 	}
+	// }, [graphData]);
 
 	// 4) optional: inspect final points
 	useEffect(() => {
@@ -185,6 +226,10 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 			);
 		}
 	}, [chartSeries]);
+
+	useEffect(() => {
+		console.log('xLabels = ', xLabels);
+	}, [xLabels])
 
 	return (
 		<ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 50 }}>
@@ -208,7 +253,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 									assetHealth.assetHealth === "Not Defined" && styles.not_defined,
 								]}
 							>
-								{assetHealth?.assetScore ? assetHealth.assetScore : "-"}
+								{assetHealth?.assetScore ? assetHealth.assetScore : "N/A"}
 							</Text>
 						)}
 					</View>
@@ -225,10 +270,14 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 
 			{/* Asset Details */}
 			<View style={styles.detailsRow}>
-				<DetailPill icon="orcid" label="Asset ID" value={asset_data?.id} iconColor="#742bde" />
+				<DetailPill icon="orcid" label="Asset Name" value={asset_data?.asset_name} iconColor="#742bde" />
 				<DetailPill icon="screwdriver-wrench" label="Asset Type" value={asset_data?.asset_type || "-"} iconColor="#FF8D54" />
-				<DetailPill icon="location-dot" label="Location" value={asset_data?.locationData?.location_name || "-"} iconColor="#EE2E6B" />
+				<DetailPill icon="location-dot" label="Location" value={(asset_data?.locationId?.location_name) || "-"} iconColor="#EE2E6B" />
 			</View>
+
+			<AssetUserInfo
+				users={asset_data?.userList || []}
+				onPress={() => console.log("Pressed")} />
 
 			{/* Endpoint Selector */}
 			<SelectEndpoint
@@ -257,55 +306,113 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 			</View>
 
 			{/* Signal / ValueType Filter */}
-			<AssetFilter />
+			<View style={{ justifyContent: 'center', alignItems: 'center' }}>
+				<AssetFilter />
+			</View>
 
-			{/* Chart */}
-			<View style={styles.chartContainer}>
-				<LineChart
-					curved
-					data={orderedSeries[0]?.points || []}
-					data2={orderedSeries[1]?.points || []}
-					data3={orderedSeries[2]?.points || []}
-					color1={axisColors[orderedSeries[0]?.axis || "Horizontal"]}
-					color2={axisColors[orderedSeries[1]?.axis || "Vertical"]}
-					color3={axisColors[orderedSeries[2]?.axis || "Axial"]}
-					dataPointsColor1={axisColors[orderedSeries[0]?.axis || "Horizontal"]}
-					dataPointsColor2={axisColors[orderedSeries[1]?.axis || "Vertical"]}
-					dataPointsColor3={axisColors[orderedSeries[2]?.axis || "Axial"]}
-					thickness={2}
-					hideRules={false}
-					hideDataPoints={false}
-					yAxisTextStyle={{ color: "#A0A0A0", fontSize: 8 }}
-					xAxisLabelTextStyle={{ color: "#A0A0A0", fontSize: 8 }}
-					backgroundColor="transparent"
-					rulesColor="#F0F0F0"
-					initialSpacing={20}
-					endSpacing={20}
-					noOfSections={4}
-					spacing={40}
-					areaChart={false}
-					hideAxesAndRules={false}
-					xAxisColor="#EAEAEA"
-					yAxisColor="#EAEAEA"
-					xAxisThickness={1}
-					yAxisThickness={1}
-					yAxisLabelWidth={40}
-					height={180}
-					xAxisLabelTexts={xLabels}
-				/>
+			<View style={{ position: "relative" }}>
+				{tooltip && (
+					<View style={{
+						position: "absolute",
+						top: 100,
+						left: "50%",
+						transform: [{ translateX: -50 }],
+						backgroundColor: "#fff",
+						padding: 10,
+						borderRadius: 8,
+						shadowColor: "#000",
+						shadowOpacity: 0.1,
+						shadowRadius: 5,
+						elevation: 3,
+						width: 200,
+						zIndex: 999,
+					}}>
+						<Text style={{ color: "#333", fontSize: 12 }}>
+							{tooltip?.fullDate}
+						</Text>
 
-
-				<View style={styles.legendRow}>
-					{orderedSeries.filter(Boolean).map((s: any) => (
-						<View key={s.axis} style={styles.legendItem}>
-							<View style={[styles.dot, { backgroundColor: axisColors[s.axis] }]} />
-							<Text style={styles.legendText}>{selectedValueType}-{s.axis}</Text>
+						<View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
+							<View style={{
+								width: 8,
+								height: 8,
+								borderRadius: 4,
+								backgroundColor: "red",
+								marginRight: 6,
+							}} />
+							<Text style={{ color: "#333", fontSize: 12 }}>
+								Motor-DE-rms-Horizontal: {tooltip?.value}
+							</Text>
 						</View>
-					))}
-				</View>
+					</View>
+				)}
 
 
-				{/* <View style={styles.legendRow}>
+				{/* Chart */}
+				<View style={styles.chartContainer}>
+					<LineChart
+						curved
+
+						data={orderedSeries[0]?.points || []}
+						data2={orderedSeries[1]?.points || []}
+						data3={orderedSeries[2]?.points || []}
+						color1={axisColors[orderedSeries[0]?.axis || "Horizontal"]}
+						color2={axisColors[orderedSeries[1]?.axis || "Vertical"]}
+						color3={axisColors[orderedSeries[2]?.axis || "Axial"]}
+
+						dataPointsHeight1={6}
+						dataPointsWidth1={6}
+						dataPointsColor1={axisColors[orderedSeries[0]?.axis || "Horizontal"]}
+
+						dataPointsHeight2={6}
+						dataPointsWidth2={6}
+						dataPointsColor2={axisColors[orderedSeries[1]?.axis || "Vertical"]}
+
+						dataPointsHeight3={6}
+						dataPointsWidth3={6}
+						dataPointsColor3={axisColors[orderedSeries[2]?.axis || "Axial"]}
+
+						thickness={1}
+						hideRules={false}
+						yAxisTextStyle={{ color: "#A0A0A0", fontSize: 9 }}
+						xAxisLabelTextStyle={{ color: "#A0A0A0", fontSize: 9 }}
+						backgroundColor="transparent"
+						rulesColor="#F0F0F0"
+						initialSpacing={0}
+						endSpacing={0}
+						spacing={60}
+						areaChart={false}
+						hideAxesAndRules={false}
+						xAxisColor="#EAEAEA"
+						yAxisColor="#EAEAEA"
+						xAxisThickness={0}
+						yAxisThickness={0}
+						yAxisLabelWidth={10}
+						xAxisLabelTexts={xLabels}
+						maxValue={yMaxValue}
+						noOfSections={yMaxValue}
+						focusEnabled={true}
+						focusedDataPointShape={"circle"}
+						focusedDataPointColor={axisColors[orderedSeries[0]?.axis || "Horizontal"]}
+						focusedDataPointRadius={6}
+						// showValuesAsDataPointsText={true}
+						onFocus={(data: any) => {
+							console.log('data = ', data);
+							setTooltip(data)
+						}}
+					/>
+
+
+					<View style={styles.legendRow}>
+						{orderedSeries.filter(Boolean).map((s: any) => (
+							<View key={s.axis} style={styles.legendItem}>
+								<View style={[styles.dot, { backgroundColor: axisColors[s.axis] }]} />
+								<Text style={styles.legendText}>{selectedValueType}-{s.axis}</Text>
+							</View>
+						))}
+					</View>
+
+
+					{/* <View style={styles.legendRow}>
 					<View style={styles.legendItem}>
 						<View style={[styles.dot, { backgroundColor: "#E056FD" }]} />
 						<Text style={styles.legendText}>Axial</Text>
@@ -322,6 +429,8 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 						<Text style={styles.legendValue}>3.69</Text>
 					</View>
 				</View> */}
+				</View>
+
 			</View>
 		</ScrollView>
 	)
@@ -344,7 +453,7 @@ const DetailPill = ({
 			<Text style={styles.detailLabel}>{label}</Text>
 			<Text
 				style={styles.detailValue}
-				numberOfLines={1}
+				numberOfLines={2}
 				ellipsizeMode="tail"
 			>
 				{value}
@@ -413,10 +522,10 @@ const styles = StyleSheet.create({
 	detailsRow: {
 		flexDirection: "row",
 		justifyContent: "space-around",
+		alignItems: "flex-start",
 		margin: 20,
 		backgroundColor: "#fff",
 		borderRadius: 10,
-		alignItems: "center",
 		elevation: 2,
 	},
 	detailPill: {
@@ -462,7 +571,7 @@ const styles = StyleSheet.create({
 		backgroundColor: "#742BDE"
 	},
 	modeTabText: {
-		color: "#00000060",
+		color: "#00000080",
 		fontSize: 10,
 		fontFamily: Fonts.regular,
 		textAlign: "center",

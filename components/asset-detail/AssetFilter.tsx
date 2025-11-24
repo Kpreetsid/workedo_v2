@@ -120,23 +120,26 @@ export default AssetFilter
 
 const styles = StyleSheet.create({
 	modeTabs: {
+		width: '80%',
+		// backgroundColor: 'orange',
 		flexDirection: "row",
 		gap: 10,
 		flexWrap: "wrap",
 		alignItems: "center",
-		justifyContent: "space-around",
+		justifyContent: "center",
 	},
 	modeTab: {
-		width: width / 3,
-		backgroundColor: "#742BDE",
-		paddingVertical: 6,
-		borderRadius: 5,
+		width: width / 4,
+		backgroundColor: "#fff",
+		// backgroundColor: "#742BDE",
+		paddingVertical: 8,
+		borderRadius: 8,
 		borderWidth: 0.3,
 		borderColor: "#00000020",
 		alignItems: "center",
 	},
 	modeTabText: {
-		color: "#ffffff",
+		color: "#00000080",
 		fontSize: 10,
 		fontFamily: Fonts.regular,
 		textAlign: "center",

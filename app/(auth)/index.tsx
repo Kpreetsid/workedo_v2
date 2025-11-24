@@ -121,7 +121,7 @@ export default function Login() {
 							secure
 							rules={{
 								required: "Password is required",
-								minLength: { value: 8, message: "At least 8 characters" },
+								// minLength: { value: 8, message: "At least 8 characters" },
 							}}
 						/>
 					</View>

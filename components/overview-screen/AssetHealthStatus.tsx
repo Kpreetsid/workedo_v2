@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
 import Fonts from "@/constants/Typography";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
@@ -18,6 +18,7 @@ const pieDataRaw = [
 
 export default function AssetHealthStatus() {
 	const assetKPIHistory = useOverviewStore((state) => state.assetKPIHistory);
+	const [hidden, setHidden] = React.useState<string[]>([]);
 
 	const screenWidth = Dimensions.get("window").width;
 	const radius = screenWidth * 0.22;
@@ -37,19 +38,40 @@ export default function AssetHealthStatus() {
 	};
 
 	// 🧩 Convert API data into chart-friendly format
-	const pieDataRaw = breakup.map((item) => ({
+	// const pieDataRaw = breakup.map((item) => ({
+	// 	value: item.value,
+	// 	color: colorMap[item.name] || "#ccc",
+	// 	text: item.name,
+	// }));
+
+	const pieDataRaw = breakup.map(item => ({
 		value: item.value,
-		color: colorMap[item.name] || "#ccc",
+		color: colorMap[item.name],
 		text: item.name,
 	}));
 
+	// 2) Filter only for the chart
+	const chartDataRaw = pieDataRaw.filter(item => !hidden.includes(item.text));
+
+	// 3) If empty → show one grey slice
+	let finalChartData = chartDataRaw.length > 0
+		? chartDataRaw
+		: [{
+			text: "Not Defined",
+			value: 1,
+			color: "#B0B0B0"
+		}];
+
+
+
 	// 🧮 Compute total for normalization
-	const total = pieDataRaw.reduce((sum, s) => sum + s.value, 0) || 1;
+	const total = finalChartData.reduce((sum, s) => sum + s.value, 0) || 1;
+
 
 	let startAngle = -90;
 
 	// 🌀 Calculate arc offsets (same as before)
-	const pieData = pieDataRaw.map((slice) => {
+	const pieData = finalChartData.map(slice => {
 		const sliceAngle = (slice.value / total) * 360 - arcPadding;
 		const midAngle = startAngle + sliceAngle / 2;
 		const rad = (midAngle * Math.PI) / 180;
@@ -75,6 +97,7 @@ export default function AssetHealthStatus() {
 			<View style={styles.card}>
 				<View style={styles.pieRow}>
 					{pieData.length > 0 && <PieChart
+						isAnimated
 						data={pieData}
 						radius={radius}
 						donut={false}
@@ -82,19 +105,45 @@ export default function AssetHealthStatus() {
 						sectionAutoFocus={false}
 					/>}
 
+
+
 					<View style={styles.pieLegend}>
 						<Text style={styles.legendHeader}>See Details</Text>
-						{pieDataRaw.map((item, index) => (
-							<View key={index} style={styles.legendRow}>
+
+						{breakup.map((item, index) => (
+							<TouchableOpacity
+								key={index}
+								onPress={() => {
+									setHidden(prev =>
+										prev.includes(item.name)
+											? prev.filter(v => v !== item.name)   // unhide
+											: [...prev, item.name]                  // hide
+									);
+								}}
+								style={styles.legendRow}
+							>
 								<View
-									style={[styles.legendColor, { backgroundColor: item.color }]}
+									style={[
+										styles.legendColor,
+										{
+											backgroundColor: colorMap[item.name],
+											opacity: hidden.includes(item.name) ? 0.3 : 1
+										}
+									]}
 								/>
-								<Text style={styles.legendText}>
-									{item.text} ({item.value})
+								<Text
+									style={[
+										styles.legendText,
+										{ opacity: hidden.includes(item.name) ? 0.4 : 1 }
+									]}
+								>
+									{item.name} ({item.value})
 								</Text>
-							</View>
+							</TouchableOpacity>
 						))}
 					</View>
+
+
 				</View>
 			</View>
 		</View>

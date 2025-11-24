@@ -4,14 +4,20 @@ import AssetsTab from "@/components/assets/AssetsTab";
 import { AssetsTabIcon, LocationTabIcon } from "@/constants/IconProvider";
 import { StatusBar } from "expo-status-bar";
 import SelectLocation from "../(createScreens)/selectLocation";
+import { useLocalSearchParams } from "expo-router";
 
 export default function Assets() {
+	const { initialIndex } = useLocalSearchParams<{ initialIndex?: string }>();
+	const startIndex = initialIndex ? Number(initialIndex) : 0;
+	console.log("startIndex", startIndex);
+
 	return (
 		<>
 			<Header title="Assets" />
 			<StatusBar style="light" animated={true} />
 
 			<SegmentedPager
+				initialPage={startIndex}
 				tabs={[
 					{
 						label: "Locations",

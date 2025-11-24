@@ -210,6 +210,7 @@ export default function NewWorkOrder() {
 						options={["Preventive", "Electrical", "Break Down", "Inspection", "Corrective", "Safety", "Upgrade", "Meter Reading", "Mechanical", "Other"]}
 						store={useWorkOrderStore}
 						setterName="setWorkForm"
+						styles={{paddingHorizontal: 25}}
 					/>
 
 					<FormField
@@ -219,6 +220,7 @@ export default function NewWorkOrder() {
 						options={["None", "Low", "Medium", "High"]}
 						store={useWorkOrderStore}
 						setterName="setWorkForm"
+						styles={{paddingHorizontal: 25}}
 					/>
 
 					<FormField

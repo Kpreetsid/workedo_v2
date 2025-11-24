@@ -17,7 +17,8 @@ export const FormField = React.memo(
 		setterName = "setPartFormValue",
 		setActiveDateField,
 		setIsDatePickerVisible,
-		required = true
+		required = true,
+		styles
 	}: {
 		label: string;
 		placeholder?: string;
@@ -31,6 +32,7 @@ export const FormField = React.memo(
 		setActiveDateField?: any;
 		setIsDatePickerVisible?: any;
 		required?: boolean;
+		styles?: any;
 	}) => {
 		const value = store((s: any) => s[field]);
 		const setValue = store((s: any) => s[setterName]);
@@ -122,6 +124,7 @@ export const FormField = React.memo(
 					options={options || []}
 					displayKey={field}
 					onSelect={(val) => setValue(field, val)}
+					containerStyle={styles}
 				/>
 			);
 		}

@@ -207,7 +207,7 @@ export default function RegisterScreen() {
 							secure
 							rules={{
 								required: "Password is required",
-								minLength: { value: 8, message: "Password must be at least 8 characters" },
+								// minLength: { value: 8, message: "Password must be at least 8 characters" },
 							}}
 							style={{ flex: 1 }}
 						/>

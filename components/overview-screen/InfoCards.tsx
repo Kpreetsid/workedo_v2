@@ -1,9 +1,11 @@
-import { ScrollView, Text, View, StyleSheet } from "react-native";
+import { ScrollView, Text, View, StyleSheet, Pressable } from "react-native";
 import { AssetStatus } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
+import { useRouter } from "expo-router";
 
 export default function InfoCards() {
+	const router = useRouter();
 	const { assetKPIHistory } = useOverviewStore();
 	console.log("assetKPIHistory", assetKPIHistory);
 
@@ -48,29 +50,44 @@ export default function InfoCards() {
 		},
 	];
 
+	const handlePress = async (card_id: number) => {
+		console.log("card_id", card_id);
+		router.push({
+			pathname: "/assets",
+			params: {
+				comingFrom: "overview",
+				card_id: card_id,
+				initialIndex: "1" // must be string
+			}
+		});
+	}
+
 	return (
 		<ScrollView horizontal contentContainerStyle={styles.container} showsHorizontalScrollIndicator={false}>
-			{infoCardsData.map((card) => (
-				<View
-					key={card.id}
-					style={[styles.card, { borderColor: card.color }]}
-				>
-					<View style={styles.topRow}>
-						<AssetStatus />
-						<Text
-							style={styles.cardLabel}
-							numberOfLines={2}
-							adjustsFontSizeToFit
-						>
-							{card.title}
-						</Text>
-					</View>
+			{infoCardsData.map((card) => {
+				return (
+					<Pressable
+						key={card.id}
+						style={[styles.card, { borderColor: card.color }]}
+						onPress={() => handlePress(card.id)}
+					>
+						<View style={styles.topRow}>
+							<AssetStatus />
+							<Text
+								style={styles.cardLabel}
+								numberOfLines={2}
+								adjustsFontSizeToFit
+							>
+								{card.title}
+							</Text>
+						</View>
 
-					<Text style={[styles.cardValue, { color: card.color }]}>
-						{card.value}
-					</Text>
-				</View>
-			))}
+						<Text style={[styles.cardValue, { color: card.color }]}>
+							{card.value}
+						</Text>
+					</Pressable>
+				);
+			})}
 		</ScrollView>
 	)
 }

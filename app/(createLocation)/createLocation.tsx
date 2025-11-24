@@ -156,6 +156,7 @@ const createLocation = () => {
 					]}
 					store={useCreateLocationStore}
 					setterName="setCreateLocationValue"
+          			styles={{ paddingHorizontal: 25 }}
 				/>
 
 

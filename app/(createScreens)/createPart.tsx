@@ -16,6 +16,12 @@ export default function CreatePart() {
 	const router = useRouter();
 	const { setPartFormValue, resetPartForm } = usePartFormStore();
 
+	useEffect(() => {
+		return () => {
+			resetPartForm();
+		}
+	}, [])
+
 	const handleSubmit = async () => {
 		console.log('in handle submit');
 		const data: any = usePartFormStore.getState();

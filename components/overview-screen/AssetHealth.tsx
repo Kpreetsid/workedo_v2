@@ -7,7 +7,7 @@ import { useOverviewStore } from "@/src/store/useOverviewStore";
 import { assetHealthStatus } from "@/src/services/asset.service";
 
 // Define series colors
-const COLORS = {
+const COLORS: any = {
 	Healthy: "#22C55E",
 	Alert: "#FACC15",
 	Danger: "#F97316",
@@ -17,71 +17,193 @@ const COLORS = {
 const screenWidth = Dimensions.get("window").width;
 
 export default function AssetHealth() {
-	const [selectedBar, setSelectedBar] = useState<number | null>(null);
 	const [barData, setBarData] = useState<any[]>([]);
+	const [maxValue, setMaxValue] = useState<number>(0);
 	const { childAssets } = useOverviewStore();
 
+	const [rawSeries, setRawSeries] = useState<any>(null);
+
+	const [enabledSeries, setEnabledSeries] = useState<any>({
+		Healthy: true,
+		Alert: true,
+		Danger: true,
+		Critical: true,
+	});
+
+	const [selectedMonth, setSelectedMonth] = useState<any>(null); // NEW
+
+	const BAR_WIDTH = 15;
+	const BAR_SPACING = 3;
+	const GROUP_GAPS = 2; // two gaps after each month
+
+	// ----------------------------- FETCH ------------------------------------
 	const fetchAssetHealth = async () => {
-		const payload = {
-			asset_list: childAssets.map((item) => item.id),
-			group_by: "month",
-		};
-
 		try {
-			const res = await assetHealthStatus(payload);
-			console.log("res health status =", res);
-
-			const timestamps: string[] = res?.data?.timestamp ?? [];
-			const healthy = res?.data?.series?.find((s: any) => s.name === "Healthy")?.data ?? [];
-			const alert = res?.data?.series?.find((s: any) => s.name === "Alert")?.data ?? [];
-			const danger = res?.data?.series?.find((s: any) => s.name === "Danger")?.data ?? [];
-			const critical = res?.data?.series?.find((s: any) => s.name === "Critical")?.data ?? [];
-
-			// helper: label like "Aug" or "Aug-25"
-			const shortLabel = (full: string) => {
-				const [m, y] = (full ?? "").split("-");
-				if (!m || !y) return full ?? "";
-				return `${m.slice(0, 3)}`;            // use 'Aug' only
-				// return `${m.slice(0,3)}-${y.slice(2)}`; // or 'Aug-25' if you prefer
+			const payload = {
+				asset_list: childAssets.map((item) => item.id),
+				group_by: "month",
 			};
 
-			// ✅ flat array: [H, A, D, C] for month 0, then [H, A, D, C] for month 1, ...
-			const flat: { value: number; label: string; frontColor: string }[] = [];
-			const COLORS = { Healthy: "#22C55E", Alert: "#FACC15", Danger: "#F97316", Critical: "#EF4444" };
+			const res = await assetHealthStatus(payload);
+			const data = res?.data;
 
-			for (let i = 0; i < timestamps.length; i++) {
-				const label = shortLabel(timestamps[i]);
-				flat.push({ value: healthy[i] || 0, label, frontColor: COLORS.Healthy });
-				flat.push({ value: alert[i] || 0, label, frontColor: COLORS.Alert });
-				flat.push({ value: danger[i] || 0, label, frontColor: COLORS.Danger });
-				flat.push({ value: critical[i] || 0, label, frontColor: COLORS.Critical });
-			}
-
-			setBarData(flat);
-		} catch (error) {
-			console.log("error =", error);
+			setRawSeries(data);
+			setBarData(buildBarData(data, enabledSeries));
+		} catch (err) {
+			console.log("asset health error =", err);
 		}
 	};
 
+	// ----------------------------- BUILD BAR DATA ---------------------------
+	function buildBarData(api: any, enabledSeries: any) {
+		const timestamps = api.timestamp ?? [];
+		const series = api.series ?? [];
+
+		const healthy = series.find((s: any) => s.name === "Healthy")?.data ?? [];
+		const alert = series.find((s: any) => s.name === "Alert")?.data ?? [];
+		const danger = series.find((s: any) => s.name === "Danger")?.data ?? [];
+		const critical = series.find((s: any) => s.name === "Critical")?.data ?? [];
+
+		const shortLabel = (ts: string) => ts.split("-")[0];
+
+		let output: any[] = [];
+
+		for (let i = 0; i < timestamps.length; i++) {
+			const label = shortLabel(timestamps[i]);
+
+			if (enabledSeries.Healthy) {
+				output.push({
+					value: healthy[i],
+					label,
+					monthIndex: i,
+					health: "Healthy",
+					spacing: 2,
+					labelWidth: 30,
+					labelTextStyle: { color: "gray" },
+					frontColor: COLORS.Healthy,
+				});
+			}
+
+			if (enabledSeries.Alert) {
+				output.push({
+					value: alert[i],
+					monthIndex: i,
+					health: "Alert",
+					frontColor: COLORS.Alert,
+				});
+			}
+
+			if (enabledSeries.Danger) {
+				output.push({
+					value: danger[i],
+					monthIndex: i,
+					health: "Danger",
+					frontColor: COLORS.Danger,
+				});
+			}
+
+			if (enabledSeries.Critical) {
+				output.push({
+					value: critical[i],
+					monthIndex: i,
+					health: "Critical",
+					frontColor: COLORS.Critical,
+				});
+			}
+
+			// GAPS
+			for (let k = 0; k < GROUP_GAPS; k++) {
+				output.push({
+					value: 0,
+					monthIndex: i,
+					health: "Gap",
+					frontColor: "rgba(0,0,0,0)",
+				});
+			}
+		}
+
+		return output;
+	}
+
+	// ------------------------------ TOGGLE LEGEND --------------------------
+	function toggleSeries(type: "Healthy" | "Alert" | "Danger" | "Critical") {
+		setEnabledSeries((prev: any) => {
+			const updated = { ...prev, [type]: !prev[type] };
+
+			if (rawSeries) {
+				setBarData(buildBarData(rawSeries, updated));
+				setSelectedMonth(null); // Close popup on filter change
+			}
+
+			return updated;
+		});
+	}
+
+	// --------------------------- BAR CLICK HANDLER -----------------------
+	const handleBarPress = (item: any) => {
+		if (!rawSeries) return;
+		if (item.health === "Gap") return;
+
+		const monthIndex = item.monthIndex;
+
+		const ts = rawSeries.timestamp[monthIndex]; // "Apr-2025"
+		const [month, year] = ts.split("-");
+
+		const series = rawSeries.series;
+
+		const totals = {
+			Healthy: series.find((s: any) => s.name === "Healthy")?.data[monthIndex] ?? 0,
+			Alert: series.find((s: any) => s.name === "Alert")?.data[monthIndex] ?? 0,
+			Danger: series.find((s: any) => s.name === "Danger")?.data[monthIndex] ?? 0,
+			Critical: series.find((s: any) => s.name === "Critical")?.data[monthIndex] ?? 0,
+		};
+
+		// Find all bars for this month
+		const monthBars = barData.filter((b) => b.monthIndex === monthIndex);
+		const firstIndex = barData.indexOf(monthBars[0]);
+		const lastIndex = barData.indexOf(monthBars[monthBars.length - 1]);
+		const centerIndex = Math.floor((firstIndex + lastIndex) / 2);
+
+		const positionX = centerIndex * (BAR_WIDTH + BAR_SPACING) + 30;
+
+		setSelectedMonth({
+			index: monthIndex,
+			label: `${month} ${year}`,
+			totals,
+			positionX,
+		});
+	};
+
+	// ------------------------------- EFFECTS -------------------------------
 	useEffect(() => {
-		if (childAssets.length === 0) return;
+		if (childAssets.length === 0) {
+			setBarData([]);
+			return;
+		}
 		fetchAssetHealth();
 	}, [childAssets]);
 
-	// ✅ Dynamic Y-axis scaling
-	const maxValue = useMemo(() => {
-		console.log("barData = ", barData);
-		const allVals = barData.flatMap((b: any) =>
-			b.value
-		);
-		const rawMax = Math.max(...allVals, 0);
-		return rawMax <= 10
-			? 10
-			: rawMax <= 50
-				? Math.ceil(rawMax / 5) * 5
-				: Math.ceil(rawMax / 10) * 10;
+	useEffect(() => {
+		if (barData.length > 0) {
+			const maxValue = Math.max(...barData.map((item: any) => item.value));
+			setMaxValue(maxValue);
+		}
 	}, [barData]);
 
+	// ------------------------------ Y-AXIS LOGIC ---------------------------
+	const yAxisInfo = useMemo(() => {
+		if (!maxValue) return { sections: 4, labels: ["0"] };
+
+		const sections = 4;
+		const step = maxValue / sections;
+		const labels = Array.from({ length: sections + 1 }, (_, i) =>
+			(step * i).toFixed(1)
+		);
+
+		return { sections, labels };
+	}, [maxValue]);
+
+	// -----------------------------------------------------------------------
 	return (
 		<View style={styles.container}>
 			{/* Header */}
@@ -96,63 +218,87 @@ export default function AssetHealth() {
 
 			{/* Chart */}
 			<View style={styles.card}>
-				{selectedBar !== null && (
-					<Pressable style={styles.overlay} onPress={() => setSelectedBar(null)} />
+				{selectedMonth && (
+					<Pressable
+						style={styles.overlay}
+						onPress={() => setSelectedMonth(null)}
+					/>
 				)}
 
 				<BarChart
 					data={barData}
-					barWidth={15}
+					barWidth={BAR_WIDTH}
+					spacing={BAR_SPACING}
 					barBorderRadius={4}
-					spacing={3}
 					isAnimated
-					hideRules
 					yAxisLabelWidth={25}
 					yAxisColor="rgba(0,0,0,0.1)"
 					xAxisColor="rgba(0,0,0,0.1)"
-					xAxisLabelTextStyle={styles.axisLabel}
 					yAxisTextStyle={{ color: "#999", fontSize: 10 }}
+					xAxisLabelTextStyle={styles.axisLabel}
 					maxValue={maxValue}
-					noOfSections={5}
+					noOfSections={yAxisInfo.sections}
+					yAxisLabelTexts={yAxisInfo.labels}
+					onPress={handleBarPress}
 				/>
 
+				{/* Popup */}
+				{selectedMonth && (
+					<View
+						style={[
+							styles.popup,
+							{ left: '50%', transform: [{ translateX: -50 }], },
+						]}
+					>
+						<Text style={styles.popupTitle}>
+							{selectedMonth.label}
+						</Text>
 
-				{/* Floating Tooltip */}
-				{selectedBar !== null && (
-					<View style={[styles.tooltip, { left: 25 + selectedBar * (30 + 20) }]}>
-						<Text style={styles.legendTitle}>{barData[selectedBar].label}</Text>
-						{barData[selectedBar].stacks.map((stack: any, idx: number) => (
-							<View key={idx} style={styles.legendRow}>
-								<View
-									style={[styles.legendColor, { backgroundColor: stack.color }]}
-								/>
-								<Text style={styles.legendText}>
-									{stack.label}: {stack.value}
-								</Text>
-							</View>
-						))}
+						{Object.entries(selectedMonth.totals).map(
+							([key, value]: any) => (
+								<View key={key} style={styles.popupRow}>
+									<View
+										style={[
+											styles.popupDot,
+											{ backgroundColor: COLORS[key] },
+										]}
+									/>
+									<Text style={styles.popupKey}>{key}</Text>
+									<Text style={styles.popupValue}>{value}</Text>
+								</View>
+							)
+						)}
 					</View>
 				)}
 			</View>
 
 			{/* Legends */}
 			<View style={styles.legendContainer}>
-				<View style={styles.legendItem}>
-					<View style={[styles.legendDot, { backgroundColor: "#22C55E" }]} />
-					<Text style={styles.legendText}>Healthy</Text>
-				</View>
-				<View style={styles.legendItem}>
-					<View style={[styles.legendDot, { backgroundColor: "#FACC15" }]} />
-					<Text style={styles.legendText}>Alert</Text>
-				</View>
-				<View style={styles.legendItem}>
-					<View style={[styles.legendDot, { backgroundColor: "#F97316" }]} />
-					<Text style={styles.legendText}>Danger</Text>
-				</View>
-				<View style={styles.legendItem}>
-					<View style={[styles.legendDot, { backgroundColor: "#EF4444" }]} />
-					<Text style={styles.legendText}>Critical</Text>
-				</View>
+				{["Healthy", "Alert", "Danger", "Critical"].map((type: any) => (
+					<TouchableOpacity
+						key={type}
+						onPress={() => toggleSeries(type)}
+						style={styles.legendItem}
+					>
+						<View
+							style={[
+								styles.legendDot,
+								{ backgroundColor: enabledSeries[type] ? COLORS[type] : "rgba(0,0,0,0.2)", }
+							]
+							}
+						/>
+						<Text
+							style={[
+								styles.legendText,
+								{
+									opacity: enabledSeries[type] ? 1 : 0.3,
+								},
+							]}
+						>
+							{type}
+						</Text>
+					</TouchableOpacity>
+				))}
 			</View>
 		</View>
 	);
@@ -197,6 +343,7 @@ const styles = StyleSheet.create({
 		shadowRadius: 8,
 		elevation: 3,
 		position: "relative",
+		overflow: 'hidden'
 	},
 	axisLabel: {
 		fontSize: 11,
@@ -225,19 +372,19 @@ const styles = StyleSheet.create({
 		minWidth: 120,
 		zIndex: 10,
 	},
-	legendContainer: {
-		flexDirection: "row",
-		justifyContent: "center",
-		marginTop: 10,
-	},
-	legendItem: { flexDirection: "row", alignItems: "center", marginHorizontal: 8 },
-	legendDot: { height: 8, width: 8, borderRadius: 4, marginRight: 4 },
-	legendTitle: {
-		fontSize: 12,
-		fontFamily: Fonts.regular,
-		marginBottom: 6,
-		color: "#45515C",
-	},
+	// legendContainer: {
+	// 	flexDirection: "row",
+	// 	justifyContent: "center",
+	// 	marginTop: 10,
+	// },
+	// legendItem: { flexDirection: "row", alignItems: "center", marginHorizontal: 8 },
+	// legendDot: { height: 8, width: 8, borderRadius: 4, marginRight: 4 },
+	// legendTitle: {
+	// 	fontSize: 12,
+	// 	fontFamily: Fonts.regular,
+	// 	marginBottom: 6,
+	// 	color: "#45515C",
+	// },
 	legendRow: {
 		flexDirection: "row",
 		alignItems: "center",
@@ -249,8 +396,73 @@ const styles = StyleSheet.create({
 		borderRadius: 5,
 		marginRight: 6,
 	},
+	// legendText: {
+	// 	fontSize: 10,
+	// 	fontFamily: Fonts.regular,
+	// 	color: "#45515C",
+	// },
+
+	/* POPUP */
+	popup: {
+		position: "absolute",
+		bottom: 140,
+		backgroundColor: "#EFF2FC",
+		borderRadius: 10,
+		padding: 12,
+		width: 140,
+		zIndex: 10,
+		shadowColor: "#000",
+		shadowOpacity: 0.15,
+		shadowRadius: 6,
+		elevation: 6,
+	},
+	popupTitle: {
+		fontFamily: Fonts.semiBold,
+		fontSize: 13,
+		marginBottom: 8,
+		color: "#2D3748",
+	},
+	popupRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		marginBottom: 6,
+	},
+	popupDot: {
+		width: 10,
+		height: 10,
+		borderRadius: 5,
+		marginRight: 6,
+	},
+	popupKey: {
+		flex: 1,
+		fontSize: 12,
+		fontFamily: Fonts.regular,
+		color: "#45515C",
+	},
+	popupValue: {
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
+		color: "#2D3748",
+	},
+
+	legendContainer: {
+		flexDirection: "row",
+		justifyContent: "center",
+		marginTop: 10,
+	},
+	legendItem: {
+		flexDirection: "row",
+		alignItems: "center",
+		marginHorizontal: 8,
+	},
+	legendDot: {
+		height: 10,
+		width: 10,
+		borderRadius: 5,
+		marginRight: 4,
+	},
 	legendText: {
-		fontSize: 10,
+		fontSize: 12,
 		fontFamily: Fonts.regular,
 		color: "#45515C",
 	},

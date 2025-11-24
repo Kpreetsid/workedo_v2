@@ -107,7 +107,9 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 		<>
 			{showHeader && <Header title="Select Location" />}
 			<>
-				<SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText} />
+				{
+					!selection && <SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText} />
+				}
 				<FlatList
 					ListHeaderComponent={() => {
 						return (
@@ -131,7 +133,8 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 							selection={selection}
 							comingFrom={comingFrom}
 							handleDeleteLocation={handleDeleteLocation}
-						/>}
+						/>
+					}
 					// renderItem={({ item }) => {
 					// 	const isExpanded = expandedAssetId === item.id;
 					// 	const hasChildren = item.childs && item.childs.length > 0;

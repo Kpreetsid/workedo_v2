@@ -8,7 +8,7 @@ import { useWorkRequestStore } from '@/src/store/useWorkRequestStore';
 import { usePartFormStore } from '@/src/store/usePartFormStore';
 import { usePreventiveStore } from '@/src/store/usePreventiveStore';
 import { Ionicons } from '@expo/vector-icons';
-import Popover from 'react-native-popover-view';
+import Popover, { PopoverMode, Rect } from 'react-native-popover-view';
 
 interface LocationCardInterface {
 	item: Location;
@@ -103,16 +103,17 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 					</View>
 
 				</View>
-				{/* <MapIcon /> */}
 
 				<Popover
+					popoverStyle={{ borderRadius: 15 }}
 					isVisible={openPopoverId === item.id}
 					onRequestClose={() => setOpenPopoverId(null)}
 					from={(
 						<TouchableOpacity style={{ padding: 6 }} onPress={() => setOpenPopoverId(item.id)}>
 							<Ionicons name="ellipsis-vertical" size={18} color="#201F23CC" />
 						</TouchableOpacity>
-					)}>
+					)}
+				>
 					<View style={styles.popoverContent}>
 						{
 							[
@@ -179,6 +180,8 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 								item={child}
 								isChild={true}
 								level={level + 1}
+								selection={selection}
+								comingFrom={comingFrom}
 								handleDeleteLocation={() => handleDeleteLocation?.(child)}
 							/>
 						))}

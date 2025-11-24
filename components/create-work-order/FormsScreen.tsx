@@ -41,6 +41,7 @@ const FormsScreen = () => {
         <DropDownInput
           label="Form"
           field="sop_form_id"
+          containerStyle={{ paddingHorizontal: 25 }}
           store={useWorkOrderStore}
           options={forms?.map((form: any) => form.name)}
           displayKey="name"
@@ -51,35 +52,38 @@ const FormsScreen = () => {
           }}
         />
 
-        <View style={styles.container}>
-          <FormInput
-            label="Name"
-            value={selectedForm?.name}
-            readOnly
-          />
+        {
+          selectedForm &&
+          <View style={styles.container}>
+            <FormInput
+              label="Name"
+              value={selectedForm?.name}
+              readOnly
+            />
 
-          <FormInput
-            label="Category"
-            value={selectedForm?.categoryId?.name}
-            readOnly
-          />
+            <FormInput
+              label="Category"
+              value={selectedForm?.categoryId?.name}
+              readOnly
+            />
 
-          <FormInput
-            label="Location"
-            value={selectedForm?.locationId?.location_name}
-            readOnly
-          />
+            <FormInput
+              label="Location"
+              value={selectedForm?.locationId?.location_name}
+              readOnly
+            />
 
-          <FormInput
-            label="Description"
-            value={selectedForm?.description}
-            readOnly
-          />
+            <FormInput
+              label="Description"
+              value={selectedForm?.description}
+              readOnly
+            />
 
-          {
-            selectedForm && <DynamicForm components={selectedForm?.json_temp?.components} />
-          }
-        </View>
+            {
+              selectedForm && <DynamicForm components={selectedForm?.json_temp?.components} />
+            }
+          </View>
+        }
       </ScrollView>
     </KeyboardAwareScrollView>
   )

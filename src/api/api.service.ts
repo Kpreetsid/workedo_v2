@@ -16,7 +16,7 @@ export const sendRequest = async <T = any>(
   config: RequestConfig = {}
 ): Promise<T> => {
   try {
-    console.log('request url =', url, 'payload =', data);
+    // console.log('request url =', url, 'payload =', data);
     const response = await apiClient.request({
       method,
       url,
@@ -37,7 +37,7 @@ export const sendRequestDemo = async <T = any>(
   config: RequestConfig = {}
 ): Promise<T> => {
   try {
-    console.log('request url =', url, 'payload =', data);
+    // console.log('request url =', url, 'payload =', data);
     const response = await apiClientDemo.request({
       method,
       url,

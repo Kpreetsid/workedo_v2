@@ -11,7 +11,7 @@ export interface BaseAsset {
 	account_id: string;
 	top_level?: boolean;
 	top_level_asset_id?: string;
-	locationId?: string;
+	locationId?: string | any;
 	asset_timezone?: string;
 	org_timezone?: string;
 	description?: string | null;
@@ -29,6 +29,7 @@ export interface BaseAsset {
 	createdAt?: string;
 	updatedAt?: string;
 	userList?: string[]; // backend sends array of string IDs
+	asset_status?: string;
   }
   
   export interface AssetChild extends BaseAsset {

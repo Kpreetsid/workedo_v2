@@ -179,7 +179,7 @@ const AssignInputNew: FC<AssignInputProps> = ({
 									{assignedUsers?.map((u: any) => (
 										<View key={u._id || u.id} style={styles.chip}>
 											<Text style={styles.chipText}>
-												{u.firstName || u.username || u.user?.firstName || u.user?.username}
+												{u.firstName + " " + u.lastName || u.user?.firstName + " " + u.user?.lastName || u.user?.username}
 											</Text>
 
 											<Pressable

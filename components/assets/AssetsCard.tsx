@@ -23,9 +23,9 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: As
 	const isExpanded = expandedAssetId === asset.id;
 	const hasChildren = asset.childs && asset.childs.length > 0;
 
-	useEffect(() => {
-		calculateAssetHealth();
-	}, [asset]);
+	// useEffect(() => {
+		// calculateAssetHealth();
+	// }, [asset]);
 
 	const calculateAssetHealth = async () => {
 		try {
@@ -90,6 +90,7 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: As
 
 						{/* <Ionicons name="ellipsis-vertical" size={18} color="black" /> */}
 						<Popover
+							popoverStyle={{ borderRadius: 15 }}
 							isVisible={openPopoverId === asset.id}
 							onRequestClose={() => setOpenPopoverId(null)}
 							from={(
@@ -167,7 +168,8 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: As
 				< View style={styles.cardRow} >
 					<View style={styles.cardRowTexts}>
 						<Text style={styles.assetHeading}>Asset Health</Text>
-						<Text style={styles.assetText}>{assetHealth?.assetHealth ?? "N/A"}</Text>
+						<Text style={styles.assetText}>{(asset?.asset_status || assetHealth?.assetHealth) ?? "N/A"}</Text>
+						{/* <Text style={styles.assetText}>{assetHealth?.assetHealth ?? "N/A"}</Text> */}
 					</View>
 				</View>
 

@@ -22,6 +22,7 @@ interface SegmentedPagerProps {
 console.log("[SegmentedPager] rendering PagerView now");
 
 export default function SegmentedPager({ tabs, initialPage = 0, containerStyle, tabStyle, activeTabStyle, textStyle, activeTextStyle }: SegmentedPagerProps) {
+	console.log('initial page = ', initialPage)
 	const pagerRef = useRef<PagerView>(null);
 	const [activeTab, setActiveTab] = useState(initialPage);
 

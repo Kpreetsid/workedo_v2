@@ -1,15 +1,18 @@
 import { Dimensions, FlatList, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import SearchBar from "@/components/global/SearchBar";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MapIcon } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
 import ActionButton from "@/components/create-screens/ActionButton";
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { assetTree, deleteAsset } from "@/src/services/asset.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { Asset } from "@/src/types/asset";
 import AssetsCard from "./AssetsCard";
 import { FlashList } from "@shopify/flash-list";
+import { LocationAsset } from "@/src/types/locationAsset";
+import { assetsHealthLocation } from "@/src/services/location.service";
+import { useOverviewStore } from "@/src/store/useOverviewStore";
 
 const width = Dimensions.get("window").width;
 
@@ -17,8 +20,16 @@ interface AssetsTabInterface {
 	selection?: boolean
 }
 
-export default function AssetsTab({ selection = true }: AssetsTabInterface) {
-	console.log('rendering assets');
+export default function AssetsTab({
+	selection = true,
+}: AssetsTabInterface) {
+	let { comingFrom, card_id } = useLocalSearchParams();
+	console.log('rendering assets = ', comingFrom, card_id);
+
+	const [ignoreFilter, setIgnoreFilter] = useState(true);
+	const [cardId, setCardId] = useState<number | null>(null);
+
+	const childAssets = useOverviewStore((state) => state.childAssets);
 	const [searchText, setSearchText] = useState("");
 	const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
 
@@ -26,13 +37,61 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 	const [assets, setAssets] = useState<Asset[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
 
-	const filteredAssets = assets.filter((asset) => asset.asset_name.toLowerCase().includes(searchText.toLowerCase()) || asset?.locationData?.location_name?.toLowerCase().includes(searchText.toLowerCase()));
+	const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
+
+	// const filteredAssets = assets.filter(
+	// 	(asset) => {
+	// 		return (
+	// 			asset.asset_name.toLowerCase().includes(searchText.toLowerCase()) ||
+	// 			asset?.locationData?.location_name?.toLowerCase().includes(searchText.toLowerCase())
+	// 		);
+	// 	}
+	// );
 
 	useFocusEffect(
 		useCallback(() => {
-			fetchAssets();
+			console.log('if card id recevied or not. = ', cardId)
+
+			// if card id received
+			if (cardId) {
+				fetchAssets();
+			} else {
+				// if card id doesn't receive
+				fetchAssets();
+			}
+			return () => {
+				console.log('assets blurred')
+				// setIgnoreFilter(true)
+			}
 		}, [])
 	);
+
+	useEffect(() => {
+		if (card_id) {
+			setCardId(Number(card_id));
+		} else {
+			setCardId(null);
+		}
+	}, [card_id])
+
+	useEffect(() => {
+		if (!assets.length) return;
+
+		// If coming from overview and filter is NOT ignored → run sorting
+		if (cardId) {
+			console.log('yes if')
+			sortFiltered(assets);
+			return;
+		}
+
+		// If NOT coming from overview → show all assets
+		if (!cardId) {
+			console.log('no if')
+			console.log('card id is undefined = ', cardId);
+			setFilteredAssets([]); // ensures FlashList uses full assets array
+			fetchAssetsHealthLocation(assets)
+		}
+	}, [assets]);
 
 	const fetchAssets = async () => {
 		try {
@@ -46,6 +105,109 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 			console.error("Login failed:", err);
 		}
 	};
+
+	const sortFiltered = (assets: Asset[]) => {
+		if (assets.length > 0 && childAssets.length > 0) {
+
+			console.log('assets = ', assets)
+			console.log('childAssets = ', childAssets)
+
+			const filteredAssets1 = assets.filter((asset) => {
+				return childAssets.some((childAsset) => childAsset.id === asset.id && childAsset.top_level === true)
+			})
+			console.log('filteredAssets1 = ', filteredAssets1)
+			// now filter based on asset status
+			fetchAssetsHealthLocation(filteredAssets1);
+		}
+	}
+
+	const fetchAssetsHealthLocation = async (filtered: Asset[]) => {
+		const obj: { org_id: string, asset_list: string[] } = {
+			org_id: user?.account_id,
+			asset_list: filtered?.map((asset: Asset) => asset.id),
+		};
+
+		console.log("obj = ", obj);
+		// return;
+		const resp = await assetsHealthLocation(obj);
+		console.log("resp health location = ", resp, card_id);
+		if (cardId) {
+			if (card_id === "1") {
+				console.log("inside if card_id 1");
+
+				const enriched = filtered.map((asset: Asset) => {
+					const statusObj = resp.data.find(
+						(item: any) => item.asset_id === asset.id
+					);
+
+					return {
+						...asset,
+						asset_status: statusObj?.asset_status || "Not Defined",
+					};
+				});
+
+				setFilteredAssets(enriched);
+			} else if (card_id === '2') {
+				console.log('inside if card_id 2')
+				let dangerAssets = resp?.data.filter((asset: any) => asset?.asset_status === "Danger")
+				if (dangerAssets.length > 0) {
+					let found = filtered.find((a: Asset) => a.id === dangerAssets[0].asset_id);
+
+					if (found) {
+						setFilteredAssets([
+							{
+								...found,
+								asset_status: dangerAssets[0].asset_status, // add/override status
+							}
+						]);
+					}
+
+				} else {
+					setFilteredAssets([]);
+				}
+			} else if (card_id === '3') {
+				console.log('inside if card_id 3');
+
+				const match = resp?.data.find(
+					(item: any) => item.asset_status === "Critical"
+				);
+
+				if (match) {
+					const found = filtered.find(
+						(a: Asset) => a.id === match.asset_id
+					);
+
+					if (found) {
+						setFilteredAssets([
+							{
+								...found,
+								asset_status: match.asset_status, // attach status
+							}
+						]);
+					} else {
+						setFilteredAssets([]);
+					}
+				} else {
+					setFilteredAssets([]);
+				}
+
+			}
+		} else {
+			console.log("inside else");
+			const enriched = filtered.map((asset: Asset) => {
+				const statusObj = resp.data.find(
+					(item: any) => item.asset_id === asset.id
+				);
+
+				return {
+					...asset,
+					asset_status: statusObj?.asset_status || "Not Defined",
+				};
+			});
+			console.log("enriched = ", enriched);
+			setFilteredAssets(enriched);
+		}
+	}
 
 	const handleRefresh = async () => {
 		setRefreshing(true);
@@ -70,14 +232,21 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 		}
 	}
 
+	const clearFilters = async () => {
+		setCardId(null);  // 🔥 disable overview filtering
+		setFilteredAssets([]);  // 🔥 reset your filtered list
+		await fetchAssets();    // 🔥 reload normally
+	};
+
 	return (
 		<>
-			<SearchBar placeholder="Search Asset..." value={searchText} onChangeText={setSearchText} />
+			{
+				!selection && <SearchBar placeholder="Search Asset..." value={searchText} onChangeText={setSearchText} />
+			}
 			<FlashList
 				ListHeaderComponent={() => {
 					return (
-						<>
-
+						<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
 							{
 
 								!selection && (
@@ -87,10 +256,24 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 								)
 							}
 
-						</>
+							{
+								cardId && (
+									<TouchableOpacity style={styles.clearFilters} onPress={clearFilters}>
+										<Text style={styles.clearFiltersText}>Clear Filters</Text>
+									</TouchableOpacity>
+								)
+							}
+
+						</View>
 					);
 				}}
 				data={filteredAssets}
+				// data={
+				// 	!ignoreFilter && comingFrom === "overview" && card_id
+				// 		? filteredAssets
+				// 		: assets
+				// }
+				// data={!ignoreFilter && card_id ? filteredAssets : assets}
 				keyExtractor={(item) => item.id}
 				renderItem={
 					({ item }: { item: Asset }) => <AssetsCard
@@ -101,88 +284,6 @@ export default function AssetsTab({ selection = true }: AssetsTabInterface) {
 				refreshing={refreshing}
 				onRefresh={handleRefresh}
 			/>
-
-
-
-			{/* old code */}
-			{/* <FlatList
-				data={filteredAssets}
-				keyExtractor={(item) => item.id}
-				renderItem={({ item }: { item: Asset }) => {
-					const isExpanded = expandedAssetId === item.id;
-					const hasChildren = item.childs && item.childs.length > 0;
-
-					return (
-						<View key={item.id}>
-							<Pressable
-								style={[
-									styles.assetButton,
-									isExpanded ? {
-										borderBottomLeftRadius: 0,
-										borderBottomRightRadius: 0,
-									} : {},
-									{
-										backgroundColor: selectedAsset === item.id ? "#FFBF0080" : "#fff",
-										borderColor: selectedAsset === item.id ? "#FFC1074D" : "#99999933",
-									},
-								]}
-								onLongPress={() => setSelectedAsset(item.id)}
-								onPress={() => {
-									router.push({
-										pathname: "/assetDetail",
-										params: { id: item.id },
-										// params: { data: JSON.stringify(item) },
-									});
-								}}
-							>
-								<View style={styles.textRow}>
-									<View>
-										<Text style={styles.assetText}>{item.asset_name}</Text>
-										<Text style={styles.assetLocations}>
-											Location: {item?.locationData?.location_name}
-										</Text>
-										{hasChildren && (
-											<Pressable onPress={() => {
-												// Toggle expand instead of navigating
-												setExpandedAssetId(isExpanded ? null : item.id);
-											}}>
-												<Text style={styles.childLabel}>
-													Child Assets
-													{isExpanded ? " ▲" : " ▼"}
-												</Text>
-											</Pressable>
-										)}
-									</View>
-								</View>
-								<MapIcon />
-							</Pressable>
-
-							{isExpanded && hasChildren && (
-								<View style={styles.childContainer}>
-									{item?.childs?.map((child) => (
-										<Pressable
-											key={child.id}
-											style={styles.childButton}
-											onPress={() =>
-												router.push({
-													pathname: "/assetDetail",
-													params: { data: JSON.stringify(child) },
-												})
-											}
-										>
-											<Text style={styles.childText}>{child.asset_name}</Text>
-										</Pressable>
-									))}
-								</View>
-							)}
-						</View>
-					);
-				}}
-				contentContainerStyle={styles.listContainer}
-				refreshing={refreshing}
-				onRefresh={handleRefresh}
-			/> */}
-
 
 			{selection && <ActionButton onPress={() => console.info("Confirm Pressed")} label="Confirm Location" buttonStyle={styles.actionButton} />}
 		</>
@@ -268,6 +369,21 @@ const styles = StyleSheet.create({
 		fontSize: 10,
 		fontFamily: Fonts.regular,
 		color: "#FFFFFF",
+		lineHeight: 20,
+	},
+	clearFilters: {
+		marginTop: 5,
+		backgroundColor: "transparent",
+		borderRadius: 5,
+		paddingHorizontal: 12,
+		paddingVertical: 5,
+		borderWidth: 1,
+		borderColor: "#222",
+	},
+	clearFiltersText: {
+		fontSize: 10,
+		fontFamily: Fonts.regular,
+		color: "#222",
 		lineHeight: 20,
 	},
 });

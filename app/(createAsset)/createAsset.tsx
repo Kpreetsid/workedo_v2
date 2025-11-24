@@ -227,6 +227,7 @@ const createAsset = () => {
 					options={["Fan_Blower", "Pumps", "Gearbox", "Compressor", "Chillers", "CNC", "Motor", "Other"]}
 					store={useCreateAssetStore}
 					setterName="setCreateAssetValue"
+          			styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -237,6 +238,7 @@ const createAsset = () => {
 					options={timezones}
 					store={useCreateAssetStore}
 					setterName="setCreateAssetValue"
+          			styles={{ paddingHorizontal: 25 }}
 				/>
 
 				{
