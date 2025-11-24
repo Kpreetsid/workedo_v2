@@ -89,11 +89,6 @@ const createLocation = () => {
 			return;
 		}
 
-		if (values.description === "") {
-			ToastAndroid.show("Please enter description", ToastAndroid.SHORT);
-			return;
-		}
-
 		if (values.assigned_users.length === 0) {
 			ToastAndroid.show("Please assign users", ToastAndroid.SHORT);
 			return;
@@ -210,6 +205,7 @@ const createLocation = () => {
 					comingFrom="createLocation"
 					store={useCreateLocationStore}
 					setterName="setCreateLocationValue"
+					required={true}
 				/>
 
 
@@ -219,6 +215,7 @@ const createLocation = () => {
 					placeholder=""
 					field="attachments"
 					router={router}
+					required={false}
 					comingFrom="createLocation"
 					store={useCreateLocationStore}
 					setterName="setCreateLocationValue"

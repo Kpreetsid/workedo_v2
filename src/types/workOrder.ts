@@ -18,7 +18,8 @@ export interface WorkOrder {
     task_submitted: boolean;
     files: any[];
     visible: boolean;
-    createdBy: string;
+    createdBy: any;
+    created_by: string;
     createdAt: string;
     updatedAt: string;
     updatedBy?: string;

@@ -12,6 +12,8 @@ export default function ToDoTab() {
 	const [selectedButton, setSelectedButton] = useState<number>(0);
 	const [selectedId, setSelectedId] = useState<string | null>(null);
 	const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
+
+	const [assignedToMe, setAssignedToMe] = useState<WorkOrder[]>([]);
 	const [createdByMeWorkOrders, setCreatedByMeWorkOrders] = useState<WorkOrder[]>([]);
 	const [openForAllWorkOrders, setOpenForAllWorkOrders] = useState<WorkOrder[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
@@ -20,6 +22,12 @@ export default function ToDoTab() {
 
 	const loggedInUser = useAuthStore((state) => state.user);
 	console.log('user in state = ', loggedInUser);
+
+	const data =
+		selectedButton === 0 ? assignedToMe :
+			selectedButton === 1 ? createdByMeWorkOrders :
+				openForAllWorkOrders;
+
 
 	useFocusEffect(
 		useCallback(() => {
@@ -33,29 +41,12 @@ export default function ToDoTab() {
 
 		try {
 			const res = await getWorkOrders('todo');
+			console.log("work orders = ", res);
 
 			if (res?.status && res?.data) {
+				// filter whose status != "Completed" if selected
 				const allWorkOrders = res.data as WorkOrder[];
-
-				// Work orders assigned to logged-in user
-				const assignedToUser = allWorkOrders.filter((item) =>
-					item.assignedUsers?.some(
-						(user: AssignedUser) => user?.userId === loggedInUser?.id
-					)
-				);
-
-				// Work orders created by logged-in user
-				const createdByUser = allWorkOrders.filter(
-					(item) => item?.createdBy === loggedInUser?.id
-				);
-
-				// ✅ Update both states once
-				setWorkOrders(assignedToUser.reverse());
-				setCreatedByMeWorkOrders(createdByUser.reverse());
-				setOpenForAllWorkOrders(allWorkOrders.reverse());
-
-				console.log("assignedToUser =", assignedToUser.length);
-				console.log("createdByUser =", createdByUser.length);
+				setWorkOrders(allWorkOrders);
 				setLoading(false)
 			}
 		} catch (error: any) {
@@ -65,9 +56,45 @@ export default function ToDoTab() {
 		}
 	};
 
-	// useEffect(() => {
-	// 	console.log('work orders final = ', createdByMeWorkOrders);
-	// }, [createdByMeWorkOrders])
+	useEffect(() => {
+		if (!workOrders.length) return;
+
+		let assigned = [];
+		let created = [];
+		let open = [];
+
+		for (let i = 0; i < workOrders.length; i++) {
+			const wo = workOrders[i];
+
+			const isAssigned = wo.assignedUsers?.some(
+				u => u.userId === loggedInUser?.id
+			);
+			const isCreated = wo.created_by === loggedInUser?.id;
+			
+			// If assigned to me, add to workOrderList
+			if (isAssigned) {
+				assigned.push(wo);
+			}
+
+			// If created by me and not already in workOrderList, add to createdByMeWorkOrders
+			if (isCreated && !assigned.some(a => a.id === wo.id)) {
+				created.push(wo);
+			}
+
+			// If neither assigned to me nor created by me, and not in workOrderList, add to openForAllWorkOrders
+			if (!isAssigned && !isCreated &&  !assigned.some(a => a.id === wo.id)) {
+				open.push(wo);
+			}
+		}
+
+
+		console.log('assigned = ', assigned);
+		console.log('created = ', created);
+		console.log('open = ', open);
+		setAssignedToMe([...assigned].reverse());
+		setCreatedByMeWorkOrders([...created].reverse());
+		setOpenForAllWorkOrders([...open].reverse());
+	}, [workOrders]);
 
 	const handleRefresh = async () => {
 		setRefreshing(true);
@@ -101,12 +128,13 @@ export default function ToDoTab() {
 
 			<FlatList
 				data={
-					(selectedButton === 0
-						? workOrders
+					selectedButton === 0
+						? assignedToMe
 						: selectedButton === 1
 							? createdByMeWorkOrders
-							: openForAllWorkOrders)
+							: openForAllWorkOrders
 				}
+
 				keyExtractor={(item) => item.id.toString()}
 				renderItem={renderWorkOrderItem}
 				removeClippedSubviews={false}
@@ -114,7 +142,6 @@ export default function ToDoTab() {
 				onRefresh={handleRefresh}
 				contentContainerStyle={styles.listContainer}
 			/>
-
 		</>
 	)
 }

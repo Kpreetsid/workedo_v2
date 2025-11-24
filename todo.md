@@ -86,3 +86,24 @@ Functionality modifications:
 51. Home page - Asset Health Status graph clickable - Done
 52. Info page - Info cards clickable - Done (needs more testing)
 53. Create work order - Only show other fields like name, category, location when form is selected - Done
+54. Create work order - Add Task new UI + functionaity - Done
+55. After updating profile details, the contact number shows empty
+    - Unable to replicate this issue. Make sure you are testing the latest build I sent.
+
+56. The work order details for “Assigned to Me”, “Created by Me”, and “Open for All” are not displaying correctly - Done
+57. While creating a work order, change the field name “Message” to “Description” as per the UI - Done
+58. While selecting a location, change the selection to a checkbox as per the provided UI. The edit option is not required there
+    - Done (I have used the new UI opening up a pop up with a list of locations with check boxes)
+59. While selecting assets, use a checkbox selection similar to the provided UI. - Done
+60. In the work order, Nature of Work, Priority, and Estimated Duration should not be mandatory fields. - Done
+61. Photo upload is not working while creating a work order.
+62. Completed work order details are not displaying correctly.
+63. While creating a location, the description should not be a required field. You have not marked it with *, but it is still showing a validation warning. - Done
+64. User assignment while creating a location should be a required field. - Done
+65. Attachments should not be a required field, but currently it is marked with *. - Done
+66. Implement parent-child location hierarchy as per the provided UI.
+67. When clicking the menu icon copy location  there should be copy of location should be created
+68. Add Parts - Update according to the new UI. - Done
+69. Preventive - Update according to the new UI.
+70. Asset - Update according to the new UI. Under Asset → Sensor → Endpoint, the name is incorrect.
+71. Work Request - Update according to the new UI.

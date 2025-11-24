@@ -18,7 +18,8 @@ export const FormField = React.memo(
 		setActiveDateField,
 		setIsDatePickerVisible,
 		required = true,
-		styles
+		styles,
+		openPicker,
 	}: {
 		label: string;
 		placeholder?: string;
@@ -33,6 +34,7 @@ export const FormField = React.memo(
 		setIsDatePickerVisible?: any;
 		required?: boolean;
 		styles?: any;
+		openPicker?: () => void;
 	}) => {
 		const value = store((s: any) => s[field]);
 		const setValue = store((s: any) => s[setterName]);
@@ -48,9 +50,10 @@ export const FormField = React.memo(
 					placeholder={placeholder}
 					comingFrom={comingFrom}
 					store={store}
+					required={required}
 					setterName={setterName}
 					displayKey="attachments"
-					onPress={() => {}}
+					onPress={() => { }}
 				/>
 			);
 		}
@@ -63,13 +66,9 @@ export const FormField = React.memo(
 					placeholder={placeholder}
 					comingFrom={comingFrom}
 					store={store}
+					required={required}
 					displayKey="location_name"
-					onPress={() =>
-						router.push({
-							pathname: "/selectLocation",
-							params: { comingFrom },
-						})
-					}
+					onPress={openPicker}
 				/>
 			);
 		}
@@ -82,13 +81,15 @@ export const FormField = React.memo(
 					placeholder={placeholder}
 					comingFrom={comingFrom}
 					store={store}
+					required={required}
 					displayKey="asset_name"
-					onPress={() =>
-						router.push({
-							pathname: "/selectAsset",
-							params: { comingFrom },
-						})
-					}
+					onPress={openPicker}
+					// onPress={() =>
+					// 	router.push({
+					// 		pathname: "/selectAsset",
+					// 		params: { comingFrom },
+					// 	})
+					// }
 				/>
 			);
 		}
@@ -103,7 +104,7 @@ export const FormField = React.memo(
 					comingFrom={comingFrom}
 					store={store}
 					setterName={setterName}
-					required={false}
+					required={required}
 					displayKey="username"
 					onPress={() =>
 						router.push({
@@ -125,6 +126,7 @@ export const FormField = React.memo(
 					displayKey={field}
 					onSelect={(val) => setValue(field, val)}
 					containerStyle={styles}
+					required={required}
 				/>
 			);
 		}

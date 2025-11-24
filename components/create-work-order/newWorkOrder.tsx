@@ -72,9 +72,9 @@ export default function NewWorkOrder() {
 			"start_date",
 			"end_date",
 			// "parts",
-			"nature_of_work",
-			"priority",
-			"completion_days",
+			// "nature_of_work",
+			// "priority",
+			// "completion_days",
 		];
 
 		// Fields that must not be empty arrays
@@ -189,8 +189,8 @@ export default function NewWorkOrder() {
 						/>
 
 						<FormField
-							label="Message"
-							placeholder="Enter a message"
+							label="Description"
+							placeholder="Enter a description"
 							field="message"
 							store={useWorkOrderStore}
 							setterName="setWorkForm"
@@ -210,7 +210,8 @@ export default function NewWorkOrder() {
 						options={["Preventive", "Electrical", "Break Down", "Inspection", "Corrective", "Safety", "Upgrade", "Meter Reading", "Mechanical", "Other"]}
 						store={useWorkOrderStore}
 						setterName="setWorkForm"
-						styles={{paddingHorizontal: 25}}
+						styles={{ paddingHorizontal: 25 }}
+						required={false}
 					/>
 
 					<FormField
@@ -220,7 +221,8 @@ export default function NewWorkOrder() {
 						options={["None", "Low", "Medium", "High"]}
 						store={useWorkOrderStore}
 						setterName="setWorkForm"
-						styles={{paddingHorizontal: 25}}
+						styles={{ paddingHorizontal: 25 }}
+						required={false}
 					/>
 
 					<FormField
@@ -229,11 +231,12 @@ export default function NewWorkOrder() {
 						field="completion_days"
 						store={useWorkOrderStore}
 						setterName="setWorkForm"
+						required={false}
 					/>
 
 					<View style={{ marginHorizontal: 0 }}>
 						<AssignInput label="Add Parts" comingFrom="newWorkOrder" required={false} onPress={() => router.push({
-							pathname: "/updateParts",
+							pathname: "/addParts",
 							params: { comingFrom: "newWorkOrder" }
 						})} />
 					</View>
@@ -243,7 +246,7 @@ export default function NewWorkOrder() {
 							useWorkOrderStore.getState().parts.map((part: any, index: number) => (
 								<View style={styles.partItem} key={index}>
 									<Text style={styles.partText}>{part?.part_name}</Text>
-									<Text style={styles.partText}>({part?.estimatedQuantity})</Text>
+									<Text style={styles.partText}>({part?.qty})</Text>
 									<Pressable onPress={() => handleRemovePart(part.id || part._id)}>
 										<Ionicons name="close" size={16} color="#000" />
 									</Pressable>

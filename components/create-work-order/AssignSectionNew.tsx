@@ -5,6 +5,8 @@ import { useWorkOrderStore } from '@/src/store/useWorkOrderStore';
 import { FormField } from '../global/FormField';
 import DatePicker from '../global/DatePicker';
 import moment from 'moment';
+import LocationPickerModal from './LocationPickerModal';
+import AssetPickerModal from './AssetPickerModal';
 
 const AssignSectionNew = ({ type }: { type: "workOrders" | "requests" }) => {
 	const router = useRouter();
@@ -15,6 +17,10 @@ const AssignSectionNew = ({ type }: { type: "workOrders" | "requests" }) => {
 
 	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 	const [activeDateField, setActiveDateField] = useState<"start_date" | "end_date" | null>(null);
+	const [visible, setVisible] = useState(false);
+	const [visibleAsset, setVisibleAsset] = useState(false);
+	const [selectedLocation, setSelectedLocation] = useState(null);
+	const [comingFrom, setComingFrom] = useState<string | null>(null);
 
 	return (
 		<View>
@@ -27,6 +33,16 @@ const AssignSectionNew = ({ type }: { type: "workOrders" | "requests" }) => {
 				comingFrom="newWorkOrder"
 				store={useWorkOrderStore}
 				setterName="setWorkForm"
+				openPicker={() => {
+					console.log('opening')
+					setVisible(true)
+				}}
+			/>
+
+			<LocationPickerModal
+				visible={visible}
+				onClose={() => setVisible(false)}
+				comingFrom="newWorkOrder"
 			/>
 
 			{
@@ -40,8 +56,18 @@ const AssignSectionNew = ({ type }: { type: "workOrders" | "requests" }) => {
 					comingFrom="newWorkOrder"
 					store={useWorkOrderStore}
 					setterName="setWorkForm"
+					openPicker={() => {
+						console.log('opening asset')
+						setVisibleAsset(true)
+					}}
 				/>
 			}
+
+			<AssetPickerModal
+				visible={visibleAsset}
+				comingFrom="newWorkOrder"
+				onClose={() => setVisibleAsset(false)}
+			/>
 
 			{
 				workOrderLocation && workOrderAsset &&
