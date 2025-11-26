@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TextInputProps, StyleSheet, ViewStyle, TextStyle } from "react-native";
+import { View, Text, TextInput, TextInputProps, StyleSheet, ViewStyle, TextStyle, GestureResponderEvent, Pressable } from "react-native";
 import Fonts from "@/constants/Typography";
 import { FC } from "react";
 import Dropdown from "../overview-screen/DropDown";
@@ -10,13 +10,14 @@ interface FormInputProps extends TextInputProps {
 	type?: "dropdown" | "text";
 	selectedPart?: string;
 	setSelectedPart?: (value: string) => void;
+	onPress?: (event: GestureResponderEvent) => void;
 	containerStyle?: ViewStyle;
 	inputContainer?: ViewStyle;
 	labelStyle?: TextStyle;
 	inputStyle?: TextStyle;
 }
 
-const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", selectedPart, setSelectedPart, containerStyle, labelStyle, inputStyle, inputContainer, ...textInputProps }) => {
+const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", selectedPart, setSelectedPart, containerStyle, labelStyle, inputStyle, inputContainer, onPress, ...textInputProps }) => {
 
 	return (
 		<>
@@ -28,7 +29,7 @@ const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", 
 							{required && <Text style={styles.asterisk}>*</Text>}
 						</View>
 
-						<View style={[styles.field, inputContainer]}>
+						<Pressable style={[styles.field, inputContainer]} onPress={onPress}>
 							<TextInput
 								style={[styles.inputField, inputStyle, (label === "Message" || label === "Description") && styles.messageInput]}
 								placeholderTextColor="#6B788899"
@@ -36,7 +37,7 @@ const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", 
 								textAlignVertical="top"
 								{...textInputProps}
 							/>
-						</View>
+						</Pressable>
 					</View>
 					:
 					<DropDownInput label="Measuring Point Location" value={selectedPart} options={["DE", "NDE"]} onSelect={(val) => setSelectedPart!(val)} />

@@ -66,9 +66,12 @@ const addParts = () => {
 			id: item.id,
 			part_name: item.part_name,
 			part_number: item.part_number,
-			qty: Number(qty),
-			uom: item.unit,
+			part_type: item.part_type,
+			unit: item.unit,
+			estimatedQuantity: Number(qty),
 		};
+
+		console.log('part obj = ', partObj);
 
 		const oldParts = useStore.parts ?? [];
 
@@ -99,7 +102,7 @@ const addParts = () => {
 					{selectedParts?.map((p: any) => (
 						<View key={p.id} style={styles.chip}>
 							<Text style={styles.chipText}>
-								{p.part_name} - {p.qty}
+								{p.part_name} - {p.estimatedQuantity}
 							</Text>
 
 							<TouchableOpacity

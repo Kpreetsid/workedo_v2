@@ -69,6 +69,7 @@ export const endpoints = {
     approveRequest: 'work/requests/approve',
     rejectRequest: 'work/requests/reject',
     postComments: 'comments',
+    uploadImage: 'upload/work_request'
   },
   gateways: {
     sensorsList: 'master/locations/sensor-list',

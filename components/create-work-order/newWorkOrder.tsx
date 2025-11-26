@@ -1,6 +1,6 @@
 import Header from "@/components/global/Header";
 import FormInput from "@/components/create-screens/FormInput";
-import { Pressable, ScrollView, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import AssignInput from "@/components/create-screens/AssignInput";
 import Fonts from "@/constants/Typography";
 import { DropDownIcon } from "@/constants/IconProvider";
@@ -20,12 +20,20 @@ import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 import { FormField } from "@/components/global/FormField";
 import AssignSectionNew from "@/components/create-work-order/AssignSectionNew";
 import { getSOPs } from "@/src/services/preventive.service";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { launchCamera, launchImageLibrary } from "react-native-image-picker";
+import { workOrderImageUpload } from "@/src/services/work-order.service";
+import { useAuthStore } from "@/src/store/useAuthStore";
+import { Image } from "expo-image";
+import { endpoints } from "@/src/api/endpoints";
 
 export default function NewWorkOrder() {
 	const router = useRouter();
 	const { setWorkForm, resetForm } = useWorkOrderStore();
 	const [forms, setForms] = useState<any>([]);
 	const parts = useWorkOrderStore((state) => state.parts);
+
+	const { user } = useAuthStore();
 
 	useEffect(() => {
 		const fetchForms = async () => {
@@ -71,16 +79,11 @@ export default function NewWorkOrder() {
 			"assigned_users",
 			"start_date",
 			"end_date",
-			// "parts",
-			// "nature_of_work",
-			// "priority",
-			// "completion_days",
 		];
 
 		// Fields that must not be empty arrays
 		const requireNonEmptyArrays: (keyof typeof data)[] = [
 			"assigned_users",
-			// "parts",
 		];
 
 		for (const field of required) {
@@ -123,11 +126,15 @@ export default function NewWorkOrder() {
 			end_date: data.end_date || new Date().toISOString().split("T")[0],
 			estimated_time: data.completion_days, // using completion_days for hours/days input
 			files: data.files || [],
+			oldParts: null,
 			parts: data.parts?.map((p: any) => ({
-				part_id: p.part_id || p._id,
+				actualQuantity: null,
+				part_id: p.id,
 				part_name: p.part_name,
 				part_type: p.part_type,
-				estimatedQuantity: p.estimatedQuantity || 1,
+				part_number: p.part_number,
+				estimatedQuantity: p.estimatedQuantity,
+				unit: p.unit,
 			})) || [],
 			priority: data.priority,
 			// sop_form_id: null,
@@ -139,6 +146,7 @@ export default function NewWorkOrder() {
 			userIdList: data.assigned_users?.map((u: any) => u.id) || [],
 			wo_asset_id: data.selected_asset?.id || "",
 			wo_location_id: data.location?.id || "",
+			image_path: data.files.length > 0 ? data.files[0].image_path : "",
 
 			// ✅ Conditionally include work_request_id
 			...(data.work_request_id && { work_request_id: data.work_request_id }),
@@ -171,6 +179,37 @@ export default function NewWorkOrder() {
 			console.error("❌ Error creating work order:", error);
 			ToastAndroid.show("Failed to create work order!", ToastAndroid.SHORT);
 		}
+	};
+
+	const pickImage = (fromCamera = false) => {
+		const options: any = {
+			mediaType: 'photo' as const,
+			quality: 0.8,
+		};
+
+		if (fromCamera) {
+			launchCamera(options, handleImageResponse);
+		} else {
+			launchImageLibrary(options, handleImageResponse);
+		}
+	};
+
+	const handleImageResponse = async (response: any) => {
+		if (response.didCancel) return;
+		if (response.errorCode) {
+			Alert.alert('Error', response.errorMessage || 'Image selection failed');
+			return;
+		}
+
+		const asset = response.assets?.[0];
+		if (!asset) return;
+
+		console.log('Selected image: ', asset.uri);
+
+		const updatedWorkOrderImage = await workOrderImageUpload(asset, user);
+		console.log('Updated work order image: ', updatedWorkOrderImage);
+
+		setWorkForm("files", [updatedWorkOrderImage]);
 	};
 
 	return (
@@ -246,7 +285,7 @@ export default function NewWorkOrder() {
 							useWorkOrderStore.getState().parts.map((part: any, index: number) => (
 								<View style={styles.partItem} key={index}>
 									<Text style={styles.partText}>{part?.part_name}</Text>
-									<Text style={styles.partText}>({part?.qty})</Text>
+									<Text style={styles.partText}>({part?.estimatedQuantity})</Text>
 									<Pressable onPress={() => handleRemovePart(part.id || part._id)}>
 										<Ionicons name="close" size={16} color="#000" />
 									</Pressable>
@@ -254,9 +293,21 @@ export default function NewWorkOrder() {
 							))}
 					</View>
 
-					<Pressable style={styles.uploadBtn}>
+					<Pressable style={styles.uploadBtn} onPress={() => pickImage()}>
 						<Text style={styles.uploadBtnText}>Upload or Capture Photos</Text>
 					</Pressable>
+
+					{
+						useWorkOrderStore.getState().files.length > 0 &&
+						<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
+							<Image
+								source={{
+									uri: `${endpoints.baseURL}work_request/${useWorkOrderStore.getState().files[0].image_path}?t=${Date.now()}`
+								}}
+								style={{ width: 200, height: 200, borderRadius: 8 }}
+							/>
+						</View>
+					}
 
 					<ActionButton onPress={handleSubmit} label="Create Work Order" buttonStyle={styles.submitBtn} />
 				</ScrollView>

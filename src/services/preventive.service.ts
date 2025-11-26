@@ -31,3 +31,8 @@ export const toggleWorkOrderStatus = async (id: string, payload: any) => {
     const url = `${endpoints.preventive.preventives}/${id}`;
     return await sendRequest("PUT", url, payload);
 };
+
+export const deletePreventive = async (id: string) => {
+    const url = `${endpoints.preventive.preventives}/${id}`;
+    return await sendRequest("DELETE", url);
+};

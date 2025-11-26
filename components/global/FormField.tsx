@@ -24,7 +24,7 @@ export const FormField = React.memo(
 		label: string;
 		placeholder?: string;
 		field: string;
-		type?: "text" | "dropdown" | "location" | "new-location" | "asset" | "new-asset" | "user" | "new-user" | "date" | "attachments";
+		type?: "text" | "dropdown" | "location" | "new-location" | "asset" | "new-asset" | "user" | "new-user" | "date" | "attachments" | "tasks";
 		options?: string[];
 		router?: any;
 		comingFrom?: string;
@@ -84,12 +84,12 @@ export const FormField = React.memo(
 					required={required}
 					displayKey="asset_name"
 					onPress={openPicker}
-					// onPress={() =>
-					// 	router.push({
-					// 		pathname: "/selectAsset",
-					// 		params: { comingFrom },
-					// 	})
-					// }
+				// onPress={() =>
+				// 	router.push({
+				// 		pathname: "/selectAsset",
+				// 		params: { comingFrom },
+				// 	})
+				// }
 				/>
 			);
 		}

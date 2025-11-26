@@ -14,6 +14,9 @@ export interface PreventiveFormData {
   priority: string;
   completion_days: string;
   parts: any[];
+	tasks: any[];
+  no_of_repititions: string;
+  skip_dates: string[];
 }
 
 interface PreventiveStore {
@@ -23,6 +26,7 @@ interface PreventiveStore {
   assigned_users: any[]; // full user object
   selected_asset: any | null;
   start_date: string;
+  end_date?: string;
   schedule: string;
   assign_to: string;
   sop_form_id: string;
@@ -30,6 +34,9 @@ interface PreventiveStore {
   priority: string;
   completion_days: string;
   parts: any[];
+  tasks: any[];
+  no_of_repititions: string;
+  skip_dates: string[];
   setPreventiveValue: (key: keyof PreventiveFormData, value: any) => void;
   resetForm: () => void;
 }
@@ -41,6 +48,7 @@ export const usePreventiveStore = create<PreventiveStore>((set) => ({
   assigned_users: [],
   selected_asset: null,
   start_date: "",
+  end_date: "",
   schedule: "",
   assign_to: "",
   sop_form_id: "",
@@ -48,6 +56,9 @@ export const usePreventiveStore = create<PreventiveStore>((set) => ({
   priority: "",
   completion_days: "",
   parts: [],
+	tasks: [],
+  no_of_repititions: "",
+  skip_dates: [],
   setPreventiveValue: (key: keyof PreventiveFormData, value: any) =>
     set((state) => ({
       [key]: value,
@@ -60,6 +71,7 @@ export const usePreventiveStore = create<PreventiveStore>((set) => ({
       assigned_users: [],
       selected_asset: null,
       start_date: "",
+      end_date: "",
       schedule: "",
       assign_to: "",
       sop_form_id: "",
@@ -67,5 +79,8 @@ export const usePreventiveStore = create<PreventiveStore>((set) => ({
       priority: "",
       completion_days: "",
       parts: [],
+			tasks: [],
+      no_of_repititions: "",
+      skip_dates: [],
     }),
 }));

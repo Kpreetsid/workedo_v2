@@ -15,6 +15,7 @@ interface AssignInputProps {
 	label: string;
 	field?: string;
 	store?: any;
+	type?: string;
 	comingFrom?: string;
 	displayKey?: string; // key to show (like username, asset_name)
 	onPress?: (event: GestureResponderEvent) => void;
@@ -30,6 +31,7 @@ const AssignInput: FC<AssignInputProps> = ({
 	field,
 	store,
 	comingFrom,
+	type,
 	displayKey,
 	required = true,
 	onPress,
@@ -95,7 +97,11 @@ const AssignInput: FC<AssignInputProps> = ({
 			</View>
 
 			<View style={[styles.buttonContainer, buttonStyle]}>
-				<Text style={[styles.buttonText, buttonTextStyle]}>Assign</Text>
+				<Text style={[styles.buttonText, buttonTextStyle]}>
+					{
+						field === "tasks" ? "Create Task" : (field === "parts" ? "Add Parts" : "Assign")
+					}
+				</Text>
 				<ArrowRight />
 			</View>
 		</Pressable>
@@ -140,7 +146,8 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		backgroundColor: "#742BDE",
-		width: 70,
+		// width: 70,
+		paddingHorizontal: 10,
 		height: 28,
 		justifyContent: "center",
 		gap: 5,

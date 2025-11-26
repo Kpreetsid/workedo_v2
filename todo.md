@@ -96,7 +96,7 @@ Functionality modifications:
     - Done (I have used the new UI opening up a pop up with a list of locations with check boxes)
 59. While selecting assets, use a checkbox selection similar to the provided UI. - Done
 60. In the work order, Nature of Work, Priority, and Estimated Duration should not be mandatory fields. - Done
-61. Photo upload is not working while creating a work order.
+61. Photo upload is not working while creating a work order - Done
 62. Completed work order details are not displaying correctly.
 63. While creating a location, the description should not be a required field. You have not marked it with *, but it is still showing a validation warning. - Done
 64. User assignment while creating a location should be a required field. - Done
@@ -105,5 +105,10 @@ Functionality modifications:
 67. When clicking the menu icon copy location  there should be copy of location should be created
 68. Add Parts - Update according to the new UI. - Done
 69. Preventive - Update according to the new UI.
+     - Create Preventive
+     - Edit Preventive
+     - Delete Preventive
+     - Preventive Details
+
 70. Asset - Update according to the new UI. Under Asset → Sensor → Endpoint, the name is incorrect.
 71. Work Request - Update according to the new UI.
