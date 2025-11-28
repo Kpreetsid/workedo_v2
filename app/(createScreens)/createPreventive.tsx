@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { createPreventive, getSOPs } from "@/src/services/preventive.service";
 import { FormField } from "@/components/global/FormField";
 import SkipDatesUI from "@/components/create-preventive/skipDates";
+import SkipWeekendSelector from "@/components/create-preventive/skipWeekendSelector";
 
 export default function CreatePreventive() {
 	const router = useRouter();
@@ -31,6 +32,7 @@ export default function CreatePreventive() {
 
 	const { skip_dates, setPreventiveValue, resetForm } = usePreventiveStore();
 	const preventiveLocation = usePreventiveStore((s) => s.location);
+	const preventiveAssets = usePreventiveStore((s) => s.selected_asset)
 	const [forms, setForms] = useState<any>([]);
 
 	useEffect(() => {
@@ -72,41 +74,85 @@ export default function CreatePreventive() {
 		// ✅ Basic validation (optional)
 		const required: (keyof PreventiveFormData)[] = [
 			"title",
-			"description",
 			"location",
+			"selected_asset",
 			"assigned_users",
 			"start_date",
-			"schedule",
+		];
+
+		// Fields that must not be empty arrays
+		const requireNonEmptyArrays: (keyof typeof data)[] = [
+			"assigned_users",
 		];
 
 		for (const field of required) {
-			if (!data[field]) {
+			const value = data[field];
+
+			if (requireNonEmptyArrays.includes(field)) {
+				if (!Array.isArray(value) || value.length === 0) {
+					const label = (field as string)
+						.replace(/_/g, " ")
+						.replace(/\b\w/g, (c) => c.toUpperCase());
+
+					var message = "";
+					if (label === "Assigned Users") {
+						message = "User selection"
+					} else {
+						message = label;
+					}
+
+					ToastAndroid.show(`${message} is required`, ToastAndroid.SHORT);
+					return;
+				}
+				continue;
+			}
+
+			// Handle normal fields
+			if (!value) {
+				if (field === "completion_days") {
+					ToastAndroid.show(`Estimation Duration is required`, ToastAndroid.SHORT);
+					return;
+				}
+
 				const label = (field as string)
 					.replace(/_/g, " ")
 					.replace(/\b\w/g, (c) => c.toUpperCase());
-				ToastAndroid.show(`${label} is required`, ToastAndroid.SHORT);
+
+				var message = "";
+				if (label === "Assigned Users") {
+					message = "User selection"
+				} else {
+					message = label;
+				}
+
+				ToastAndroid.show(`${message} is required`, ToastAndroid.SHORT);
 				return;
 			}
+		}
+
+		if (data?.end_date === "" && data?.no_of_repititions === "") {
+			ToastAndroid.show("Please provide at least one: End Date or Number of Reps.", ToastAndroid.SHORT);
+			return;
 		}
 
 		// ✅ Prepare payload
 		const payload = {
 			title: data.title.trim(),
-			description: data.description.trim(),
+			description: data?.description?.trim(),
 
 			schedule: {
 				mode: data.schedule || "daily",
 				enabled: true,
-				no_of_repetition: data.no_of_repetition, // default (can make dynamic)
+				no_of_repetition: data.no_of_repititions, // default (can make dynamic)
 				start_date: data.start_date,
 				end_date: data.end_date ? data.end_date : null, // can later compute based on repetition
 				[data.schedule || "daily"]: {
 					everyNDays: Number(nDays) || 1,
 				}, // dynamic key
 				skipDates: [],
-				skipWeekendSaturday: false,
-				skipWeekendSunday: false,
-				skipWeekends: false
+				skipWeekendSaturday: data?.skipWeekendSaturday,
+				skipWeekendSunday: data?.skipWeekendSunday,
+				skipWeekends: data?.skipWeekends,
 			},
 
 			work_order: {
@@ -137,7 +183,6 @@ export default function CreatePreventive() {
 		};
 
 		console.log("📦 Final Preventive Payload:", payload);
-		return;
 
 		try {
 			const res = await createPreventive(payload);
@@ -181,6 +226,7 @@ export default function CreatePreventive() {
 					field="description"
 					store={usePreventiveStore}
 					setterName="setPreventiveValue"
+					required={false}
 				/>
 
 				<FormField
@@ -209,27 +255,18 @@ export default function CreatePreventive() {
 					)
 				}
 
-				<FormField
-					label="Assign User"
-					type="user"
-					field="assigned_users"
-					router={router}
-					comingFrom="createPreventive"
-					store={usePreventiveStore}
-					setterName="setPreventiveValue"
-				/>
-
-				<FormField
-					label="Start Date"
-					type="date"
-					field="start_date"
-					router={router}
-					comingFrom="createPreventive"
-					store={usePreventiveStore}
-					setterName="setPreventiveValue"
-					setIsDatePickerVisible={setIsDatePickerVisible}
-					setActiveDateField={setActiveDateField}
-				/>
+				{
+					preventiveLocation && preventiveAssets &&
+					<FormField
+						label="Assign User"
+						type="new-user"
+						field="assigned_users"
+						router={router}
+						comingFrom="createPreventive"
+						store={usePreventiveStore}
+						setterName="setPreventiveValue"
+					/>
+				}
 
 				<FormField
 					label="Nature of Work"
@@ -241,6 +278,7 @@ export default function CreatePreventive() {
 					store={usePreventiveStore}
 					setterName="setPreventiveValue"
 					styles={{ paddingHorizontal: 25 }}
+					required={false}
 				/>
 
 
@@ -254,6 +292,7 @@ export default function CreatePreventive() {
 					store={usePreventiveStore}
 					setterName="setPreventiveValue"
 					styles={{ paddingHorizontal: 25 }}
+					required={false}
 				/>
 
 
@@ -265,6 +304,7 @@ export default function CreatePreventive() {
 					store={usePreventiveStore}
 					setterName="setPreventiveValue"
 					styles={{ paddingHorizontal: 25 }}
+					required={false}
 				/>
 
 				<FormField
@@ -277,6 +317,7 @@ export default function CreatePreventive() {
 					store={usePreventiveStore}
 					setterName="setPreventiveValue"
 					styles={{ paddingHorizontal: 25 }}
+					required={false}
 				/>
 
 				<AssignInput
@@ -427,6 +468,10 @@ export default function CreatePreventive() {
 							setIsDatePickerVisible(true);
 						}}
 					/>
+				</View>
+
+				<View style={{ marginHorizontal: 25 }}>
+					<SkipWeekendSelector />
 				</View>
 
 				<ActionButton label="Submit" onPress={handleSubmit} />

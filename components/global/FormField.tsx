@@ -39,7 +39,7 @@ export const FormField = React.memo(
 		const value = store((s: any) => s[field]);
 		const setValue = store((s: any) => s[setterName]);
 
-		console.log(`Render → ${label}`, value);
+		// console.log(`Render → ${label}`, value);
 
 
 		if (type === "attachments") {

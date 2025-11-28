@@ -137,7 +137,7 @@ const AssignInputNew: FC<AssignInputProps> = ({
 
 		console.log('coming from value = ', comingFrom)
 
-		if(comingFrom === "createLocation") {
+		if (comingFrom === "createLocation") {
 			const setter = store.getState()[setterName!];
 			console.log('setter = ', setter);
 			setter("attachments", [updatedLocationImage]);

@@ -19,7 +19,7 @@ interface SelectAssetCardInterface {
 const width = Dimensions.get("window").width;
 
 const SelectAssetsCard = ({ item, isChild = false, level = 0, comingFrom }: SelectAssetCardInterface) => {
-	console.log('asset card select item = ', item);
+	// console.log('asset card select item = ', item);
 	const router = useRouter();
 	const [selectedAsset, setSelectedAsset] = useState<Asset>();
 	const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
@@ -55,8 +55,9 @@ const SelectAssetsCard = ({ item, isChild = false, level = 0, comingFrom }: Sele
 						setWorkForm("assigned_users", item.userList);
 					} else if (comingFrom === "newWorkRequest") {
 						setWorkRequestForm("selected_asset", item);
-					} else {
+					} else if(comingFrom === "createPreventive") {
 						setPreventiveValue("selected_asset", item);
+						setPreventiveValue("assigned_users", item.userList);
 					}
 					router.back();
 				}}

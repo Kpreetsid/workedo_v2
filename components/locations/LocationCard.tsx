@@ -59,12 +59,17 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 						console.log('in selection = ', comingFrom)
 						if (comingFrom === "newWorkOrder") {
 							setWorkForm("location", item);
+							setWorkForm("selected_asset", item);
+							setWorkForm("assigned_users", []);
 						} else if (comingFrom === "newWorkRequest") {
 							setWorkRequestForm("location", item);
+							setWorkRequestForm("selected_asset", item);
 						} else if (comingFrom === "createPart") {
 							setPartFormValue("location", item);
-						} else {
+						} else if(comingFrom === "createPreventive") {
 							setPreventiveValue("location", item);
+							setPreventiveValue("selected_asset", null);
+							setPreventiveValue("assigned_users", []);
 						}
 						router.back();
 					} else {

@@ -105,10 +105,34 @@ Functionality modifications:
 67. When clicking the menu icon copy location  there should be copy of location should be created
 68. Add Parts - Update according to the new UI. - Done
 69. Preventive - Update according to the new UI.
-     - Create Preventive
-     - Edit Preventive
-     - Delete Preventive
-     - Preventive Details
+     - Create Preventive - In progress
+     - Edit Preventive - In progress
+     - Delete Preventive - In progress
+     - Preventive Details - In progress
 
 70. Asset - Update according to the new UI. Under Asset → Sensor → Endpoint, the name is incorrect.
 71. Work Request - Update according to the new UI.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. Users sheet from asset details page
+2. edit icon now moved inside asset details and location details
+3. assets UI is now changed same as locations
+4. icons should be bigger
+5. staric issue

@@ -22,12 +22,13 @@ export default function SelectUser() {
 	const { setPreventiveValue } = usePreventiveStore();
 	const { setWorkForm } = useWorkOrderStore();
 
-	const {setCreateAssetValue} = useCreateAssetStore();
-	const {setCreateLocationValue} = useCreateLocationStore();
+	const { setCreateAssetValue } = useCreateAssetStore();
+	const { setCreateLocationValue } = useCreateLocationStore();
 
 	const workOrderAssignedUsers: any = useWorkOrderStore((state) => state.assigned_users);
 	const createAssetAssignedUsers: any = useCreateAssetStore((state) => state.assigned_users);
 	const createLocationAssignedUsers: any = useCreateLocationStore((state) => state.assigned_users);
+	const createPreveniveAssignedUsers: any = usePreventiveStore((state) => state.assigned_users);
 
 	useEffect(() => {
 		fetchUsers();
@@ -46,11 +47,21 @@ export default function SelectUser() {
 
 			setSelectedUsers(preselected);
 
-		} else if(comingFrom === "createLocation") {
+		} else if (comingFrom === "createLocation") {
 			// no need to preselect because its a new location, so no user will be preselected
-			
+
 			const preselected = users.filter((u) =>
 				(createLocationAssignedUsers || []).some(
+					(sel: any) => (sel.user?.id || sel.id) === (u._id || u.id)
+				)
+			);
+
+			setSelectedUsers(preselected);
+		} else if (comingFrom === "createPreventive") {
+			// no need to preselect because its a new location, so no user will be preselected
+
+			const preselected = users.filter((u) =>
+				(createPreveniveAssignedUsers || []).some(
 					(sel: any) => (sel.user?.id || sel.id) === (u._id || u.id)
 				)
 			);
@@ -104,9 +115,9 @@ export default function SelectUser() {
 		if (comingFrom === "newWorkOrder") {
 			console.log('selected users in select user = ', selectedUsers);
 			setWorkForm("assigned_users", selectedUsers);
-		} else if(comingFrom === "createAsset") {
+		} else if (comingFrom === "createAsset") {
 			setCreateAssetValue("assigned_users", selectedUsers);
-		} else if(comingFrom === "createLocation") {
+		} else if (comingFrom === "createLocation") {
 			setCreateLocationValue("assigned_users", selectedUsers);
 		} else {
 			setPreventiveValue("assigned_users", selectedUsers);

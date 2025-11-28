@@ -14,9 +14,12 @@ export interface PreventiveFormData {
   priority: string;
   completion_days: string;
   parts: any[];
-	tasks: any[];
+  tasks: any[];
   no_of_repititions: string;
   skip_dates: string[];
+  skipWeekends: boolean;
+  skipWeekendSaturday: boolean;
+  skipWeekendSunday: boolean;
 }
 
 interface PreventiveStore {
@@ -37,6 +40,9 @@ interface PreventiveStore {
   tasks: any[];
   no_of_repititions: string;
   skip_dates: string[];
+  skipWeekends: boolean;
+  skipWeekendSaturday: boolean;
+  skipWeekendSunday: boolean;
   setPreventiveValue: (key: keyof PreventiveFormData, value: any) => void;
   resetForm: () => void;
 }
@@ -56,9 +62,12 @@ export const usePreventiveStore = create<PreventiveStore>((set) => ({
   priority: "",
   completion_days: "",
   parts: [],
-	tasks: [],
+  tasks: [],
   no_of_repititions: "",
   skip_dates: [],
+  skipWeekends: false,
+  skipWeekendSaturday: false,
+  skipWeekendSunday: false,
   setPreventiveValue: (key: keyof PreventiveFormData, value: any) =>
     set((state) => ({
       [key]: value,
@@ -79,8 +88,11 @@ export const usePreventiveStore = create<PreventiveStore>((set) => ({
       priority: "",
       completion_days: "",
       parts: [],
-			tasks: [],
+      tasks: [],
       no_of_repititions: "",
       skip_dates: [],
+      skipWeekends: false,
+      skipWeekendSaturday: false,
+      skipWeekendSunday: false,
     }),
 }));
