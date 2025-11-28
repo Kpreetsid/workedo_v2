@@ -105,13 +105,15 @@ Functionality modifications:
 67. When clicking the menu icon copy location  there should be copy of location should be created
 68. Add Parts - Update according to the new UI. - Done
 69. Preventive - Update according to the new UI.
-     - Create Preventive - In progress
-     - Edit Preventive - In progress
-     - Delete Preventive - In progress
-     - Preventive Details - In progress
+     - Create Preventive - Done (tested)
+     - Edit Preventive - Done (tested)
+     - Delete Preventive - Done (tested)
+     - Preventive Details - Done
 
 70. Asset - Update according to the new UI. Under Asset → Sensor → Endpoint, the name is incorrect.
 71. Work Request - Update according to the new UI.
+72. Work Order details - Edit and Delete functionality - Done
+73. Forms not populating while doing edit work order - check it later
 
 
 

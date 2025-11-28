@@ -3,6 +3,7 @@ import { Text, StyleSheet, View, TouchableOpacity } from "react-native";
 import { ArrowBack } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
 import {router} from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 interface HeaderProps {
     title: string;
@@ -15,7 +16,8 @@ export default function Header({ title, modal = false, dismiss }: HeaderProps) {
         <SafeAreaView edges={["top"]} style={styles.safeArea}>
             <View style={styles.headerContainer}>
                 <TouchableOpacity onPress={() => modal ? dismiss!() : router.back()} style={styles.backButton}>
-                    <ArrowBack />
+                    {/* <ArrowBack /> */}
+                    <Ionicons name="chevron-back" size={22} color={"#fff"} />
                 </TouchableOpacity>
                 <Text style={styles.title}>{title}</Text>
             </View>
@@ -35,7 +37,7 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
     },
     backButton: {
-        marginRight: 10,
+        marginRight: 5,
         padding: 5,
     },
     title: {

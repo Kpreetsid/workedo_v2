@@ -11,6 +11,12 @@ export const createPreventive = async (data: any) => {
     return await sendRequest("POST", url, data);
 };
 
+export const updatePreventive = async (id: any, data: any) => {
+    const url = `${endpoints.preventive.create}/${id}`;
+    return await sendRequest("PUT", url, data);
+};
+
+
 export const getFilteredAssets = async (payload: any) => {
     const url = `${endpoints.preventive.getFilteredAssets}`;
     return await sendRequest("POST", url, payload);

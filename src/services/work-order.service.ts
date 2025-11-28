@@ -17,6 +17,15 @@ export const getWorkOrderDetails = async (id: string) => {
     return await sendRequest('GET', `${endpoints.workOrders.workOrders}/${id}`);
 }
 
+export const updateWorkOrder = async (id: any, data: any) => {
+    const url = `${endpoints.workOrders.workOrders}/${id}`;
+    return await sendRequest("PUT", url, data);
+};
+
+export const deleteWorkOrder = async (id: string) => {
+    return await sendRequest('DELETE', `${endpoints.workOrders.workOrders}/${id}`)
+}
+
 export const updateWorkOrderStatus = async (id: string, payload: any) => {
     return await sendRequest('PUT', `${endpoints.workOrders.updateWorkOrder}/${id}`, payload);
 };

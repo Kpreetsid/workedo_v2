@@ -1,12 +1,14 @@
 import { create } from "zustand";
 
 export interface PreventiveFormData {
+  isLoaded: boolean;
   title: string;
   description: string;
   location: any | null; // full location object
   assigned_users: any[]; // full user object
   selected_asset: any | null;
   start_date: string;
+  end_date: string;
   schedule: string;
   assign_to: string;
   sop_form_id: string;
@@ -23,6 +25,7 @@ export interface PreventiveFormData {
 }
 
 interface PreventiveStore {
+  isLoaded: boolean;
   title: string;
   description: string;
   location: any | null; // full location object
@@ -48,6 +51,7 @@ interface PreventiveStore {
 }
 
 export const usePreventiveStore = create<PreventiveStore>((set) => ({
+  isLoaded: false,
   title: "",
   description: "",
   location: null,
@@ -55,7 +59,7 @@ export const usePreventiveStore = create<PreventiveStore>((set) => ({
   selected_asset: null,
   start_date: "",
   end_date: "",
-  schedule: "",
+  schedule: "daily",
   assign_to: "",
   sop_form_id: "",
   nature_of_work: "",
@@ -74,6 +78,7 @@ export const usePreventiveStore = create<PreventiveStore>((set) => ({
     })),
   resetForm: () =>
     set({
+      isLoaded: false,
       title: "",
       description: "",
       location: null,
@@ -81,7 +86,7 @@ export const usePreventiveStore = create<PreventiveStore>((set) => ({
       selected_asset: null,
       start_date: "",
       end_date: "",
-      schedule: "",
+      schedule: "daily",
       assign_to: "",
       sop_form_id: "",
       nature_of_work: "",

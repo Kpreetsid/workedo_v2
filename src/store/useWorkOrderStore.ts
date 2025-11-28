@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 interface WorkOrderStore {
+  isLoaded: boolean;
 	title: string;
 	message: string;
 	location: any | null;
@@ -10,6 +11,7 @@ interface WorkOrderStore {
 	end_date: string;
 	nature_of_work: string;
 	sop_form_id: string;
+	sop_form_name: string;
 	priority: string;
 	completion_days: string;
 	parts: any[];
@@ -21,6 +23,7 @@ interface WorkOrderStore {
 }
 
 export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
+  isLoaded: false,
 	title: "",
 	message: "",
 	location: null,
@@ -28,8 +31,9 @@ export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
 	selected_asset: null,
 	start_date: "",
 	end_date: "",
-	nature_of_work: "",
+	nature_of_work: "Preventive",
 	sop_form_id: "",
+	sop_form_name: "",
 	priority: "",
 	completion_days: "",
 	parts: [],
@@ -41,6 +45,7 @@ export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
 
 	resetForm: () =>
 		set({
+			isLoaded: false,
 			title: "",
 			message: "",
 			location: null,
@@ -50,6 +55,7 @@ export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
 			end_date: "",
 			nature_of_work: "",
 			sop_form_id: "",
+			sop_form_name: "",
 			priority: "",
 			completion_days: "",
 			parts: [],

@@ -1,17 +1,22 @@
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import Header from "@/components/global/Header";
 import Detail from "@/components/work-order-detail/Detail";
 import Comments from "@/components/work-order-detail/Comments";
 import SegmentedPager from "@/components/global/SegmentPager";
-import { Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import { Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { WorkOrderCompleteIcon, WorkOrderInProgressIcon, WorkOrderOnHoldIcon, WorkOrderOpenIcon } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
-import { getWorkOrderDetails, updateWorkOrderStatus } from "@/src/services/work-order.service";
+import { deleteWorkOrder, getWorkOrderDetails, updateWorkOrderStatus } from "@/src/services/work-order.service";
 import { useEffect, useState } from "react";
+import Popover from "react-native-popover-view";
+import { Ionicons } from "@expo/vector-icons";
+import { WorkOrder } from "@/src/types/workOrder";
 
 export default function WorkOrderDetail() {
+	const router = useRouter();
 	const params: any = useLocalSearchParams();
 	const work_order_data = JSON.parse(params?.data);
+	const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 
 	const [workOrderData, setWorkOrderData] = useState<any>(work_order_data);
 
@@ -32,14 +37,95 @@ export default function WorkOrderDetail() {
 		}
 	}
 
+	const handleDeleteWo = async (item: WorkOrder) => {
+		console.log('deleting WO = ', item);
+		// setDeleteLoading(true)
+		try {
+			const resp = await deleteWorkOrder(item?.id);
+			console.log('resp = ', resp);
+			if (resp?.status) {
+				ToastAndroid.show("Work Order Deleted", ToastAndroid.SHORT);
+				router.back();
+				// setDeleteLoading(false)
+			}
+		} catch (e) {
+			// setDeleteLoading(false)
+			console.log('error deleting = ', e);
+		}
+	}
+
 	return (
 		<View style={styles.container}>
 			<Header title="Work Order Details" />
 			<View style={styles.headerContainer}>
 				<View style={styles.header}>
-					<Text style={styles.woId}># {workOrderData?.order_no}</Text>
-					<Text style={styles.woType}>{workOrderData?.type}</Text>
-					<Text style={styles.woTitle}>{workOrderData?.title}</Text>
+					<View>
+						<Text style={styles.woId}># {workOrderData?.order_no}</Text>
+						{
+							workOrderData?.type && <Text style={styles.woType}>{workOrderData?.type}</Text>
+						}
+						<Text style={styles.woTitle}>{workOrderData?.title}</Text>
+					</View>
+
+					<View>
+						<Popover
+							popoverStyle={{ borderRadius: 15 }}
+							isVisible={openPopoverId === workOrderData.id}
+							onRequestClose={() => setOpenPopoverId(null)}
+							from={(
+								<TouchableOpacity style={{ padding: 6 }} onPress={() => setOpenPopoverId(workOrderData.id)}>
+									<Ionicons name="ellipsis-vertical" size={20} color="#fff" />
+								</TouchableOpacity>
+							)}>
+							<View style={styles.popoverContent}>
+								{
+									[
+										{ icon: '', text: 'Select Option', type: 'heading' },
+										{ icon: '', text: 'Edit', type: 'option' },
+										{ icon: '', text: 'Delete', type: 'option' }
+									].map((option, index) => {
+										return (
+											<Pressable
+												style={styles.popoverItem}
+												key={index}
+												onPress={async () => {
+													if (index === 1) {
+														router.push({
+															pathname: "/editWorkOrder",
+															params: {
+																data: JSON.stringify(workOrderData),
+															},
+														});
+													} else if (index === 2) {
+														console.log('in it delete = ', workOrderData);
+														handleDeleteWo?.(workOrderData);
+													}
+													setOpenPopoverId(null)
+												}}
+											>
+												<View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'flex-start' }}>
+													{option.icon != '' && <Ionicons name={option.icon as any} size={16} color="#71717A" />}
+
+													<Text style={
+														[
+															{ color: "#71717A", fontFamily: Fonts.regular },
+															option.type == 'heading' ? { color: "#742BDE", fontFamily: Fonts.semiBold } : {}
+														]
+													}>
+														{option.text}
+													</Text>
+
+													{/* {
+														(deleteLoading && index === 3) && <ActivityIndicator size={"small"} color={"#71717A"} />
+													} */}
+												</View>
+											</Pressable>
+										);
+									})
+								}
+							</View>
+						</Popover>
+					</View>
 				</View>
 
 
@@ -118,6 +204,9 @@ const styles = StyleSheet.create({
 		// backgroundColor: "#fff"
 	},
 	header: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
 		backgroundColor: "#742BDE",
 		borderRadius: 8,
 		padding: 16,
@@ -180,5 +269,14 @@ const styles = StyleSheet.create({
 	tabTextActive: {
 		color: "#742BDE",
 		fontFamily: Fonts.medium,
-	}
+	},
+	popoverContent: {
+		borderRadius: 20,
+		backgroundColor: "#fff",
+		padding: 10,
+	},
+	popoverItem: {
+		width: 150,
+		padding: 10,
+	},
 })

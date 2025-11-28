@@ -7,7 +7,8 @@ import {
 	TouchableOpacity,
 	StyleSheet,
 	ScrollView,
-	ToastAndroid
+	ToastAndroid,
+	ActivityIndicator
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
@@ -38,6 +39,7 @@ export default function AssetPickerModal
 	const { setWorkForm } = useWorkOrderStore();
 	const { setWorkRequestForm } = useWorkRequestStore();
 	const { setPreventiveValue } = usePreventiveStore();
+	const [loading, setLoading] = useState<boolean>(false);
 
 	const [expanded, setExpanded] = useState<any>({});
 	const [selectedId, setSelectedId] = useState<string | null>(null);   // ⭐ only 1 selected at a time
@@ -51,10 +53,15 @@ export default function AssetPickerModal
 		if (visible) {
 			console.log("Modal is now visible — fetching assets...");
 			fetchAssets();
+
+			return () => {
+				setAssets([])
+			}
 		}
 	}, [visible]);
 
 	const fetchAssets = async () => {
+		setLoading(true)
 		try {
 			console.log('locationsList = ', locationsList);
 			if (!locationsList) {
@@ -72,8 +79,10 @@ export default function AssetPickerModal
 			if (res.status) {
 				console.log('res assets = ', res?.data);
 				setAssets(res?.data);
+				setLoading(false)
 			}
 		} catch (err: any) {
+			setLoading(false)
 			console.error("Login failed:", err);
 			if (!err.status) {
 				if (err.message === "No data found") {
@@ -99,8 +108,9 @@ export default function AssetPickerModal
 			setWorkForm("assigned_users", item.userList);
 		} else if (comingFrom === "newWorkRequest") {
 			setWorkRequestForm("selected_asset", item);
-		} else {
+		} else if (comingFrom === "createPreventive") {
 			setPreventiveValue("selected_asset", item);
+			setPreventiveValue("assigned_users", item.userList);
 		}
 		console.log("Selected:", item);
 	}
@@ -116,7 +126,7 @@ export default function AssetPickerModal
 						<TouchableOpacity onPress={() => toggleExpand(node.id)}>
 							<Ionicons
 								name={expanded[node.id] ? "chevron-down" : "chevron-forward"}
-								size={14}
+								size={18}
 								color="#333"
 							/>
 						</TouchableOpacity>
@@ -128,7 +138,7 @@ export default function AssetPickerModal
 					<TouchableOpacity onPress={() => handleSelect(node)} style={{ flexDirection: "row", alignItems: "center" }}>
 
 						{/* Checkbox → replaced with single-select tick */}
-						<TouchableOpacity
+						<View
 							style={styles.checkboxContainer}
 						>
 							{isSelected ? (
@@ -141,7 +151,7 @@ export default function AssetPickerModal
 							) : (
 								<View style={styles.checkboxOutline} />
 							)}
-						</TouchableOpacity>
+						</View>
 
 						{/* Label */}
 						<Text style={styles.nodeText}>{node.asset_name}</Text>
@@ -167,6 +177,10 @@ export default function AssetPickerModal
 					</View>
 
 					<View style={styles.separator} />
+
+					{
+						loading && <ActivityIndicator size={"small"} />
+					}
 
 					<ScrollView showsVerticalScrollIndicator={false}>
 						{assets.map((node) => renderNode(node))}
@@ -216,7 +230,7 @@ const styles = StyleSheet.create({
 	separator: {
 		marginVertical: 12,
 		height: 1,
-		backgroundColor: "#eee"
+		// backgroundColor: "#eee"
 	},
 	nodeRow: {
 		flexDirection: "row",
@@ -226,8 +240,8 @@ const styles = StyleSheet.create({
 		marginHorizontal: 8
 	},
 	checkboxOutline: {
-		width: 16,
-		height: 16,
+		width: 18,
+		height: 18,
 		borderWidth: 1,
 		borderRadius: 4,
 		borderColor: "#656565",

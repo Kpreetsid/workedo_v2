@@ -139,12 +139,13 @@ export const FormField = React.memo(
 					comingFrom={comingFrom}
 					store={store}
 					displayKey="location_name"
-					onPress={() =>
-						router.push({
-							pathname: "/selectLocation",
-							params: { comingFrom },
-						})
-					}
+					onPress={openPicker}
+					// onPress={() =>
+					// 	router.push({
+					// 		pathname: "/selectLocation",
+					// 		params: { comingFrom },
+					// 	})
+					// }
 				/>
 			);
 		}
@@ -157,12 +158,13 @@ export const FormField = React.memo(
 					field={field}
 					store={store}
 					displayKey="asset_name"
-					onPress={() =>
-						router.push({
-							pathname: "/selectAsset",
-							params: { comingFrom },
-						})
-					}
+					onPress={openPicker}
+					// onPress={() =>
+					// 	router.push({
+					// 		pathname: "/selectAsset",
+					// 		params: { comingFrom },
+					// 	})
+					// }
 				/>
 			);
 		}

@@ -85,7 +85,7 @@ const AssignSectionNew = ({ type }: { type: "workOrders" | "requests" }) => {
 
 
 			{/* --- Start Date --- */}
-			<FormField
+			{/* <FormField
 				label="Start Date"
 				type="date"
 				field="start_date"
@@ -95,10 +95,10 @@ const AssignSectionNew = ({ type }: { type: "workOrders" | "requests" }) => {
 				setterName="setWorkForm"
 				setActiveDateField={setActiveDateField}
 				setIsDatePickerVisible={setIsDatePickerVisible}
-			/>
+			/> */}
 
 			{/* --- End Date --- */}
-			<FormField
+			{/* <FormField
 				label="End Date"
 				type="date"
 				field="end_date"
@@ -108,7 +108,7 @@ const AssignSectionNew = ({ type }: { type: "workOrders" | "requests" }) => {
 				setterName="setWorkForm"
 				setActiveDateField={setActiveDateField}
 				setIsDatePickerVisible={setIsDatePickerVisible}
-			/>
+			/> */}
 
 			{/* --- Date Picker --- */}
 			<DatePicker

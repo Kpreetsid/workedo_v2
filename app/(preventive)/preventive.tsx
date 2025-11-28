@@ -124,7 +124,10 @@ export default function PreventivePage() {
 															key={index}
 															onPress={async () => {
 																if (index === 1) {
-
+																	router.push({
+																		pathname: '/createPreventive',
+																		params: {data: JSON.stringify(item)}
+																	})
 																} else if (index === 2) {
 																	console.log('in it delete = ', item);
 																	handleDeletePreventive?.(item);

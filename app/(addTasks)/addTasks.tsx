@@ -15,7 +15,15 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Header from "@/components/global/Header";
 import { usePreventiveStore } from "@/src/store/usePreventiveStore";
 
-const DROPDOWN_OPTIONS = ["Radio Button", "Text", "Number", "Check Box"];
+
+const UI_TYPES = ["Radio Button", "Text", "Number", "Check Box"];
+
+const TYPE_MAP: Record<string, string> = {
+  "Radio Button": "multipleChoice",
+  "Text": "text",
+  "Number": "number",
+  "Check Box": "checkBox",
+};
 
 const AddTasks = () => {
   const tasks = usePreventiveStore((s) => s.tasks);
@@ -23,20 +31,24 @@ const AddTasks = () => {
 
   const [activeDropdownTask, setActiveDropdownTask] = useState(null);
 
-  /** ────────────────────────────────────────────────
-   *  TASK ACTIONS USING STORE
-   *  ──────────────────────────────────────────────── */
-
+  /** -------------------------------------------------------
+   *  ADD TASK  (API CORRECT SHAPE)
+   *  ------------------------------------------------------- */
   const addTask = () => {
     const newTask = {
       id: Date.now(),
       title: "",
-      type: "Text",
-      options: [],
+      type: "text",             // API format
+      fieldValue: "",
+      options: [],              // MUST be array of {key,value}
     };
+
     setPreventiveValue("tasks", [newTask, ...tasks]);
   };
 
+  /** -------------------------------------------------------
+   *  REMOVE TASK
+   *  ------------------------------------------------------- */
   const removeTask = (id: any) => {
     setPreventiveValue(
       "tasks",
@@ -44,6 +56,9 @@ const AddTasks = () => {
     );
   };
 
+  /** -------------------------------------------------------
+   *  UPDATE SINGLE FIELD (title, type, fieldValue)
+   *  ------------------------------------------------------- */
   const updateTask = (id: any, field: any, value: any) => {
     setPreventiveValue(
       "tasks",
@@ -53,6 +68,9 @@ const AddTasks = () => {
     );
   };
 
+  /** -------------------------------------------------------
+   *  UPDATE MULTIPLE FIELDS AT ONCE
+   *  ------------------------------------------------------- */
   const updateTaskMany = (id: any, updates: any) => {
     setPreventiveValue(
       "tasks",
@@ -62,98 +80,71 @@ const AddTasks = () => {
     );
   };
 
+  /** -------------------------------------------------------
+   *  ADD OPTION  (API FORMAT)
+   *  ------------------------------------------------------- */
   const addOption = (taskId: any) => {
     setPreventiveValue(
       "tasks",
       tasks.map((task: any) =>
         task.id === taskId
-          ? { ...task, options: [...task.options, ""] }
+          ? {
+            ...task,
+            options: [
+              ...task.options,
+              {
+                key: "",
+                value:
+                  task.type === "multipleChoice"
+                    ? task.options.length // numeric index
+                    : false,               // checkbox defaults
+              },
+            ],
+          }
           : task
       )
     );
   };
 
-  const updateOption = (taskId: any, index: any, value: any) => {
+  /** -------------------------------------------------------
+   *  UPDATE OPTION KEY
+   *  ------------------------------------------------------- */
+  const updateOption = (taskId: any, index: any, newValue: any) => {
     setPreventiveValue(
       "tasks",
       tasks.map((task: any) =>
         task.id === taskId
           ? {
-              ...task,
-              options: task.options.map((opt: any, i: any) =>
-                i === index ? value : opt
-              ),
-            }
+            ...task,
+            options: task.options.map((opt: any, i: number) =>
+              i === index ? { ...opt, key: newValue } : opt
+            ),
+          }
           : task
       )
     );
   };
 
+  /** -------------------------------------------------------
+   *  REMOVE OPTION
+   *  ------------------------------------------------------- */
   const removeOption = (taskId: any, index: any) => {
     setPreventiveValue(
       "tasks",
       tasks.map((task: any) =>
         task.id === taskId
           ? {
-              ...task,
-              options: task.options.filter((_: any, i: any) => i !== index),
-            }
+            ...task,
+            options: task.options.filter((_: any, i: number) => i !== index),
+          }
           : task
       )
     );
   };
 
-  /** ────────────────────────────────────────────────
-   *  PAYLOAD BUILDER
-   *  ──────────────────────────────────────────────── */
-
-  const convertType = (type: string) => {
-    switch (type) {
-      case "Radio Button":
-        return "multipleChoice";
-      case "Check Box":
-        return "checkBox";
-      case "Text":
-        return "text";
-      case "Number":
-        return "number";
-      default:
-        return type;
-    }
-  };
-
-  const buildFinalPayload = () => {
-    return tasks.map((task: any) => ({
-      title: task.title,
-      type: convertType(task.type),
-      fieldValue: "",
-      options:
-        task.type === "Check Box"
-          ? task.options.map((opt: string) => ({
-              key: opt,
-              value: false,
-            }))
-          : task.type === "Radio Button"
-          ? task.options.map((opt: string, index: number) => ({
-              key: opt,
-              value: index,
-            }))
-          : task.options.map(() => ({
-              key: "",
-              value: false,
-            })),
-    }));
-  };
-
-  useEffect(() => {
-    console.log("tasks = ", tasks);
-    const payload = buildFinalPayload();
-    console.log("payload = ", payload);
-  }, [tasks]);
-
-  /** ────────────────────────────────────────────────
-   *  UI
-   *  ──────────────────────────────────────────────── */
+  /** -------------------------------------------------------
+   *  UI COMPONENT
+   *  ------------------------------------------------------- */
 
   return (
     <KeyboardAwareScrollView bottomOffset={30}>
@@ -166,7 +157,7 @@ const AddTasks = () => {
           <Ionicons name="add-circle" size={18} color="white" />
         </TouchableOpacity>
 
-        {/* Task Blocks */}
+        {/* Task List */}
         {tasks.map((task: any) => (
           <View key={task.id} style={styles.taskCard}>
             {/* Title */}
@@ -181,22 +172,29 @@ const AddTasks = () => {
               style={styles.input}
               placeholder="Name"
               value={task.title}
-              onChangeText={(text) => updateTask(task.id, "title", text)}
+              onChangeText={(t) => updateTask(task.id, "title", t)}
               placeholderTextColor="#94A3B8"
             />
 
-            {/* Select Type */}
+            {/* TYPE SELECT */}
             <Text style={[styles.label, { marginTop: 12 }]}>Select Type</Text>
 
             <TouchableOpacity
               style={styles.dropdown}
               onPress={() => setActiveDropdownTask(task.id)}
             >
-              <Text style={styles.dropdownText}>{task.type}</Text>
+              <Text style={styles.dropdownText}>
+                {
+                  // Convert API type back to UI name for display
+                  Object.keys(TYPE_MAP).find(
+                    (k) => TYPE_MAP[k] === task.type
+                  ) || task.type
+                }
+              </Text>
               <Ionicons name="chevron-down" size={18} color="#64748B" />
             </TouchableOpacity>
 
-            {/* Dropdown Modal */}
+            {/* DROPDOWN */}
             <Modal
               visible={activeDropdownTask === task.id}
               transparent
@@ -207,16 +205,19 @@ const AddTasks = () => {
                 onPress={() => setActiveDropdownTask(null)}
               >
                 <View style={styles.dropdownMenu}>
-                  {DROPDOWN_OPTIONS.map((option) => (
+                  {UI_TYPES.map((option) => (
                     <Pressable
                       key={option}
                       style={styles.dropdownItem}
                       onPress={() => {
-                        if (option === "Text" || option === "Number") {
-                          updateTaskMany(task.id, { type: option, options: [] });
-                        } else {
-                          updateTaskMany(task.id, { type: option });
-                        }
+                        updateTaskMany(task.id, {
+                          type: TYPE_MAP[option],
+                          options:
+                            option === "Text" || option === "Number"
+                              ? []               // no options
+                              : task.options,    // keep options
+                        });
+
                         setActiveDropdownTask(null);
                       }}
                     >
@@ -227,44 +228,47 @@ const AddTasks = () => {
               </Pressable>
             </Modal>
 
-            {/* OPTIONS (ONLY for Radio / Checkbox) */}
-            {(task.type === "Radio Button" || task.type === "Check Box") && (
-              <View style={{ marginTop: 15 }}>
-                {task?.options?.map((option: any, index: any) => (
-                  <View key={index} style={styles.optionRow}>
-                    <TextInput
-                      placeholderTextColor={"#000"}
-                      style={styles.optionInput}
-                      value={option}
-                      onChangeText={(text) => updateOption(task.id, index, text)}
-                      placeholder={`Option ${index + 1}`}
-                    />
-
-                    <TouchableOpacity
-                      onPress={() => removeOption(task.id, index)}
-                    >
-                      <Ionicons
-                        name="trash-outline"
-                        size={22}
-                        color="#4F46E5"
+            {/* OPTIONS UI */}
+            {(task.type === "multipleChoice" ||
+              task.type === "checkBox") && (
+                <View style={{ marginTop: 15 }}>
+                  {task.options.map((opt: any, index: number) => (
+                    <View key={index} style={styles.optionRow}>
+                      <TextInput
+                        placeholderTextColor={"#000"}
+                        style={styles.optionInput}
+                        value={opt.key}
+                        onChangeText={(text) =>
+                          updateOption(task.id, index, text)
+                        }
+                        placeholder={`Option ${index + 1}`}
                       />
-                    </TouchableOpacity>
-                  </View>
-                ))}
 
-                <TouchableOpacity
-                  onPress={() => addOption(task.id)}
-                  style={styles.addOptionButton}
-                >
-                  <Ionicons
-                    name="add-circle-outline"
-                    size={14}
-                    color="#4F46E5"
-                  />
-                  <Text style={styles.addOptionText}>Add Options</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+                      <TouchableOpacity
+                        onPress={() => removeOption(task.id, index)}
+                      >
+                        <Ionicons
+                          name="trash-outline"
+                          size={22}
+                          color="#4F46E5"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+
+                  <TouchableOpacity
+                    onPress={() => addOption(task.id)}
+                    style={styles.addOptionButton}
+                  >
+                    <Ionicons
+                      name="add-circle-outline"
+                      size={14}
+                      color="#4F46E5"
+                    />
+                    <Text style={styles.addOptionText}>Add Options</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
           </View>
         ))}
       </ScrollView>

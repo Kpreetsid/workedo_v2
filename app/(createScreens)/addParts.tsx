@@ -60,10 +60,11 @@ const addParts = () => {
 	};
 
 	const handleAddPart = (item: any, qty: string) => {
+		console.log('item part = ', item);
 		if (!qty || Number(qty) <= 0) return;
 
 		const partObj = {
-			id: item.id,
+			part_id: item.id,
 			part_name: item.part_name,
 			part_number: item.part_number,
 			part_type: item.part_type,
@@ -77,7 +78,7 @@ const addParts = () => {
 
 		// Add or replace
 		const updated = [
-			...oldParts.filter((p: any) => p.id !== item.id),
+			...oldParts.filter((p: any) => p.part_id !== item.id),
 			partObj,
 		];
 
@@ -89,7 +90,7 @@ const addParts = () => {
 	}, [parts])
 
 	const handleRemovePart = (id: string) => {
-		const updated = useStore.parts.filter((p: any) => p.id !== id);
+		const updated = useStore.parts.filter((p: any) => p.part_id !== id);
 		useStore[setterKey]("parts", updated);
 	};
 
@@ -100,14 +101,14 @@ const addParts = () => {
 
 				<View style={styles.selectedWrap}>
 					{selectedParts?.map((p: any) => (
-						<View key={p.id} style={styles.chip}>
+						<View key={p.part_id} style={styles.chip}>
 							<Text style={styles.chipText}>
 								{p.part_name} - {p.estimatedQuantity}
 							</Text>
 
 							<TouchableOpacity
 								style={styles.closeBtn}
-								onPress={() => handleRemovePart(p.id)}
+								onPress={() => handleRemovePart(p.part_id)}
 							>
 								<Ionicons name="close" size={12} style={styles.close} />
 							</TouchableOpacity>

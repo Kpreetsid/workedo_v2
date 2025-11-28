@@ -45,6 +45,7 @@ const FormsScreen = () => {
           store={useWorkOrderStore}
           options={forms?.map((form: any) => form.name)}
           displayKey="name"
+          required={false}
           onSelect={(val) => {
             console.log('form selected = ', val);
             setSelectedForm(forms?.find((f: any) => f.name === val))

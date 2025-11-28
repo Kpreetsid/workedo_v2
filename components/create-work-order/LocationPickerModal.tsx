@@ -6,7 +6,8 @@ import {
 	TextInput,
 	TouchableOpacity,
 	StyleSheet,
-	ScrollView
+	ScrollView,
+	ActivityIndicator
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
@@ -22,6 +23,8 @@ export default function LocationPickerModal({ comingFrom, visible, onClose }: { 
 	const [selectedId, setSelectedId] = useState<string | null>(null);   // ⭐ only 1 selected at a time
 	const [locations, setLocations] = useState<Location[]>([]);
 
+	const [loading, setLoading] = useState<boolean>(false);
+
 	const { setWorkForm } = useWorkOrderStore();
 	const { setWorkRequestForm } = useWorkRequestStore();
 	const { setPreventiveValue } = usePreventiveStore();
@@ -34,15 +37,18 @@ export default function LocationPickerModal({ comingFrom, visible, onClose }: { 
 	);
 
 	const fetchLocations = async () => {
+		setLoading(true)
 		try {
 			const res = await locationTree();
 
 			if (res.status) {
 				console.log('res locations = ', res?.data);
 				setLocations(res.data as Location[]);
+				setLoading(false)
 			}
 		} catch (err: any) {
 			console.error("Login failed:", err);
+			setLoading(false)
 		}
 	};
 
@@ -64,8 +70,9 @@ export default function LocationPickerModal({ comingFrom, visible, onClose }: { 
 			setWorkRequestForm("location", item);
 		} else if (comingFrom === "createPart") {
 			setPartFormValue("location", item);
-		} else {
+		} else if (comingFrom === "createPreventive") {
 			setPreventiveValue("location", item);
+			setPreventiveValue("selected_asset", null);
 		}
 		console.log("Selected:", item);
 	}
@@ -81,17 +88,17 @@ export default function LocationPickerModal({ comingFrom, visible, onClose }: { 
 						<TouchableOpacity onPress={() => toggleExpand(node.id)}>
 							<Ionicons
 								name={expanded[node.id] ? "chevron-down" : "chevron-forward"}
-								size={14}
+								size={18}
 								color="#333"
 							/>
 						</TouchableOpacity>
 					) : (
-						<View style={{ width: 18 }} />
+						<View style={{ width: 18, height: 18 }} />
 					)}
 
 					{/* Checkbox → replaced with single-select tick */}
 					<TouchableOpacity onPress={() => handleSelect(node)} style={{ flexDirection: "row", alignItems: "center" }}>
-						<TouchableOpacity
+						<View
 							style={styles.checkboxContainer}
 						>
 							{isSelected ? (
@@ -104,7 +111,7 @@ export default function LocationPickerModal({ comingFrom, visible, onClose }: { 
 							) : (
 								<View style={styles.checkboxOutline} />
 							)}
-						</TouchableOpacity>
+						</View>
 
 						{/* Label */}
 						<Text style={styles.nodeText}>{node.location_name}</Text>
@@ -129,6 +136,10 @@ export default function LocationPickerModal({ comingFrom, visible, onClose }: { 
 					</View>
 
 					<View style={styles.separator} />
+
+					{
+						loading && <ActivityIndicator size={"small"} />
+					}
 
 					<ScrollView showsVerticalScrollIndicator={false}>
 						{locations.map((node) => renderNode(node))}
@@ -178,7 +189,7 @@ const styles = StyleSheet.create({
 	separator: {
 		marginVertical: 12,
 		height: 1,
-		backgroundColor: "#eee"
+		// backgroundColor: "#eee"
 	},
 	nodeRow: {
 		flexDirection: "row",
@@ -188,8 +199,8 @@ const styles = StyleSheet.create({
 		marginHorizontal: 8
 	},
 	checkboxOutline: {
-		width: 16,
-		height: 16,
+		width: 18,
+		height: 18,
 		borderWidth: 1,
 		borderRadius: 4,
 		borderColor: "#656565",

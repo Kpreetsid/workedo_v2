@@ -15,25 +15,84 @@ import moment from "moment";
 import DropDownInput from "@/components/create-screens/DropDownInput";
 import Fonts from "@/constants/Typography";
 import { Ionicons } from "@expo/vector-icons";
-import { createPreventive, getSOPs } from "@/src/services/preventive.service";
+import { createPreventive, getSOPs, updatePreventive } from "@/src/services/preventive.service";
 import { FormField } from "@/components/global/FormField";
 import SkipDatesUI from "@/components/create-preventive/skipDates";
 import SkipWeekendSelector from "@/components/create-preventive/skipWeekendSelector";
+import { useLocalSearchParams } from "expo-router/build/hooks";
+import LocationPickerModal from "@/components/create-work-order/LocationPickerModal";
+import AssetPickerModal from "@/components/create-work-order/AssetPickerModal";
+
+const MODE_FIELD_MAP: Record<string, string> = {
+	daily: "everyNDays",
+	weekly: "everyNWeeks",
+	monthly: "everyNMonths",
+};
 
 export default function CreatePreventive() {
+	const params: any = useLocalSearchParams();
 	const router = useRouter();
+	const [visible, setVisible] = useState(false);
+	const [visibleAsset, setVisibleAsset] = useState(false);
 
 	const [dates, setDates] = useState<string[]>([]);
 	const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
 	const [nDays, setNDays] = useState("1");
+	const [id, setId] = useState();
 	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 	const [activeDateField, setActiveDateField] = useState<any>(null);
 
-	const { skip_dates, setPreventiveValue, resetForm } = usePreventiveStore();
+	const { skip_dates, setPreventiveValue, resetForm, isLoaded } = usePreventiveStore();
+
 	const preventiveLocation = usePreventiveStore((s) => s.location);
 	const preventiveAssets = usePreventiveStore((s) => s.selected_asset)
 	const [forms, setForms] = useState<any>([]);
+
+	useEffect(() => {
+		if (params?.data && !isLoaded) {
+			const data = JSON.parse(params.data);
+			console.log('data here in params = ', data);
+
+			// all setters here
+			setId(data?.id);
+			setPreventiveValue("title", data?.title);
+			setPreventiveValue("description", data?.description);
+			setPreventiveValue("location", data?.work_order?.location);
+			setPreventiveValue("assigned_users", data?.work_order?.users);
+			setPreventiveValue("selected_asset", data?.work_order?.asset);
+			setPreventiveValue("nature_of_work", data?.work_order?.type);
+			setPreventiveValue("completion_days", String(data?.work_order?.estimated_time ?? ""));
+			const form = forms?.find(
+				(f: any) => f.id === data?.work_order?.sop_form_id
+			);
+
+			setPreventiveValue("sop_form_id", form ? form.name : null);
+			setPreventiveValue("schedule", data?.schedule?.mode);
+			setNDays(deriveNDays(data?.schedule));
+			setPreventiveValue("start_date", data?.schedule?.start_date);
+			setPreventiveValue("end_date", data?.schedule?.end_date);
+			setPreventiveValue("no_of_repititions", data?.schedule?.no_of_repetition === null ? "" : String(data?.schedule?.no_of_repetition));
+			setPreventiveValue("skipWeekends", data?.schedule?.skipWeekends ?? false);
+			setPreventiveValue("skipWeekendSaturday", data?.schedule?.skipWeekendSaturday ?? false);
+			setPreventiveValue("skipWeekendSunday", data?.schedule?.skipWeekendSunday ?? false);
+			setPreventiveValue("skip_dates", data?.schedule?.skipDates ?? []);
+			setPreventiveValue("priority", data?.work_order?.priority ?? null);
+
+
+			setPreventiveValue("parts", data.work_order?.parts?.map((p: any) => ({
+				part_id: p.part_id,
+				part_name: p.part_name,
+				part_type: p.part_type,
+				estimatedQuantity: p.estimatedQuantity,
+			})) || []);
+
+			setPreventiveValue("tasks", data?.work_order?.tasks ?? []);
+
+			// finally mark as loaded ONCE
+			setPreventiveValue("isLoaded", true);
+		}
+	}, [params]);
 
 	useEffect(() => {
 		const fetchForms = async () => {
@@ -135,66 +194,112 @@ export default function CreatePreventive() {
 			return;
 		}
 
+		let mode: any;
+		let field: any;
+
+		if (params && params.data) {
+			console.log('init', data?.schedule)
+			mode = data?.schedule?.toLowerCase();
+			field = MODE_FIELD_MAP[mode];
+		} else {
+			console.log('init else', data?.schedule)
+			mode = data?.schedule?.toLowerCase();
+			// const mode = data?.schedule?.mode?.toLowerCase();
+			field = MODE_FIELD_MAP[mode];
+		}
+
+		console.log("mode:", mode, "field:", field);
+
+		const scheduleObject = {
+			mode: mode,
+			enabled: true,
+			no_of_repetition: data?.schedule?.no_of_repetition ? String(data.schedule.no_of_repetition) : null,
+			start_date: data.start_date,
+			end_date: data.end_date || null,
+
+			// dynamic nested block
+			[mode]: {
+				[field]: Number(nDays) || 1,
+			},
+
+			skipDates: [],
+			skipWeekendSaturday: data?.skipWeekendSaturday || false,
+			skipWeekendSunday: data?.skipWeekendSunday || false,
+			skipWeekends: data?.skipWeekends || false,
+		};
+
+		console.log(scheduleObject)
+		// return;
+
+		const workOrderObject = {
+			title: data.title.trim(),
+			description: data.description.trim(),
+			type: data.nature_of_work || "Preventive",
+			status: "Open",
+			priority: data.priority || "Low",
+			wo_location_id: data.location?.id || data.location?._id || "",
+			wo_asset_id: data.selected_asset?.id || data.selected_asset?._id || "",
+			estimated_time: Number(data.completion_days) || 0,
+			start_date: data.start_date,
+			end_date: null,
+			createdFrom: "Preventive",
+			userIdList: data.assigned_users
+				? data.assigned_users.map((user: any) => user.id || user._id)
+				: [],
+			sop_form_id: forms?.find((f: any) => f.name === data.sop_form_id)?.id,
+			parts:
+				data.parts?.map((p: any) => ({
+					part_id: p.part_id,
+					part_name: p.part_name,
+					part_type: p.part_type,
+					estimatedQuantity: 1,
+				})) || [],
+			tasks: data.tasks || [],
+		};
+
 		// ✅ Prepare payload
 		const payload = {
 			title: data.title.trim(),
 			description: data?.description?.trim(),
-
-			schedule: {
-				mode: data.schedule || "daily",
-				enabled: true,
-				no_of_repetition: data.no_of_repititions, // default (can make dynamic)
-				start_date: data.start_date,
-				end_date: data.end_date ? data.end_date : null, // can later compute based on repetition
-				[data.schedule || "daily"]: {
-					everyNDays: Number(nDays) || 1,
-				}, // dynamic key
-				skipDates: [],
-				skipWeekendSaturday: data?.skipWeekendSaturday,
-				skipWeekendSunday: data?.skipWeekendSunday,
-				skipWeekends: data?.skipWeekends,
-			},
-
-			work_order: {
-				title: data.title.trim(),
-				description: data.description.trim(),
-				type: data.nature_of_work || "Preventive",
-				status: "Open",
-				priority: data.priority || "Low",
-				wo_location_id: data.location?.id || data.location?._id || "",
-				wo_asset_id: data.selected_asset?.id || data.selected_asset?._id || "",
-				estimated_time: Number(data.completion_days) || 0,
-				start_date: data.start_date,
-				end_date: null,
-				createdFrom: "Preventive",
-				userIdList: data.assigned_users
-					? data.assigned_users.map((user: any) => user.id || user._id)
-					: [],
-				sop_form_id: forms?.find((f: any) => f.name === data.sop_form_id)?.id,
-				parts:
-					data.parts?.map((p: any) => ({
-						part_id: p.id || p._id,
-						part_name: p.part_name,
-						part_type: p.part_type,
-						estimatedQuantity: 1,
-					})) || [],
-				tasks: data.tasks || [],
-			},
+			schedule: scheduleObject,
+			work_order: workOrderObject,
 		};
 
 		console.log("📦 Final Preventive Payload:", payload);
 
 		try {
-			const res = await createPreventive(payload);
-			console.log("✅ Response:", res);
-			if (res?.status) {
-				ToastAndroid.show("Preventive created successfully!", ToastAndroid.SHORT);
-				usePreventiveStore.getState().resetForm();
+			if (params && params.data) {
+				const res = await updatePreventive(id, payload);
+				console.log("✅ Response:", res);
+				if (res?.status) {
+					ToastAndroid.show("Preventive updated successfully!", ToastAndroid.SHORT);
+					usePreventiveStore.getState().resetForm();
+					router.back();
+				}
+			} else {
+				const res = await createPreventive(payload);
+				console.log("✅ Response:", res);
+				if (res?.status) {
+					ToastAndroid.show("Preventive created successfully!", ToastAndroid.SHORT);
+					usePreventiveStore.getState().resetForm();
+					router.back();
+				}
 			}
 		} catch (error) {
 			console.error("❌ Error creating preventive:", error);
 			ToastAndroid.show("Failed to create preventive!", ToastAndroid.SHORT);
 		}
+	};
+
+	const deriveNDays = (schedule: any) => {
+		if (!schedule) return "1";
+
+		const mode = schedule?.mode;
+		const field = MODE_FIELD_MAP[mode];
+		console.log('mode = ', mode);
+		console.log('field = ', field);
+
+		return String(schedule?.[mode]?.[field] ?? "1");
 	};
 
 	const handleRemovePart = (partId: string) => {
@@ -238,6 +343,16 @@ export default function CreatePreventive() {
 					comingFrom="createPreventive"
 					store={usePreventiveStore}
 					setterName="setPreventiveValue"
+					openPicker={() => {
+						console.log('opening')
+						setVisible(true)
+					}}
+				/>
+
+				<LocationPickerModal
+					visible={visible}
+					onClose={() => setVisible(false)}
+					comingFrom="createPreventive"
 				/>
 
 				{
@@ -251,9 +366,19 @@ export default function CreatePreventive() {
 							comingFrom="createPreventive"
 							store={usePreventiveStore}
 							setterName="setPreventiveValue"
+							openPicker={() => {
+								console.log('opening asset')
+								setVisibleAsset(true)
+							}}
 						/>
 					)
 				}
+
+				<AssetPickerModal
+					visible={visibleAsset}
+					comingFrom="createPreventive"
+					onClose={() => setVisibleAsset(false)}
+				/>
 
 				{
 					preventiveLocation && preventiveAssets &&
@@ -346,7 +471,7 @@ export default function CreatePreventive() {
 							<View style={styles.partItem} key={index}>
 								<Text style={styles.partText}>{part?.part_name}</Text>
 								<Text style={styles.partText}>({part?.estimatedQuantity})</Text>
-								<Pressable onPress={() => handleRemovePart(part.id || part._id)}>
+								<Pressable onPress={() => handleRemovePart(part.part_id)}>
 									<Ionicons name="close" size={16} color="#000" />
 								</Pressable>
 							</View>
@@ -533,13 +658,14 @@ const styles = StyleSheet.create({
 	},
 	partItem: {
 		paddingHorizontal: 10,
-		backgroundColor: "#fff",
-		borderColor: "#999",
-		borderWidth: 0.2,
+		paddingVertical: 6,
+		backgroundColor: "rgba(117, 43, 223, 0.1)",
+		borderColor: "#752BDF",
+		borderWidth: StyleSheet.hairlineWidth,
+		borderRadius: 6,
 		justifyContent: "center",
 		padding: 6,
 		gap: 5,
-		borderRadius: 5,
 		display: "flex",
 		alignItems: "center",
 		flexDirection: "row",
