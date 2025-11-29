@@ -11,6 +11,7 @@ interface TabConfig {
 
 interface SegmentedPagerProps {
 	tabs: TabConfig[];
+	comingFrom?: string;
 	initialPage?: number;
 	containerStyle?: StyleProp<ViewStyle>;
 	tabStyle?: StyleProp<ViewStyle>;
@@ -21,7 +22,7 @@ interface SegmentedPagerProps {
 
 console.log("[SegmentedPager] rendering PagerView now");
 
-export default function SegmentedPager({ tabs, initialPage = 0, containerStyle, tabStyle, activeTabStyle, textStyle, activeTextStyle }: SegmentedPagerProps) {
+export default function SegmentedPager({ tabs, comingFrom, initialPage = 0, containerStyle, tabStyle, activeTabStyle, textStyle, activeTextStyle }: SegmentedPagerProps) {
 	console.log('initial page = ', initialPage)
 	const pagerRef = useRef<PagerView>(null);
 	const [activeTab, setActiveTab] = useState(initialPage);
@@ -45,15 +46,14 @@ export default function SegmentedPager({ tabs, initialPage = 0, containerStyle, 
 		setActiveTab(pos);
 	};
 
-
 	return (
 		<>
 			{/* Tabs */}
-			<View style={[styles.tabRow, containerStyle]}>
+			<View style={[styles.tabRow, containerStyle, comingFrom === "preventive" ? {height: 50} : {height: 40}]}>
 				{tabs.map((tab, index) => {
 					const isActive = index === activeTab;
 					return (
-						<Pressable key={index} style={[styles.tab, tabStyle, isActive && [styles.activeTab, activeTabStyle]]} onPress={() => handleTabPress(index)}>
+						<Pressable key={index} style={[styles.tab, comingFrom === "preventive" ? {width: '40%', height: 42} : {width: 'auto', height: 32}, tabStyle, isActive && [styles.activeTab, activeTabStyle]]} onPress={() => handleTabPress(index)}>
 							{isValidElement(tab?.icon) ? cloneElement(tab.icon, { color: isActive ? "#FFFFFF" : "#000000" }) : null}
 
 
@@ -90,7 +90,7 @@ export default function SegmentedPager({ tabs, initialPage = 0, containerStyle, 
 const styles = StyleSheet.create({
 	tabRow: {
 		flexDirection: "row",
-		backgroundColor: "#FFFFFF",
+		backgroundColor: '#fff',
 		borderRadius: 100,
 		overflow: "hidden",
 		alignSelf: "center",

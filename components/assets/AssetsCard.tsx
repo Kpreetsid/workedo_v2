@@ -1,11 +1,16 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import Fonts from '@/constants/Typography'
-import { Ionicons } from '@expo/vector-icons'
-import { Asset } from '@/src/types/asset'
-import { getSingleAssetHealthHistory } from '@/src/services/asset.service'
-import { useRouter } from 'expo-router'
-import Popover from 'react-native-popover-view'
+import { Dimensions, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native'
+import React, { useState } from 'react'
+import { Location } from '@/src/types/location';
+import { useRouter } from 'expo-router';
+import Fonts from '@/constants/Typography';
+import { useWorkOrderStore } from '@/src/store/useWorkOrderStore';
+import { useWorkRequestStore } from '@/src/store/useWorkRequestStore';
+import { usePartFormStore } from '@/src/store/usePartFormStore';
+import { usePreventiveStore } from '@/src/store/usePreventiveStore';
+import { Ionicons } from '@expo/vector-icons';
+import Popover, { PopoverMode, Rect } from 'react-native-popover-view';
+import { Asset } from '@/src/types/asset';
+import { getSingleAssetHealthHistory } from '@/src/services/asset.service';
 
 interface AssetsCardInterface {
 	asset: Asset;
@@ -13,6 +18,16 @@ interface AssetsCardInterface {
 	level?: number;
 	handleDeleteAsset?: (asset: Asset) => void;
 }
+
+const width = Dimensions.get("window").width;
+
+const COLORS: any = {
+	"Healthy": "#22C55E",
+	"Alert": "#FACC15",
+	"Danger": "#F97316",
+	"Critical": "#EF4444",
+	"Not Defined": "#fff"
+};
 
 const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: AssetsCardInterface) => {
 	const router = useRouter();
@@ -23,8 +38,14 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: As
 	const isExpanded = expandedAssetId === asset.id;
 	const hasChildren = asset.childs && asset.childs.length > 0;
 
+	const { setWorkForm } = useWorkOrderStore();
+	const { setWorkRequestForm } = useWorkRequestStore();
+	const { setPartFormValue } = usePartFormStore();
+	const { setPreventiveValue } = usePreventiveStore();
+
+
 	// useEffect(() => {
-		// calculateAssetHealth();
+	// calculateAssetHealth();
 	// }, [asset]);
 
 	const calculateAssetHealth = async () => {
@@ -45,35 +66,36 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: As
 
 	return (
 		<>
-			{/* INDENT CHILD CARDS */}
-			<Pressable
-				style={[
-					styles.assetCard,
-					// { marginTop: isChild ? 10 : 0 }
-				]}
+			<Pressable style={
+				[
+					styles.locationButton,
+					asset?.asset_status && {
+						borderLeftWidth: 8,
+						borderLeftColor: COLORS[asset?.asset_status],
+					},
+					isExpanded ? {
+						borderBottomLeftRadius: 0,
+						borderBottomRightRadius: 0,
+					} : {},
+					{ marginBottom: 20 }
+				]
+			}
 				onPress={() => {
+					console.log('in else = ', asset)
 					router.push({
 						pathname: "/assetDetail",
-						params: { id: asset.id },
+						params: { data: JSON.stringify(asset) },
 					});
 				}}
 			>
-				{/* ROW 1 */}
-				< View style={styles.cardRow} >
-
-					<View style={[styles.cardRowTexts, { width: '50%' }]}>
-						<Text style={styles.assetHeading}>Asset Name</Text>
-						<Text style={styles.assetText} numberOfLines={2}>{asset?.asset_name}</Text>
-					</View>
-
-					<View style={[styles.cardRowTexts, { width: '40%' }]}>
-						<Text style={styles.assetHeading}>Asset Type</Text>
-						<Text style={styles.assetText} numberOfLines={2}>{asset?.asset_type}</Text>
-					</View>
-
-					{/* ONLY SHOW EXPAND TOGGLE ON PARENT */}
-					<View style={[styles.cardRowIcons, { width: '10%' }]}>
-						{!isChild && hasChildren && (
+				<View style={{ flexDirection: "column", alignItems: "flex-start", justifyContent: "center" }}>
+					<View style={[
+						styles.textRow,
+						{
+							marginLeft: level * 20
+						}
+					]}>
+						{hasChildren && (
 							<Pressable
 								onPress={() => {
 									console.log('expanding')
@@ -81,115 +103,84 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: As
 								}}
 							>
 								<Ionicons
-									name={isExpanded ? "chevron-up" : "chevron-down"}
-									size={18}
+									name={isExpanded ? "chevron-down" : "chevron-forward"}
+									size={16}
 									color="black"
+									style={hasChildren ? { display: 'flex' } : (isChild ? { display: 'none' } : { display: 'flex' })}
 								/>
 							</Pressable>
 						)}
 
-						{/* <Ionicons name="ellipsis-vertical" size={18} color="black" /> */}
-						<Popover
-							popoverStyle={{ borderRadius: 15 }}
-							isVisible={openPopoverId === asset.id}
-							onRequestClose={() => setOpenPopoverId(null)}
-							from={(
-								<TouchableOpacity style={{ padding: 6 }} onPress={() => setOpenPopoverId(asset.id)}>
-									<Ionicons name="ellipsis-vertical" size={18} color="#201F23CC" />
-								</TouchableOpacity>
-							)}>
-							<View style={styles.popoverContent}>
-								{
-									[
-										{ icon: 'add', text: 'Add' },
-										{ icon: 'pencil', text: 'Edit' },
-										{ icon: 'copy', text: 'Copy' },
-										{ icon: 'trash', text: 'Delete' }
-									].map((option, index) => {
-										return (
-											<Pressable
-												style={styles.popoverItem}
-												key={index}
-												onPress={async () => {
-													if (index === 0) {
-														router.push({
-															pathname: "/createAsset",
-															params: {
-																asset_data: JSON.stringify(asset),
-																mode: 'child',
-																isEdit: 'false'
-															},
-														});
-													} else if (index === 1) {
-														router.push({
-															pathname: "/createAsset",
-															params: {
-																asset_data: JSON.stringify(asset),
-																isEdit: 'true'
-															},
-														});
-													} else if (index === 3) {
-														console.log('in it delete = ', asset);
-														handleDeleteAsset?.(asset);
-													}
-													setOpenPopoverId(null)
-												}}
-											>
-												<View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'flex-start' }}>
-													<Ionicons name={option.icon as any} size={16} color="#71717A" />
-
-													<Text style={{ color: "#71717A", fontFamily: Fonts.regular }}>
-														{option.text}
-													</Text>
-
-													{/* {
-														(deleteLoading && index === 3) && <ActivityIndicator size={"small"} color={"#71717A"} />
-													} */}
-												</View>
-											</Pressable>
-										);
-									})
-								}
-							</View>
-						</Popover>
-
-						{/* {!isChild && hasChildren && (
-							<Ionicons
-								name={isExpanded ? "chevron-up" : "chevron-down"}
-								size={18}
-								color="black"
-							/>
-						)} */}
-					</View >
-
-				</View >
-
-				{/* ROW 2 - Asset Health */}
-				< View style={styles.cardRow} >
-					<View style={styles.cardRowTexts}>
-						<Text style={styles.assetHeading}>Asset Health</Text>
-						<Text style={styles.assetText}>{(asset?.asset_status || assetHealth?.assetHealth) ?? "N/A"}</Text>
-						{/* <Text style={styles.assetText}>{assetHealth?.assetHealth ?? "N/A"}</Text> */}
+						<Text style={styles.locationText}>{asset.asset_name}</Text>
 					</View>
+
 				</View>
 
-				{/* ROW 3 - Location */}
-				< View style={styles.cardRow} >
-					<View style={styles.cardRowTexts}>
-						<Text style={styles.assetHeading}>Location Name</Text>
-						<Text style={styles.assetText}>{asset?.locationData?.location_name}</Text>
-					</View>
-				</View>
+				<Popover
+					popoverStyle={{ borderRadius: 15 }}
+					isVisible={openPopoverId === asset.id}
+					onRequestClose={() => setOpenPopoverId(null)}
+					from={(
+						<TouchableOpacity style={{ padding: 6 }} onPress={() => setOpenPopoverId(asset.id)}>
+							<Ionicons name="ellipsis-vertical" size={18} color="#201F23CC" />
+						</TouchableOpacity>
+					)}
+				>
+					<View style={styles.popoverContent}>
+						{
+							[
+								{ icon: 'add', text: 'Add' },
+								// { icon: 'pencil', text: 'Edit' },
+								{ icon: 'copy', text: 'Copy' },
+								{ icon: 'trash', text: 'Delete' }
+							].map((option, index) => {
+								return (
+									<Pressable
+										style={styles.popoverItem}
+										key={index}
+										onPress={async () => {
+											if (index === 0) {
+												router.push({
+													pathname: "/createLocation",
+													params: {
+														location_data: JSON.stringify(asset),
+														mode: 'child',
+														isEdit: 'false'
+													},
+												});
+											} else if (index === 1) {
+												// router.push({
+												// 	pathname: "/createLocation",
+												// 	params: {
+												// 		location_data: JSON.stringify(asset),
+												// 		isEdit: 'true'
+												// 	},
+												// });
+											} else if (index === 2) {
+												handleDeleteAsset?.(asset)
+											}
+											setOpenPopoverId(null)
+										}}
+									>
+										<View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'flex-start' }}>
+											<Ionicons name={option.icon as any} size={16} color="#71717A" />
 
-				{/* ROW 4 - Assign To */}
-				< View style={styles.cardRow} >
-					<View style={styles.cardRowTexts}>
-						<Text style={styles.assetHeading}>Assign To</Text>
-						<Text style={styles.assetText} numberOfLines={2}>Atul, Aman, Kamal, Parwez</Text>
-					</View>
-				</View>
+											<Text style={{ color: "#71717A", fontFamily: Fonts.regular }}>
+												{option.text}
+											</Text>
 
-			</Pressable >
+											{/* {
+											(deleteLoading && index === 3) && <ActivityIndicator size={"small"} color={"#71717A"} />
+										} */}
+										</View>
+									</Pressable>
+								);
+							})
+						}
+					</View>
+				</Popover>
+			</Pressable>
+
 
 			{/* RECURSIVE CHILDREN */}
 			{
@@ -214,39 +205,79 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: As
 export default AssetsCard
 
 const styles = StyleSheet.create({
-	assetHeading: {
-		fontSize: 10,
-		fontFamily: Fonts.regular,
-		color: "#201F23",
+
+	locationButton: {
+		backgroundColor: "#fff",
+		// borderWidth: 0.6,
+		borderRadius: 7,
+		height: 50,
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		paddingHorizontal: 20,
 	},
-	assetText: {
-		fontSize: 12,
+	textRow: {
+		flexDirection: "row",
+		gap: 5,
+		alignItems: "center",
+	},
+	childContainer: {
+		backgroundColor: "#fff",
+		paddingLeft: 40,
+		paddingBottom: 10,
+		borderBottomLeftRadius: 7,
+		borderBottomRightRadius: 7,
+	},
+	childButton: {
+		paddingVertical: 5,
+	},
+	childText: {
+		fontSize: 10,
+		color: "#555",
+		fontFamily: Fonts.regular,
+	},
+	childLabel: {
+		marginTop: 3,
+		fontSize: 10,
+		color: "#201F23",
+		fontFamily: Fonts.light,
+	},
+	locationText: {
+		fontSize: 11,
 		fontFamily: Fonts.semiBold,
 		color: "#201F23",
+		lineHeight: 20
 	},
-	assetCard: {
-		backgroundColor: '#fff',
-		minHeight: 200,
-		padding: 16,
-		borderWidth: 1,
-		borderColor: '#D9D9D9',
-		borderRadius: 12,
-		flexDirection: 'column',
-		marginBottom: 10,
-		gap: 15
+	actionButton: {
+		position: "absolute",
+		width: width - 50,
+		bottom: 0,
+		alignSelf: "center",
 	},
-	cardRow: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'center',
+
+	/* Add Task Button */
+	buttonContainer: {
+		marginTop: 5,
+		alignSelf: "flex-start",
+		flexDirection: "row",
+		alignItems: "center",
+		backgroundColor: "#742BDE",
+		justifyContent: "center",
+		gap: 5,
+		paddingHorizontal: 12,
+		paddingVertical: 5,
+		borderRadius: 5,
+		elevation: 5,
+		shadowColor: "rgba(116, 43, 222, 0.80)",
+		shadowOffset: { width: 2, height: 2 },
+		shadowOpacity: 0.60,
+		shadowRadius: 2,
 	},
-	cardRowTexts: {
-		flexDirection: 'column',
-		alignItems: 'flex-start',
-	},
-	cardRowIcons: {
-		flexDirection: 'row',
-		alignItems: 'center',
+	buttonText: {
+		fontSize: 10,
+		fontFamily: Fonts.regular,
+		color: "#FFFFFF",
+		lineHeight: 20,
 	},
 	popoverContent: {
 		borderRadius: 20,

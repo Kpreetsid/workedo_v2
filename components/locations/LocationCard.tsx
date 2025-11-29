@@ -97,7 +97,7 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 							>
 								<Ionicons
 									name={isExpanded ? "chevron-down" : "chevron-forward"}
-									size={14}
+									size={16}
 									color="black"
 									style={hasChildren ? { display: 'flex' } : (isChild ? { display: 'none' } : { display: 'flex' })}
 								/>
@@ -123,7 +123,7 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 						{
 							[
 								{ icon: 'add', text: 'Add' },
-								{ icon: 'pencil', text: 'Edit' },
+								// { icon: 'pencil', text: 'Edit' },
 								{ icon: 'copy', text: 'Copy' },
 								{ icon: 'trash', text: 'Delete' }
 							].map((option, index) => {
@@ -142,14 +142,14 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 													},
 												});
 											} else if (index === 1) {
-												router.push({
-													pathname: "/createLocation",
-													params: {
-														location_data: JSON.stringify(item),
-														isEdit: 'true'
-													},
-												});
-											} else if (index === 3) {
+												// router.push({
+												// 	pathname: "/createLocation",
+												// 	params: {
+												// 		location_data: JSON.stringify(item),
+												// 		isEdit: 'true'
+												// 	},
+												// });
+											} else if (index === 2) {
 												handleDeleteLocation?.(item)
 											}
 											setOpenPopoverId(null)

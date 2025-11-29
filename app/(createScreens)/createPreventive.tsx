@@ -22,6 +22,8 @@ import SkipWeekendSelector from "@/components/create-preventive/skipWeekendSelec
 import { useLocalSearchParams } from "expo-router/build/hooks";
 import LocationPickerModal from "@/components/create-work-order/LocationPickerModal";
 import AssetPickerModal from "@/components/create-work-order/AssetPickerModal";
+import WeekDays from "@/components/create-preventive/weekDaysComponent";
+import MonthDays from "@/components/create-preventive/monthDaysComponent";
 
 const MODE_FIELD_MAP: Record<string, string> = {
 	daily: "everyNDays",
@@ -29,8 +31,22 @@ const MODE_FIELD_MAP: Record<string, string> = {
 	monthly: "everyNMonths",
 };
 
+const weekdayNames = [
+	"sunday",
+	"monday",
+	"tuesday",
+	"wednesday",
+	"thursday",
+	"friday",
+	"saturday",
+];
+
 export default function CreatePreventive() {
 	const params: any = useLocalSearchParams();
+	console.log('params = ', params);
+
+	const comingFrom = params?.comingFrom;
+
 	const router = useRouter();
 	const [visible, setVisible] = useState(false);
 	const [visibleAsset, setVisibleAsset] = useState(false);
@@ -47,7 +63,28 @@ export default function CreatePreventive() {
 
 	const preventiveLocation = usePreventiveStore((s) => s.location);
 	const preventiveAssets = usePreventiveStore((s) => s.selected_asset)
+	const schedule = usePreventiveStore((s) => s.schedule);
+
 	const [forms, setForms] = useState<any>([]);
+
+	const [selectedWeekDays, setSelectedWeekDays] = useState<number[]>([]);
+	const [selectedMonthDays, setSelectedMonthDays] = useState<number[]>([]);
+
+	const toggleWeekDay = (index: number) => {
+		setSelectedWeekDays(prev =>
+			prev.includes(index)
+				? prev.filter(i => i !== index)
+				: [...prev, index]
+		);
+	};
+
+	const toggleMonthDay = (num: number) => {
+		setSelectedMonthDays(prev =>
+			prev.includes(num)
+				? prev.filter(i => i !== num)
+				: [...prev, num]
+		);
+	};
 
 	useEffect(() => {
 		if (params?.data && !isLoaded) {
@@ -91,6 +128,34 @@ export default function CreatePreventive() {
 
 			// finally mark as loaded ONCE
 			setPreventiveValue("isLoaded", true);
+
+
+			// WEEKLY — convert weekday names to indices
+			if (data?.schedule?.mode === "weekly") {
+				const weekdayNames = [
+					"sunday",
+					"monday",
+					"tuesday",
+					"wednesday",
+					"thursday",
+					"friday",
+					"saturday",
+				];
+
+				const weekDayIndices =
+					data?.schedule?.weekly?.days?.map(
+						(day: string) => weekdayNames.indexOf(day.toLowerCase())
+					) || [];
+
+				setSelectedWeekDays(weekDayIndices);
+			}
+
+			// MONTHLY — numbers directly
+			if (data?.schedule?.mode === "monthly") {
+				const monthDays = data?.schedule?.monthly?.monthDays || [];
+				setSelectedMonthDays(monthDays);
+			}
+
 		}
 	}, [params]);
 
@@ -194,6 +259,14 @@ export default function CreatePreventive() {
 			return;
 		}
 
+		console.log("tasks =", data?.tasks);
+		const invalid = data?.tasks.some((task: any) => !task?.title);
+
+		if (invalid) {
+			ToastAndroid.show("Task title is required", ToastAndroid.SHORT);
+			return;
+		}
+
 		let mode: any;
 		let field: any;
 
@@ -210,7 +283,7 @@ export default function CreatePreventive() {
 
 		console.log("mode:", mode, "field:", field);
 
-		const scheduleObject = {
+		let scheduleObject: any = {
 			mode: mode,
 			enabled: true,
 			no_of_repetition: data?.schedule?.no_of_repetition ? String(data.schedule.no_of_repetition) : null,
@@ -228,8 +301,20 @@ export default function CreatePreventive() {
 			skipWeekends: data?.skipWeekends || false,
 		};
 
+
+		if (mode === "weekly" && scheduleObject[mode]) {
+			scheduleObject[mode] = {
+				...scheduleObject[mode],
+				days: selectedWeekDays.map((i) => weekdayNames[i]),
+			};
+		}
+
+
+		if (mode === "monthly" && scheduleObject[mode]) {
+			scheduleObject[mode].days = selectedMonthDays;
+		}
+
 		console.log(scheduleObject)
-		// return;
 
 		const workOrderObject = {
 			title: data.title.trim(),
@@ -282,6 +367,10 @@ export default function CreatePreventive() {
 				if (res?.status) {
 					ToastAndroid.show("Preventive created successfully!", ToastAndroid.SHORT);
 					usePreventiveStore.getState().resetForm();
+					if (comingFrom === "overview") {
+						router.replace("/preventive");
+						return;
+					}
 					router.back();
 				}
 			}
@@ -521,9 +610,27 @@ export default function CreatePreventive() {
 							onChangeText={setNDays}
 						/>
 
-						<Text style={styles.label1}>day(s)</Text>
+						<Text style={styles.label1}>
+							{schedule === "Weekly"
+								? "week(s)"
+								: schedule === "Monthly"
+									? "month(s)"
+									: "day(s)"}
+						</Text>
 					</View>
+
+					{(schedule === "weekly" || schedule === "Weekly") && (
+						<WeekDays selected={selectedWeekDays} onToggle={toggleWeekDay} />
+					)}
+
+					{(schedule === "monthly" || schedule === "Monthly") && (
+						<MonthDays selected={selectedMonthDays} onToggle={toggleMonthDay} />
+					)}
 				</View>
+
+
+
+
 
 
 				<View style={styles.labelContainer}>

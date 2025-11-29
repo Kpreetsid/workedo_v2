@@ -16,6 +16,7 @@ import { locationTree, mapUserToLocation } from '@/src/services/location.service
 import { Location } from '@/src/types/location'
 import { useGlobalStore } from '@/src/store/useGlobal'
 import { Asset } from '@/src/types/asset'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 interface createAssetParams {
 	asset_data: Asset;
@@ -25,6 +26,7 @@ interface createAssetParams {
 
 const createAsset = () => {
 	const router = useRouter();
+	const insets = useSafeAreaInsets();
 	const { asset_data, isEdit, mode } = useLocalSearchParams();
 	const parentLocations = useGlobalStore((state) => state.locationsTree);
 	console.log('parentLocations = ', parentLocations);
@@ -227,7 +229,7 @@ const createAsset = () => {
 					options={["Fan_Blower", "Pumps", "Gearbox", "Compressor", "Chillers", "CNC", "Motor", "Other"]}
 					store={useCreateAssetStore}
 					setterName="setCreateAssetValue"
-          			styles={{ paddingHorizontal: 25 }}
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -238,7 +240,7 @@ const createAsset = () => {
 					options={timezones}
 					store={useCreateAssetStore}
 					setterName="setCreateAssetValue"
-          			styles={{ paddingHorizontal: 25 }}
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				{
@@ -396,7 +398,7 @@ const createAsset = () => {
 					setterName="setCreateAssetValue"
 				/>
 
-				<TouchableOpacity style={styles.createBtn} onPress={handleCreateAsset}>
+				<TouchableOpacity style={[styles.createBtn, { marginBottom: insets.bottom + 20 }]} onPress={handleCreateAsset}>
 					<Text style={styles.createBtnText}>
 						{
 							data?.isEdit === "true" ? "Update Asset" : "Create Asset"

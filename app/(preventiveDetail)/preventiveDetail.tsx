@@ -1,6 +1,6 @@
 import Header from "@/components/global/Header";
 import { useLocalSearchParams } from "expo-router";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import Fonts from "@/constants/Typography";
 import { AssignUserRightIcon } from "@/constants/IconProvider";
 import { useEffect, useState } from "react";
@@ -9,19 +9,11 @@ import PartsInfoModal from "@/components/work-order-detail/PartsInfoModal";
 import MoreInfoModal from "@/components/work-order-detail/MoreInfoModal";
 import { endpoints } from "@/src/api/endpoints";
 import moment from "moment";
-import { toggleWorkOrderStatus } from "@/src/services/preventive.service";
+import { getSOPs, toggleWorkOrderStatus } from "@/src/services/preventive.service";
+import SegmentedPager from "@/components/global/SegmentPager";
+import PreventiveDetails from "./Preventive-details";
+import PreventiveForm from "./Preventive-form";
 
-const mockUsers = [
-	{ id: "1", name: "Alice Johnson", avatar: "https://randomuser.me/api/portraits/women/1.jpg" },
-	{ id: "2", name: "Michael Smith", avatar: "https://randomuser.me/api/portraits/men/2.jpg" },
-	{ id: "3", name: "Sophia Brown", avatar: "https://randomuser.me/api/portraits/women/3.jpg" },
-	{ id: "4", name: "James Wilson", avatar: "https://randomuser.me/api/portraits/men/4.jpg" },
-	{ id: "5", name: "Emily Davis", avatar: "https://randomuser.me/api/portraits/women/5.jpg" },
-];
-const parts = [
-	{ id: "1", name: "ARM microcontrollers MCU Ultra-low power FPU Arm", quantity: 1 },
-	{ id: "2", name: "Accelerometers tri-axis acclrmtr 8g, 16g, 32g", quantity: 4 },
-];
 export default function PreventiveDetail() {
 	const params: any = useLocalSearchParams();
 	let item = JSON.parse(params?.data);
@@ -48,7 +40,7 @@ export default function PreventiveDetail() {
 		}
 	}
 
-	useEffect(()=>{
+	useEffect(() => {
 		console.log('preventive details = ', preventiveDetails);
 	}, [preventiveDetails])
 
@@ -56,7 +48,24 @@ export default function PreventiveDetail() {
 		<View style={{ backgroundColor: "#F5F7FA", flex: 1 }}>
 			<Header title="Preventive Details" />
 
-			<View style={styles.header}>
+			<SegmentedPager
+				comingFrom="preventive"
+				tabs={[
+					{
+						label: "Preventive Details",
+						component: () => <PreventiveDetails item={preventiveDetails} />,
+					},
+					{
+						label: "Forms",
+						component: () => <PreventiveForm item={preventiveDetails} />,
+					},
+				]}
+			/>
+
+
+
+
+			{/* <View style={styles.header}>
 				<Text style={styles.woType}>Preventive</Text>
 				<Text style={styles.woTitle}>{preventiveDetails.title}</Text>
 			</View>
@@ -111,7 +120,6 @@ export default function PreventiveDetail() {
 					</View>
 				</View>
 
-				{/* Location */}
 				<Pressable style={styles.card} onPress={() => setMoreInfoModalVisible(true)}>
 					<View style={styles.rowBetween}>
 						<Text style={styles.cardTitle}>Location</Text>
@@ -119,7 +127,6 @@ export default function PreventiveDetail() {
 					</View>
 				</Pressable>
 
-				{/* Asset */}
 				<Pressable style={styles.card}>
 					<View style={styles.rowBetween}>
 						<Text style={styles.cardTitle}>Asset</Text>
@@ -130,7 +137,6 @@ export default function PreventiveDetail() {
 					</View>
 				</Pressable>
 
-				{/* More Info */}
 				<Pressable style={styles.card} onPress={() => setMoreInfoModalVisible(true)}>
 					<View style={styles.rowBetween}>
 						<Text style={styles.cardTitle}>More Info</Text>
@@ -138,7 +144,6 @@ export default function PreventiveDetail() {
 					</View>
 				</Pressable>
 
-				{/* Parts Section */}
 				<Pressable style={styles.card} onPress={() => setPartsModalVisible(true)}>
 					<View style={styles.rowBetween}>
 						<Text style={styles.cardTitle}>Parts</Text>
@@ -151,7 +156,6 @@ export default function PreventiveDetail() {
 			</View>
 
 			<View style={styles.detailContainer}>
-				{/* Description Section */}
 				<Text style={styles.cardTitle}>Description</Text>
 				<Text style={styles.description}>
 					{preventiveDetails?.work_order?.description || "No description available."}
@@ -166,7 +170,7 @@ export default function PreventiveDetail() {
 			<PartsInfoModal visible={partsModalVisible} onClose={() => setPartsModalVisible(false)} parts={preventiveDetails?.work_order?.parts} />
 
 			<MoreInfoModal visible={moreInfoModalVisible} onClose={() => setMoreInfoModalVisible(false)}
-				estimatedTime={preventiveDetails?.work_order?.estimated_time} requestedBy={preventiveDetails?.createdBy?.firstName + " " + preventiveDetails?.createdBy?.lastName} createdOn={moment(preventiveDetails?.work_order?.createdAt).format("MMM DD, YYYY")} />
+				estimatedTime={preventiveDetails?.work_order?.estimated_time} requestedBy={preventiveDetails?.createdBy?.firstName + " " + preventiveDetails?.createdBy?.lastName} createdOn={moment(preventiveDetails?.work_order?.createdAt).format("MMM DD, YYYY")} /> */}
 		</View>
 	)
 }

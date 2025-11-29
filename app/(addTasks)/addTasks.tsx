@@ -14,6 +14,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Header from "@/components/global/Header";
 import { usePreventiveStore } from "@/src/store/usePreventiveStore";
+import ActionButton from "@/components/auth-screens/ActionButton";
+import { useRouter } from "expo-router";
 
 
 const UI_TYPES = ["Radio Button", "Text", "Number", "Check Box"];
@@ -26,6 +28,7 @@ const TYPE_MAP: Record<string, string> = {
 };
 
 const AddTasks = () => {
+  const router = useRouter();
   const tasks = usePreventiveStore((s) => s.tasks);
   const setPreventiveValue = usePreventiveStore((s) => s.setPreventiveValue);
 
@@ -147,132 +150,141 @@ const AddTasks = () => {
    *  ------------------------------------------------------- */
 
   return (
-    <KeyboardAwareScrollView bottomOffset={30}>
-      <Header title="Add Tasks" />
+    <>
+      <KeyboardAwareScrollView bottomOffset={30} style={{
+        flex: 1,
+      }}>
+        <Header title="Add Tasks" />
 
-      <ScrollView style={styles.taskContainer}>
-        {/* Add Task */}
-        <TouchableOpacity style={styles.buttonContainer} onPress={addTask}>
-          <Text style={styles.buttonText}>Add Task</Text>
-          <Ionicons name="add-circle" size={18} color="white" />
-        </TouchableOpacity>
+        <ScrollView style={styles.taskContainer}>
+          {/* Add Task */}
+          <TouchableOpacity style={styles.buttonContainer} onPress={addTask}>
+            <Text style={styles.buttonText}>Add Task</Text>
+            <Ionicons name="add-circle" size={18} color="white" />
+          </TouchableOpacity>
 
-        {/* Task List */}
-        {tasks.map((task: any) => (
-          <View key={task.id} style={styles.taskCard}>
-            {/* Title */}
-            <View style={styles.rowBetween}>
-              <Text style={styles.label}>Title</Text>
-              <TouchableOpacity onPress={() => removeTask(task.id)}>
-                <Ionicons name="trash" size={20} color="#818181" />
-              </TouchableOpacity>
-            </View>
+          {/* Task List */}
+          {tasks.map((task: any) => (
+            <View key={task.id} style={styles.taskCard}>
+              {/* Title */}
+              <View style={styles.rowBetween}>
+                <Text style={styles.label}>Title</Text>
+                <TouchableOpacity onPress={() => removeTask(task.id)}>
+                  <Ionicons name="trash" size={20} color="#818181" />
+                </TouchableOpacity>
+              </View>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Name"
-              value={task.title}
-              onChangeText={(t) => updateTask(task.id, "title", t)}
-              placeholderTextColor="#94A3B8"
-            />
+              <TextInput
+                style={styles.input}
+                placeholder="Name"
+                value={task.title}
+                onChangeText={(t) => updateTask(task.id, "title", t)}
+                placeholderTextColor="#94A3B8"
+              />
 
-            {/* TYPE SELECT */}
-            <Text style={[styles.label, { marginTop: 12 }]}>Select Type</Text>
+              {/* TYPE SELECT */}
+              <Text style={[styles.label, { marginTop: 12 }]}>Select Type</Text>
 
-            <TouchableOpacity
-              style={styles.dropdown}
-              onPress={() => setActiveDropdownTask(task.id)}
-            >
-              <Text style={styles.dropdownText}>
-                {
-                  // Convert API type back to UI name for display
-                  Object.keys(TYPE_MAP).find(
-                    (k) => TYPE_MAP[k] === task.type
-                  ) || task.type
-                }
-              </Text>
-              <Ionicons name="chevron-down" size={18} color="#64748B" />
-            </TouchableOpacity>
-
-            {/* DROPDOWN */}
-            <Modal
-              visible={activeDropdownTask === task.id}
-              transparent
-              animationType="fade"
-            >
-              <Pressable
-                style={styles.modalOverlay}
-                onPress={() => setActiveDropdownTask(null)}
+              <TouchableOpacity
+                style={styles.dropdown}
+                onPress={() => setActiveDropdownTask(task.id)}
               >
-                <View style={styles.dropdownMenu}>
-                  {UI_TYPES.map((option) => (
-                    <Pressable
-                      key={option}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        updateTaskMany(task.id, {
-                          type: TYPE_MAP[option],
-                          options:
-                            option === "Text" || option === "Number"
-                              ? []               // no options
-                              : task.options,    // keep options
-                        });
+                <Text style={styles.dropdownText}>
+                  {
+                    // Convert API type back to UI name for display
+                    Object.keys(TYPE_MAP).find(
+                      (k) => TYPE_MAP[k] === task.type
+                    ) || task.type
+                  }
+                </Text>
+                <Ionicons name="chevron-down" size={18} color="#64748B" />
+              </TouchableOpacity>
 
-                        setActiveDropdownTask(null);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{option}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </Pressable>
-            </Modal>
+              {/* DROPDOWN */}
+              <Modal
+                visible={activeDropdownTask === task.id}
+                transparent
+                animationType="fade"
+              >
+                <Pressable
+                  style={styles.modalOverlay}
+                  onPress={() => setActiveDropdownTask(null)}
+                >
+                  <View style={styles.dropdownMenu}>
+                    {UI_TYPES.map((option) => (
+                      <Pressable
+                        key={option}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          updateTaskMany(task.id, {
+                            type: TYPE_MAP[option],
+                            options:
+                              option === "Text" || option === "Number"
+                                ? []               // no options
+                                : task.options,    // keep options
+                          });
 
-            {/* OPTIONS UI */}
-            {(task.type === "multipleChoice" ||
-              task.type === "checkBox") && (
-                <View style={{ marginTop: 15 }}>
-                  {task.options.map((opt: any, index: number) => (
-                    <View key={index} style={styles.optionRow}>
-                      <TextInput
-                        placeholderTextColor={"#000"}
-                        style={styles.optionInput}
-                        value={opt.key}
-                        onChangeText={(text) =>
-                          updateOption(task.id, index, text)
-                        }
-                        placeholder={`Option ${index + 1}`}
-                      />
-
-                      <TouchableOpacity
-                        onPress={() => removeOption(task.id, index)}
+                          setActiveDropdownTask(null);
+                        }}
                       >
-                        <Ionicons
-                          name="trash-outline"
-                          size={22}
-                          color="#4F46E5"
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
+                        <Text style={styles.dropdownItemText}>{option}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </Pressable>
+              </Modal>
 
-                  <TouchableOpacity
-                    onPress={() => addOption(task.id)}
-                    style={styles.addOptionButton}
-                  >
-                    <Ionicons
-                      name="add-circle-outline"
-                      size={14}
-                      color="#4F46E5"
-                    />
-                    <Text style={styles.addOptionText}>Add Options</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-          </View>
-        ))}
-      </ScrollView>
-    </KeyboardAwareScrollView>
+              {/* OPTIONS UI */}
+              {(task.type === "multipleChoice" ||
+                task.type === "checkBox") && (
+                  <View style={{ marginTop: 15 }}>
+                    {task.options.map((opt: any, index: number) => (
+                      <View key={index} style={styles.optionRow}>
+                        <TextInput
+                          placeholderTextColor={"#000"}
+                          style={styles.optionInput}
+                          value={opt.key}
+                          onChangeText={(text) =>
+                            updateOption(task.id, index, text)
+                          }
+                          placeholder={`Option ${index + 1}`}
+                        />
+
+                        <TouchableOpacity
+                          onPress={() => removeOption(task.id, index)}
+                        >
+                          <Ionicons
+                            name="trash-outline"
+                            size={22}
+                            color="#4F46E5"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+
+                    <TouchableOpacity
+                      onPress={() => addOption(task.id)}
+                      style={styles.addOptionButton}
+                    >
+                      <Ionicons
+                        name="add-circle-outline"
+                        size={14}
+                        color="#4F46E5"
+                      />
+                      <Text style={styles.addOptionText}>Add Options</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+            </View>
+          ))}
+        </ScrollView>
+
+      </KeyboardAwareScrollView>
+
+      <View style={styles.btnContainer}>
+        <ActionButton label="Submit" onPress={() => router.back()} />
+      </View>
+    </>
   );
 };
 
@@ -414,5 +426,10 @@ const styles = StyleSheet.create({
     color: "#4F46E5",
     fontFamily: Fonts.medium,
     fontSize: 12,
+  },
+  btnContainer: {
+    marginHorizontal: 20,
+    marginBottom: 40,
+    paddingVertical: 10,
   },
 });

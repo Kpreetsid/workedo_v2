@@ -21,7 +21,10 @@ export default function Overview() {
 
 	const onSelect = (option: string) => {
 		option === "parts" && router.push("/createPart");
-		option === "preventive" && router.push("/createPreventive");
+		option === "preventive" && router.push({
+			pathname: "/createPreventive",
+			params: {comingFrom: "overview"}
+		});
 		setCreateAlertBoxVisible(false);
 	}
 

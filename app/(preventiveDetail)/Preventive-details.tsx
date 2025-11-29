@@ -1,0 +1,175 @@
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import React from 'react'
+import Fonts from '@/constants/Typography';
+import { Preventive } from '@/src/types/preventive';
+import ActionButton from '@/components/auth-screens/ActionButton';
+import { useRouter } from 'expo-router';
+
+
+const InfoField = ({ label, value }: { label: string; value: string }) => (
+  <View style={styles.infoBlock}>
+    <Text style={styles.label}>{label}</Text>
+    <View style={styles.inputBox}>
+      <Text style={styles.inputText}>{value || "--"}</Text>
+    </View>
+  </View>
+);
+
+const PreventiveDetails = ({ item }: { item: Preventive | any }) => {
+  const router = useRouter();
+
+  return (
+    <>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 30 }}>
+        {/* TOP GRID */}
+        <View style={styles.row}>
+          <InfoField label="Mode" value={item?.schedule?.mode} />
+          <InfoField label="Schedule Status" value={item?.schedule?.enabled ? "Active" : "Inactive"} />
+        </View>
+
+        <View style={styles.row}>
+          <InfoField label="Part Type" value="Spare 1" />
+          <InfoField label="Start Date" value={item?.schedule?.start_date} />
+        </View>
+
+        <View style={styles.row}>
+          <InfoField label="No. of Repetition" value={item?.schedule?.no_of_repetition} />
+          <InfoField label="Last Executed On" value={item?.schedule?.last_executed_on} />
+        </View>
+
+        {/* SECTION HEADER */}
+        <Text style={styles.sectionTitle}>Work Order Details :</Text>
+
+        {/* WORK ORDER GRID */}
+        <View style={styles.row}>
+          <InfoField label="Title" value={item?.work_order?.title} />
+          <InfoField label="Location Name" value={item?.work_order?.location?.location_name} />
+        </View>
+
+        <View style={styles.row}>
+          <InfoField label="Location Type" value={item?.work_order?.location?.location_type} />
+          <InfoField label="Asset Name" value={item?.work_order?.asset?.asset_name} />
+        </View>
+
+        <View style={styles.row}>
+          <InfoField label="Asset Type" value={item?.work_order?.asset?.asset_type} />
+          <InfoField label="Problem Type" value={item?.work_order?.type} />
+        </View>
+
+        <View style={styles.row}>
+          <InfoField label="Priority" value={item?.work_order?.priority} />
+          <InfoField label="Status" value={item?.work_order?.status} />
+        </View>
+
+        <View style={styles.row}>
+          <InfoField label="Updated On" value={item?.work_order?.updatedAt} />
+          <InfoField label="Created On" value={item?.work_order?.createdAt} />
+        </View>
+
+        {/* ASSIGN TO */}
+        <View style={[styles.infoBlock, { width: '100%' }]}>
+          <Text style={styles.label}>Assign To</Text>
+          <View style={styles.tagsRow}>
+            {item?.work_order?.users?.map((user: any) => (
+              <View key={user?.id} style={styles.tag}>
+                <Text style={styles.tagText}>{user?.firstName + " " + user?.lastName}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* FOOTER TEXTAREA */}
+        <View style={[styles.infoBlock, { width: '100%' }]}>
+          <Text style={styles.label}>Description</Text>
+          <View style={[styles.inputBox, { height: 90 }]}>
+            <Text style={styles.inputText}>{item?.description}</Text>
+          </View>
+        </View>
+      </ScrollView>
+
+      <View style={styles.btnContainer}>
+        <ActionButton label="Submit" onPress={() => router.back()} />
+      </View>
+    </>
+  );
+};
+
+export default PreventiveDetails
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F3F5F8",
+    padding: 20,
+  },
+
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+
+  infoBlock: {
+    width: "48%",
+    marginBottom: 16,
+  },
+
+  label: {
+    fontSize: 12,
+    color: "#201F23",
+    marginBottom: 5,
+    fontFamily: Fonts.semiBold
+  },
+
+  inputBox: {
+    backgroundColor: "#fff",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#E2E5E9",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    justifyContent: "center",
+  },
+
+  inputText: {
+    color: "#201F23",
+    fontSize: 12,
+    fontFamily: Fonts.regular
+  },
+
+  sectionTitle: {
+    fontSize: 14,
+    fontFamily: Fonts.semiBold,
+    marginVertical: 15,
+    color: "#222",
+  },
+
+  tagsRow: {
+    width: '100%',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: "#fff",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#E2E5E9",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+
+  tag: {
+    backgroundColor: "#E7ECF7",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+
+  tagText: {
+    fontSize: 13,
+    color: "#333",
+  },
+  btnContainer: {
+    marginHorizontal: 20,
+    marginBottom: 40,
+    paddingVertical: 10,
+  },
+});

@@ -238,6 +238,10 @@ export default function AssetsTab({
 		await fetchAssets();    // 🔥 reload normally
 	};
 
+	useEffect(()=>{
+		console.log('filteredAssets final = ', filteredAssets)
+	}, [filteredAssets])
+
 	return (
 		<>
 			{

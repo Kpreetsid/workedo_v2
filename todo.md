@@ -108,7 +108,7 @@ Functionality modifications:
      - Create Preventive - Done (tested)
      - Edit Preventive - Done (tested)
      - Delete Preventive - Done (tested)
-     - Preventive Details - Done
+     - Preventive Details - new design implemented - Done
 
 70. Asset - Update according to the new UI. Under Asset → Sensor → Endpoint, the name is incorrect.
 71. Work Request - Update according to the new UI.

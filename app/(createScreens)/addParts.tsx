@@ -97,7 +97,7 @@ const addParts = () => {
 	return (
 		<>
 			<Header title="Add Parts" />
-			<KeyboardAwareScrollView bottomOffset={30} style={{ backgroundColor: '#F5F7FA' }}>
+			<KeyboardAwareScrollView bottomOffset={30} style={{ flex: 1, backgroundColor: '#F5F7FA' }}>
 
 				<View style={styles.selectedWrap}>
 					{selectedParts?.map((p: any) => (
@@ -129,13 +129,14 @@ const addParts = () => {
 					})
 				}
 
-				<View style={styles.btnContainer}>
-					{
-						parts?.length > 0 && <ActionButton label="Confirm" onPress={() => router.back()} />
-					}
-				</View>
-
 			</KeyboardAwareScrollView>
+
+
+			<View style={styles.btnContainer}>
+				{
+					parts?.length > 0 && <ActionButton label="Confirm" onPress={() => router.back()} />
+				}
+			</View>
 
 		</>
 	)
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
 	},
 	btnContainer: {
 		marginHorizontal: 20,
-		marginVertical: 10,
+		marginBottom: 40,
 		backgroundColor: '#F5F7FA',
 		paddingVertical: 10,
 	},
