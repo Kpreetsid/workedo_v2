@@ -87,9 +87,9 @@ const PreventiveDetails = ({ item }: { item: Preventive | any }) => {
         </View>
       </ScrollView>
 
-      <View style={styles.btnContainer}>
+      {/* <View style={styles.btnContainer}>
         <ActionButton label="Submit" onPress={() => router.back()} />
-      </View>
+      </View> */}
     </>
   );
 };

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Pressable } from "react-native";
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Pressable, ActivityIndicator } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import Fonts from "@/constants/Typography";
 import { Calender, DropDownIcon } from "@/constants/IconProvider";
@@ -21,6 +21,7 @@ export default function AssetHealth() {
 	const [maxValue, setMaxValue] = useState<number>(0);
 	const { childAssets } = useOverviewStore();
 
+	const [loading, setLoading] = useState<boolean>(false);
 	const [rawSeries, setRawSeries] = useState<any>(null);
 
 	const [enabledSeries, setEnabledSeries] = useState<any>({
@@ -49,8 +50,10 @@ export default function AssetHealth() {
 
 			setRawSeries(data);
 			setBarData(buildBarData(data, enabledSeries));
+			setLoading(false);
 		} catch (err) {
 			console.log("asset health error =", err);
+			setLoading(false);
 		}
 	};
 
@@ -176,6 +179,7 @@ export default function AssetHealth() {
 
 	// ------------------------------- EFFECTS -------------------------------
 	useEffect(() => {
+		setLoading(true);
 		if (childAssets.length === 0) {
 			setBarData([]);
 			return;
@@ -225,22 +229,33 @@ export default function AssetHealth() {
 					/>
 				)}
 
-				<BarChart
-					data={barData}
-					barWidth={BAR_WIDTH}
-					spacing={BAR_SPACING}
-					barBorderRadius={4}
-					isAnimated
-					yAxisLabelWidth={25}
-					yAxisColor="rgba(0,0,0,0.1)"
-					xAxisColor="rgba(0,0,0,0.1)"
-					yAxisTextStyle={{ color: "#999", fontSize: 10 }}
-					xAxisLabelTextStyle={styles.axisLabel}
-					maxValue={maxValue}
-					noOfSections={yAxisInfo.sections}
-					yAxisLabelTexts={yAxisInfo.labels}
-					onPress={handleBarPress}
-				/>
+
+				{
+					loading ?
+						<View style={[{ height: 250, justifyContent: 'center', alignItems: 'center' }]}>
+							<ActivityIndicator size="large" />
+						</View>
+						:
+						<BarChart
+							data={barData}
+							barWidth={BAR_WIDTH}
+							spacing={BAR_SPACING}
+							barBorderRadius={4}
+							isAnimated
+							yAxisLabelWidth={25}
+							yAxisColor="rgba(0,0,0,0.1)"
+							xAxisColor="rgba(0,0,0,0.1)"
+							yAxisTextStyle={{ color: "#999", fontSize: 10 }}
+							xAxisLabelTextStyle={styles.axisLabel}
+							maxValue={maxValue}
+							noOfSections={yAxisInfo.sections}
+							yAxisLabelTexts={yAxisInfo.labels}
+							onPress={handleBarPress}
+						/>
+
+
+				}
+
 
 				{/* Popup */}
 				{selectedMonth && (

@@ -54,7 +54,7 @@ export default function Overview() {
 						<AssetHealth />
 						<AssetHealthStatus />
 						<AlarmSummary />
-						<Top10BadAssets />
+						{/* <Top10BadAssets /> */}
 						<Alarms />
 					</>
 				)}

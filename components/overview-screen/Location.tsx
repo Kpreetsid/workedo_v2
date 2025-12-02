@@ -61,6 +61,7 @@ export default function Location() {
 
 	// 🧠 When parent changes — fetch its child locations
 	useEffect(() => {
+		console.log('parent changes')
 		if (!parentSelectionId) return;
 
 		const fetchChildsForParent = async () => {
@@ -91,6 +92,7 @@ export default function Location() {
 					// Select ALL child IDs by default
 					const allChildIds: string[] = []
 					setChildSelectionIds(allChildIds);
+					setChildLocations([]);
 
 					// Fetch assets for selected children
 					fetchChildAssets(parentSelectionId ?? undefined, allChildIds);
