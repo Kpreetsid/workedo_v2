@@ -445,13 +445,13 @@ export const PrevisionLogo: FC = () => <Svg width="143" height="30" viewBox="0 0
     <Rect x="125" y="9" width="5" height="9" fill="white" />
 </Svg>
 
-export const FABIcon: FC = () => <Svg width="22" height="21" viewBox="0 0 22 21" fill="none">
+export const FABIcon: FC<{ color?: string, width?: number, height?: number }> = ({color = "white", width = 22, height = 21}) => <Svg width={width} height={height} viewBox="0 0 22 21" fill="none">
     <Path
         d="M9.00018 1.90505C9.00018 7.63826 9.00018 13.3717 9.00018 19.1049C9.00018 21.645 12.1302 21.645 12.1302 19.1049C12.1302 13.3717 12.1302 7.63826 12.1302 1.90505C12.1302 -0.635018 9.00018 -0.635018 9.00018 1.90505Z"
-        fill="white" />
+        fill={color} />
     <Path
         d="M19.9794 8.88281C13.9848 8.88281 7.99036 8.88281 1.99568 8.88281C-0.665227 8.88281 -0.665227 12.0128 1.99568 12.0128C7.99036 12.0128 13.9848 12.0128 19.9794 12.0128C22.6403 12.0128 22.6403 8.88281 19.9794 8.88281Z"
-        fill="white" />
+        fill={color} />
 </Svg>
 
 export const AssetStatus: FC = () => <Svg width="30" height="30" viewBox="0 0 30 30" fill="none">

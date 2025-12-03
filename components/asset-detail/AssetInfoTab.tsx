@@ -1,4 +1,4 @@
-import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
+import { Dimensions, FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
 import { Feather, FontAwesome, FontAwesome6 } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
@@ -14,12 +14,15 @@ import AssetFilter from "./AssetFilter";
 import { useAssetStore } from "@/src/store/useAssetStore";
 import { formatGraphData } from "@/src/utils/helper";
 import AssetUserInfo from "./AssetUserInfo";
+import AssignedUsersModal from "../work-order-detail/AssignUserModal";
 
 interface AssetInfoTabProps {
 	asset_data: Asset;
 }
 
 export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
+	const [userModalVisible, setUserModalVisible] = useState(false);
+
 	// console.log('inside info tab', asset_data);
 	const [activeTab, setActiveTab] = useState("Horizontal");
 	const [tooltip, setTooltip] = useState<any>(null);
@@ -195,27 +198,6 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 		}
 	}, [graphData]);
 
-
-	// useEffect(() => {
-	// 	if (graphData && Array.isArray(graphData)) {
-	// 		const formatted = formatGraphData(graphData);
-	// 		console.log('formatted = ', formatted);
-	// 		setChartSeries(formatted);
-
-	// 		const points = formatted[0].points;
-	// 		console.log('points = ', points);
-
-	// 		const labels = points.map((p: any, index: number) => {
-	// 			// Keep only every 15th point
-	// 			return index % 15 === 0 ? p.label : "";
-	// 		});
-
-	// 		console.log("labels =", labels);
-
-	// 		setXLabels(labels.filter((label: string) => label !== ""));
-	// 	}
-	// }, [graphData]);
-
 	// 4) optional: inspect final points
 	useEffect(() => {
 		if (chartSeries.length) {
@@ -233,7 +215,6 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 
 	return (
 		<ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 50 }}>
-			{/* Summary Card */}
 			<View style={styles.summaryCard}>
 				<View style={styles.rowBetween}>
 					<View style={styles.cameraIcon}>
@@ -277,7 +258,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 
 			<AssetUserInfo
 				users={asset_data?.userList || []}
-				onPress={() => console.log("Pressed")} />
+				onPress={() => setUserModalVisible(true)} />
 
 			{/* Endpoint Selector */}
 			<SelectEndpoint
@@ -411,25 +392,9 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 						))}
 					</View>
 
-
-					{/* <View style={styles.legendRow}>
-					<View style={styles.legendItem}>
-						<View style={[styles.dot, { backgroundColor: "#E056FD" }]} />
-						<Text style={styles.legendText}>Axial</Text>
-						<Text style={styles.legendValue}>1.11</Text>
-					</View>
-					<View style={styles.legendItem}>
-						<View style={[styles.dot, { backgroundColor: "#742BDE" }]} />
-						<Text style={styles.legendText}>Horizontal</Text>
-						<Text style={styles.legendValue}>3.69</Text>
-					</View>
-					<View style={styles.legendItem}>
-						<View style={[styles.dot, { backgroundColor: "#FF9D00" }]} />
-						<Text style={styles.legendText}>Vertical</Text>
-						<Text style={styles.legendValue}>3.69</Text>
-					</View>
-				</View> */}
 				</View>
+
+				<AssignedUsersModal visible={userModalVisible} onClose={() => setUserModalVisible(false)} users={asset_data?.userList} />
 
 			</View>
 		</ScrollView>

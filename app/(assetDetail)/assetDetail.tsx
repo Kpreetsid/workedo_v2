@@ -2,7 +2,7 @@ import Header from "@/components/global/Header";
 import SegmentedPager from "@/components/global/SegmentPager";
 import AssetInfoTab from "@/components/asset-detail/AssetInfoTab";
 import AssetSensorsTab from "@/components/asset-detail/AssetSensorsTab";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Asset } from "@/src/types/asset";
 import { StyleSheet, Text, ToastAndroid, View } from "react-native";
@@ -10,6 +10,7 @@ import { getAssetData } from "@/src/services/asset.service";
 import Fonts from "@/constants/Typography";
 
 export default function AssetDetailScreen() {
+	const router = useRouter();
 	const params: any = useLocalSearchParams();
 	console.log('params = ', params);
 	// const asset_data = JSON.parse(params?.data);
@@ -37,9 +38,21 @@ export default function AssetDetailScreen() {
 		}
 	}
 
+	const handleEditAsset = () => {
+		console.log('handleEditAsset');
+
+		router.push({
+			pathname: "/createAsset",
+			params: {
+				asset_data: JSON.stringify(assetData),
+				isEdit: 'true'
+			},
+		});
+	}
+
 	return (
 		<View style={styles.container}>
-			<Header title={assetData?.asset_name || ""} />
+			<Header title={assetData?.asset_name || ""} editAsset={true} handleEditAsset={handleEditAsset} />
 
 			{
 				assetData ? (

@@ -9,6 +9,7 @@ import { usePartFormStore } from '@/src/store/usePartFormStore';
 import { usePreventiveStore } from '@/src/store/usePreventiveStore';
 import { Ionicons } from '@expo/vector-icons';
 import Popover, { PopoverMode, Rect } from 'react-native-popover-view';
+import { FABIcon } from '@/constants/IconProvider';
 
 interface LocationCardInterface {
 	item: Location;
@@ -17,10 +18,11 @@ interface LocationCardInterface {
 	selection?: boolean;
 	comingFrom?: string;
 	handleDeleteLocation?: (location: Location) => void;
+	handleCopyLocation?: (location: Location) => void;
 }
 
 const width = Dimensions.get("window").width;
-const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom, handleDeleteLocation }: LocationCardInterface) => {
+const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom, handleDeleteLocation, handleCopyLocation }: LocationCardInterface) => {
 
 	const router = useRouter();
 	const [selectedLocation, setSelectedLocation] = useState<Location>();
@@ -66,7 +68,7 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 							setWorkRequestForm("selected_asset", item);
 						} else if (comingFrom === "createPart") {
 							setPartFormValue("location", item);
-						} else if(comingFrom === "createPreventive") {
+						} else if (comingFrom === "createPreventive") {
 							setPreventiveValue("location", item);
 							setPreventiveValue("selected_asset", null);
 							setPreventiveValue("assigned_users", []);
@@ -76,6 +78,7 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 						console.log('in else = ', item)
 						router.push({
 							pathname: "/locationDetail",
+							// params: { data: item.id },
 							params: { data: JSON.stringify(item) },
 						});
 					}
@@ -142,13 +145,7 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 													},
 												});
 											} else if (index === 1) {
-												// router.push({
-												// 	pathname: "/createLocation",
-												// 	params: {
-												// 		location_data: JSON.stringify(item),
-												// 		isEdit: 'true'
-												// 	},
-												// });
+												handleCopyLocation?.(item);
 											} else if (index === 2) {
 												handleDeleteLocation?.(item)
 											}
@@ -156,7 +153,9 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 										}}
 									>
 										<View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'flex-start' }}>
-											<Ionicons name={option.icon as any} size={16} color="#71717A" />
+											{
+												option.icon === "add" ? <FABIcon color='#71717A' width={16} height={16} /> : <Ionicons name={option.icon as any} size={16} color="#71717A" />
+											}
 
 											<Text style={{ color: "#71717A", fontFamily: Fonts.regular }}>
 												{option.text}
@@ -188,6 +187,7 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 								selection={selection}
 								comingFrom={comingFrom}
 								handleDeleteLocation={() => handleDeleteLocation?.(child)}
+								handleCopyLocation={() => handleCopyLocation?.(child)}
 							/>
 						))}
 					</View>

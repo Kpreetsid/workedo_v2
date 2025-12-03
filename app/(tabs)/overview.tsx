@@ -25,6 +25,9 @@ export default function Overview() {
 			pathname: "/createPreventive",
 			params: {comingFrom: "overview"}
 		});
+		option === "location" && router.push("/createLocation");
+		option === "asset" && router.push("/createAsset");
+		option === "work_order" && router.push("/createWorkOrder");
 		setCreateAlertBoxVisible(false);
 	}
 

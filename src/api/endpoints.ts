@@ -44,7 +44,8 @@ export const endpoints = {
     topLevelAssets: 'master/assets',
     assetsHealthLocation: 'get_asset_health_location_api/',
     mapUserToLocations: 'map/userToLocations',
-    uploadImage: 'upload/locations'
+    uploadImage: 'upload/locations',
+    copy: 'master/locations/make-copy'
   },
   asset: {
     add: 'master/assets/old',
@@ -59,7 +60,8 @@ export const endpoints = {
     createEndpoint: 'endPointApi/',
     updateEndpoint: 'update_endpoint/',
     deleteEndpoint: 'deleteEndPointApi/',
-    assetHealthStatus: 'asset_health_status_summary/'
+    assetHealthStatus: 'asset_health_status_summary/',
+    copy: 'master/assets/make-copy'
   },
   workOrders: {
     workOrders: 'work/orders',

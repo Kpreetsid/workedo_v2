@@ -4,12 +4,17 @@ import AssetsTab from "@/components/assets/AssetsTab";
 import { AssetsTabIcon, LocationTabIcon } from "@/constants/IconProvider";
 import { StatusBar } from "expo-status-bar";
 import SelectLocation from "../(createScreens)/selectLocation";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import CreateFAB from "@/components/global/CreateFAB";
+import { useState } from "react";
 
 export default function Assets() {
 	const { initialIndex } = useLocalSearchParams<{ initialIndex?: string }>();
 	const startIndex = initialIndex ? Number(initialIndex) : 0;
 	console.log("startIndex", startIndex);
+	const [activeTab, setActiveTab] = useState(startIndex);
+
+	const router = useRouter();
 
 	return (
 		<>
@@ -31,6 +36,7 @@ export default function Assets() {
 					},
 				]}
 			/>
+
 		</>
 	)
 }

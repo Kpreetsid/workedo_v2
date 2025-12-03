@@ -1,10 +1,10 @@
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View, } from "react-native";
 import Header from "@/components/global/Header";
 import Fonts from "@/constants/Typography";
-import { useEffect, useState } from "react";
-import { assetsHealthLocation, topLevelAssets } from "@/src/services/location.service";
+import { useCallback, useEffect, useState } from "react";
+import { assetsHealthLocation, singleLocationData, topLevelAssets } from "@/src/services/location.service";
 import { useLocationStore } from "@/src/store/useLocationStore";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import moment from "moment";
 import { AssetHealth } from "@/src/types/assetHealth";
@@ -12,6 +12,8 @@ import apiClient from "@/src/api/apiClient";
 import { Image } from 'expo-image';
 import { LocationAsset } from "@/src/types/locationAsset";
 import { endpoints } from "@/src/api/endpoints";
+import { Ionicons } from "@expo/vector-icons";
+import { Location } from "@/src/types/location";
 
 const blurhash =
 	'|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
@@ -23,15 +25,34 @@ export default function LocationDetail() {
 	console.log('location = ', location);
 	const { user } = useAuthStore();
 	const [assets, setAssets] = useState<LocationAsset[] | null>(null);
+	const [loading, setLoading] = useState(false);
+	const [locationData, setLocationData] = useState<Location | null>(null);
 
-	useEffect(() => {
-		fetchTopLevelAssets();
-	}, []);
+	useFocusEffect(
+		useCallback(() => {
+			fetchSingleLocation();
+			fetchTopLevelAssets()
+		}, [])
+	);
+
+	const fetchSingleLocation = async () => {
+		try {
+			const res = await singleLocationData(location?.id);
+			console.log(res);
+			if (res?.status) {
+				setLocationData(res?.data[0]);
+			}
+		} catch (e) {
+			console.log('error = ', e);
+		}
+	}
 
 	const fetchTopLevelAssets = async () => {
+		console.log('top level = ', location.id);
+		setLoading(true)
 		try {
 			const res = await topLevelAssets(location.id);
-			console.log("res top level assets = ", res);
+			// console.log("res top level assets = ", res);
 			if (res.status) {
 				let assets: LocationAsset[] = res?.data;
 
@@ -42,7 +63,6 @@ export default function LocationDetail() {
 				};
 
 				console.log("obj = ", obj);
-				// return;
 				const resp = await assetsHealthLocation(obj);
 				console.log("resp = ", resp);
 				if (resp?.data && assets?.length) {
@@ -59,19 +79,31 @@ export default function LocationDetail() {
 					}
 					console.log("final assets =", assets);
 					setAssets(assets);
+					setLoading(false)
 				}
 			}
 		} catch (e: any) {
 			if (!e.status) {
 				ToastAndroid.show(e.message, ToastAndroid.SHORT);
 				setAssets([]);
+				setLoading(false)
 			}
 		}
 	}
 
+	const handleEdit = async () => {
+		router.push({
+			pathname: "/createLocation",
+			params: {
+				location_data: JSON.stringify(locationData),
+				isEdit: 'true'
+			},
+		});
+	}
+
 	return (
 		<>
-			<Header title={location?.location_name ?? "Location Detail"} />
+			<Header title={locationData?.location_name ?? "Location Detail"} />
 			<ScrollView contentContainerStyle={styles.container}>
 
 				{/* Header card with image + info */}
@@ -84,17 +116,25 @@ export default function LocationDetail() {
 						transition={1000}
 					/>
 					<View style={styles.infoSection}>
-						<Text style={styles.label}>Location ID</Text>
-						<TextInput style={styles.input} value={location.id} editable={false} />
+						<View style={{ flex: 1 }}>
+							<View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>
+								<Text style={styles.label}>Location ID</Text>
+								<Pressable onPress={handleEdit} style={{ width: 25, height: 25, backgroundColor: '#fff', borderRadius: 200, justifyContent: 'center', alignItems: 'center' }}>
+									<Ionicons name="pencil" size={14} color="#71717A" />
+								</Pressable>
+							</View>
+
+							<TextInput style={styles.input} value={location.id} editable={false} />
+						</View>
 
 						<View style={styles.row}>
 							<View style={styles.col}>
 								<Text style={styles.label}>Location Type</Text>
-								<TextInput style={styles.input} value={location.location_type} editable={false} />
+								<TextInput style={styles.input} value={locationData?.location_type} editable={false} />
 							</View>
 							<View style={styles.col}>
 								<Text style={styles.label}>Location</Text>
-								<TextInput style={styles.input} value={location.location_name} editable={false} />
+								<TextInput style={styles.input} value={locationData?.location_name} editable={false} />
 							</View>
 						</View>
 					</View>
@@ -191,6 +231,7 @@ const styles = StyleSheet.create({
 	infoSection: {
 		flex: 1,
 		justifyContent: "center",
+		marginRight: 5
 	},
 	label: {
 		fontSize: 9,

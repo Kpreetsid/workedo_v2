@@ -3,7 +3,7 @@ import { router, useFocusEffect } from "expo-router";
 import CreateFAB from "@/components/global/CreateFAB";
 import SearchBar from "@/components/global/SearchBar";
 import { useCallback, useEffect, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import Fonts from "@/constants/Typography";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { deletePreventive, getPreventives } from "@/src/services/preventive.service";
@@ -23,6 +23,7 @@ export default function PreventivePage() {
 	const [refreshing, setRefreshing] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [preventives, setPreventives] = useState<any[]>([]);
+	const [loading, setLoading] = useState(false)
 
 	useFocusEffect(
 		useCallback(() => {
@@ -37,13 +38,16 @@ export default function PreventivePage() {
 	};
 
 	const fetchPreventives = async () => {
+		setLoading(true)
 		try {
 			const resp = await getPreventives()
 			console.log('resp = ', resp);
 			if (resp.status) {
 				setPreventives(resp?.data);
+				setLoading(false)
 			}
 		} catch (error) {
+			setLoading(false)
 			console.log('error = ', error);
 		}
 	}
@@ -71,101 +75,107 @@ export default function PreventivePage() {
 			<View style={styles.container}>
 				<SearchBar value={searchQuery} onChangeText={setSearchQuery} />
 
-				<FlatList
-					data={preventives}
-					keyExtractor={(item) => item.id}
-					renderItem={({ item }) => {
-						return (
-							<Pressable style={styles.preventiveItem} onPress={() =>
-								router.push({ pathname: "/preventiveDetail", params: { data: JSON.stringify(item) } })}>
-								<View style={styles.leftContentBox}>
-									<View style={styles.makeRow}>
-										<Text style={styles.itemTitle}>{item?.title}</Text>
-										<View style={styles.noneTag}>
-											<Text style={styles.noneTagText}>#{item?.work_order?.priority}</Text>
+				{
+					loading ?
+						<ActivityIndicator size={"large"} />
+						:
+						<FlatList
+							data={preventives}
+							keyExtractor={(item) => item.id}
+							renderItem={({ item }) => {
+								return (
+									<Pressable style={styles.preventiveItem} onPress={() =>
+										router.push({ pathname: "/preventiveDetail", params: { data: JSON.stringify(item) } })}>
+										<View style={styles.leftContentBox}>
+											<View style={styles.makeRow}>
+												<Text style={styles.itemTitle}>{item?.title}</Text>
+												<View style={styles.noneTag}>
+													<Text style={styles.noneTagText}>#{item?.work_order?.priority}</Text>
+												</View>
+											</View>
+											<View style={styles.subInfoRow}>
+												<MaterialIcons name="groups" size={12} color="black" />
+												<Text style={styles.subText}>Assigned to : {item?.createdBy?.firstName + " " + item?.createdBy?.lastName || ""}</Text>
+											</View>
+
+											<View style={styles.makeRow}>
+												<View style={styles.subInfoRow}>
+													<MaterialIcons name="location-on" size={12} color="black" />
+													<Text style={styles.subText}>Location : {item.work_order?.location?.location_name || ""}</Text>
+												</View>
+												<View style={[styles.activeTag, !item?.schedule?.enabled && { backgroundColor: "red" }]}>
+													<Text style={styles.activeTagText}>{item?.schedule?.enabled ? "Active" : "In Active"}</Text>
+												</View>
+											</View>
 										</View>
-									</View>
-									<View style={styles.subInfoRow}>
-										<MaterialIcons name="groups" size={12} color="black" />
-										<Text style={styles.subText}>Assigned to : {item?.createdBy?.firstName + " " + item?.createdBy?.lastName || ""}</Text>
-									</View>
 
-									<View style={styles.makeRow}>
-										<View style={styles.subInfoRow}>
-											<MaterialIcons name="location-on" size={12} color="black" />
-											<Text style={styles.subText}>Location : {item.work_order?.location?.location_name || ""}</Text>
-										</View>
-										<View style={[styles.activeTag, !item?.schedule?.enabled && { backgroundColor: "red" }]}>
-											<Text style={styles.activeTagText}>{item?.schedule?.enabled ? "Active" : "In Active"}</Text>
-										</View>
-									</View>
-								</View>
+										<View style={styles.rightIconBox}>
+											<Popover
+												popoverStyle={{ borderRadius: 15 }}
+												isVisible={openPopoverId === item.id}
+												onRequestClose={() => setOpenPopoverId(null)}
+												from={(
+													<TouchableOpacity style={{ padding: 6 }} onPress={() => setOpenPopoverId(item.id)}>
+														<Ionicons name="ellipsis-vertical" size={18} color="#201F23CC" />
+													</TouchableOpacity>
+												)}>
+												<View style={styles.popoverContent}>
+													{
+														[
+															{ icon: '', text: 'Select Option', type: 'heading' },
+															{ icon: '', text: 'Edit', type: 'option' },
+															{ icon: '', text: 'Delete', type: 'option' }
+														].map((option, index) => {
+															return (
+																<Pressable
+																	style={styles.popoverItem}
+																	key={index}
+																	onPress={async () => {
+																		if (index === 1) {
+																			router.push({
+																				pathname: '/createPreventive',
+																				params: { data: JSON.stringify(item) }
+																			})
+																		} else if (index === 2) {
+																			console.log('in it delete = ', item);
+																			handleDeletePreventive?.(item);
+																		}
+																		setOpenPopoverId(null)
+																	}}
+																>
+																	<View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'flex-start' }}>
+																		{option.icon != '' && <Ionicons name={option.icon as any} size={16} color="#71717A" />}
 
-								<View style={styles.rightIconBox}>
-									<Popover
-										popoverStyle={{ borderRadius: 15 }}
-										isVisible={openPopoverId === item.id}
-										onRequestClose={() => setOpenPopoverId(null)}
-										from={(
-											<TouchableOpacity style={{ padding: 6 }} onPress={() => setOpenPopoverId(item.id)}>
-												<Ionicons name="ellipsis-vertical" size={18} color="#201F23CC" />
-											</TouchableOpacity>
-										)}>
-										<View style={styles.popoverContent}>
-											{
-												[
-													{ icon: '', text: 'Select Option', type: 'heading' },
-													{ icon: '', text: 'Edit', type: 'option' },
-													{ icon: '', text: 'Delete', type: 'option' }
-												].map((option, index) => {
-													return (
-														<Pressable
-															style={styles.popoverItem}
-															key={index}
-															onPress={async () => {
-																if (index === 1) {
-																	router.push({
-																		pathname: '/createPreventive',
-																		params: {data: JSON.stringify(item)}
-																	})
-																} else if (index === 2) {
-																	console.log('in it delete = ', item);
-																	handleDeletePreventive?.(item);
-																}
-																setOpenPopoverId(null)
-															}}
-														>
-															<View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'flex-start' }}>
-																{option.icon != '' && <Ionicons name={option.icon as any} size={16} color="#71717A" />}
+																		<Text style={
+																			[
+																				{ color: "#71717A", fontFamily: Fonts.regular },
+																				option.type == 'heading' ? { color: "#742BDE", fontFamily: Fonts.semiBold } : {}
+																			]
+																		}>
+																			{option.text}
+																		</Text>
 
-																<Text style={
-																	[
-																		{ color: "#71717A", fontFamily: Fonts.regular },
-																		option.type == 'heading' ? { color: "#742BDE", fontFamily: Fonts.semiBold } : {}
-																	]
-																}>
-																	{option.text}
-																</Text>
-
-																{/* {
+																		{/* {
 														(deleteLoading && index === 3) && <ActivityIndicator size={"small"} color={"#71717A"} />
 													} */}
-															</View>
-														</Pressable>
-													);
-												})
-											}
+																	</View>
+																</Pressable>
+															);
+														})
+													}
+												</View>
+											</Popover>
 										</View>
-									</Popover>
-								</View>
-							</Pressable>
-						);
-					}}
-					contentContainerStyle={{ paddingBottom: 100, gap: 10 }}
-					showsVerticalScrollIndicator={false}
-					refreshing={refreshing}
-					onRefresh={handleRefresh}
-				/>
+									</Pressable>
+								);
+							}}
+							contentContainerStyle={{ paddingBottom: 100, gap: 10 }}
+							showsVerticalScrollIndicator={false}
+							refreshing={refreshing}
+							onRefresh={handleRefresh}
+						/>
+
+				}
 
 
 			</View>
@@ -233,7 +243,7 @@ const styles = StyleSheet.create({
 		color: "#fff"
 	},
 	createBtn: {
-		width: 190
+		// width: 190
 	},
 	leftContentBox: {
 		width: '90%',

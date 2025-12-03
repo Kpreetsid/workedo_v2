@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
+    "@gorhom/bottom-sheet": "^5.2.7",
     "@shopify/flash-list": "2.0.2",
     "axios": "^1.12.2",
     "expo": "~54.0.12",
@@ -32,6 +33,7 @@
     "react-hook-form": "^7.64.0",
     "react-native": "0.81.4",
     "react-native-country-select": "^0.3.5",
+    "react-native-gesture-handler": "^2.29.1",
     "react-native-gifted-charts": "^1.4.64",
     "react-native-image-picker": "^8.2.1",
     "react-native-keyboard-controller": "1.18.5",

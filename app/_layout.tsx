@@ -2,6 +2,7 @@ import { SplashScreen, Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import { useEffect } from "react";
 import { KeyboardProvider } from "react-native-keyboard-controller";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -24,12 +25,14 @@ export default function RootLayout() {
 	if (!loaded && !error) return null;
 
 	return (
-		<KeyboardProvider>
-			{/* <Stack screenOptions={{ headerShown: false }} /> */}
-			<Stack initialRouteName="(auth)/index" screenOptions={{
-				headerShown: false,
-				navigationBarColor: "#742BDE", animation: "flip", animationTypeForReplace: "push"
-			}} />
-		</KeyboardProvider>
+		<GestureHandlerRootView style={{ flex: 1 }}>
+			<KeyboardProvider>
+				{/* <Stack screenOptions={{ headerShown: false }} /> */}
+				<Stack initialRouteName="(auth)/index" screenOptions={{
+					headerShown: false,
+					navigationBarColor: "#742BDE", animation: "flip", animationTypeForReplace: "push"
+				}} />
+			</KeyboardProvider>
+		</GestureHandlerRootView>
 	)
 }

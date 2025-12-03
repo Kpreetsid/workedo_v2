@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Fonts from "@/constants/Typography";
 import { FC, ReactNode } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { FABIcon } from "@/constants/IconProvider";
 
 interface FABProps {
 	label: string;
@@ -23,9 +24,9 @@ const CreateFAB: FC<FABProps> = ({ label, onPress, backgroundColor = "#742BDE", 
 
 				// widen only for these labels
 				// (label === "Create Work Order" || label === "Create Request") && 
-				{
-					width: 200,
-				},
+				// {
+				// 	width: 200,
+				// },
 
 				// margin bottom only for labels in array
 				sectionsForMargin.includes(label) && {
@@ -39,8 +40,9 @@ const CreateFAB: FC<FABProps> = ({ label, onPress, backgroundColor = "#742BDE", 
 				style,
 			]}
 		>
-			<Ionicons name="add-circle" size={24} color="white" />
-			{label && <Text style={styles.label}>{label}</Text>}
+			{/* <Ionicons name="add-circle" size={24} color="white" /> */}
+			<FABIcon />
+			{/* {label && <Text style={styles.label}>{label}</Text>} */}
 		</Pressable>
 
 	);

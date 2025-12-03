@@ -59,6 +59,16 @@ export const createNewLocation = async (payload: any) => {
 	return await sendRequest('POST', url, payload);
 }
 
+export const updateNewLocation = async (id: string, payload: any) => {
+	const url = `${endpoints.location.createNewLocation}/${id}`;
+	return await sendRequest('PUT', url, payload);
+}
+
+export const copyLocation = async (id: string) => {
+	const url = `${endpoints.location.copy}/${id}`;
+	return await sendRequest('GET', url);
+}
+
 export const singleLocationData = async (locationId: string) => {
 	const url = `${endpoints.location.get}/${locationId}`;
 	return await sendRequest('GET', url);

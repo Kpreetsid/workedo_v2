@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 interface CreateAlertProps {
 	visible: boolean;
 	onClose: () => void;
-	onSelect: (choice: "parts" | "preventive") => void;
+	onSelect: (choice: "parts" | "preventive" | "location" | "asset" | "work_order") => void;
 }
 
 const screenWidth = Dimensions.get("window").width;
@@ -25,14 +25,26 @@ export default function CreateAlertBox({ visible, onClose, onSelect }: CreateAle
 
 						<Text style={styles.title}>What would you like to create?</Text>
 
-						<TouchableOpacity style={styles.optionButton} onPress={() => onSelect("parts")}>
+						<TouchableOpacity activeOpacity={0.8} style={styles.optionButton} onPress={() => onSelect("parts")}>
 							<Text style={styles.optionText}>Parts</Text>
 						</TouchableOpacity>
 
-						<Text style={styles.orText}>or</Text>
+						{/* <Text style={styles.orText}>or</Text> */}
 
-						<TouchableOpacity style={styles.optionButton} onPress={() => onSelect("preventive")}>
+						<TouchableOpacity activeOpacity={0.8} style={styles.optionButton} onPress={() => onSelect("preventive")}>
 							<Text style={styles.optionText}>Preventive</Text>
+						</TouchableOpacity>
+
+						<TouchableOpacity activeOpacity={0.8} style={styles.optionButton} onPress={() => onSelect("location")}>
+							<Text style={styles.optionText}>Location</Text>
+						</TouchableOpacity>
+
+						<TouchableOpacity activeOpacity={0.8} style={styles.optionButton} onPress={() => onSelect("asset")}>
+							<Text style={styles.optionText}>Asset</Text>
+						</TouchableOpacity>
+
+						<TouchableOpacity activeOpacity={0.8} style={styles.optionButton} onPress={() => onSelect("work_order")}>
+							<Text style={styles.optionText}>Work Order</Text>
 						</TouchableOpacity>
 					</View>
 				</LinearGradient>
@@ -56,7 +68,7 @@ const styles = StyleSheet.create({
 	},
 	container: {
 		width: screenWidth * 0.83,
-		height: 210,
+		height: 350,
 		backgroundColor: "#fff",
 		borderRadius: 20,
 		paddingVertical: 20,
@@ -85,6 +97,7 @@ const styles = StyleSheet.create({
 		marginBottom: 5
 	},
 	optionButton: {
+		width: '55%',
 		backgroundColor: "#742BDE",
 		paddingVertical: 10,
 		paddingHorizontal: 35,

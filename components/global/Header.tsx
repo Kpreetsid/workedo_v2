@@ -2,24 +2,36 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Text, StyleSheet, View, TouchableOpacity } from "react-native";
 import { ArrowBack } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
-import {router} from "expo-router";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 interface HeaderProps {
     title: string;
     modal?: boolean;
     dismiss?: () => void | null;
+    editAsset?: boolean;
+    handleEditAsset?: () => void;
 }
 
-export default function Header({ title, modal = false, dismiss }: HeaderProps) {
+export default function Header({ title, modal = false, dismiss, editAsset, handleEditAsset }: HeaderProps) {
     return (
         <SafeAreaView edges={["top"]} style={styles.safeArea}>
             <View style={styles.headerContainer}>
-                <TouchableOpacity onPress={() => modal ? dismiss!() : router.back()} style={styles.backButton}>
-                    {/* <ArrowBack /> */}
-                    <Ionicons name="chevron-back" size={22} color={"#fff"} />
-                </TouchableOpacity>
-                <Text style={styles.title}>{title}</Text>
+                <View style={styles.rowBetween}>
+                    <TouchableOpacity onPress={() => modal ? dismiss!() : router.back()} style={styles.backButton}>
+                        <Ionicons name="chevron-back" size={22} color={"#fff"} />
+                    </TouchableOpacity>
+
+                    <Text style={styles.title}>{title}</Text>
+                </View>
+
+                {
+                    editAsset && (
+                        <TouchableOpacity onPress={handleEditAsset} style={styles.editButton}>
+                            <Ionicons name="pencil" size={22} color={"#fff"} />
+                        </TouchableOpacity>
+                    )
+                }
             </View>
         </SafeAreaView>
     );
@@ -32,12 +44,20 @@ const styles = StyleSheet.create({
     headerContainer: {
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "flex-start",
+        justifyContent: "space-between",
         paddingHorizontal: 25,
         paddingVertical: 15,
     },
     backButton: {
         marginRight: 5,
+        padding: 5,
+    },
+    rowBetween: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    editButton: {
         padding: 5,
     },
     title: {

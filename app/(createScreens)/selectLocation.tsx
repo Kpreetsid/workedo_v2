@@ -1,12 +1,12 @@
 import Header from "@/components/global/Header";
-import { ActivityIndicator, Dimensions, FlatList, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Dimensions, FlatList, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import ActionButton from "@/components/create-screens/ActionButton";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import Fonts from "@/constants/Typography";
 import { ArrowRight, MapIcon } from "@/constants/IconProvider";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import SearchBar from "@/components/global/SearchBar";
-import { deleteLocation, locationTree } from "@/src/services/location.service";
+import { copyLocation, deleteLocation, locationTree } from "@/src/services/location.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { Location } from "@/src/types/location";
 import { useLocationStore } from "@/src/store/useLocationStore";
@@ -17,6 +17,7 @@ import { usePartFormStore } from "@/src/store/usePartFormStore";
 import { Fontisto, Ionicons } from "@expo/vector-icons";
 import Popover from "react-native-popover-view";
 import LocationCard from "@/components/locations/LocationCard";
+import CreateFAB from "@/components/global/CreateFAB";
 
 interface LocationInterface {
 	showHeader?: boolean,
@@ -26,6 +27,8 @@ interface LocationInterface {
 const width = Dimensions.get("window").width;
 export default function SelectLocation({ showHeader = true, selection = true }: LocationInterface) {
 	console.log('rendering select location');
+
+	const [loading, setLoading] = useState(false);
 
 	const params: any = useLocalSearchParams();
 	const comingFrom = params?.comingFrom;
@@ -68,14 +71,17 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 	);
 
 	const fetchLocations = async () => {
+		setLoading(true)
 		try {
 			const res = await locationTree();
 
 			if (res.status) {
 				console.log('res locations = ', res?.data);
 				setLocations(res.data as Location[]);
+				setLoading(false)
 			}
 		} catch (err: any) {
+			setLoading(false)
 			console.error("Login failed:", err);
 		}
 	};
@@ -86,21 +92,74 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 		setRefreshing(false);
 	};
 
+	const handleCopyLocation = async (item: Location) => {
+		console.log('copying location = ', item);
+		Alert.alert(
+			"Copy Location",
+			`Are you sure you want to copy ${item.location_name}?`,
+			[
+				{
+					text: "Cancel",
+					style: "cancel",
+				},
+				{
+					text: "Confirm",
+					style: "destructive",
+					onPress: async () => {
+						setDeleteLoading(true)
+						try {
+							const resp = await copyLocation(item?.id);
+							console.log('resp = ', resp);
+							if (resp?.status) {
+								ToastAndroid.show("Location Copied", ToastAndroid.SHORT);
+								fetchLocations();
+								setDeleteLoading(false)
+							}
+						} catch (e) {
+							setDeleteLoading(false)
+							console.log('error deleting = ', e);
+						}
+					},
+				},
+			],
+			{ cancelable: true }
+		);
+	}
+
 	const handleDeleteLocation = async (item: Location) => {
 		console.log('deleting location = ', item);
-		setDeleteLoading(true)
-		try {
-			const resp = await deleteLocation(item?.id);
-			console.log('resp = ', resp);
-			if (resp?.status) {
-				ToastAndroid.show("Location Deleted", ToastAndroid.SHORT);
-				fetchLocations();
-				setDeleteLoading(false)
-			}
-		} catch (e) {
-			setDeleteLoading(false)
-			console.log('error deleting = ', e);
-		}
+		Alert.alert(
+			"Delete Location",
+			`Are you sure you want to delete ${item.location_name}?`,
+			[
+				{
+					text: "Cancel",
+					style: "cancel",
+				},
+				{
+					text: "Delete",
+					style: "destructive",
+					onPress: async () => {
+						setDeleteLoading(true)
+						try {
+							const resp = await deleteLocation(item?.id);
+							console.log('resp = ', resp);
+							if (resp?.status) {
+								ToastAndroid.show("Location Deleted", ToastAndroid.SHORT);
+								fetchLocations();
+								setDeleteLoading(false)
+							}
+						} catch (e) {
+							setDeleteLoading(false)
+							console.log('error deleting = ', e);
+						}
+					},
+				},
+			],
+			{ cancelable: true }
+		);
+
+
 	}
 
 	return (
@@ -110,185 +169,48 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 				{
 					!selection && <SearchBar placeholder="Search Location..." value={searchText} onChangeText={setSearchText} />
 				}
-				<FlatList
-					ListHeaderComponent={() => {
-						return (
-							<>
-								{
-									!selection && (
-										<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createLocation")}>
-											<Text style={styles.buttonText}>Create Location</Text>
-										</TouchableOpacity>
-									)
-								}
 
-							</>
-						);
-					}}
-					data={searchText ? filteredLocations : locations}
-					keyExtractor={(_, index) => index.toString()}
-					renderItem={
-						({ item }: { item: Location }) => <LocationCard
-							item={item}
-							selection={selection}
-							comingFrom={comingFrom}
-							handleDeleteLocation={handleDeleteLocation}
+				{
+					loading ?
+						<ActivityIndicator size="large" />
+						:
+						<FlatList
+							ListHeaderComponent={() => {
+								return (
+									<>
+										{/* {
+											!selection && (
+												<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createLocation")}>
+													<Text style={styles.buttonText}>Create Location</Text>
+												</TouchableOpacity>
+											)
+										} */}
+
+									</>
+								);
+							}}
+							data={searchText ? filteredLocations : locations}
+							keyExtractor={(_, index) => index.toString()}
+							renderItem={
+								({ item }: { item: Location }) => <LocationCard
+									item={item}
+									selection={selection}
+									comingFrom={comingFrom}
+									handleDeleteLocation={handleDeleteLocation}
+									handleCopyLocation={handleCopyLocation}
+								/>
+							}
+							contentContainerStyle={styles.container}
+							refreshing={refreshing}
+							onRefresh={handleRefresh}
 						/>
-					}
-					// renderItem={({ item }) => {
-					// 	const isExpanded = expandedAssetId === item.id;
-					// 	const hasChildren = item.childs && item.childs.length > 0;
-
-					// 	return (
-					// 		<View>
-					// 			<Pressable style={
-					// 				[
-					// 					styles.locationButton,
-					// 					isExpanded ? {
-					// 						borderBottomLeftRadius: 0,
-					// 						borderBottomRightRadius: 0,
-					// 					} : {},
-					// 					{
-					// 						backgroundColor: selectedLocation?.id === item.id ? "#FFBF0080" : "#fff",
-					// 						borderColor: selectedLocation?.id === item.id ? "#FFC1074D" : "#99999933"
-					// 					}
-					// 				]
-					// 			}
-					// 				onPress={() => {
-					// 					if (selection) {
-					// 						setSelectedLocation(item);
-					// 						// updating selected location in zustand store while creating part
-					// 						console.log('in selection = ', comingFrom)
-					// 						if (comingFrom === "newWorkOrder") {
-					// 							setWorkForm("location", item);
-					// 						} else if (comingFrom === "newWorkRequest") {
-					// 							setWorkRequestForm("location", item);
-					// 						} else if (comingFrom === "createPart") {
-					// 							setPartFormValue("location", item);
-					// 						} else {
-					// 							setPreventiveValue("location", item);
-					// 						}
-					// 						router.back();
-					// 					} else {
-					// 						console.log('in else = ', item)
-					// 						router.push({
-					// 							pathname: "/locationDetail",
-					// 							params: { data: JSON.stringify(item) },
-					// 						});
-					// 					}
-					// 				}}
-					// 			>
-					// 				<View style={{ flexDirection: "column", alignItems: "flex-start", justifyContent: "center" }}>
-					// 					<View style={styles.textRow}>
-					// 						<Ionicons name="chevron-forward" color={"#201F23"} size={14} />
-					// 						<Text style={styles.locationText}>{item.location_name}</Text>
-					// 						{/* <ArrowRight color={"#201F23CC"} /> */}
-					// 					</View>
-
-					// 					{/* {hasChildren && (
-					// 						<Pressable onPress={() => {
-					// 							setExpandedAssetId(isExpanded ? null : item.id);
-					// 						}}>
-					// 							<Text style={styles.childLabel}>
-					// 								Child locations
-					// 								{isExpanded ? " ▲" : " ▼"}
-					// 							</Text>
-					// 						</Pressable>
-					// 					)} */}
-
-					// 				</View>
-					// 				{/* <MapIcon /> */}
-
-					// 				<Popover
-					// 					isVisible={openPopoverId === item.id}
-					// 					onRequestClose={() => setOpenPopoverId(null)}
-					// 					from={(
-					// 						<TouchableOpacity style={{ padding: 6 }} onPress={() => setOpenPopoverId(item.id)}>
-					// 							<Ionicons name="ellipsis-vertical" size={18} color="#201F23CC" />
-					// 						</TouchableOpacity>
-					// 					)}>
-					// 					<View style={styles.popoverContent}>
-					// 						{
-					// 							[
-					// 								{ icon: 'add', text: 'Add' },
-					// 								{ icon: 'pencil', text: 'Edit' },
-					// 								{ icon: 'copy', text: 'Copy' },
-					// 								{ icon: 'trash', text: 'Delete' }
-					// 							].map((option, index) => {
-					// 								return (
-					// 									<Pressable
-					// 										style={styles.popoverItem}
-					// 										key={index}
-					// 										onPress={async () => {
-					// 											if (index === 0) {
-					// 												router.push({
-					// 													pathname: "/locationDetail",
-					// 													params: { data: JSON.stringify(item) },
-					// 												});
-					// 											} else if (index === 1) {
-					// 												router.push({
-					// 													pathname: "/createLocation",
-					// 													params: {
-					// 														location_data: JSON.stringify(item),
-					// 														isEdit: 'true'
-					// 													},
-					// 												});
-					// 											} else if (index === 3) {
-					// 												handleDeleteLocation(item)
-					// 											}
-					// 											setOpenPopoverId(null)
-					// 										}}
-					// 									>
-					// 										<View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'flex-start' }}>
-					// 											<Ionicons name={option.icon as any} size={16} color="#71717A" />
-
-					// 											<Text style={{ color: "#71717A", fontFamily: Fonts.regular }}>
-					// 												{option.text}
-					// 											</Text>
-
-					// 											{
-					// 												(deleteLoading && index === 3) && <ActivityIndicator size={"small"} color={"#71717A"} />
-					// 											}
-					// 										</View>
-					// 									</Pressable>
-					// 								);
-					// 							})
-					// 						}
-					// 					</View>
-					// 				</Popover>
-					// 			</Pressable>
-
-					// 			{/* 👇 Show child assets if expanded */}
-					// 			{
-					// 				isExpanded && hasChildren && (
-					// 					<View style={styles.childContainer}>
-					// 						{item?.childs?.map((child) => (
-					// 							<Pressable
-					// 								key={child.id}
-					// 								style={styles.childButton}
-					// 								onPress={() =>
-					// 									router.push({
-					// 										pathname: "/locationDetail",
-					// 										params: { data: JSON.stringify(child) },
-					// 									})
-					// 								}
-					// 							>
-					// 								<Text style={styles.childText}>{child.location_name}</Text>
-					// 							</Pressable>
-					// 						))}
-					// 					</View>
-					// 				)
-					// 			}
-					// 		</View>
-					// 	);
-					// }}
-					contentContainerStyle={styles.container}
-					refreshing={refreshing}
-					onRefresh={handleRefresh}
-				/>
+				}
 
 				{selection && <ActionButton onPress={() => router.back()} label="Confirm Location" buttonStyle={styles.actionButton} />}
 			</>
+
+
+			<CreateFAB label="Create Location" onPress={() => router.push("/createLocation")} />
 		</>
 	)
 }

@@ -78,3 +78,8 @@ export const deleteAsset = async (assetId: string) => {
     const url = `${endpoints.asset.assetData}/${assetId}`;
     return await sendRequest('DELETE', url);
 }
+
+export const copyAsset = async (id: string) => {
+	const url = `${endpoints.asset.copy}/${id}`;
+	return await sendRequest('GET', url);
+}

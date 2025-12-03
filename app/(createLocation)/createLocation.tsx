@@ -1,11 +1,11 @@
-import { Pressable, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native'
-import React, { useEffect } from 'react'
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import Header from '@/components/global/Header'
 import { FormField } from '@/components/global/FormField'
 import { useCreateLocationStore } from '@/src/store/useCreateLocationStore'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { createNewLocation, singleLocationData } from '@/src/services/location.service'
+import { createNewLocation, singleLocationData, updateNewLocation } from '@/src/services/location.service'
 import Fonts from '@/constants/Typography'
 import { Location } from '@/src/types/location'
 import { DateDropDownIcon } from '@/constants/IconProvider'
@@ -30,6 +30,8 @@ const createLocation = () => {
 	};
 
 	console.log("Parsed Data:", data);
+
+	const [loading, setLoading] = useState(false);
 
 	const router = useRouter();
 
@@ -94,9 +96,10 @@ const createLocation = () => {
 			return;
 		}
 
+		setLoading(true)
 		let payload: any = {
 			top_level: data?.mode === 'child' ? false : true,
-			top_level_location_id: data?.mode === 'child' ? data?.location_data?.id : "",
+			top_level_location_id: (data?.mode === 'child' || data?.isEdit === "true") ? data?.location_data?.id : "",
 			location_name: values.title,
 			description: values.description,
 			location_type: values.location_type,
@@ -111,14 +114,32 @@ const createLocation = () => {
 		console.log('payload = ', payload);
 
 		try {
-			const res = await createNewLocation(payload);
-			console.log('res = ', res);
-			if (res.status) {
-				resetForm();
-				ToastAndroid.show('Location created successfully', ToastAndroid.LONG);
-				router.back();
+			if (data?.isEdit === "true") {
+				const res = await updateNewLocation(data.location_data?.id, payload);
+				console.log('res = ', res);
+				if (res.status) {
+					setLoading(false)
+					resetForm();
+					ToastAndroid.show('Location updated successfully', ToastAndroid.LONG);
+					router.back();
+				} else {
+					setLoading(false)
+				}
+			} else {
+				const res = await createNewLocation(payload);
+				console.log('res = ', res);
+				if (res.status) {
+					setLoading(false)
+					resetForm();
+					ToastAndroid.show('Location created successfully', ToastAndroid.LONG);
+					router.back();
+				} else {
+					setLoading(false)
+				}
 			}
+
 		} catch (err) {
+		setLoading(false)
 			console.log('error = ', err);
 		}
 	}
@@ -151,7 +172,7 @@ const createLocation = () => {
 					]}
 					store={useCreateLocationStore}
 					setterName="setCreateLocationValue"
-          			styles={{ paddingHorizontal: 25 }}
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 
@@ -237,6 +258,9 @@ const createLocation = () => {
 				<TouchableOpacity style={styles.createBtn} onPress={handleCreateLocation}>
 					<Text style={styles.createBtnText}>
 						{
+							loading ? 
+							<ActivityIndicator size={"small"} color={"#fff"} />
+							:
 							data?.isEdit === "true" ? "Update Location" : "Create Location"
 						}
 					</Text>

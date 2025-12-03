@@ -11,12 +11,14 @@ import { Ionicons } from '@expo/vector-icons';
 import Popover, { PopoverMode, Rect } from 'react-native-popover-view';
 import { Asset } from '@/src/types/asset';
 import { getSingleAssetHealthHistory } from '@/src/services/asset.service';
+import { FABIcon } from '@/constants/IconProvider';
 
 interface AssetsCardInterface {
 	asset: Asset;
 	isChild?: boolean;
 	level?: number;
 	handleDeleteAsset?: (asset: Asset) => void;
+	handleCopyAsset?: (asset: Asset) => void;
 }
 
 const width = Dimensions.get("window").width;
@@ -29,7 +31,7 @@ const COLORS: any = {
 	"Not Defined": "#fff"
 };
 
-const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: AssetsCardInterface) => {
+const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset, handleCopyAsset }: AssetsCardInterface) => {
 	const router = useRouter();
 	const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 	const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
@@ -84,7 +86,8 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: As
 					console.log('in else = ', asset)
 					router.push({
 						pathname: "/assetDetail",
-						params: { data: JSON.stringify(asset) },
+						params: { id: asset.id },
+						// params: { data: JSON.stringify(asset) },
 					});
 				}}
 			>
@@ -149,13 +152,7 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: As
 													},
 												});
 											} else if (index === 1) {
-												// router.push({
-												// 	pathname: "/createLocation",
-												// 	params: {
-												// 		location_data: JSON.stringify(asset),
-												// 		isEdit: 'true'
-												// 	},
-												// });
+												handleCopyAsset?.(asset)
 											} else if (index === 2) {
 												handleDeleteAsset?.(asset)
 											}
@@ -163,7 +160,10 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: As
 										}}
 									>
 										<View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'flex-start' }}>
-											<Ionicons name={option.icon as any} size={16} color="#71717A" />
+
+											{
+												option.icon === "add" ? <FABIcon color='#71717A' width={16} height={16} /> : <Ionicons name={option.icon as any} size={16} color="#71717A" />
+											}
 
 											<Text style={{ color: "#71717A", fontFamily: Fonts.regular }}>
 												{option.text}
@@ -193,6 +193,7 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset }: As
 								isChild={true}
 								level={level + 1}
 								handleDeleteAsset={() => handleDeleteAsset?.(child)}
+								handleCopyAsset={() => handleCopyAsset?.(child)}
 							/>
 						))}
 					</View>

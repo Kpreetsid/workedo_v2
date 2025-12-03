@@ -1,11 +1,11 @@
-import { Dimensions, FlatList, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Dimensions, FlatList, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import SearchBar from "@/components/global/SearchBar";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { MapIcon } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
 import ActionButton from "@/components/create-screens/ActionButton";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { assetTree, deleteAsset } from "@/src/services/asset.service";
+import { assetTree, copyAsset, deleteAsset } from "@/src/services/asset.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { Asset } from "@/src/types/asset";
 import AssetsCard from "./AssetsCard";
@@ -13,6 +13,7 @@ import { FlashList } from "@shopify/flash-list";
 import { LocationAsset } from "@/src/types/locationAsset";
 import { assetsHealthLocation } from "@/src/services/location.service";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
+import CreateFAB from "../global/CreateFAB";
 
 const width = Dimensions.get("window").width;
 
@@ -23,6 +24,7 @@ interface AssetsTabInterface {
 export default function AssetsTab({
 	selection = true,
 }: AssetsTabInterface) {
+	const [loading, setLoading] = useState(false);
 	let { comingFrom, card_id } = useLocalSearchParams();
 	console.log('rendering assets = ', comingFrom, card_id);
 
@@ -38,6 +40,25 @@ export default function AssetsTab({
 	const [refreshing, setRefreshing] = useState(false);
 
 	const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
+
+	const flattenAssets = (list: Asset[]) => {
+		const out: Asset[] = [];
+		const walk = (items: Asset[]) => {
+			items.forEach((i: any) => {
+				out.push(i);
+				if (i.childs && i.childs.length) walk(i.childs);
+			});
+		};
+		walk(list || []);
+		return out;
+	};
+
+	const flatAssets = useMemo(() => flattenAssets(filteredAssets), [filteredAssets]);
+	const searchedFilteredAssets = useMemo(() => {
+		const q = (searchText || "").trim().toLowerCase();
+		if (!q) return flatAssets;
+		return flatAssets.filter(l => (l.asset_name || "").toLowerCase().includes(q));
+	}, [searchText, flatAssets]);
 
 	// const filteredAssets = assets.filter(
 	// 	(asset) => {
@@ -94,14 +115,17 @@ export default function AssetsTab({
 	}, [assets]);
 
 	const fetchAssets = async () => {
+		setLoading(true)
 		try {
 			const res = await assetTree();
 
 			if (res.status) {
 				console.log('res assets = ', res?.data);
 				setAssets(res.data as Asset[]);
+				setLoading(false)
 			}
 		} catch (err: any) {
+			setLoading(false)
 			console.error("Login failed:", err);
 		}
 	};
@@ -215,22 +239,81 @@ export default function AssetsTab({
 		setRefreshing(false);
 	};
 
-	const handleDeleteAsset = async (item: Asset) => {
-		console.log('deleting asset = ', item);
-		// setDeleteLoading(true)
-		try {
-			const resp = await deleteAsset(item?.id);
-			console.log('resp = ', resp);
-			if (resp?.status) {
-				ToastAndroid.show("Asset Deleted", ToastAndroid.SHORT);
-				fetchAssets();
-				// setDeleteLoading(false)
-			}
-		} catch (e) {
-			// setDeleteLoading(false)
-			console.log('error deleting = ', e);
-		}
+	const handleCopyAsset = async (item: Asset) => {
+		console.log('copying asset = ', item);
+		Alert.alert(
+			"Copy Asset",
+			`Are you sure you want to copy ${item.asset_name}?`,
+			[
+				{
+					text: "Cancel",
+					style: "cancel",
+				},
+				{
+					text: "Confirm",
+					style: "destructive",
+					onPress: async () => {
+						try {
+							const resp = await copyAsset(item.id);
+							if (resp?.status) {
+								ToastAndroid.show("Asset Copied", ToastAndroid.SHORT);
+								fetchAssets();
+							}
+						} catch (e) {
+							console.log("error deleting = ", e);
+						}
+					},
+				},
+			],
+			{ cancelable: true }
+		);
 	}
+
+	const handleDeleteAsset = (item: Asset) => {
+		Alert.alert(
+			"Delete Asset",
+			`Are you sure you want to delete ${item.asset_name}?`,
+			[
+				{
+					text: "Cancel",
+					style: "cancel",
+				},
+				{
+					text: "Delete",
+					style: "destructive",
+					onPress: async () => {
+						try {
+							const resp = await deleteAsset(item.id);
+							if (resp?.status) {
+								ToastAndroid.show("Asset Deleted", ToastAndroid.SHORT);
+								fetchAssets();
+							}
+						} catch (e) {
+							console.log("error deleting = ", e);
+						}
+					},
+				},
+			],
+			{ cancelable: true }
+		);
+	};
+
+	// const handleDeleteAsset = async (item: Asset) => {
+	// 	console.log('deleting asset = ', item);
+	// 	// setDeleteLoading(true)
+	// 	try {
+	// 		const resp = await deleteAsset(item?.id);
+	// 		console.log('resp = ', resp);
+	// 		if (resp?.status) {
+	// 			ToastAndroid.show("Asset Deleted", ToastAndroid.SHORT);
+	// 			fetchAssets();
+	// 			// setDeleteLoading(false)
+	// 		}
+	// 	} catch (e) {
+	// 		// setDeleteLoading(false)
+	// 		console.log('error deleting = ', e);
+	// 	}
+	// }
 
 	const clearFilters = async () => {
 		setCardId(null);  // 🔥 disable overview filtering
@@ -238,58 +321,73 @@ export default function AssetsTab({
 		await fetchAssets();    // 🔥 reload normally
 	};
 
-	useEffect(()=>{
+	useEffect(() => {
 		console.log('filteredAssets final = ', filteredAssets)
 	}, [filteredAssets])
+
+	useEffect(() => {
+		console.log('searchedFilteredAssets final = ', searchedFilteredAssets)
+	}, [searchedFilteredAssets])
 
 	return (
 		<>
 			{
 				!selection && <SearchBar placeholder="Search Asset..." value={searchText} onChangeText={setSearchText} />
 			}
-			<FlashList
-				ListHeaderComponent={() => {
-					return (
-						<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-							{
 
-								!selection && (
-									<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createAsset")}>
-										<Text style={styles.buttonText}>Create Asset</Text>
-									</TouchableOpacity>
-								)
-							}
+			{
+				loading ?
+					<ActivityIndicator size={"large"} />
+					:
+					<FlashList
+						ListHeaderComponent={() => {
+							return (
+								<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+									{
 
-							{
-								cardId && (
-									<TouchableOpacity style={styles.clearFilters} onPress={clearFilters}>
-										<Text style={styles.clearFiltersText}>Clear Filters</Text>
-									</TouchableOpacity>
-								)
-							}
+										// !selection && (
+										// 	<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createAsset")}>
+										// 		<Text style={styles.buttonText}>Create Asset</Text>
+										// 	</TouchableOpacity>
+										// )
+									}
 
-						</View>
-					);
-				}}
-				data={filteredAssets}
-				// data={
-				// 	!ignoreFilter && comingFrom === "overview" && card_id
-				// 		? filteredAssets
-				// 		: assets
-				// }
-				// data={!ignoreFilter && card_id ? filteredAssets : assets}
-				keyExtractor={(item) => item.id}
-				renderItem={
-					({ item }: { item: Asset }) => <AssetsCard
-						asset={item}
-						handleDeleteAsset={handleDeleteAsset}
-					/>}
-				contentContainerStyle={styles.listContainer}
-				refreshing={refreshing}
-				onRefresh={handleRefresh}
-			/>
+									{
+										cardId && (
+											<TouchableOpacity style={styles.clearFilters} onPress={clearFilters}>
+												<Text style={styles.clearFiltersText}>Clear Filters</Text>
+											</TouchableOpacity>
+										)
+									}
+
+								</View>
+							);
+						}}
+						data={searchText ? searchedFilteredAssets : filteredAssets}
+						// data={
+						// 	!ignoreFilter && comingFrom === "overview" && card_id
+						// 		? filteredAssets
+						// 		: assets
+						// }
+						// data={!ignoreFilter && card_id ? filteredAssets : assets}
+						keyExtractor={(item) => item.id}
+						renderItem={
+							({ item }: { item: Asset }) => <AssetsCard
+								asset={item}
+								handleDeleteAsset={handleDeleteAsset}
+								handleCopyAsset={handleCopyAsset}
+							/>}
+						contentContainerStyle={styles.listContainer}
+						refreshing={refreshing}
+						onRefresh={handleRefresh}
+					/>
+			}
+
 
 			{selection && <ActionButton onPress={() => console.info("Confirm Pressed")} label="Confirm Location" buttonStyle={styles.actionButton} />}
+
+
+			<CreateFAB label="Create Asset" onPress={() => router.push("/createAsset")} />
 		</>
 	);
 }
@@ -301,6 +399,7 @@ const styles = StyleSheet.create({
 	listContainer: {
 		flexGrow: 1,
 		paddingHorizontal: 20,
+		paddingBottom: 50,
 		gap: 10,
 		// marginTop: 5
 	},

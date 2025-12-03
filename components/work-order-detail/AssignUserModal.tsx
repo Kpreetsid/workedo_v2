@@ -9,7 +9,7 @@ import { endpoints } from "@/src/api/endpoints";
 interface AssignedUsersModalProps {
 	visible: boolean;
 	onClose: () => void;
-	users: AssignedUser[];
+	users: AssignedUser[] | any;
 }
 
 const { height } = Dimensions.get("window");
@@ -18,7 +18,7 @@ const AssignedUsersModal: FC<AssignedUsersModalProps> = ({ visible, onClose, use
 	console.log('users = ', users);
 	const [search, setSearch] = useState("");
 
-	const filteredUsers = users?.filter((u) => u?.user?.firstName?.toLowerCase().includes(search.toLowerCase()));
+	const filteredUsers = users?.filter((u: any) => u?.user?.firstName?.toLowerCase().includes(search.toLowerCase()));
 
 	return (
 		<Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} >
@@ -62,7 +62,9 @@ const AssignedUsersModal: FC<AssignedUsersModalProps> = ({ visible, onClose, use
 											<Text style={styles.avatarInitials}>{initials}</Text>
 										</View>
 									)}
-									<Text style={styles.userName}>{item?.user?.firstName}</Text>
+									<Text style={styles.userName}>{
+										item?.user?.firstName || item?.firstName
+									}</Text>
 								</TouchableOpacity>
 							);
 						}}
