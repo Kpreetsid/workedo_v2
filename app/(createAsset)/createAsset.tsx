@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { FormField } from '@/components/global/FormField'
@@ -11,12 +11,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import LocationSelector from '@/components/create-asset/LocationSelector'
 import { DateDropDownIcon } from '@/constants/IconProvider'
 import moment from "moment-timezone";
-import { createNewAsset, singleAssetData } from '@/src/services/asset.service'
+import { createNewAsset, singleAssetData, updateNewAsset } from '@/src/services/asset.service'
 import { locationTree, mapUserToLocation } from '@/src/services/location.service'
 import { Location } from '@/src/types/location'
 import { useGlobalStore } from '@/src/store/useGlobal'
 import { Asset } from '@/src/types/asset'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import LocationPickerModal from '@/components/create-work-order/LocationPickerModal'
 
 interface createAssetParams {
 	asset_data: Asset;
@@ -28,6 +29,9 @@ const createAsset = () => {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
 	const { asset_data, isEdit, mode } = useLocalSearchParams();
+
+	const [loading, setLoading] = useState(false);
+
 	const parentLocations = useGlobalStore((state) => state.locationsTree);
 	console.log('parentLocations = ', parentLocations);
 	const { resetForm, setCreateAssetValue } = useCreateAssetStore();
@@ -164,6 +168,7 @@ const createAsset = () => {
 			}
 		}
 
+		setLoading(true)
 		let payload: any = {
 			top_level: data?.mode === 'child' ? false : true,
 			top_level_asset_id: data?.mode === 'child' ? data?.asset_data?.id : "",
@@ -189,15 +194,32 @@ const createAsset = () => {
 		console.log('payload = ', payload);
 
 		try {
-			const res = await createNewAsset(payload);
-			console.log('res = ', res);
-			if (res.status) {
-				resetForm();
-				ToastAndroid.show('Asset created successfully', ToastAndroid.LONG);
-				router.back();
+			if (data?.isEdit === "true") {
+				const res = await updateNewAsset(data.asset_data?.id, payload);
+				console.log('res = ', res);
+				if (res.status) {
+					setLoading(false)
+					resetForm();
+					ToastAndroid.show('Asset updated successfully', ToastAndroid.LONG);
+					router.back();
+				} else {
+					setLoading(false)
+				}
+			} else {
+				const res = await createNewAsset(payload);
+				console.log('res = ', res);
+				if (res.status) {
+					resetForm();
+					ToastAndroid.show('Asset created successfully', ToastAndroid.LONG);
+					router.back();
+					setLoading(false)
+				} else {
+					setLoading(false)
+				}
 			}
 		} catch (err) {
 			console.log('error = ', err);
+			setLoading(false)
 		}
 	}
 
@@ -304,7 +326,16 @@ const createAsset = () => {
 						</Pressable>
 				}
 
-				{open && data?.mode != 'child' && <LocationSelector />}
+				{
+					// open && data?.mode != 'child' && <LocationSelector />
+					open && data?.mode != 'child' &&
+					<LocationPickerModal
+						visible={open}
+						onClose={() => setOpen(false)}
+						comingFrom="createAsset"
+					/>
+					// <LocationSelector />
+				}
 
 				{
 					data?.mode === 'child' &&
@@ -398,10 +429,13 @@ const createAsset = () => {
 					setterName="setCreateAssetValue"
 				/>
 
-				<TouchableOpacity style={[styles.createBtn, { marginBottom: insets.bottom + 20 }]} onPress={handleCreateAsset}>
+				<TouchableOpacity style={[styles.createBtn, { marginBottom: insets.bottom + 60 }]} onPress={handleCreateAsset}>
 					<Text style={styles.createBtnText}>
 						{
-							data?.isEdit === "true" ? "Update Asset" : "Create Asset"
+							loading ?
+								<ActivityIndicator size={"small"} color={"#fff"} />
+								:
+								data?.isEdit === "true" ? "Update Asset" : "Create Asset"
 						}
 					</Text>
 				</TouchableOpacity>

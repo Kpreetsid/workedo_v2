@@ -144,9 +144,9 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset, hand
 										onPress={async () => {
 											if (index === 0) {
 												router.push({
-													pathname: "/createLocation",
+													pathname: "/createAsset",
 													params: {
-														location_data: JSON.stringify(asset),
+														asset_data: JSON.stringify(asset),
 														mode: 'child',
 														isEdit: 'false'
 													},

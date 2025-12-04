@@ -116,7 +116,18 @@ Functionality modifications:
 73. Forms not populating while doing edit work order - check it later
 
 
+I have fixed the Alarm Summary on overview page
+Location edit option moved to location details page
+Added loaders on all pages
+Added Alert boxes while deleting location and asset
+Copy location
+Copy assets
+Search Assets
+Working on Asset Details page
+Edit Asset is also pushed into asset details page, not on the assets tab.
 
+
+Location picker modal changed on create asset page.
 
 
 

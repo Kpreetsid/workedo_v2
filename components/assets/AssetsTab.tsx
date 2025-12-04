@@ -364,12 +364,6 @@ export default function AssetsTab({
 							);
 						}}
 						data={searchText ? searchedFilteredAssets : filteredAssets}
-						// data={
-						// 	!ignoreFilter && comingFrom === "overview" && card_id
-						// 		? filteredAssets
-						// 		: assets
-						// }
-						// data={!ignoreFilter && card_id ? filteredAssets : assets}
 						keyExtractor={(item) => item.id}
 						renderItem={
 							({ item }: { item: Asset }) => <AssetsCard

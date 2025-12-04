@@ -17,6 +17,8 @@ import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 import { usePreventiveStore } from "@/src/store/usePreventiveStore";
 import { usePartFormStore } from "@/src/store/usePartFormStore";
+import { useCreateAssetStore } from "@/src/store/useCreateAsset";
+import { Location } from "@/src/types/location";
 
 export default function LocationPickerModal({ comingFrom, visible, onClose }: { comingFrom: string; visible: boolean; onClose: () => void }) {
 	const [expanded, setExpanded] = useState<any>({});
@@ -29,6 +31,8 @@ export default function LocationPickerModal({ comingFrom, visible, onClose }: { 
 	const { setWorkRequestForm } = useWorkRequestStore();
 	const { setPreventiveValue } = usePreventiveStore();
 	const { setPartFormValue } = usePartFormStore();
+
+	const { setParentLocation, setAssignedUsers, setLocationObject, setLocation } = useCreateAssetStore();
 
 	useFocusEffect(
 		useCallback(() => {
@@ -62,6 +66,8 @@ export default function LocationPickerModal({ comingFrom, visible, onClose }: { 
 	};
 
 	const onSelect = (item: Location) => {
+		console.log('on item = ', item);
+
 		if (comingFrom === "newWorkOrder") {
 			setWorkForm("location", item);
 			setWorkForm("selected_asset", null);
@@ -73,6 +79,11 @@ export default function LocationPickerModal({ comingFrom, visible, onClose }: { 
 		} else if (comingFrom === "createPreventive") {
 			setPreventiveValue("location", item);
 			setPreventiveValue("selected_asset", null);
+		} else if (comingFrom === "createAsset") {
+			setParentLocation({ id: item?.id, location_name: item?.location_name });
+			setAssignedUsers([]);
+			setLocation(item?.id);
+			setLocationObject(item);
 		}
 		console.log("Selected:", item);
 	}
