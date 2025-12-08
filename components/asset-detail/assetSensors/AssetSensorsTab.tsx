@@ -2,17 +2,17 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-nati
 import { MaterialIcons, } from "@expo/vector-icons";
 import Fonts from "@/constants/Typography";
 import { JSX } from "react";
-import EndpointCards from "@/components/asset-detail/EndpointCards";
-import ConfigSections from "@/components/asset-detail/ConfigSections";
+import ConfigSections from "@/components/asset-detail/assetSensors/ConfigSections";
 import { router } from "expo-router";
 import { useAssetStore } from "@/src/store/useAssetStore";
 import { Asset } from "@/src/types/asset";
+import EndpointCards from "./EndpointCards";
 
 interface Props {
 	asset_data: Asset;
 }
 
-export default function SensorsScreen({ asset_data }: Props) {
+export default function AssetSensorsTab({ asset_data }: Props) {
 
 	return (
 		<ScrollView contentContainerStyle={styles.screenContainer} showsVerticalScrollIndicator={false}>

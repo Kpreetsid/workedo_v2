@@ -1,6 +1,7 @@
 import apiClient from './apiClient';
 import apiClientDemo from './apiClientDemo';
 import apiClientValidate from './apiClientValidate';
+import { endpoints } from './endpoints';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -16,7 +17,7 @@ export const sendRequest = async <T = any>(
   config: RequestConfig = {}
 ): Promise<T> => {
   try {
-    // console.log('request url =', url, 'payload =', data);
+    console.log('request url =', endpoints.baseURL + url, 'payload =', data);
     const response = await apiClient.request({
       method,
       url,

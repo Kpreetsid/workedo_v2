@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/useAuthStore';
 
 const apiClient = axios.create({
   baseURL: 'https://new.presageinsights.ai/cmms_express/api/',
+  // baseURL: 'https://app.presageinsights.ai/cmms_express/api/',
   timeout: 15000,
 });
 
@@ -20,6 +21,8 @@ apiClient.interceptors.request.use((config) => {
   if (data?.user?.account_id) {
     config.headers.accountID = data?.user?.account_id;
   }
+
+  console.log('config = ', config);
 
   return config;
 });

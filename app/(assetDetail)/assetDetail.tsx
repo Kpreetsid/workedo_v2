@@ -1,13 +1,13 @@
 import Header from "@/components/global/Header";
 import SegmentedPager from "@/components/global/SegmentPager";
-import AssetInfoTab from "@/components/asset-detail/AssetInfoTab";
-import AssetSensorsTab from "@/components/asset-detail/AssetSensorsTab";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Asset } from "@/src/types/asset";
 import { StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { getAssetData } from "@/src/services/asset.service";
 import Fonts from "@/constants/Typography";
+import AssetInfoTab from "@/components/asset-detail/assetInfo/AssetInfoTab";
+import AssetSensorsTab from "@/components/asset-detail/assetSensors/AssetSensorsTab";
 
 export default function AssetDetailScreen() {
 	const router = useRouter();

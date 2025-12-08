@@ -46,7 +46,7 @@ export const useAssetStore = create<AssetState>((set) => ({
 	endpointSelected: null,
 	compositeIdSelected: null,
 	assetHealth: null,
-	selectedAxis: ["Horizontal"],
+	selectedAxis: ["Horizontal", "Vertical", "Axial"],
 
 	selectedSignal: "Velocity",     // default option
 	selectedValueType: "Rms",       // default option
@@ -85,7 +85,7 @@ export const useAssetStore = create<AssetState>((set) => ({
 			endpointSelected: null,
 			compositeIdSelected: null,
 			assetHealth: null,
-			selectedAxis: ["Horizontal"],
+			selectedAxis: ["Horizontal", "Vertical", "Axial"],
 			selectedSignal: "Velocity",
 			selectedValueType: "Rms",
 			graphData: null,

@@ -3,6 +3,7 @@ import { deleteEndpoint } from "../services/asset.service";
 // src/api/endpoints.ts
 export const endpoints = {
   baseURL: 'https://new.presageinsights.ai/cmms_express/',
+  // baseURL: 'https://app.presageinsights.ai/cmms_express/',
   auth: {
     login: 'users/login',
     details: 'users/',

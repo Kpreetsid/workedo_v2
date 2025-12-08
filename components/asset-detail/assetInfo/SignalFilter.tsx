@@ -1,31 +1,39 @@
-import { Dimensions, findNodeHandle, FlatList, Modal, Pressable, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native'
-import React, { useRef, useState } from 'react'
+import { Dimensions, findNodeHandle, FlatList, Modal, Pressable, StyleSheet, Text, UIManager, View } from 'react-native';
+import React, { useRef, useState } from 'react';
 import Fonts from '@/constants/Typography';
 import { Ionicons } from '@expo/vector-icons';
-import { useAssetStore } from '@/src/store/useAssetStore';
 
 const { width } = Dimensions.get("window");
 
-const AssetFilter = () => {
+type AssetFilterProps = {
+	selectedSignal: string;
+	selectedValueType: string;
+	onSignalChange: (v: string) => void;
+	onValueTypeChange: (v: string) => void;
+};
+
+const SignalFilter = ({
+	selectedSignal,
+	selectedValueType,
+	onSignalChange,
+	onValueTypeChange,
+}: AssetFilterProps) => {
+
 	const signalOptions = ["Velocity", "Acceleration", "Displacement"];
 	const valueTypeOptions = ["Rms", "Peak_to_peak", "Peak", "Kurtosis"];
-
-	const {
-		selectedSignal,
-		selectedValueType,
-		setSelectedSignal,
-		setSelectedValueType
-	} = useAssetStore();
 
 	const [modalVisible, setModalVisible] = useState(false);
 	const [currentType, setCurrentType] = useState<"signal" | "valueType" | null>(null);
 	const [buttonLayout, setButtonLayout] = useState<any>(null);
 
-	const velocityRef = useRef<View>(null);
-	const rmsRef = useRef<View>(null);
+	const signalRef = useRef<View>(null);
+	const valueTypeRef = useRef<View>(null);
 
+	// -------------------------------
+	// OPEN DROPDOWN
+	// -------------------------------
 	const openModal = (type: "signal" | "valueType") => {
-		const ref = type === "signal" ? velocityRef : rmsRef;
+		const ref = type === "signal" ? signalRef : valueTypeRef;
 		if (!ref.current) return;
 
 		UIManager.measure(findNodeHandle(ref.current)!, (x, y, width, height, pageX, pageY) => {
@@ -35,14 +43,22 @@ const AssetFilter = () => {
 		});
 	};
 
+	// -------------------------------
+	// HANDLE SELECT
+	// -------------------------------
 	const handleSelect = (value: string) => {
-		if (currentType === "signal") setSelectedSignal(value);
-		if (currentType === "valueType") setSelectedValueType(value);
+		if (currentType === "signal") onSignalChange(value);
+		if (currentType === "valueType") onValueTypeChange(value);
+
 		setModalVisible(false);
 	};
 
 	const options =
-		currentType === "signal" ? signalOptions : currentType === "valueType" ? valueTypeOptions : [];
+		currentType === "signal"
+			? signalOptions
+			: currentType === "valueType"
+				? valueTypeOptions
+				: [];
 
 	const selectedValue =
 		currentType === "signal" ? selectedSignal : selectedValueType;
@@ -50,16 +66,16 @@ const AssetFilter = () => {
 	return (
 		<View style={styles.modeTabs}>
 			{/* Signal Button */}
-			<Pressable ref={velocityRef} style={styles.modeTab} onPress={() => openModal("signal")}>
+			<Pressable ref={signalRef} style={styles.modeTab} onPress={() => openModal("signal")}>
 				<Text style={styles.modeTabText}>{selectedSignal}</Text>
 			</Pressable>
 
 			{/* Value Type Button */}
-			<Pressable ref={rmsRef} style={styles.modeTab} onPress={() => openModal("valueType")}>
+			<Pressable ref={valueTypeRef} style={styles.modeTab} onPress={() => openModal("valueType")}>
 				<Text style={styles.modeTabText}>{selectedValueType}</Text>
 			</Pressable>
 
-			{/* Modal */}
+			{/* Dropdown Modal */}
 			<Modal
 				visible={modalVisible}
 				transparent
@@ -114,14 +130,13 @@ const AssetFilter = () => {
 			</Modal>
 		</View>
 	);
-}
+};
 
-export default AssetFilter
+export default SignalFilter;
 
 const styles = StyleSheet.create({
 	modeTabs: {
 		width: '80%',
-		// backgroundColor: 'orange',
 		flexDirection: "row",
 		gap: 10,
 		flexWrap: "wrap",
@@ -129,9 +144,8 @@ const styles = StyleSheet.create({
 		justifyContent: "center",
 	},
 	modeTab: {
-		width: width / 4,
+		width: width / 4.3,
 		backgroundColor: "#fff",
-		// backgroundColor: "#742BDE",
 		paddingVertical: 8,
 		borderRadius: 8,
 		borderWidth: 0.3,

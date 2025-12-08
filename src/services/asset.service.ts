@@ -3,7 +3,7 @@ import { endpoints } from '../api/endpoints';
 
 export const assetTree = async () => {
     const url = `${endpoints.asset.tree}`;
-    return await sendRequest('POST', url, {});
+    return await sendRequest('GET', url, {});
 };
 
 export const getChildren = async (assetId: string) => {
