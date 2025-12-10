@@ -47,6 +47,8 @@ export default function MyAccount() {
 	const { user, setUser } = useAuthStore();
 	console.log('my account = ', user);
 
+	const [imgError, setImgError] = useState(false);
+
 	const { pickImage } = useImageUpload();
 	const { logout } = useGlobal();
 
@@ -54,6 +56,8 @@ export default function MyAccount() {
 	const last = user?.lastName?.[0] || "";
 	const initials = (first + last).toUpperCase();
 
+	const imgUri = `${endpoints.baseURL}/user_profile_img/${user?.user_profile_img}`;
+	const showFallback = !imgUri || imgError;
 
 	const renderListItem = (item: { id: string; icon: string; label: string }) => (
 		<Pressable style={styles.listItem}>
@@ -127,7 +131,29 @@ export default function MyAccount() {
 
 			<View style={styles.userInfoContainer}>
 
-				{
+
+				<TouchableOpacity
+					style={styles.profilePhoto}
+					activeOpacity={0.8}
+					onPress={() => router.push("/myAccount")}
+				>
+
+					{showFallback ? (
+						<View style={{ width: '100%', height: '100%', backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center' }}>
+							<Text style={styles.avatarInitials}>{initials}</Text>
+						</View>
+					) : (
+						<Image
+							source={{ uri: imgUri }}
+							style={styles.profilePhotoImage}
+							resizeMode="cover"
+							onError={() => setImgError(true)} // 👈 fallback trigger
+						/>
+					)}
+
+				</TouchableOpacity>
+
+				{/* {
 					user?.user_profile_img ?
 						<TouchableOpacity style={styles.profilePhoto} onPress={() => Alert.alert('Upload Photo', 'Select source', [
 							{ text: 'Camera', onPress: () => pickImage(true) },
@@ -151,7 +177,7 @@ export default function MyAccount() {
 								<Text style={styles.avatarInitials}>{initials}</Text>
 							</View>
 						</TouchableOpacity>
-				}
+				} */}
 
 				<Text style={styles.nameText}>{user?.firstName} {user?.lastName}</Text>
 				<Text style={styles.designationText}>{user?.user_role}</Text>

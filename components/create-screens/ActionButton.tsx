@@ -3,7 +3,7 @@ import Fonts from "@/constants/Typography";
 
 interface ActionButtonProps {
     onPress: (event: GestureResponderEvent) => void;
-    label: String;
+    label: String | any;
     buttonStyle?: ViewStyle;
 }
 

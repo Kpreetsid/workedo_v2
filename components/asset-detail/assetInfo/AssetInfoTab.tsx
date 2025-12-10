@@ -26,9 +26,11 @@ interface AssetInfoTabProps {
 }
 
 export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
+	console.log('inside info tab = ', Date.now());
+	const [graphLoading, setGraphLoading] = useState(false);
+
 	const [userModalVisible, setUserModalVisible] = useState(false);
 
-	// console.log('inside info tab', asset_data);
 	const [activeTab, setActiveTab] = useState("Horizontal");
 	const [tooltip, setTooltip] = useState<any>(null);
 	const [yMaxValue, setYMaxValue] = useState<number>(0);
@@ -135,6 +137,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 	// 👇 Every time endpoint, axis, signal, or valueType changes → fetch graph data
 	useEffect(() => {
 		if (endpointSelected && selectedAxis.length > 0 && selectedSignal && selectedValueType) {
+			setGraphLoading(true);     // 🔥 start loader
 			fetchGraphTrendData();
 		}
 	}, [endpointSelected, selectedAxis, selectedSignal, selectedValueType]);
@@ -170,11 +173,13 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 			console.log("graph data payload = ", payload);
 
 			const res = await getGraphTrendData(payload);
-			console.log("graph trend data =", res);
-			if (res) setGraphData(res['velocity-rms']);
+			console.log("graph trend data =", res, `${selectedSignal.toLowerCase()}-${selectedValueType.toLowerCase()}`);
+			if (res) setGraphData(res[`${selectedSignal.toLowerCase()}-${selectedValueType.toLowerCase()}`]);
 		} catch (err) {
 			console.error("Error fetching graph trend data:", err);
 			ToastAndroid.show("Failed to load graph trend data.", ToastAndroid.SHORT);
+		} finally {
+			setGraphLoading(false);
 		}
 	};
 
@@ -247,6 +252,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 				xLabels={xLabels}
 				yMaxValue={yMaxValue}
 				selectedValueType={selectedValueType}
+				loading={graphLoading}
 			/>
 
 		</ScrollView >

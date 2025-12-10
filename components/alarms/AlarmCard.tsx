@@ -1,45 +1,56 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import { AlarmItem } from '@/src/types/alarm';
 import Fonts from '@/constants/Typography';
 import moment from 'moment';
+import { useRouter } from 'expo-router';
 
-const AlarmCard = ({ item }: { item: AlarmItem }) => (
-	<View key={item.id} style={styles.card}>
-		<View style={styles.cardHeader}>
-			<View>
-				<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-					<View>
-						<Text style={styles.assetTitle}>{item.asset_name}</Text>
-						<Text style={styles.assetSubtitle}>
-							{item.signal_type} - {item.trend_type}
-						</Text>
+const AlarmCard = ({ item }: { item: AlarmItem }) => {
+	const router = useRouter();
+
+	return (
+		<Pressable key={item.id} style={styles.card} onPress={() => {
+			console.log('item clicked = ', item);
+			router.push({
+				pathname: "/assetDetail",
+				params: { id: item.asset_id },
+			});
+		}}>
+			<View style={styles.cardHeader}>
+				<View>
+					<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+						<View>
+							<Text style={styles.assetTitle}>{item.asset_name}</Text>
+							<Text style={styles.assetSubtitle}>
+								{item.signal_type} - {item.trend_type}
+							</Text>
+						</View>
+
+						<View style={[styles.statusTag, item.priority === "Critical" ? styles.dangerTag : styles.resolvedTag]}>
+							<View style={[styles.statusDot, { backgroundColor: item.priority === "Critical" ? "#FF5C5C" : "#4CAF50" }]} />
+							<Text style={[styles.statusText, { color: item.priority === "Critical" ? "#FF5C5C" : "#4CAF50" }]}>
+								{item.priority}
+							</Text>
+						</View>
 					</View>
 
-					<View style={[styles.statusTag, item.priority === "Critical" ? styles.dangerTag : styles.resolvedTag]}>
-						<View style={[styles.statusDot, { backgroundColor: item.priority === "Critical" ? "#FF5C5C" : "#4CAF50" }]} />
-						<Text style={[styles.statusText, { color: item.priority === "Critical" ? "#FF5C5C" : "#4CAF50" }]}>
-							{item.priority}
-						</Text>
-					</View>
-				</View>
-
-				<View style={[styles.row, { width: "100%" }]}>
-					<View>
-						<Text style={styles.smallLabel}>Set Threshold</Text>
-						<Text style={styles.value}>{item.threshold_value}</Text>
-					</View>
-					<View>
-						<Text style={styles.smallLabel}>Observed Value</Text>
-						<Text style={styles.value}>{item.observed_value}</Text>
+					<View style={[styles.row, { width: "100%" }]}>
+						<View>
+							<Text style={styles.smallLabel}>Set Threshold</Text>
+							<Text style={styles.value}>{item.threshold_value}</Text>
+						</View>
+						<View>
+							<Text style={styles.smallLabel}>Observed Value</Text>
+							<Text style={styles.value}>{item.observed_value}</Text>
+						</View>
 					</View>
 				</View>
 			</View>
-		</View>
 
-		<Text style={styles.timestamp}>{moment(item.timestamp).format("MMM DD, YYYY, h:mm:ss")}</Text>
-	</View>
-);
+			<Text style={styles.timestamp}>{moment(item.timestamp).format("MMM DD, YYYY, h:mm:ss")}</Text>
+		</Pressable>
+	);
+}
 
 export default AlarmCard;
 

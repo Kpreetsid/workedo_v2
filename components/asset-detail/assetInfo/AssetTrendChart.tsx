@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { View, Text, StyleSheet, Dimensions, ActivityIndicator } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
 
 const SCREEN_WIDTH = Dimensions.get("window").width - 60;
@@ -14,6 +14,7 @@ type AssetTrendChartProps = {
 	xLabels: string[];
 	yMaxValue: number;
 	selectedValueType: string;
+	loading: boolean;
 };
 
 export default function AssetTrendChart({
@@ -21,6 +22,7 @@ export default function AssetTrendChart({
 	xLabels,
 	yMaxValue,
 	selectedValueType,
+	loading
 }: AssetTrendChartProps) {
 
 	// -------------------------------------
@@ -50,14 +52,13 @@ export default function AssetTrendChart({
 	// Limit spacing so it doesn't become too small
 	const spacingValue = Math.max(dynamicSpacing, 6);
 
-
 	return (
 		<View style={{ position: "relative", marginTop: 20 }}>
 
 			{/* ----------------------------- */}
 			{/*            TOOLTIP            */}
 			{/* ----------------------------- */}
-			{tooltip && (
+			{/* {tooltip && (
 				<View style={styles.tooltip}>
 					<Text style={styles.tooltipLabel}>{tooltip.fullDate}</Text>
 
@@ -73,11 +74,12 @@ export default function AssetTrendChart({
 						</Text>
 					</View>
 				</View>
-			)}
+			)} */}
 
 			{/* ----------------------------- */}
 			{/*              CHART            */}
 			{/* ----------------------------- */}
+
 			<View style={styles.chartContainer}>
 				<LineChart
 					curved
@@ -143,6 +145,15 @@ export default function AssetTrendChart({
 					onFocus={(data: any) => setTooltip(data)}
 				/>
 
+
+
+				{/* Loader overlay */}
+				{loading && (
+					<View style={styles.loaderOverlay}>
+						<ActivityIndicator size="large" color="#742BDE" />
+					</View>
+				)}
+
 				{/* ----------------------------- */}
 				{/*            LEGEND             */}
 				{/* ----------------------------- */}
@@ -173,6 +184,7 @@ const styles = StyleSheet.create({
 		borderRadius: 10,
 		paddingHorizontal: 20,
 		paddingVertical: 10,
+		justifyContent: "center",
 	},
 
 	tooltip: {
@@ -229,5 +241,19 @@ const styles = StyleSheet.create({
 	legendText: {
 		fontSize: 10,
 		color: "#666",
+	},
+
+
+	loaderOverlay: {
+		position: "absolute",
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		backgroundColor: "rgba(255,255,255,0.6)", // slight blur
+		alignItems: "center",
+		justifyContent: "center",
+		borderRadius: 10,
+		zIndex: 100,
 	},
 });

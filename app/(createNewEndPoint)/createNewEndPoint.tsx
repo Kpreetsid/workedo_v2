@@ -1,6 +1,6 @@
 import Header from "@/components/global/Header";
 import FormInput from "@/components/create-screens/FormInput";
-import { Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Fonts from "@/constants/Typography";
 import ActionButton from "@/components/create-screens/ActionButton";
@@ -10,8 +10,14 @@ import { useAuthStore } from "@/src/store/useAuthStore";
 import { useRouter } from "expo-router";
 import { useLocalSearchParams } from "expo-router/build/hooks";
 import { useAssetStore } from "@/src/store/useAssetStore";
+import DropDownInput from "@/components/create-screens/DropDownInput";
+import DropDownLocation from "@/components/create-endpoint/DropDownLocation";
 
 export default function CreateNewEndPoint() {
+	const { id } = useLocalSearchParams();
+	console.log('asset id = ', id);
+
+	const [loading, setLoading] = useState(false);
 	const selectedEndpointToEdit = useAssetStore((state) => state.selectedEndpointToEdit);
 	console.log('selectedEndpointToEdit = ', selectedEndpointToEdit);
 
@@ -58,6 +64,7 @@ export default function CreateNewEndPoint() {
 			return;
 		}
 
+		setLoading(true)
 		const data = {
 			name,
 			measuringPointLocation,
@@ -70,7 +77,7 @@ export default function CreateNewEndPoint() {
 
 		// construct the payload for API
 		const payload = {
-			asset_id: "68e634fc55f585c8ba8e2a88", // from your selected asset or Zustand
+			asset_id: id,
 			point_name: name,
 			rpm: Number(rpm),
 			mount_location: measuringPointLocation,
@@ -85,12 +92,22 @@ export default function CreateNewEndPoint() {
 
 		console.log("Final Payload:", payload);
 
-		const res = await createEndpoint(payload);
-		console.log("API Response:", res);
+		try {
+			const res = await createEndpoint(payload);
+			console.log("API Response:", res);
 
-		if (res?.message === "End Point created successfully.") {
-			ToastAndroid.show("Endpoint created successfully!", ToastAndroid.SHORT);
-			router.back();
+			if (res?.message === "End Point created successfully.") {
+				setLoading(false)
+				ToastAndroid.show("Endpoint created successfully!", ToastAndroid.SHORT);
+				router.back();
+			} else {
+				setLoading(false)
+			}
+
+		} catch (er: any) {
+			console.log('er = ', er);
+			ToastAndroid.show(er?.message, ToastAndroid.SHORT);
+			setLoading(false)
 		}
 	};
 
@@ -142,21 +159,31 @@ export default function CreateNewEndPoint() {
 
 	const fetchBearingDetails = async () => {
 		console.log("Bearing Number:", bearingNoRef.current);
+		if (!bearingNoRef.current) return;
+
 		const payload = {
 			account_id: user?.account_id,
 			bearing_number: bearingNoRef.current,
 			user_id: user?.id,
 		};
-		const res = await getBearingDetails(payload);
-		console.log("Bearing Details:", res);
-		if (res.result) {
-			setBearingData({
-				bpfo: res.message.bpfo,
-				bpfi: res.message.bpfi,
-				bsf: res.message.bsf,
-				ftf: res.message.ftf
-			})
+		try {
+			const res = await getBearingDetails(payload);
+			console.log("Bearing Details:", res);
+			if (res.result) {
+				setBearingData({
+					bpfo: res.message.bpfo,
+					bpfi: res.message.bpfi,
+					bsf: res.message.bsf,
+					ftf: res.message.ftf
+				})
+			}
+		} catch (e: any) {
+			console.log('e = ', e);
+			if (!e.result) {
+				ToastAndroid.show(e?.message, ToastAndroid.SHORT);
+			}
 		}
+
 	};
 
 	return (
@@ -167,12 +194,12 @@ export default function CreateNewEndPoint() {
 
 				<FormInput label="Data Collection Point Name" placeholder="Use a descriptive name" defaultValue={selectedEndpointToEdit?.point_name || ""} onChangeText={(text) => (nameRef.current = text)} />
 
-				<FormInput
+				<DropDownLocation
 					label="Measuring Point Location"
-					placeholder="DE"
-					type="dropdown"
-					selectedPart={selectedPart}
-					setSelectedPart={setSelectedPart}
+					required={true}
+					value={selectedPart}
+					options={["DE", "NDE"]}
+					onSelect={setSelectedPart}
 				/>
 
 				<FormInput
@@ -201,7 +228,15 @@ export default function CreateNewEndPoint() {
 
 			</KeyboardAwareScrollView>
 
-			<ActionButton label={selectedEndpointToEdit ? "Update Endpoint" : "Create Endpoint"} onPress={selectedEndpointToEdit ? handleEdit : handleSubmit} />
+			<ActionButton
+				label={
+					loading ?
+						<ActivityIndicator size={"small"} />
+						:
+						selectedEndpointToEdit ? "Update Endpoint" : "Create Endpoint"
+				}
+				onPress={selectedEndpointToEdit ? handleEdit : handleSubmit}
+			/>
 		</>
 	)
 }

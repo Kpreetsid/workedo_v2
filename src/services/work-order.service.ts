@@ -3,6 +3,13 @@ import { sendRequest } from "../api/api.service";
 import { endpoints } from "../api/endpoints";
 import { storage } from "../storage/mmkv";
 
+export const workOrdersPaginated = async (pageType: string, page: number, limit: number = 20) => {
+    let url = '';
+    url = `${endpoints.workOrders.workOrders}/get-work-order?page=${page}&limit=${limit}&pageType=${pageType}`;
+    console.log('url for request = ', url);
+    return await sendRequest('GET', url);
+}
+
 export const getWorkOrders = async (type: string) => {
     let url = '';
     if(type === 'todo') {

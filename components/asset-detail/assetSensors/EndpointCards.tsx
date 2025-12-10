@@ -1,6 +1,5 @@
 import { Pressable, ScrollView, Text, TouchableOpacity, View, StyleSheet, RefreshControl, FlatList, ToastAndroid } from "react-native";
 import { Fontisto, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import Fonts from "../../constants/Typography";
 import { AssetEndpoint } from "@/src/types/assetEndpoint";
 import { useAssetStore } from "@/src/store/useAssetStore";
 import { useEffect, useState } from "react";
@@ -8,6 +7,7 @@ import { Asset } from "@/src/types/asset";
 import { deleteEndpoint, getAllEndpoints } from "@/src/services/asset.service";
 import Popover from "react-native-popover-view";
 import { useRouter } from "expo-router";
+import Fonts from "@/constants/Typography";
 
 interface Props {
 	asset_data: Asset;
@@ -96,7 +96,7 @@ export default function EndpointCards({ asset_data }: Props) {
 							]}
 						>
 							<View style={styles.cardHeader}>
-								<Text style={styles.cardMac}>{ep.mac_id}</Text>
+								<Text style={styles.cardMac}>{ep.mac_id || "No Sensor Mapped"}</Text>
 								<Popover
 									isVisible={openPopoverId === Number(ep.id)}
 									onRequestClose={() => setOpenPopoverId(null)}
@@ -165,7 +165,7 @@ export default function EndpointCards({ asset_data }: Props) {
 							<View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
 								<View>
 									<Text style={styles.cardTitle}>End Point</Text>
-									<Text style={styles.cardSub}>{ep.mount_location}</Text>
+									<Text style={styles.cardSub}>{ep.point_name || ""} - {ep.mount_location}</Text>
 								</View>
 
 								<View style={{ width: 1, backgroundColor: "#5552FE30", height: "70%" }} />

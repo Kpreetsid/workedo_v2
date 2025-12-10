@@ -34,13 +34,13 @@ const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", 
 								style={[styles.inputField, inputStyle, (label === "Message" || label === "Description") && styles.messageInput]}
 								placeholderTextColor="#6B788899"
 								multiline={label === "Message" || label === "Description"}
-								textAlignVertical="top"
+								// textAlignVertical="top"
 								{...textInputProps}
 							/>
 						</Pressable>
 					</View>
 					:
-					<DropDownInput label="Measuring Point Location" value={selectedPart} options={["DE", "NDE"]} onSelect={(val) => setSelectedPart!(val)} />
+					<DropDownInput containerStyle={containerStyle} label="Measuring Point Location" value={selectedPart} options={["DE", "NDE"]} onSelect={(val) => setSelectedPart!(val)} />
 			}
 		</>
 	);

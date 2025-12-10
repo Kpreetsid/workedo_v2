@@ -3,121 +3,162 @@ import Fonts from "@/constants/Typography";
 import { useCallback, useEffect, useState } from "react";
 import WorkOrderCard from "@/components/work-orders/WorkOrderCard";
 import { FlashList, ListRenderItem } from "@shopify/flash-list";
-import { getWorkOrders } from "@/src/services/work-order.service";
+import { getWorkOrders, workOrdersPaginated } from "@/src/services/work-order.service";
 import { AssignedUser, WorkOrder } from "@/src/types/workOrder";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { useFocusEffect } from "expo-router";
 
+const TABS = ['assignedToMe', "createdByMe", "openForAll"];
+
 export default function ToDoTab() {
 	const [selectedButton, setSelectedButton] = useState<number>(0);
 	const [selectedId, setSelectedId] = useState<string | null>(null);
+
+	const [page, setPage] = useState(1);
 	const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
-
-	const [assignedToMe, setAssignedToMe] = useState<WorkOrder[]>([]);
-	const [createdByMeWorkOrders, setCreatedByMeWorkOrders] = useState<WorkOrder[]>([]);
-	const [openForAllWorkOrders, setOpenForAllWorkOrders] = useState<WorkOrder[]>([]);
+	const [loading, setLoading] = useState(false);
+	const [loadingMore, setLoadingMore] = useState(false);
 	const [refreshing, setRefreshing] = useState(false);
-
-	const [loading, setLoading] = useState(false)
+	const [hasMore, setHasMore] = useState(true);
 
 	const loggedInUser = useAuthStore((state) => state.user);
 	console.log('user in state = ', loggedInUser);
 
-	const data =
-		selectedButton === 0 ? assignedToMe :
-			selectedButton === 1 ? createdByMeWorkOrders :
-				openForAllWorkOrders;
-
-
 	useFocusEffect(
 		useCallback(() => {
 			setLoading(true)
-			fetchWorkOrders();
+			fetchWorkOrders(1);
 		}, [])
 	);
 
-	const fetchWorkOrders = async () => {
-		console.log("fetch work orders");
-
+	const fetchWorkOrders = async (pageToLoad: number, isRefresh = false) => {
 		try {
-			const res = await getWorkOrders('todo');
-			console.log("work orders = ", res);
+			if (pageToLoad === 1 || isRefresh) {
+				setLoading(true);
+			} else {
+				setLoadingMore(true);
+			}
 
+			const res = await workOrdersPaginated(
+				TABS[selectedButton],
+				pageToLoad,
+				10
+			);
+
+			console.log('res todos - ', res);
 			if (res?.status && res?.data) {
-				// filter whose status != "Completed" if selected
-				const allWorkOrders = res.data as WorkOrder[];
-				setWorkOrders(allWorkOrders);
-				setLoading(false)
+				const incoming = res.data as WorkOrder[];
+
+				setHasMore(res?.pagination?.hasNextPage);
+
+				if (pageToLoad === 1 || isRefresh) {
+					setWorkOrders(incoming);   // reset list
+				} else {
+					setWorkOrders(prev => [...prev, ...incoming]); // append
+				}
+
+				setPage(pageToLoad + 1);
 			}
 		} catch (error: any) {
 			console.log("error =", error);
 			ToastAndroid.show(error?.message || "Something went wrong", ToastAndroid.LONG);
-			setLoading(false)
+		} finally {
+			setLoading(false);
+			setLoadingMore(false);
 		}
 	};
 
-	useEffect(() => {
-		if (!workOrders.length) return;
-
-		let assigned = [];
-		let created = [];
-		let open = [];
-
-		for (let i = 0; i < workOrders.length; i++) {
-			const wo = workOrders[i];
-
-			const isAssigned = wo.assignedUsers?.some(
-				u => u.userId === loggedInUser?.id
-			);
-			const isCreated = wo.created_by === loggedInUser?.id;
-			
-			// If assigned to me, add to workOrderList
-			if (isAssigned) {
-				assigned.push(wo);
-			}
-
-			// If created by me and not already in workOrderList, add to createdByMeWorkOrders
-			if (isCreated && !assigned.some(a => a.id === wo.id)) {
-				created.push(wo);
-			}
-
-			// If neither assigned to me nor created by me, and not in workOrderList, add to openForAllWorkOrders
-			if (!isAssigned && !isCreated &&  !assigned.some(a => a.id === wo.id)) {
-				open.push(wo);
-			}
-		}
-
-
-		console.log('assigned = ', assigned);
-		console.log('created = ', created);
-		console.log('open = ', open);
-		setAssignedToMe([...assigned].reverse());
-		setCreatedByMeWorkOrders([...created].reverse());
-		setOpenForAllWorkOrders([...open].reverse());
-	}, [workOrders]);
-
 	const handleRefresh = async () => {
 		setRefreshing(true);
-		await fetchWorkOrders();
+		await fetchWorkOrders(1, true);
 		setRefreshing(false);
 	};
 
 	const renderWorkOrderItem = useCallback(
-		({ item }: { item: WorkOrder }) => <WorkOrderCard item={item} isSelected={selectedId === item.id} />,
+		({ item, index }: { item: WorkOrder, index: number }) => <WorkOrderCard key={index} item={item} isSelected={selectedId === item.id} />,
 		[selectedId]
 	);
+
+	// 🚀 Infinite scroll
+	const handleEndReached = () => {
+		console.log("Reached end, loading next page...");
+		if (loadingMore || loading || !hasMore) return;
+		fetchWorkOrders(page);
+	};
+
+	useEffect(() => {
+		// reset everything when tab changes
+		setPage(1);
+		setWorkOrders([]);
+		setHasMore(true);
+
+		fetchWorkOrders(1, true); // always load first page
+	}, [selectedButton]);
+
+
+	// useEffect(() => {
+	// 	if (!workOrders.length) return;
+
+	// 	let assigned = [];
+	// 	let created = [];
+	// 	let open = [];
+
+	// 	for (let i = 0; i < workOrders.length; i++) {
+	// 		const wo = workOrders[i];
+
+	// 		const isAssigned = wo.assignedUsers?.some(
+	// 			u => u.userId === loggedInUser?.id
+	// 		);
+	// 		const isCreated = wo.created_by === loggedInUser?.id;
+
+	// 		if (isAssigned) {
+	// 			assigned.push(wo);
+	// 		}
+
+	// 		if (isCreated && !assigned.some(a => a.id === wo.id)) {
+	// 			created.push(wo);
+	// 		}
+
+	// 		if (!isAssigned && !isCreated && !assigned.some(a => a.id === wo.id)) {
+	// 			open.push(wo);
+	// 		}
+	// 	}
+
+
+	// 	console.log('assigned = ', assigned);
+	// 	console.log('created = ', created);
+	// 	console.log('open = ', open);
+	// 	setAssignedToMe([...assigned].reverse());
+	// 	setCreatedByMeWorkOrders([...created].reverse());
+	// 	setOpenForAllWorkOrders([...open].reverse());
+	// }, [workOrders]);
 
 	return (
 		<>
 			<View style={styles.buttonContainer}>
 				{["Assigned To Me", "Created By Me", "Open For All"].map((text, index) => (
-					<Pressable key={index} style={[styles.filterButton, { backgroundColor: selectedButton === index ? "#3F009A" : "#3F009A14" }]} onPress={() => setSelectedButton(index)}>
-						<Text style={[styles.buttonText, {
-							color: selectedButton === index ? "#FFFFFF" : "#000000",
-							fontFamily: selectedButton === index ? Fonts.regular : Fonts.extraLight
-						}]}>{text}</Text>
+					<Pressable
+						key={index}
+						style={[
+							styles.filterButton,
+							{ backgroundColor: selectedButton === index ? "#3F009A" : "#3F009A14" }
+						]}
+						onPress={() => setSelectedButton(index)}
+					>
+						<Text
+							style={[
+								styles.buttonText,
+								{
+									color: selectedButton === index ? "#FFFFFF" : "#000000",
+									fontFamily: selectedButton === index ? Fonts.regular : Fonts.extraLight
+								}
+							]}
+						>
+							{text}
+						</Text>
 					</Pressable>
 				))}
+
 			</View>
 
 			{
@@ -127,20 +168,20 @@ export default function ToDoTab() {
 			}
 
 			<FlatList
-				data={
-					selectedButton === 0
-						? assignedToMe
-						: selectedButton === 1
-							? createdByMeWorkOrders
-							: openForAllWorkOrders
-				}
-
-				keyExtractor={(item) => item.id.toString()}
+				data={workOrders}
+				keyExtractor={(item, index) => index.toString()}
 				renderItem={renderWorkOrderItem}
 				removeClippedSubviews={false}
 				refreshing={refreshing}
 				onRefresh={handleRefresh}
 				contentContainerStyle={styles.listContainer}
+				onEndReached={handleEndReached}
+				onEndReachedThreshold={0.4}
+				ListFooterComponent={
+					loadingMore ? (
+						<ActivityIndicator size={28} />
+					) : null
+				}
 			/>
 		</>
 	)

@@ -139,7 +139,7 @@ const createLocation = () => {
 			}
 
 		} catch (err) {
-		setLoading(false)
+			setLoading(false)
 			console.log('error = ', err);
 		}
 	}
@@ -258,10 +258,10 @@ const createLocation = () => {
 				<TouchableOpacity style={styles.createBtn} onPress={handleCreateLocation}>
 					<Text style={styles.createBtnText}>
 						{
-							loading ? 
-							<ActivityIndicator size={"small"} color={"#fff"} />
-							:
-							data?.isEdit === "true" ? "Update Location" : "Create Location"
+							loading ?
+								<ActivityIndicator size={"small"} color={"#fff"} />
+								:
+								data?.isEdit === "true" ? "Update Location" : "Create Location"
 						}
 					</Text>
 				</TouchableOpacity>
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
 		shadowOffset: { width: 2, height: 2 },
 		shadowOpacity: 0.60,
 		shadowRadius: 2,
-		marginBottom: 15,
+		marginBottom: 80,
 	},
 	createBtnText: {
 		color: "#fff",

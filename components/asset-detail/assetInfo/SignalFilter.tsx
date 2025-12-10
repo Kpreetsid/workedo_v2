@@ -18,6 +18,7 @@ const SignalFilter = ({
 	onSignalChange,
 	onValueTypeChange,
 }: AssetFilterProps) => {
+	console.log('inside signal filter = ', Date.now());
 
 	const signalOptions = ["Velocity", "Acceleration", "Displacement"];
 	const valueTypeOptions = ["Rms", "Peak_to_peak", "Peak", "Kurtosis"];
