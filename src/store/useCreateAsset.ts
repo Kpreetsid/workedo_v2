@@ -7,8 +7,8 @@ export interface CreateAssetFormData {
 	asset_build_type?: string | null;
 	timezone: string;
 	timezones: any[];
-    parent_location?: { id: string; location_name: string; };
-    parent_asset?: { id: string; asset_name: string; };
+    parent_location?: { id: string; location_name: string; } | any;
+    parent_asset?: { id: any; asset_name: any; };
 	assigned_users: any[];
 	location: any | null;
 	locationObject: any | null;

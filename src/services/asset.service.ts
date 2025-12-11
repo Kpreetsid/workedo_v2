@@ -64,8 +64,8 @@ export const assetHealthStatus = async (payload: any) => {
     return await sendRequestDemo('POST', url, payload);
 };
 
-export const updateNewAsset = async (id: string, payload: any) => {
-    const url = `${endpoints.asset.add}/${id}`;
+export const updateNewAsset = async (payload: any, id?: string) => {
+    const url = `${endpoints.asset.edit}/${id}`;
     return await sendRequest('PUT', url, payload);
 }
 

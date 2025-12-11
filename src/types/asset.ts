@@ -30,20 +30,20 @@ export interface BaseAsset {
 	updatedAt?: string;
 	userList?: string[]; // backend sends array of string IDs
 	asset_status?: string;
-  }
-  
-  export interface AssetChild extends BaseAsset {
-	parent_id?: string;
+	parent_id?: string | Asset;
+}
+
+export interface AssetChild extends BaseAsset {
+	parent_id?: string | Asset;
 	parent_name?: string;
-  }
-  
-  export interface Asset extends BaseAsset {
+}
+
+export interface Asset extends BaseAsset {
 	image_path?: string; // optional (not always sent)
-	locationData?: AssetLocation; // ✅ changed from array to single object
-  }
-  
-  export interface AssetLocation {
+	locationData?: AssetLocation | AssetLocation[]; // ✅ changed from array to single object
+}
+
+export interface AssetLocation {
 	location_name: string;
 	id: string;
-  }
-  
+}

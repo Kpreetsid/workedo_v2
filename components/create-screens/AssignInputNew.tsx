@@ -179,11 +179,15 @@ const AssignInputNew: FC<AssignInputProps> = ({
 									{assignedUsers?.map((u: any) => (
 										<View key={u._id || u.id} style={styles.chip}>
 											<Text style={styles.chipText}>
-												{u.firstName && u.lastName
-													? `${u.firstName} ${u.lastName}`
-													: u.user?.firstName || u.user?.lastName
-														? `${u.user?.firstName ?? ""} ${u.user?.lastName ?? ""}`
-														: "Deleted User"}
+												{
+													u.firstName || u.lastName ?
+														`${u.firstName} ${u.lastName}`
+														:
+														u.user?.firstName || u.user?.lastName
+															?
+															`${u.user?.firstName ?? ""} ${u.user?.lastName ?? ""}`
+															:
+															"Deleted User"}
 											</Text>
 
 											<Pressable

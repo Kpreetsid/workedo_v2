@@ -16,6 +16,9 @@ const width = Dimensions.get("window").width;
 export default function SelectUser() {
 	const params: any = useLocalSearchParams();
 	const comingFrom = params?.comingFrom;
+	const usersData = params?.usersData && JSON.parse(params?.usersData);
+
+	console.log('users data = ', usersData);
 
 	const [users, setUsers] = useState<any[]>([]);
 	const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
@@ -30,18 +33,24 @@ export default function SelectUser() {
 	const createLocationAssignedUsers: any = useCreateLocationStore((state) => state.assigned_users);
 	const createPreveniveAssignedUsers: any = usePreventiveStore((state) => state.assigned_users);
 
+	// ------------- Load from param or API -------------
 	useEffect(() => {
+		if(users.length > 0) return;
+		if (usersData && Array.isArray(usersData)) {
+			setUsers(usersData);
+			return;
+		}
 		fetchUsers();
-	}, []);
+	}, [usersData]);
 
 	useEffect(() => {
 		if (!users.length) return;
 
 		if (comingFrom === "createAsset") {
-			console.log('in select user = ', createAssetAssignedUsers);
+			console.log('inside create asset = ', createAssetAssignedUsers);
 			const preselected = users.filter((u) =>
 				(createAssetAssignedUsers || []).some(
-					(sel: any) => (sel.user?.id || sel.id) === (u._id || u.id)
+					(sel: any) => (sel.user?.id || sel.id) === (u.userId || u.id)
 				)
 			);
 
@@ -78,7 +87,7 @@ export default function SelectUser() {
 			setSelectedUsers(preselected);
 		}
 
-	}, [users, workOrderAssignedUsers]);
+	}, [users]);
 
 	const fetchUsers = async () => {
 		try {
@@ -137,8 +146,11 @@ export default function SelectUser() {
 				}
 				renderItem={({ item }) => {
 					const isSelected = selectedUsers.some(
-						(u) => (u._id || u.id) === (item._id || item.id)
+						(u) => (u.user?.id || u.id) === (item.user?.id || item.id)
 					);
+
+					console.log('is selected = ', isSelected);
+
 					return (
 						<Pressable
 							style={[
@@ -165,7 +177,12 @@ export default function SelectUser() {
 								</LinearGradient>
 							)}
 							<Text style={styles.userText}>
-								{item?.firstName + "--" + item?.user_role}
+								{
+									item.firstName ?
+										item?.firstName + "--" + item?.user_role
+										:
+										item?.user?.firstName + "--" + item?.user?.user_role
+								}
 							</Text>
 						</Pressable>
 					);

@@ -50,6 +50,7 @@ export const endpoints = {
   },
   asset: {
     add: 'master/assets/old',
+    edit: 'master/assets/old-edit',
     assetData: 'master/assets',
     tree: 'master/assets/tree',
     children: 'asset_master/get_children',

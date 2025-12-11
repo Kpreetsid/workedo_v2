@@ -20,6 +20,7 @@ export const FormField = React.memo(
 		required = true,
 		styles,
 		openPicker,
+		usersData
 	}: {
 		label: string;
 		placeholder?: string;
@@ -35,6 +36,7 @@ export const FormField = React.memo(
 		required?: boolean;
 		styles?: any;
 		openPicker?: () => void;
+		usersData?: any[]
 	}) => {
 		const value = store((s: any) => s[field]);
 		const setValue = store((s: any) => s[setterName]);
@@ -109,7 +111,10 @@ export const FormField = React.memo(
 					onPress={() =>
 						router.push({
 							pathname: "/selectUser",
-							params: { comingFrom },
+							params: {
+								comingFrom: comingFrom,
+								usersData: JSON.stringify(usersData)
+							},
 						})
 					}
 				/>
@@ -140,12 +145,12 @@ export const FormField = React.memo(
 					store={store}
 					displayKey="location_name"
 					onPress={openPicker}
-					// onPress={() =>
-					// 	router.push({
-					// 		pathname: "/selectLocation",
-					// 		params: { comingFrom },
-					// 	})
-					// }
+				// onPress={() =>
+				// 	router.push({
+				// 		pathname: "/selectLocation",
+				// 		params: { comingFrom },
+				// 	})
+				// }
 				/>
 			);
 		}
@@ -159,12 +164,12 @@ export const FormField = React.memo(
 					store={store}
 					displayKey="asset_name"
 					onPress={openPicker}
-					// onPress={() =>
-					// 	router.push({
-					// 		pathname: "/selectAsset",
-					// 		params: { comingFrom },
-					// 	})
-					// }
+				// onPress={() =>
+				// 	router.push({
+				// 		pathname: "/selectAsset",
+				// 		params: { comingFrom },
+				// 	})
+				// }
 				/>
 			);
 		}

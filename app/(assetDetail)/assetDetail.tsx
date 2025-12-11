@@ -42,10 +42,10 @@ export default function AssetDetailScreen() {
 		console.log('handleEditAsset');
 
 		router.push({
-			pathname: "/createAsset",
+			pathname: "/editAsset",
 			params: {
 				asset_data: JSON.stringify(assetData),
-				isEdit: 'true'
+				mode: assetData?.top_level == false ? 'child' : 'parent'
 			},
 		});
 	}
