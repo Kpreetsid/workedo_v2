@@ -22,7 +22,7 @@ apiClient.interceptors.request.use((config) => {
     config.headers.accountID = data?.user?.account_id;
   }
 
-  console.log('config = ', config);
+  // console.log('config = ', config);
 
   return config;
 });

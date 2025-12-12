@@ -5,6 +5,7 @@ import AssetHealthStatus from "@/components/overview-screen/AssetHealthStatus";
 import AlarmSummary from "@/components/overview-screen/AlarmSummary";
 import Alarms from "@/components/overview-screen/Alarms";
 import PDMDashboardLocationSelect from "./PDMLocationSelect";
+import AssetHealthStatusPieChart from "./AssetHealthStatusPieChart";
 
 export default function PDMDashboard() {
 	return (
@@ -15,7 +16,8 @@ export default function PDMDashboard() {
 					<PDMDashboardLocationSelect />
 					<InfoCards />
 					<AssetHealth />
-					<AssetHealthStatus />
+					<AssetHealthStatusPieChart />
+					{/* <AssetHealthStatus /> */}
 					<AlarmSummary />
 					{/* <Top10BadAssets /> */}
 					<Alarms />

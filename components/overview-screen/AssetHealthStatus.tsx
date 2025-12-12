@@ -37,13 +37,6 @@ export default function AssetHealthStatus() {
 		"Not Defined": "#B0B0B0",
 	};
 
-	// 🧩 Convert API data into chart-friendly format
-	// const pieDataRaw = breakup.map((item) => ({
-	// 	value: item.value,
-	// 	color: colorMap[item.name] || "#ccc",
-	// 	text: item.name,
-	// }));
-
 	const pieDataRaw = breakup.map(item => ({
 		value: item.value,
 		color: colorMap[item.name],

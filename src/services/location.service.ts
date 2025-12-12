@@ -5,7 +5,7 @@ import { storage } from '../storage/mmkv';
 
 export const locationTree = async () => {
 	const url = `${endpoints.location.tree}`;
-	console.log('locations tree = ', url);
+	// console.log('locations tree = ', url);
 	return await sendRequest('GET', url);
 };
 
@@ -28,24 +28,24 @@ export const fetchParentLocationDetails = async (data: any, type: string) => {
 	let url = '';
 	if (type === 'parent') {
 		url = `${endpoints.overview.locationDetails}?parent_id=${data}`;
-		console.log('url parent = ', url);
+		// console.log('url parent = ', url);
 	} else {
 		url = `${endpoints.overview.locationDetails}?locationId=${data}`;
-		console.log('url child = ', url);
+		// console.log('url child = ', url);
 	}
-	console.log('url = ', url);
+	// console.log('url = ', url);
 	return await sendRequest('GET', url);
 }
 
 export const childAssetsAgainstLocation = async (data: { levelOneLocations: string[], levelTwoLocations: string[] }) => {
 	const url = `${endpoints.overview.childAssets}`;
-	console.log('url = ', url);
+	// console.log('url = ', url);
 	return await sendRequest('POST', url, data);
 }
 
 export const assetHealthKPIHistory = async (data: { org_id: string, asset_list: string[] }) => {
 	const url = `${endpoints.overview.assetHealthKPIHistory}`;
-	console.log('url = ', url);
+	// console.log('url = ', url);
 	return await sendRequestDemo('POST', url, data);
 }
 
@@ -80,12 +80,12 @@ export const deleteLocation = async (locationId: string) => {
 }
 
 export const locationImageUpload = async (image: any, user: any) => {
-	console.log('Uploading image...', image);
+	// console.log('Uploading image...', image);
 	try {
 		// Step 1: Show loader
 		const token = storage.getString('token');
-		console.log('Token: ', token);
-		console.log('user: ', user);
+		// console.log('Token: ', token);
+		// console.log('user: ', user);
 
 		// Step 2: Generate random name
 		const randomName = Math.floor(Math.random() * 1000000);
@@ -99,8 +99,8 @@ export const locationImageUpload = async (image: any, user: any) => {
 			type: 'image/jpeg',
 		} as any);
 
-		console.log('Form data: ', formData);
-		console.log('BASEURL data: ', endpoints.baseURL + 'api/' + endpoints.location.uploadImage);
+		// console.log('Form data: ', formData);
+		// console.log('BASEURL data: ', endpoints.baseURL + 'api/' + endpoints.location.uploadImage);
 
 		// Step 4: Upload with axios or fetch
 		const response = await fetch(endpoints.baseURL + 'api/' + endpoints.location.uploadImage, {
@@ -114,7 +114,7 @@ export const locationImageUpload = async (image: any, user: any) => {
 		});
 
 		const result = await response.json();
-		console.log('Upload success:', result);
+		// console.log('Upload success:', result);
 		if (result?.status) {
 			ToastAndroid.show('Image uploaded successfully!', ToastAndroid.LONG);
 			return {

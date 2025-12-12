@@ -1,11 +1,145 @@
-import { useState } from "react";
-import { TouchableOpacity, View, StyleSheet } from "react-native";
+import { useEffect, useState } from "react";
+import { TouchableOpacity, View, StyleSheet, ToastAndroid } from "react-native";
 import Dropdown from "@/components/overview-screen/DropDown";
-import { useOverviewStore } from "@/src/store/useOverviewStore";
+import { useAuthStore } from "@/src/store/useAuthStore";
+import { assetHealthKPIHistory, childAssetsAgainstLocation, fetchKPIFilterLocations, fetchParentLocationDetails } from "@/src/services/location.service";
+import { useCMMSStore } from "@/src/store/useCMMSStore";
 
 export default function CMMSDashboardLocationSelect() {
-	const { parentLocations, childLocations, parentSelectionId, childSelectionIds, setParentSelectionId, setChildSelectionIds } = useOverviewStore();
+	const {
+		parentLocations,
+		childLocations,
+		childAssets,
+		parentSelectionId,
+		childSelectionIds,
+
+		setParentLocations,
+		setChildLocations,
+		setChildAssets,
+		setParentSelectionId,
+		setChildSelectionIds,
+		setAssetKPIHistory,
+	} = useCMMSStore();
+
+	const { user } = useAuthStore();
+
 	const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+	useEffect(() => {
+		fetchLocations();
+	}, []);
+
+	// 🧩 Fetch all locations initially and select first parent
+	const fetchLocations = async () => {
+		const res = await fetchKPIFilterLocations();
+		console.log('res kpi = ', res);
+		if (res.status) {
+			setParentLocations(res.data.levelOneLocations);
+
+			const firstParent = res.data.levelOneLocations[0];
+			if (firstParent) setParentSelectionId(firstParent.id); // triggers below effect
+		}
+	};
+
+	// 🧠 When parent changes — fetch its child locations
+	useEffect(() => {
+		// console.log('parent changes')
+		if (!parentSelectionId) return;
+
+		const fetchChildsForParent = async () => {
+			try {
+				const childs = await fetchParentLocationDetails(parentSelectionId, "parent");
+				// console.log('childs = ', childs);
+
+				// 🧠 CASE 1: API returns success but "status": false (no data found)
+				if (!childs?.status || !Array.isArray(childs.data) || childs.data.length === 0) {
+					handleNoChildData();
+					return;
+				}
+
+				// 🧠 CASE 2: We have valid data
+				setChildLocations(childs.data);
+
+				// Select ALL child IDs by default
+				const allChildIds = childs.data.map((child: any) => child.id);
+				setChildSelectionIds(allChildIds);
+
+				// Fetch assets for selected children
+				fetchChildAssets(parentSelectionId ?? undefined, allChildIds);
+
+			} catch (error: any) {
+				console.error("fetchParentLocationDetails failed:", error);
+				if (!error.status) {
+					ToastAndroid.show("No Data Found", ToastAndroid.SHORT);
+					// Select ALL child IDs by default
+					const allChildIds: string[] = []
+					setChildSelectionIds(allChildIds);
+					setChildLocations([]);
+
+					// Fetch assets for selected children
+					fetchChildAssets(parentSelectionId ?? undefined, allChildIds);
+				}
+				// handleNoChildData();
+			}
+		};
+
+		fetchChildsForParent();
+	}, [parentSelectionId]);
+
+	const handleNoChildData = () => {
+		setChildLocations([]);
+		setChildSelectionIds([]);
+		setChildAssets([]);
+		setAssetKPIHistory(null);
+
+		ToastAndroid.show("No Data Found", ToastAndroid.SHORT);
+	};
+
+	// 🧠 When child selections change (user toggles checkboxes)
+	useEffect(() => {
+		if (!childSelectionIds.length) {
+			setChildAssets([]);
+			setAssetKPIHistory(null);
+			return;
+		}
+
+		fetchChildAssets(parentSelectionId ?? undefined, childSelectionIds);
+	}, [childSelectionIds]);
+
+
+	// Fetch child assets for a parent + selected children
+	const fetchChildAssets = async (parentId?: string, childIds?: string[]) => {
+		console.log('parentId ids = ', parentId)
+		console.log('chld ids = ', childIds)
+		const payload = {
+			levelOneLocations: [parentId || parentLocations[0]?.id],
+			levelTwoLocations: childIds || childLocations.map((i) => i.id),
+		};
+
+		console.log('payload for child assets = ', payload);
+
+		const childAssetsRes = await childAssetsAgainstLocation(payload);
+		// console.log('childAssetsRes = ', childAssetsRes);
+		if (childAssetsRes.status) {
+			setChildAssets(childAssetsRes.data.assetList);
+		}
+	};
+
+	// When child assets are ready, fetch KPI data
+	useEffect(() => {
+		if (!childAssets.length) return;
+		fetchAssetHealthKPIHistory();
+	}, [childAssets]);
+
+	const fetchAssetHealthKPIHistory = async () => {
+		const payload = {
+			org_id: user?.account_id,
+			asset_list: childAssets.map((item) => item.id),
+		};
+		// console.log('payload = ', payload);
+		const res = await assetHealthKPIHistory(payload);
+		setAssetKPIHistory(res.data);
+	};
 
 	return (
 		<>
@@ -23,15 +157,17 @@ export default function CMMSDashboardLocationSelect() {
 					onValueChange={(v: any) => setParentSelectionId(v ?? null)}
 				/>
 
-				<Dropdown
-					name="child"
-					label="Child Location"
-					options={childLocations}
-					value={childSelectionIds}
-					onValueChange={(v: any) => setChildSelectionIds(v ?? null)}
-					openDropdown={openDropdown}
-					setOpenDropdown={setOpenDropdown}
-				/>
+				{childLocations.length > 0 && (
+					<Dropdown
+						name="child"
+						label="Child Location"
+						options={childLocations}
+						value={childSelectionIds}
+						onValueChange={(v: any) => setChildSelectionIds(v ?? null)}
+						openDropdown={openDropdown}
+						setOpenDropdown={setOpenDropdown}
+					/>
+				)}
 			</View>
 		</>
 	);

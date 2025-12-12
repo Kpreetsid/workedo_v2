@@ -32,7 +32,7 @@ export default function PDMDashboardLocationSelect() {
 	// 🧩 Fetch all locations initially and select first parent
 	const fetchLocations = async () => {
 		const res = await fetchKPIFilterLocations();
-		console.log('res kpi = ', res);
+		// console.log('res kpi = ', res);
 		if (res.status) {
 			setParentLocations(res.data.levelOneLocations);
 
@@ -43,13 +43,13 @@ export default function PDMDashboardLocationSelect() {
 
 	// 🧠 When parent changes — fetch its child locations
 	useEffect(() => {
-		console.log('parent changes')
+		// console.log('parent changes')
 		if (!parentSelectionId) return;
 
 		const fetchChildsForParent = async () => {
 			try {
 				const childs = await fetchParentLocationDetails(parentSelectionId, "parent");
-				console.log('childs = ', childs);
+				// console.log('childs = ', childs);
 
 				// 🧠 CASE 1: API returns success but "status": false (no data found)
 				if (!childs?.status || !Array.isArray(childs.data) || childs.data.length === 0) {
@@ -114,10 +114,10 @@ export default function PDMDashboardLocationSelect() {
 			levelTwoLocations: childIds || childLocations.map((i) => i.id),
 		};
 
-		console.log('payload = ', payload);
+		// console.log('payload = ', payload);
 
 		const childAssetsRes = await childAssetsAgainstLocation(payload);
-		console.log('childAssetsRes = ', childAssetsRes);
+		// console.log('childAssetsRes = ', childAssetsRes);
 		if (childAssetsRes.status) {
 			setChildAssets(childAssetsRes.data.assetList);
 		}
@@ -134,7 +134,7 @@ export default function PDMDashboardLocationSelect() {
 			org_id: user?.account_id,
 			asset_list: childAssets.map((item) => item.id),
 		};
-		console.log('payload = ', payload);
+		// console.log('payload = ', payload);
 		const res = await assetHealthKPIHistory(payload);
 		setAssetKPIHistory(res.data);
 	};

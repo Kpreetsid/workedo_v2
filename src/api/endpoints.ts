@@ -14,6 +14,14 @@ export const endpoints = {
     verifyOTPResetPassword: 'reset-password/verify-otp',
     changePassword: 'reset-password/change-password',
   },
+  cmms: {
+    woStatus: 'work/orders/status',
+    woPriority: 'work/orders/priority',
+    monthlyCount: 'work/orders/monthly-count',
+    plannedUnplanned: 'work/orders/planned-unplanned',
+    woSummary: 'work/orders/summary',
+    woPending: 'work/orders/pending'
+  },
   user: {
     uploadProfileImage: 'upload/user_profile_img',
     updateUser: 'master/users',
