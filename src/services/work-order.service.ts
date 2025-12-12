@@ -5,7 +5,7 @@ import { storage } from "../storage/mmkv";
 
 export const workOrdersPaginated = async (pageType: string, page: number, limit: number = 20) => {
     let url = '';
-    url = `${endpoints.workOrders.workOrders}/get-work-order?page=${page}&limit=${limit}&pageType=${pageType}`;
+    url = `${endpoints.workOrders.workOrders}/get-work-order?page=${page}&limit=${limit}&pageType=${pageType}&status=Open&status=In-Progress&status=On-Hold`;
     console.log('url for request = ', url);
     return await sendRequest('GET', url);
 }

@@ -24,19 +24,42 @@ const editAsset = () => {
 	console.log('runing edit asset')
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
-	const { asset_data, mode } = useLocalSearchParams();
+
+	const params = useLocalSearchParams();
 
 	const [open, setOpen] = useState<boolean | null>(false);
 	const [loading, setLoading] = useState(false);
 	const [timezones, setTimezones] = useState<string[]>([]);
 	const [usersMappedToLocation, setUsersMappedToLocation] = useState([])
-	// typed, parsed object
-	const data: editAssetParams = {
-		asset_data: asset_data ? JSON.parse(asset_data as string) : null,
-		mode: mode as string | undefined
-	};
+	const [initialized, setInitialized] = useState(false);
 
-	console.log("Parsed Data:", data);
+	// 🔒 SAFE PARSE
+	const [data, setData] = useState<editAssetParams | null>(null);
+
+	// typed, parsed object
+	useEffect(() => {
+		if (initialized) return;
+
+		const { asset_data, mode } = params as { asset_data?: string; mode?: string };
+
+		if (!asset_data) {
+			console.warn("❌ editAsset: asset_data param missing");
+			setData(null);
+			return;
+		}
+
+		try {
+			const parsed = JSON.parse(asset_data) as Asset;
+			setData({
+				asset_data: parsed,
+				mode,
+			});
+			console.log("Parsed Data:", { asset_data: parsed, mode });
+		} catch (e) {
+			console.error("❌ editAsset: failed to parse asset_data", e);
+			setData(null);
+		}
+	}, [params]);
 
 	const { resetForm, setCreateAssetValue } = useCreateAssetStore();
 	const assigned_users = useCreateAssetStore((state) => state.assigned_users);
@@ -83,49 +106,75 @@ const editAsset = () => {
 
 
 	useEffect(() => {
-		fetchAllTimezones();
+		if (!data) return; // ← only return if data isn't ready
+
+		if (timezones.length == 0) {
+			fetchAllTimezones();
+		}
+
 		setCreateAssetValue("timezone", "Asia/Kolkata");
+		console.log('initialized value = ', initialized);
+		console.log('data value = ', data);
 
-		setCreateAssetValue("title", data?.asset_data?.asset_name);
-		setCreateAssetValue("asset_id", data?.asset_data?.id);
-		setCreateAssetValue("asset_type", data?.asset_data?.asset_type);
-		setCreateAssetValue("timezone", data?.asset_data?.asset_timezone ?? "");
-		setCreateAssetValue("location", data?.asset_data?.locationId?.id);
-		setCreateAssetValue("locationObject", data?.asset_data?.locationId);
-		setCreateAssetValue("parent_location", data?.asset_data?.locationId);
-		setCreateAssetValue("manufacturer", data?.asset_data?.manufacturer ?? null);
-		setCreateAssetValue("model", data?.asset_data?.model ?? "");
-		setCreateAssetValue("year", data?.asset_data?.year ?? "");
-		setCreateAssetValue("description", data?.asset_data?.description ?? "");
-		setCreateAssetValue("assigned_users", data?.asset_data?.userList ?? []);
 
-		if (data?.asset_data?.asset_build_type) {
-			setCreateAssetValue("asset_build_type", data?.asset_data?.asset_build_type == "non_electric" ? "Non Electric" : "Electric");
-		}
+		if (!initialized && data) {
+			console.log('in if')
+			setCreateAssetValue("title", data?.asset_data.asset_name);
+			setCreateAssetValue("asset_id", data?.asset_data?.id);
+			setCreateAssetValue("asset_type", data?.asset_data?.asset_type);
+			setCreateAssetValue("timezone", data?.asset_data?.asset_timezone ?? "");
+			setCreateAssetValue("location", data?.asset_data?.locationId?.id);
+			setCreateAssetValue("locationObject", data?.asset_data?.locationId);
+			setCreateAssetValue("parent_location", data?.asset_data?.locationId);
+			setCreateAssetValue("manufacturer", data?.asset_data?.manufacturer ?? null);
+			setCreateAssetValue("model", data?.asset_data?.model ?? "");
+			setCreateAssetValue("year", data?.asset_data?.year ?? "");
+			setCreateAssetValue("description", data?.asset_data?.description ?? "");
+			setCreateAssetValue("assigned_users", data?.asset_data?.userList ?? []);
 
-		// fetchAssetData()
-
-		if (data.mode === 'child' && data.asset_data) {
-			const parentAsset = normalizeParent(data?.asset_data?.parent_id);
-			setCreateAssetValue("parent_asset", parentAsset!);
-		}
-
-		return () => {
-			resetForm();
-		}
-	}, [])
-
-	const fetchAssetData = async () => {
-		try {
-			const res = await singleAssetData(data?.asset_data?.id);
-			console.log('single asset data = ', res);
-			if (res?.status) {
-				setCreateAssetValue("assigned_users", res?.data[0]?.userList);
+			if (data?.asset_data?.asset_build_type) {
+				setCreateAssetValue(
+					"asset_build_type",
+					data.asset_data.asset_build_type === "non_electric"
+						? "Non Electric"
+						: "Electric"
+				);
 			}
-		} catch (e) {
-			console.log('error asset data = ', e);
+
+			if (data.mode === "child") {
+				const parentAsset = normalizeParent(data.asset_data.parent_id);
+				setCreateAssetValue("parent_asset", parentAsset!);
+			}
+
+			setInitialized(true); // ← only set here
 		}
-	}
+
+	}, [data])
+
+	useEffect(() => {
+		return () => {
+			console.log("unmount → reset");
+			resetForm();
+		};
+	}, []);
+
+
+	useEffect(() => {
+		console.log('iniialized ran = ', initialized)
+		console.log('store after initialized true = ', useCreateAssetStore.getState())
+	}, [initialized])
+
+	// const fetchAssetData = async () => {
+	// 	try {
+	// 		const res = await singleAssetData(data?.asset_data?.id);
+	// 		console.log('single asset data = ', res);
+	// 		if (res?.status) {
+	// 			setCreateAssetValue("assigned_users", res?.data[0]?.userList);
+	// 		}
+	// 	} catch (e) {
+	// 		console.log('error asset data = ', e);
+	// 	}
+	// }
 
 	const fetchAllTimezones = () => {
 		console.log(moment.tz.names())
@@ -191,7 +240,7 @@ const editAsset = () => {
 		console.log('payload = ', payload);
 
 		try {
-			const res = await updateNewAsset(payload, data.asset_data?.id);
+			const res = await updateNewAsset(payload, data?.asset_data?.id);
 			console.log('res = ', res);
 			if (res.status) {
 				setLoading(false)
@@ -213,220 +262,226 @@ const editAsset = () => {
 			<ScrollView style={styles.container}>
 				<Header title={"Update Asset"} />
 
-				<FormField
-					label="Title"
-					placeholder="Enter Title"
-					field="title"
-					store={useCreateAssetStore}
-					setterName="setCreateAssetValue"
-				/>
-
-				<FormField
-					label="Asset ID"
-					placeholder="Enter Asset ID"
-					field="asset_id"
-					store={useCreateAssetStore}
-					setterName="setCreateAssetValue"
-					required={false}
-				/>
-
-				<FormField
-					label="Asset Type"
-					type="dropdown"
-					field="asset_type"
-					options={["Fan_Blower", "Pumps", "Gearbox", "Compressor", "Chillers", "CNC", "Motor", "Other"]}
-					store={useCreateAssetStore}
-					setterName="setCreateAssetValue"
-					styles={{ paddingHorizontal: 25 }}
-				/>
-
-				<FormField
-					label="Time Zone"
-					type="dropdown"
-					placeholder="Select Time Zone"
-					field="timezone"
-					options={timezones}
-					store={useCreateAssetStore}
-					setterName="setCreateAssetValue"
-					styles={{ paddingHorizontal: 25 }}
-				/>
-
 				{
-					data?.mode === 'child' ?
-						<View
-							style={[
-								styles.locationSelector
-							]}
-						>
-							<View style={styles.labelContainer}>
-								<Text style={styles.labelText}>Parent Location</Text>
-								<Text style={styles.asterisk}>*</Text>
-							</View>
+					initialized && (
+						<>
+							<FormField
+								label="Title"
+								placeholder="Enter Title"
+								field="title"
+								store={useCreateAssetStore}
+								setterName="setCreateAssetValue"
+							/>
 
-							<View
-								style={[styles.field]}
-							>
-								<Text
+							<FormField
+								label="Asset ID"
+								placeholder="Enter Asset ID"
+								field="asset_id"
+								store={useCreateAssetStore}
+								setterName="setCreateAssetValue"
+								required={false}
+							/>
+
+							<FormField
+								label="Asset Type"
+								type="dropdown"
+								field="asset_type"
+								options={["Fan_Blower", "Pumps", "Gearbox", "Compressor", "Chillers", "CNC", "Motor", "Other"]}
+								store={useCreateAssetStore}
+								setterName="setCreateAssetValue"
+								styles={{ paddingHorizontal: 25 }}
+							/>
+
+							<FormField
+								label="Time Zone"
+								type="dropdown"
+								placeholder="Select Time Zone"
+								field="timezone"
+								options={timezones}
+								store={useCreateAssetStore}
+								setterName="setCreateAssetValue"
+								styles={{ paddingHorizontal: 25 }}
+							/>
+
+							{
+								data?.mode === 'child' ?
+									<View
+										style={[
+											styles.locationSelector
+										]}
+									>
+										<View style={styles.labelContainer}>
+											<Text style={styles.labelText}>Parent Location</Text>
+											<Text style={styles.asterisk}>*</Text>
+										</View>
+
+										<View
+											style={[styles.field]}
+										>
+											<Text
+												style={[
+													styles.inputText,
+													{ color: "#222" },
+												]}
+												numberOfLines={1}
+											>
+												{
+													useCreateAssetStore.getState().parent_location?.location_name
+												}
+											</Text>
+										</View>
+									</View>
+									:
+									<Pressable onPress={() => setOpen(!open)}>
+										<View
+											style={[
+												styles.locationSelector
+											]}
+										>
+											<View style={styles.labelContainer}>
+												<Text style={styles.labelText}>Parent Location</Text>
+												<Text style={styles.asterisk}>*</Text>
+											</View>
+
+											<Pressable
+												style={[styles.field]}
+												onPress={() => setOpen(!open)}
+											>
+												<Text
+													style={[
+														styles.inputText,
+														open === false && { color: "#222" },
+													]}
+													numberOfLines={1}
+												>
+													{
+														locationObject ? locationObject?.location_name : "Select"
+													}
+												</Text>
+												<DateDropDownIcon />
+											</Pressable>
+										</View>
+									</Pressable>
+							}
+
+							{
+								// open && data?.mode != 'child' && <LocationSelector />
+								open && data?.mode != 'child' &&
+								<LocationPickerModal
+									visible={open}
+									onClose={() => setOpen(false)}
+									comingFrom="createAsset"
+								/>
+								// <LocationSelector />
+							}
+
+							{
+								data?.mode === 'child' &&
+								<View
 									style={[
-										styles.inputText,
-										{ color: "#222" },
+										styles.locationSelector
 									]}
-									numberOfLines={1}
 								>
+									<View style={styles.labelContainer}>
+										<Text style={styles.labelText}>Parent Asset</Text>
+										<Text style={styles.asterisk}>*</Text>
+									</View>
+
+									<View
+										style={[styles.field]}
+									>
+										<Text
+											style={[
+												styles.inputText,
+												{ color: "#222" },
+											]}
+											numberOfLines={1}
+										>
+											{
+												useCreateAssetStore.getState().parent_asset?.asset_name
+											}
+										</Text>
+									</View>
+								</View>
+							}
+
+							{
+								locationObject &&
+								<FormField
+									label="Select users to assign to location"
+									type="new-user"
+									placeholder="User"
+									field="assigned_users"
+									router={router}
+									comingFrom="createAsset"
+									store={useCreateAssetStore}
+									setterName="setCreateAssetValue"
+									usersData={usersMappedToLocation}
+								/>
+							}
+
+							{
+								data?.mode === 'child' &&
+								<FormField
+									label="Circuit Type"
+									type="dropdown"
+									field="asset_build_type"
+									options={["Electric", "Non Electric"]}
+									store={useCreateAssetStore}
+									setterName="setCreateAssetValue"
+									styles={{ paddingHorizontal: 25 }}
+								/>
+							}
+
+							<FormField
+								label="Manufacturer"
+								required={false}
+								placeholder="Enter Manufacturer"
+								field="manufacturer"
+								store={useCreateAssetStore}
+								setterName="setCreateAssetValue"
+							/>
+
+							<FormField
+								label="Model"
+								required={false}
+								placeholder="Enter Model"
+								field="model"
+								store={useCreateAssetStore}
+								setterName="setCreateAssetValue"
+							/>
+
+							<FormField
+								label="Year"
+								required={false}
+								placeholder="Enter Year"
+								field="year"
+								store={useCreateAssetStore}
+								setterName="setCreateAssetValue"
+							/>
+
+							<FormField
+								label="Description"
+								required={false}
+								placeholder="Enter Description"
+								field="description"
+								store={useCreateAssetStore}
+								setterName="setCreateAssetValue"
+							/>
+
+							<TouchableOpacity style={[styles.createBtn, { marginBottom: insets.bottom + 60 }]} onPress={handleEditAsset}>
+								<Text style={styles.createBtnText}>
 									{
-										useCreateAssetStore.getState().parent_location?.location_name
+										loading ?
+											<ActivityIndicator size={"small"} color={"#fff"} />
+											:
+											"Update Asset"
 									}
 								</Text>
-							</View>
-						</View>
-						:
-						<Pressable onPress={() => setOpen(!open)}>
-							<View
-								style={[
-									styles.locationSelector
-								]}
-							>
-								<View style={styles.labelContainer}>
-									<Text style={styles.labelText}>Parent Location</Text>
-									<Text style={styles.asterisk}>*</Text>
-								</View>
-
-								<Pressable
-									style={[styles.field]}
-									onPress={() => setOpen(!open)}
-								>
-									<Text
-										style={[
-											styles.inputText,
-											open === false && { color: "#222" },
-										]}
-										numberOfLines={1}
-									>
-										{
-											locationObject ? locationObject?.location_name : "Select"
-										}
-									</Text>
-									<DateDropDownIcon />
-								</Pressable>
-							</View>
-						</Pressable>
+							</TouchableOpacity>
+						</>
+					)
 				}
-
-				{
-					// open && data?.mode != 'child' && <LocationSelector />
-					open && data?.mode != 'child' &&
-					<LocationPickerModal
-						visible={open}
-						onClose={() => setOpen(false)}
-						comingFrom="createAsset"
-					/>
-					// <LocationSelector />
-				}
-
-				{
-					data?.mode === 'child' &&
-					<View
-						style={[
-							styles.locationSelector
-						]}
-					>
-						<View style={styles.labelContainer}>
-							<Text style={styles.labelText}>Parent Asset</Text>
-							<Text style={styles.asterisk}>*</Text>
-						</View>
-
-						<View
-							style={[styles.field]}
-						>
-							<Text
-								style={[
-									styles.inputText,
-									{ color: "#222" },
-								]}
-								numberOfLines={1}
-							>
-								{
-									useCreateAssetStore.getState().parent_asset?.asset_name
-								}
-							</Text>
-						</View>
-					</View>
-				}
-
-				{
-					locationObject &&
-					<FormField
-						label="Select users to assign to location"
-						type="new-user"
-						placeholder="User"
-						field="assigned_users"
-						router={router}
-						comingFrom="createAsset"
-						store={useCreateAssetStore}
-						setterName="setCreateAssetValue"
-						usersData={usersMappedToLocation}
-					/>
-				}
-
-				{
-					data?.mode === 'child' &&
-					<FormField
-						label="Circuit Type"
-						type="dropdown"
-						field="asset_build_type"
-						options={["Electric", "Non Electric"]}
-						store={useCreateAssetStore}
-						setterName="setCreateAssetValue"
-						styles={{ paddingHorizontal: 25 }}
-					/>
-				}
-
-				<FormField
-					label="Manufacturer"
-					required={false}
-					placeholder="Enter Manufacturer"
-					field="manufacturer"
-					store={useCreateAssetStore}
-					setterName="setCreateAssetValue"
-				/>
-
-				<FormField
-					label="Model"
-					required={false}
-					placeholder="Enter Model"
-					field="model"
-					store={useCreateAssetStore}
-					setterName="setCreateAssetValue"
-				/>
-
-				<FormField
-					label="Year"
-					required={false}
-					placeholder="Enter Year"
-					field="year"
-					store={useCreateAssetStore}
-					setterName="setCreateAssetValue"
-				/>
-
-				<FormField
-					label="Description"
-					required={false}
-					placeholder="Enter Description"
-					field="description"
-					store={useCreateAssetStore}
-					setterName="setCreateAssetValue"
-				/>
-
-				<TouchableOpacity style={[styles.createBtn, { marginBottom: insets.bottom + 60 }]} onPress={handleEditAsset}>
-					<Text style={styles.createBtnText}>
-						{
-							loading ?
-								<ActivityIndicator size={"small"} color={"#fff"} />
-								:
-								"Update Asset"
-						}
-					</Text>
-				</TouchableOpacity>
 
 			</ScrollView>
 		</KeyboardAwareScrollView>

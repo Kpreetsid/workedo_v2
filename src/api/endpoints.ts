@@ -51,6 +51,7 @@ export const endpoints = {
   asset: {
     add: 'master/assets/old',
     edit: 'master/assets/old-edit',
+    userToAssets: 'map/userToAssets',
     assetData: 'master/assets',
     tree: 'master/assets/tree',
     children: 'asset_master/get_children',

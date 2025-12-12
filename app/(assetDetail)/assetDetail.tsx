@@ -1,7 +1,7 @@
 import Header from "@/components/global/Header";
 import SegmentedPager from "@/components/global/SegmentPager";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { Asset } from "@/src/types/asset";
 import { StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { getAssetData } from "@/src/services/asset.service";
@@ -19,10 +19,17 @@ export default function AssetDetailScreen() {
 
 	const [assetData, setAssetData] = useState<Asset | null>(null);
 
-	useEffect(() => {
-		console.log('id = ', id);
-		fetchAssetData();
-	}, [id])
+	// useEffect(() => {
+	// 	console.log('id = ', id);
+	// 	fetchAssetData();
+	// }, [id])
+
+	useFocusEffect(
+		useCallback(() => {
+			console.log('id init focus = ', id);
+			fetchAssetData();
+		}, [])
+	)
 
 	const fetchAssetData = async () => {
 		console.log('fetching asset details', id);

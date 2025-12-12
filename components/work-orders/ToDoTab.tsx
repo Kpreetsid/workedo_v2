@@ -95,44 +95,6 @@ export default function ToDoTab() {
 		fetchWorkOrders(1, true); // always load first page
 	}, [selectedButton]);
 
-
-	// useEffect(() => {
-	// 	if (!workOrders.length) return;
-
-	// 	let assigned = [];
-	// 	let created = [];
-	// 	let open = [];
-
-	// 	for (let i = 0; i < workOrders.length; i++) {
-	// 		const wo = workOrders[i];
-
-	// 		const isAssigned = wo.assignedUsers?.some(
-	// 			u => u.userId === loggedInUser?.id
-	// 		);
-	// 		const isCreated = wo.created_by === loggedInUser?.id;
-
-	// 		if (isAssigned) {
-	// 			assigned.push(wo);
-	// 		}
-
-	// 		if (isCreated && !assigned.some(a => a.id === wo.id)) {
-	// 			created.push(wo);
-	// 		}
-
-	// 		if (!isAssigned && !isCreated && !assigned.some(a => a.id === wo.id)) {
-	// 			open.push(wo);
-	// 		}
-	// 	}
-
-
-	// 	console.log('assigned = ', assigned);
-	// 	console.log('created = ', created);
-	// 	console.log('open = ', open);
-	// 	setAssignedToMe([...assigned].reverse());
-	// 	setCreatedByMeWorkOrders([...created].reverse());
-	// 	setOpenForAllWorkOrders([...open].reverse());
-	// }, [workOrders]);
-
 	return (
 		<>
 			<View style={styles.buttonContainer}>

@@ -36,11 +36,14 @@ export default function SelectUser() {
 	// ------------- Load from param or API -------------
 	useEffect(() => {
 		if(users.length > 0) return;
-		if (usersData && Array.isArray(usersData)) {
+		if (usersData && usersData.length > 0 && Array.isArray(usersData)) {
 			setUsers(usersData);
 			return;
 		}
+		
+		// if(comingFrom !== "createAsset") fetchUsers();
 		fetchUsers();
+		
 	}, [usersData]);
 
 	useEffect(() => {
