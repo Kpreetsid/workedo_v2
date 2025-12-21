@@ -5,6 +5,8 @@ import Fonts from "@/constants/Typography";
 import { useEffect, useState } from "react";
 import { useCMMSStore } from "@/src/store/useCMMSStore";
 import { woPriority } from "@/src/services/cmms.service";
+import { useDateRangeStore } from "@/src/store/useDateRangeStore";
+import moment from "moment";
 
 export default function WoPriority() {
 	const [hidden, setHidden] = useState<string[]>([]);
@@ -17,9 +19,11 @@ export default function WoPriority() {
 	const childAssets = useCMMSStore((state) => state.childAssets);
 	console.log('child assets in wo status = ', childAssets);
 
+	const { startDate, endDate } = useDateRangeStore();
+
 	useEffect(() => {
 		fetchWoPriority();
-	}, [childAssets])
+	}, [childAssets, startDate])
 
 	// 🎨 Color mapping for each health type
 	const colorMap: Record<string, string> = {
@@ -30,13 +34,37 @@ export default function WoPriority() {
 	};
 
 	async function fetchWoPriority() {
+		const startTimePart = "T19:00:00.000Z";
+		const timePart = "T14:01:18.788Z";
 		try {
 			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
 			console.log('payload = ', childAssetsFormatted);
 
+
+			let finalPayload: any = {};
+			// prepare for payload
+			if (startDate) {
+				finalPayload.startDate = moment(startDate, "YYYY-MM-DD")
+					.subtract(1, "day")
+					.format("YYYY-MM-DD") + startTimePart;
+			} else {
+				finalPayload.startDate = moment().subtract(2, "months").format("YYYY-MM-DD") + startTimePart;
+			}
+
+			if (endDate) {
+				finalPayload.endDate = endDate + timePart;
+			} else {
+				finalPayload.endDate = moment().format("YYYY-MM-DD") + timePart;
+			}
+
+			finalPayload.assetIds = childAssetsFormatted
+
+			console.log('final payload = ', finalPayload);
+
+
 			const res = await woPriority(
-				'2025-10-11T19:00:00.000Z',
-				'2025-12-12T10:40:53.984Z',
+				finalPayload.startDate,
+				finalPayload.endDate,
 				childAssetsFormatted
 			);
 			console.log('res = ', res);

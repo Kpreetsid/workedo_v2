@@ -15,7 +15,6 @@ interface AssignedUsersModalProps {
 const { height } = Dimensions.get("window");
 
 const AssignedUsersModal: FC<AssignedUsersModalProps> = ({ visible, onClose, users }) => {
-	console.log('users = ', users);
 	const [search, setSearch] = useState("");
 
 	const filteredUsers = users?.filter((u: any) => u?.user?.firstName?.toLowerCase().includes(search.toLowerCase()));

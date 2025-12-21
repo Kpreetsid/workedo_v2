@@ -81,7 +81,7 @@ const AssignInput: FC<AssignInputProps> = ({
 					{required && <Text style={styles.asterisk}>*</Text>}
 				</View>
 
-				{(displayValue && field!="tasks") && (
+				{(displayValue && field != "tasks") && (
 					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
 						<Text
 							style={[

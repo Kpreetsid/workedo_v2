@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
-import { TouchableOpacity, View, StyleSheet, ToastAndroid } from "react-native";
+import { TouchableOpacity, View, StyleSheet, ToastAndroid, Pressable, Modal } from "react-native";
 import Dropdown from "@/components/overview-screen/DropDown";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { assetHealthKPIHistory, childAssetsAgainstLocation, fetchKPIFilterLocations, fetchParentLocationDetails } from "@/src/services/location.service";
 import { useCMMSStore } from "@/src/store/useCMMSStore";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import DateRangeCalendar from "./DateRangeCalendar";
+import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 
 export default function CMMSDashboardLocationSelect() {
 	const {
@@ -22,8 +26,9 @@ export default function CMMSDashboardLocationSelect() {
 	} = useCMMSStore();
 
 	const { user } = useAuthStore();
-
+	const [showCalendar, setShowCalendar] = useState(false);
 	const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
 
 	useEffect(() => {
 		fetchLocations();
@@ -168,7 +173,28 @@ export default function CMMSDashboardLocationSelect() {
 						setOpenDropdown={setOpenDropdown}
 					/>
 				)}
+
+				<Pressable style={styles.iconView} onPress={() => {
+					console.log('pressed')
+					setShowCalendar(true)
+				}}>
+					<Ionicons color={"#777"} name="calendar" size={20} />
+				</Pressable>
+
 			</View>
+
+			<Modal
+				visible={showCalendar}
+				transparent
+				animationType="slide"
+			>
+				<Pressable style={styles.overlayCal} onPress={() => setShowCalendar(false)}>
+					<View style={styles.sheet}>
+						<DateRangeCalendar onClose={() => setShowCalendar(false)} />
+					</View>
+				</Pressable>
+			</Modal>
+
 		</>
 	);
 }
@@ -188,5 +214,25 @@ const styles = StyleSheet.create({
 		right: 0,
 		bottom: 0,
 		zIndex: 99,
+	},
+	iconView: {
+		// backgroundColor: 'orange',
+		position: 'absolute',
+		right: 20,
+		top: 25,
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	overlayCal: {
+		flex: 1,
+		justifyContent: "flex-end",
+		backgroundColor: "rgba(0,0,0,0.4)",
+	},
+	sheet: {
+		height: "60%",
+		backgroundColor: "#fff",
+		borderTopLeftRadius: 16,
+		borderTopRightRadius: 16,
+		// padding: 16,
 	},
 });

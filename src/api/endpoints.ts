@@ -72,7 +72,12 @@ export const endpoints = {
     updateEndpoint: 'update_endpoint/',
     deleteEndpoint: 'deleteEndPointApi/',
     assetHealthStatus: 'asset_health_status_summary/',
-    copy: 'master/assets/make-copy'
+    copy: 'master/assets/make-copy',
+    get_acceleration_data: 'get_acceleration_data/',
+    get_velocity_data: 'get_velocity_data/',
+    get_displacement_data: 'get_displacement_data/',
+    
+    get_envelope_data: 'get_envelope_data/'
   },
   workOrders: {
     workOrders: 'work/orders',

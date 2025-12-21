@@ -11,9 +11,11 @@ import { useLocationStore } from "@/src/store/useLocationStore";
 import { usePartFormStore } from "@/src/store/usePartFormStore";
 import { createPart } from "@/src/services/part.service";
 import { FormField } from "@/components/global/FormField";
+import LocationPickerModal from "@/components/create-work-order/LocationPickerModal";
 
 export default function CreatePart() {
 	const router = useRouter();
+	const [visible, setVisible] = useState(false);
 	const { setPartFormValue, resetPartForm } = usePartFormStore();
 
 	useEffect(() => {
@@ -103,6 +105,17 @@ export default function CreatePart() {
 					comingFrom="createPart"
 					store={usePartFormStore}
 					setterName="setPartFormValue"
+					openPicker={() => {
+						console.log('opening')
+						setVisible(true)
+					}}
+				/>
+
+
+				<LocationPickerModal
+					visible={visible}
+					onClose={() => setVisible(false)}
+					comingFrom="createPart"
 				/>
 
 

@@ -1,32 +1,28 @@
 import { Dimensions, FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
-import { LineChart } from "react-native-gifted-charts";
-import { Feather, FontAwesome, FontAwesome6 } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
-import Fonts from "@/constants/Typography";
-import { ArrowRight } from "@/constants/IconProvider";
-import InfoCards from "@/components/overview-screen/InfoCards";
-import SelectEndpoint from "@/components/asset-detail/SelectEndpoint";
-import { useLocalSearchParams } from "expo-router";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getAllEndpoints, getAssetData, getChildren, getGraphTrendData, getSingleAssetHealthHistory } from "@/src/services/asset.service";
 import { Asset } from "@/src/types/asset";
 import { AssetEndpoint } from "@/src/types/assetEndpoint";
-import AssetFilter from "./SignalFilter";
 import { useAssetStore } from "@/src/store/useAssetStore";
 import { formatGraphData } from "@/src/utils/helper";
-import AssetUserInfo from "../AssetUserInfo";
-import AssignedUsersModal from "../../work-order-detail/AssignUserModal";
 import AssetSummary from "./AssetSummary";
 import AssetUsers from "./AssetUsers";
 import EndpointSelector from "./EndpointSelector";
 import AssetFilters from "./AssetFilters";
-import AssetTrendChart from "./AssetTrendChart";
+import AssetDataChart from "./AssetDataChart";
+import { useGestureLock } from "@/src/store/useGestureLock";
+import { useTrendSocket } from "@/hooks/useTrendSocket";
 
 interface AssetInfoTabProps {
 	asset_data: Asset;
 }
 
 export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
-	console.log('inside info tab = ', Date.now());
+	const graphBufferRef = useRef<any[]>([]);
+	const [fftEnabled, setFftEnabled] = useState(false);
+
+	const gestureLocked = useGestureLock((s) => s.locked);
+
 	const [graphLoading, setGraphLoading] = useState(false);
 
 	const [userModalVisible, setUserModalVisible] = useState(false);
@@ -70,28 +66,26 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 		(axis) => chartSeries.find((s) => s.axis === axis)
 	);
 
-	console.log('orderedSeries = ', orderedSeries);
-
-	// console.log('asset_data in info = ', asset_data)
-
 	useEffect(() => {
 		fetchEndpoints();
 
 		return () => {
-			clearAssetState(); // cleanup when leaving page
+			// console.log('clearing')
+			// clearAssetState(); // cleanup when leaving page
 		};
 	}, []);
 
 	const fetchEndpoints = async () => {
-		console.log('fetching endpoints');
+		// console.log('fetching endpoints');
+
 		try {
-			console.log('endpointSelected = ', endpointSelected);
+			// console.log('endpointSelected = ', endpointSelected);
 			// console.log('asset_data = ', asset_data);
 
 			let payload: string[] = [asset_data?.id];
-			console.log('payload for endpoints = ', payload);
+			// console.log('payload for endpoints = ', payload);
 			const endpointsRes = await getAllEndpoints(payload);
-			console.log('res endpoints = ', endpointsRes);
+			// console.log('res endpoints = ', endpointsRes);
 
 			if (endpointsRes?.data?.length > 0) {
 				setEndpoints(endpointsRes.data);
@@ -107,7 +101,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 	}
 
 	useEffect(() => {
-		console.log('endpoint selected = ', endpointSelected);
+		// console.log('endpoint selected = ', endpointSelected);
 
 		endpointSelected != null ? calculateAssetHealth() : null;
 	}, [endpointSelected])
@@ -138,82 +132,213 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 	useEffect(() => {
 		if (endpointSelected && selectedAxis.length > 0 && selectedSignal && selectedValueType) {
 			setGraphLoading(true);     // 🔥 start loader
-			fetchGraphTrendData();
+			// fetchGraphTrendData();
 		}
 	}, [endpointSelected, selectedAxis, selectedSignal, selectedValueType]);
 
-	const fetchGraphTrendData = async () => {
-		try {
-			if (!endpointSelected?.composite_id) return;
 
-			const payload = {
-				asset_id: asset_data?.id,
-				fft_only: false,
-				compositeList: [
-					{
-						asset_id: endpointSelected?.asset_id,
-						composite_id: endpointSelected?.composite_id,
-						axis: selectedAxis, // ✅ dynamic from store
-						is_linked: true,
-					},
-				],
-				function: {
-					Vibration: [
-						`${selectedSignal.toLowerCase()}-${selectedValueType.toLowerCase()}`
-					],
-					Temperature: ["temperature"],
-					Acoustics: [],
-					"Magnetic Flux": [],
-					Current: [],
+	// ---------------------------
+	// SOCKET PAYLOAD (DECLARATIVE)
+	// ---------------------------
+	const graphKey = `${selectedSignal?.toLowerCase()}-${selectedValueType?.toLowerCase()}`;
+
+	const trendPayload = useMemo(() => {
+		// console.log('endpoint selected = ', endpointSelected);
+
+		if (
+			!endpointSelected?.composite_id ||
+			!selectedAxis.length ||
+			!selectedSignal ||
+			!selectedValueType
+		)
+			return null;
+
+		return {
+			asset_id: asset_data?.id,
+			fft_only: fftEnabled,
+			compositeList: [
+				{
+					asset_id: endpointSelected.asset_id,
+					composite_id: endpointSelected.composite_id,
+					axis: selectedAxis,
+					is_linked: false,
 				},
-				fromDate: "",
-				toDate: "",
-			};
+			],
+			function: {
+				Vibration: [graphKey],
+				Temperature: [],
+				Acoustics: [],
+				"Magnetic Flux": [],
+				Current: [],
+			},
+			fromDate: "",
+			toDate: "",
+		};
+	}, [
+		asset_data?.id,
+		endpointSelected?.asset_id,
+		endpointSelected?.composite_id,
+		selectedAxis,
+		selectedSignal,
+		selectedValueType,
+		fftEnabled
+	]);
 
-			console.log("graph data payload = ", payload);
+	// ---------------------------
+	// SOCKET CONNECTION
+	// ---------------------------
+	// console.log('trend payload = ', trendPayload)
+	useTrendSocket({
+		payload: trendPayload,
+		enabled: !!trendPayload,
+		onStatus: (status) => {
+			// console.log('status = ', status)
+			// if (status === "connected") setGraphLoading(true);
+		},
 
-			const res = await getGraphTrendData(payload);
-			console.log("graph trend data =", res, `${selectedSignal.toLowerCase()}-${selectedValueType.toLowerCase()}`);
-			if (res) setGraphData(res[`${selectedSignal.toLowerCase()}-${selectedValueType.toLowerCase()}`]);
-		} catch (err) {
-			console.error("Error fetching graph trend data:", err);
-			ToastAndroid.show("Failed to load graph trend data.", ToastAndroid.SHORT);
-		} finally {
-			setGraphLoading(false);
+		onData: (message) => {
+			if (!message?.data || !Array.isArray(message.data)) return;
+
+			if (message.data.length === 0) {
+				setGraphLoading(false);
+				setGraphData([]);
+				return;
+			}
+
+			// push each axis payload into buffer
+			message.data.forEach((series: any) => {
+				graphBufferRef.current.push(series);
+			});
+
+			// flush ONLY when backend says we're done
+			if (
+				message.chunk_info?.is_final_chunk &&
+				message.chunk_info?.is_final_series
+			) {
+				// console.log("final graph data =", graphBufferRef.current);
+
+				setGraphLoading(false);
+				setGraphData([...graphBufferRef.current]);
+			}
+		},
+	});
+
+	useEffect(() => {
+		if (trendPayload) {
+			setGraphLoading(true);
+			graphBufferRef.current = []; // reset buffer for new request
 		}
-	};
+	}, [trendPayload]);
+
+	// ---------------------------
+	// FORMAT GRAPH DATA
+	// ---------------------------
+	useEffect(() => {
+		if (!Array.isArray(graphData) || !graphData.length) {
+			setChartSeries([]);
+			return;
+		}
+
+		const formatted = formatGraphData(graphData);
+		setChartSeries(formatted);
+
+		const points = formatted[0].points;
+		setXLabels(
+			points
+				.map((p: any, i: number) => (i % 15 === 0 ? p.fullDate : null))
+				.filter(Boolean)
+		);
+
+		const allValues = formatted.flatMap((s: any) =>
+			s.points.map((p: any) => p.value)
+		);
+		setYMaxValue(Math.max(...allValues));
+	}, [graphData]);
+
+
+	// const fetchGraphTrendData = async () => {
+	// 	try {
+	// 		if (!endpointSelected?.composite_id) return;
+
+	// 		const payload = {
+	// 			asset_id: asset_data?.id,
+	// 			fft_only: false,
+	// 			compositeList: [
+	// 				{
+	// 					asset_id: endpointSelected?.asset_id,
+	// 					composite_id: endpointSelected?.composite_id,
+	// 					axis: selectedAxis, // ✅ dynamic from store
+	// 					is_linked: true,
+	// 				},
+	// 			],
+	// 			function: {
+	// 				Vibration: [
+	// 					`${selectedSignal.toLowerCase()}-${selectedValueType.toLowerCase()}`
+	// 				],
+	// 				Temperature: ["temperature"],
+	// 				Acoustics: [],
+	// 				"Magnetic Flux": [],
+	// 				Current: [],
+	// 			},
+	// 			fromDate: "",
+	// 			toDate: "",
+	// 		};
+
+	// 		// console.log("graph data payload = ", payload);
+
+	// 		const res = await getGraphTrendData(payload);
+	// 		// console.log("graph trend data =", res);
+	// 		if (res) {
+	// 			setGraphData(res[`${selectedSignal.toLowerCase()}-${selectedValueType.toLowerCase()}`]);
+	// 		}
+	// 	} catch (err) {
+	// 		console.error("Error fetching graph trend data:", err);
+	// 		ToastAndroid.show("Failed to load graph trend data.", ToastAndroid.SHORT);
+	// 	} finally {
+	// 		setGraphLoading(false);
+	// 	}
+	// };
 
 	// 3) whenever graphData (your store value) changes → format for chart
 	useEffect(() => {
+		// console.log('graph data to see = ', graphData)
 		if (graphData && Array.isArray(graphData)) {
-			const formatted = formatGraphData(graphData);
-			setChartSeries(formatted);
 
-			const points = formatted[0].points;
+			if (graphData.length > 0) {
+				const formatted = formatGraphData(graphData);
+				setChartSeries(formatted);
 
-			// X-axis labels: show every 15th point
-			const thinnedLabels = points
-				.map((p: any, index: number) => (index % 15 === 0 ? p.fullDate : null))
-				.filter(Boolean);
+				const points = formatted[0].points;
 
-			setXLabels(thinnedLabels);
+				// X-axis labels: show every 15th point
+				const thinnedLabels = points
+					.map((p: any, index: number) => (index % 15 === 0 ? p.fullDate : null))
+					.filter(Boolean);
 
-			// Y-axis: get max across ALL existing axes
-			const allValues = formatted.flatMap((series: any) =>
-				series.points.map((p: any) => p.value)
-			);
+				setXLabels(thinnedLabels);
 
-			const rawMax = Math.max(...allValues);
-			const yMax = Math.ceil(rawMax);
+				// Y-axis: get max across ALL existing axes
+				const allValues = formatted.flatMap((series: any) =>
+					series.points.map((p: any) => p.value)
+				);
 
-			setYMaxValue(yMax);
+				const rawMax = Math.max(...allValues);
+				const yMax = Math.ceil(rawMax);
+
+				// console.log('y max = ', rawMax, yMax)
+
+				setYMaxValue(rawMax);
+			} else {
+				setChartSeries([])
+			}
+
 		}
 	}, [graphData]);
 
 	// 4) optional: inspect final points
 	useEffect(() => {
 		if (chartSeries.length) {
-			console.log("final chart = ", chartSeries);
+			// console.log("final chart = ", chartSeries);
 
 			const orderedSeries = ["Horizontal", "Vertical", "Axial"].map(
 				(axis) => chartSeries.find((s) => s.axis === axis)
@@ -222,11 +347,15 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 	}, [chartSeries]);
 
 	useEffect(() => {
-		console.log('xLabels = ', xLabels);
+		// console.log('xLabels = ', xLabels);
 	}, [xLabels])
 
 	return (
-		<ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 50 }}>
+		<ScrollView
+			scrollEnabled={!gestureLocked}
+			style={styles.container}
+			contentContainerStyle={{ paddingBottom: 50 }}
+		>
 			<AssetSummary asset={asset_data} assetHealth={assetHealth} />
 			<AssetUsers users={asset_data?.userList || []} />
 
@@ -247,13 +376,58 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 				setSelectedValueType={setSelectedValueType}
 			/>
 
-			<AssetTrendChart
+			{/* <AssetTrendChart
 				chartSeries={chartSeries}
 				xLabels={xLabels}
 				yMaxValue={yMaxValue}
 				selectedValueType={selectedValueType}
 				loading={graphLoading}
+			/> */}
+
+			<View style={styles.fftToggleRow}>
+				<Text style={styles.fftLabel}>FFT</Text>
+
+				<TouchableOpacity
+					onPress={() => setFftEnabled((prev) => !prev)}
+					style={[
+						styles.fftToggle,
+						fftEnabled && styles.fftToggleActive,
+					]}
+				>
+					<Text style={styles.fftToggleText}>
+						{fftEnabled ? "ON" : "OFF"}
+					</Text>
+				</TouchableOpacity>
+			</View>
+
+
+			<AssetDataChart
+				chartSeries={orderedSeries.filter(Boolean)}
+				xLabels={xLabels}
+				yMaxValue={yMaxValue}
+				loading={graphLoading}
+				asset_data = {asset_data}
 			/>
+
+
+			{/* ----------------------------- */}
+			{/*            LEGEND             */}
+			{/* ----------------------------- */}
+			<View style={styles.legendRow}>
+				{orderedSeries.filter(Boolean).map((s: any) => (
+					<View key={s.axis} style={styles.legendItem}>
+						<View
+							style={[
+								styles.legendDot,
+								{ backgroundColor: axisColors[s.axis] },
+							]}
+						/>
+						<Text style={styles.legendText}>
+							{selectedValueType}-{s.axis}
+						</Text>
+					</View>
+				))}
+			</View>
 
 		</ScrollView >
 	)
@@ -297,4 +471,41 @@ const styles = StyleSheet.create({
 		color: "#000",
 		marginLeft: 4
 	},
+	legendDot: {
+		width: 8,
+		height: 8,
+		borderRadius: 4,
+	},
+	fftToggleRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "center",
+		gap: 20,
+		marginHorizontal: 30,
+		marginTop: 15,
+	},
+
+	fftLabel: {
+		fontSize: 14,
+		fontWeight: "600",
+		color: "#333",
+	},
+
+	fftToggle: {
+		paddingHorizontal: 14,
+		paddingVertical: 6,
+		borderRadius: 14,
+		backgroundColor: "#ddd",
+	},
+
+	fftToggleActive: {
+		backgroundColor: "#01d711",
+	},
+
+	fftToggleText: {
+		fontSize: 12,
+		fontWeight: "600",
+		color: "#000",
+	},
+
 });

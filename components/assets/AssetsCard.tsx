@@ -28,7 +28,7 @@ const COLORS: any = {
 	"Alert": "#FACC15",
 	"Danger": "#F97316",
 	"Critical": "#EF4444",
-	"Not Defined": "#fff"
+	"Not Defined": "#b0b0b0"
 };
 
 const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset, handleCopyAsset }: AssetsCardInterface) => {
@@ -83,7 +83,6 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset, hand
 				]
 			}
 				onPress={() => {
-					console.log('in else = ', asset)
 					router.push({
 						pathname: "/assetDetail",
 						params: { id: asset.id },

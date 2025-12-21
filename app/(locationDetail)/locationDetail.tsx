@@ -38,7 +38,7 @@ export default function LocationDetail() {
 	const fetchSingleLocation = async () => {
 		try {
 			const res = await singleLocationData(location?.id);
-			console.log(res);
+			console.log('single location', res);
 			if (res?.status) {
 				setLocationData(res?.data[0]);
 			}
@@ -110,7 +110,7 @@ export default function LocationDetail() {
 				<View style={styles.headerCard}>
 					<Image
 						style={styles.image}
-						source={{ uri: location?.image_path ? `${endpoints.baseURL}locations/${location?.image_path}` : 'https://new.presageinsights.ai/cmms/assets/images/company.jpg' }}
+						source={{ uri: location?.image_path ? `${endpoints.baseURL}locations/${locationData?.image_path}` : 'https://new.presageinsights.ai/cmms/assets/images/company.jpg' }}
 						placeholder={{ blurhash }}
 						contentFit="cover"
 						transition={1000}

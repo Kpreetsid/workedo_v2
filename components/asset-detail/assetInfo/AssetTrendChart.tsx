@@ -113,8 +113,8 @@ export default function AssetTrendChart({
 					backgroundColor="transparent"
 					rulesColor="#F0F0F0"
 
-					// width={SCREEN_WIDTH}
-					// adjustToWidth={true}
+					width={SCREEN_WIDTH}
+					adjustToWidth={true}
 
 					// initialSpacing={0}
 					// endSpacing={0}

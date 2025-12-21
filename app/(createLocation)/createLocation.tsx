@@ -11,6 +11,7 @@ import { Location } from '@/src/types/location'
 import { DateDropDownIcon } from '@/constants/IconProvider'
 import { Image } from 'expo-image'
 import { endpoints } from '@/src/api/endpoints'
+import { useCreateAssetStore } from '@/src/store/useCreateAsset'
 
 interface createLocationParams {
 	location_data: Location;
@@ -47,8 +48,11 @@ const createLocation = () => {
 			setCreateLocationValue("title", data?.location_data?.location_name);
 			setCreateLocationValue("location_type", data?.location_data?.location_type);
 			setCreateLocationValue("description", data?.location_data?.description);
+			setCreateLocationValue("attachments", [{image_path: data?.location_data?.image_path}]);
 
 			fetchLocationData();
+
+			console.log('in attachments = ', useCreateLocationStore.getState())
 		}
 
 		if (data.mode === 'child' && data.location_data) {
@@ -296,7 +300,7 @@ const styles = StyleSheet.create({
 		shadowOffset: { width: 2, height: 2 },
 		shadowOpacity: 0.60,
 		shadowRadius: 2,
-		marginBottom: 80,
+		marginBottom: 150,
 	},
 	createBtnText: {
 		color: "#fff",

@@ -4,33 +4,54 @@ import Fonts from "@/constants/Typography";
 import { useCMMSStore } from "@/src/store/useCMMSStore";
 import { useEffect, useState } from "react";
 import { woSummary } from "@/src/services/cmms.service";
+import { useDateRangeStore } from "@/src/store/useDateRangeStore";
+import moment from "moment";
 
 export default function CMMSInfoCards() {
 	const childAssets = useCMMSStore((state) => state.childAssets);
 	// console.log('child assets in wo status = ', childAssets);
 
 	const [woInfoCards, setWOInfoCards] = useState<any>(null);
+	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
+		console.log('bceause of start date - ', startDate);
 		fetchInfoCards();
-	}, [childAssets])
+	}, [childAssets, startDate])
 
 	async function fetchInfoCards() {
+		const startTimePart = "T11:00:00.946Z";
+		const timePart = "T13:39:00.946Z";
 		try {
 			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
-			// console.log('payload = ', childAssetsFormatted);
 
-			const res = await woSummary(
-				'2025-10-11T19:00:00.000Z',
-				'2025-12-12T10:40:53.984Z',
-				childAssetsFormatted
-			);
+			let finalPayload: any = {};
+			// prepare for payload
+			if (startDate) {
+				finalPayload.startDate = moment(startDate, "YYYY-MM-DD")
+					.subtract(1, "day")
+					.format("YYYY-MM-DD") + startTimePart;
+			} else {
+				finalPayload.startDate = moment().subtract(2, "months").format("YYYY-MM-DD") + startTimePart;
+			}
+
+			if (endDate) {
+				finalPayload.endDate = endDate + timePart;
+			} else {
+				finalPayload.endDate = moment().format("YYYY-MM-DD") + timePart;
+			}
+
+			finalPayload.assetIds = childAssetsFormatted
+
+			console.log('final payload = ', finalPayload);
+
+			const res = await woSummary(finalPayload);
 			if (res?.status) {
-				// console.log('res WO info cards = ', res?.data);
+				console.log('res WO info cards = ', res?.data);
 				setWOInfoCards(res?.data)
 			}
 		} catch (e) {
-			// console.log('e in status = ', e);
+			console.log('e in status = ', e);
 		}
 	}
 
@@ -45,9 +66,9 @@ export default function CMMSInfoCards() {
 					<Text style={[styles.cardValue, { color: card.color }]}>
 						{
 							card.id === 1 ? woInfoCards?.completion_rate :
-							card.id === 2 ? woInfoCards?.overdue_WO :
-							card.id === 3 ? woInfoCards?.work_request_count :
-							card.id === 4 ? woInfoCards?.planned_unplanned_ratio : null
+								card.id === 2 ? woInfoCards?.overdue_WO :
+									card.id === 3 ? woInfoCards?.work_request_count :
+										card.id === 4 ? woInfoCards?.planned_unplanned_ratio : null
 						}
 					</Text>
 				</View>

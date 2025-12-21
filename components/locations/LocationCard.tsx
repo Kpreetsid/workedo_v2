@@ -75,7 +75,6 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 						}
 						router.back();
 					} else {
-						console.log('in else = ', item)
 						router.push({
 							pathname: "/locationDetail",
 							// params: { data: item.id },

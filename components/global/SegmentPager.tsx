@@ -2,6 +2,7 @@ import { cloneElement, ComponentType, isValidElement, ReactElement, ReactNode, u
 import { Pressable, StyleProp, StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
 import PagerView, { PagerViewOnPageSelectedEvent } from "react-native-pager-view";
 import Fonts from "@/constants/Typography";
+import { useGestureLock } from "@/src/store/useGestureLock";
 
 interface TabConfig {
 	label: string;
@@ -24,6 +25,9 @@ interface SegmentedPagerProps {
 console.log("[SegmentedPager] rendering PagerView now");
 
 export default function SegmentedPager({ tabs, comingFrom, initialPage = 0, containerStyle, tabStyle, activeTabStyle, textStyle, activeTextStyle, onPageChange }: SegmentedPagerProps) {
+
+	const gestureLocked = useGestureLock((s) => s.locked);
+	
 	console.log('initial page = ', initialPage)
 	const pagerRef = useRef<PagerView>(null);
 	const [activeTab, setActiveTab] = useState(initialPage);
@@ -70,6 +74,7 @@ export default function SegmentedPager({ tabs, comingFrom, initialPage = 0, cont
 				initialPage={initialPage}
 				ref={pagerRef}
 				onPageSelected={onPageSelected}
+				scrollEnabled={!gestureLocked}
 			>
 				{tabs.map((tab, index) => (
 					<View key={index.toString()} style={styles.page}>

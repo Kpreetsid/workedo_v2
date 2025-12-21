@@ -1,6 +1,8 @@
 import Fonts from "@/constants/Typography";
 import { plannedUnplanned } from "@/src/services/cmms.service";
 import { useCMMSStore } from "@/src/store/useCMMSStore";
+import { useDateRangeStore } from "@/src/store/useDateRangeStore";
+import moment from "moment";
 import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { LineChart, lineDataItem } from "react-native-gifted-charts";
@@ -18,17 +20,44 @@ export default function PlannedVsUnplanned() {
 	const [maxY, setMaxY] = useState(10); // fallback default
 	const [spacingValue, setSpacingValue] = useState(40);
 
+	const { startDate, endDate } = useDateRangeStore();
+
 	useEffect(() => {
 		fetchPlannedUnplanned();
-	}, [childAssets])
+	}, [childAssets, startDate])
 
 	async function fetchPlannedUnplanned() {
+		const startTimePart = "T19:00:00.000Z";
+		const timePart = "T14:01:18.788Z";
 		try {
 			const childAssetsFormatted = childAssets.map((i) => i.id).join(",");
 
+
+			let finalPayload: any = {};
+			// prepare for payload
+			if (startDate) {
+				finalPayload.startDate = moment(startDate, "YYYY-MM-DD")
+					.subtract(1, "day")
+					.format("YYYY-MM-DD") + startTimePart;
+			} else {
+				finalPayload.startDate = moment().subtract(2, "months").format("YYYY-MM-DD") + startTimePart;
+			}
+
+			if (endDate) {
+				finalPayload.endDate = endDate + timePart;
+			} else {
+				finalPayload.endDate = moment().format("YYYY-MM-DD") + timePart;
+			}
+
+			finalPayload.assetIds = childAssetsFormatted
+
+			console.log('final payload = ', finalPayload);
+
+
+
 			const res = await plannedUnplanned(
-				"2025-10-11T19:00:00.000Z",
-				"2025-12-12T10:40:53.984Z",
+				finalPayload.startDate,
+				finalPayload.endDate,
 				childAssetsFormatted
 			);
 

@@ -5,6 +5,8 @@ import Fonts from "@/constants/Typography";
 import { useCMMSStore } from "@/src/store/useCMMSStore";
 import { useEffect, useState } from "react";
 import { woStatus } from "@/src/services/cmms.service";
+import { useDateRangeStore } from "@/src/store/useDateRangeStore";
+import moment from "moment";
 
 const chartData: pieDataItem[] = [
 	{ value: 3, color: "#00B227" }, { value: 3, color: "#DEDEDE" }, { value: 3, color: "#FFC107" }, { value: 3, color: "#5552FE" },
@@ -18,12 +20,14 @@ export default function WoStatus() {
 	const [chartDataFinal, setChartDataFinal] = useState([]);
 
 	const childAssets = useCMMSStore((state) => state.childAssets);
+	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
+		console.log(' in wo status = ', childAssets, startDate)
 		if (childAssets.length > 0) {
 			fetchWoStatus();
 		}
-	}, [childAssets])
+	}, [childAssets, startDate])
 
 	// 🎨 Color mapping for each health type
 	const colorMap: Record<string, string> = {
@@ -34,16 +38,37 @@ export default function WoStatus() {
 	};
 
 	async function fetchWoStatus() {
+		const startTimePart = "T19:00:00.000Z";
+		const timePart = "T14:01:18.788Z";
 		try {
 			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
-			console.log('payload = ', childAssetsFormatted);
+
+			let finalPayload: any = {};
+			// prepare for payload
+			if (startDate) {
+				finalPayload.startDate = moment(startDate, "YYYY-MM-DD")
+					.subtract(1, "day")
+					.format("YYYY-MM-DD") + startTimePart;
+			} else {
+				finalPayload.startDate = moment().subtract(2, "months").format("YYYY-MM-DD") + startTimePart;
+			}
+
+			if (endDate) {
+				finalPayload.endDate = endDate + timePart;
+			} else {
+				finalPayload.endDate = moment().format("YYYY-MM-DD") + timePart;
+			}
+
+			finalPayload.assetIds = childAssetsFormatted
+
+			console.log('final payload = ', finalPayload);
 
 			const res = await woStatus(
-				'2025-10-11T19:00:00.000Z',
-				'2025-12-12T11:37:07.027Z',
+				finalPayload.startDate,
+				finalPayload.endDate,
 				childAssetsFormatted
 			);
-			console.log('res = ', res);
+			console.log('wo status res = ', res);
 			if (res?.status) {
 
 				// 🎨 Color mapping for each health type
@@ -69,7 +94,7 @@ export default function WoStatus() {
 				const chartDataRaw = pieDataRaw.filter(
 					(item: any) => !hidden.includes(item.text)
 				);
-				console.log('chart data raw = ', chartDataRaw)
+				// console.log('chart data raw = ', chartDataRaw)
 				setChartDataFinal(chartDataRaw);
 			}
 		} catch (e: any) {

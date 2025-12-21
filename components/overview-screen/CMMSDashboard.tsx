@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet } from "react-native"
+import { ScrollView, StyleSheet, View } from "react-native"
 import CMMSDashboardLocationSelect from "./CMMSLocationSelect"
 import CMMSInfoCards from "./CMMSInfoCards"
 import WoStatus from "./WoStatus"
@@ -6,23 +6,24 @@ import WoPriority from "./WoPriority"
 import PlannedVsUnplanned from "./PlannedVsUnplanned"
 import WorkOrderSummary from "./WorkOrderSummary"
 import PendingWorkOrders from "./PendingWorkOders"
+import { Ionicons } from "@expo/vector-icons"
 
 export default function CMMSDashboard() {
 	return (
 		<ScrollView contentContainerStyle={styles.contentContainer}>
 			<CMMSDashboardLocationSelect />
 
-			<CMMSInfoCards />
+			{/* <CMMSInfoCards /> */}
 
 			<WoStatus />
 
-			<WoPriority />
+			{/* <WoPriority />
 
 			<PlannedVsUnplanned />
 
 			<WorkOrderSummary />
 
-			<PendingWorkOrders />
+			<PendingWorkOrders /> */}
 
 		</ScrollView>
 	)
@@ -30,6 +31,6 @@ export default function CMMSDashboard() {
 
 const styles = StyleSheet.create({
 	contentContainer: {
-		flexGrow: 1
+		// flexGrow: 1
 	}
 })

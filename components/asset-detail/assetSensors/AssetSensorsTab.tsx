@@ -21,7 +21,7 @@ export default function AssetSensorsTab({ asset_data }: Props) {
 				<Text style={styles.headerTitle}>New End Point</Text>
 				<TouchableOpacity style={styles.createButton} onPress={() => router.push({
 					pathname: "/createNewEndPoint",
-					params: {id: asset_data?.id}
+					params: { id: asset_data?.id }
 				})}>
 					<MaterialIcons name="add-circle" size={12} color="#FFFFFF" />
 					<Text style={styles.createButtonText}>Create</Text>

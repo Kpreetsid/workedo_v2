@@ -149,3 +149,60 @@ Location picker modal changed on create asset page.
 3. assets UI is now changed same as locations
 4. icons should be bigger
 5. staric issue
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Changes to do latest: 16th December 2025
+
+# Work Order
+
+* The *Problem* section in *Open Work Orders* is showing *all data, including both **Assigned to Me* and *Created by Me*.
+
+# PDM
+
+* *Monitored assets* are showing *incorrect data*.
+
+# CMMS
+
+* *Incorrect data* is being displayed.
+
+# Location Page
+
+1. During *location update, the **previously uploaded image is not displayed*. - Done
+2. The *location image appears only after refreshing* the location page. - Done
+
+# Asset Page
+
+1. While selecting the *trend chart, **kurtosis data* shows a warning: “Failed to load graph trend data.”
+2. There is a *difference in asset health color*. - Done
+
+# Sensor
+
+* *Endpoint details* should be updated according to the *UI*.
+
+# Work Order (Additional Issues)
+
+1. *Assigned To* is *not showing exact data*.
+2. *UI changes* are required.
+3. *Images are not showing during update*.
+
+# Parts
+
+1. *Location is not clickable*. - Done
+
+# Preventive
+
+1. On the *detail page, views should be displayed **according to the saved Preventive data*.
+- Done (No. of repitition, or end date will show depending on data)

@@ -21,7 +21,6 @@ export default function AssetFilters({
 	setSelectedSignal,
 	setSelectedValueType,
 }: AssetFiltersProps) {
-	console.log('inside asset filters = ', Date.now());
 	const AXES = ["Horizontal", "Vertical", "Axial"];
 
 	// ----------------------------------------

@@ -2,9 +2,8 @@ import axios from 'axios';
 import { storage } from '../storage/mmkv';
 import { useAuthStore } from '../store/useAuthStore';
 
-
 const apiClientDemo = axios.create({
-    baseURL: 'https://processor.presageinsights.ai/api/',
+    baseURL: 'https://testprocessor.presageinsights.ai/api/',
     timeout: 15000,
 });
 

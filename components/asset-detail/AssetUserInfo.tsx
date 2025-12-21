@@ -7,8 +7,6 @@ import { endpoints } from '@/src/api/endpoints'
 
 const AssetUserInfo = ({ users = [], onPress }: { users: any[], onPress: () => void }) => {
 
-    console.log('asset user = ', users);
-
     return (
         <Pressable style={styles.container} onPress={onPress}>
             <Text style={styles.label}>Assign to User</Text>

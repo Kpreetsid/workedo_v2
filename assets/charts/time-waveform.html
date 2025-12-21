@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<!-- 🔒 Disable WebView zoom -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+	<!-- Chart.js -->
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+
+	<!-- Gesture + Zoom -->
+	<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
+
+	<style>
+		html,
+		body {
+			margin: 0;
+			padding: 0;
+			height: 100%;
+			background: #ffffff;
+			font-family: system-ui, -apple-system, BlinkMacSystemFont;
+			overflow: hidden;
+		}
+
+		#wrapper {
+			position: relative;
+			height: 100%;
+			width: 100%;
+		}
+
+		canvas {
+			width: 100%;
+			height: 100%;
+			touch-action: none;
+			/* 🔴 critical: prevent WebView zoom */
+		}
+	</style>
+</head>
+
+<body>
+	<div id="wrapper">
+		<canvas id="chart"></canvas>
+	</div>
+
+	<script>
+		let chart;
+
+		function createWaveform(payload) {
+			const ctx = document.getElementById("chart").getContext("2d");
+
+			const fs = payload.fs;       // sampling frequency
+			const rawData = payload.data;
+
+			// Convert samples → time-domain points
+			const points = rawData.map((y, i) => ({
+				x: i / fs,                // time (seconds)
+				y
+			}));
+
+			chart = new Chart(ctx, {
+				type: "line",
+				data: {
+					datasets: [
+						{
+							label: payload.axis || "Waveform",
+							data: points,
+							borderColor: "#1e3cff",
+							borderWidth: 1,
+							pointRadius: 0,
+							tension: 0
+						}
+					]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					parsing: false,
+					animation: false,
+
+					interaction: {
+						mode: "nearest",
+						intersect: false
+					},
+
+					onClick: (evt, elements) => {
+						if (!elements.length) return;
+
+						const el = elements[0];
+						const dataset = chart.data.datasets[el.datasetIndex];
+						const point = dataset.data[el.index];
+
+						window.ReactNativeWebView?.postMessage(
+							JSON.stringify({
+								type: "POINT_TAP",
+								payload: {
+									x: point.x,        // time or Hz
+									y: point.y,        // amplitude
+									axis: dataset.label
+								}
+							})
+						);
+					},
+
+
+					scales: {
+						x: {
+							type: "linear",
+							title: {
+								display: true,
+								text: "Time (s)"
+							},
+							grid: {
+								display: false
+							}
+						},
+						y: {
+							title: {
+								display: true,
+								text: payload.yLabel || ""
+							}
+						}
+					},
+
+					plugins: {
+						legend: { display: false },
+
+						zoom: {
+							pan: {
+								enabled: true,
+								mode: "x"
+							},
+							zoom: {
+								pinch: {
+									enabled: true
+								},
+								wheel: {
+									enabled: false   // ❌ disable wheel for RN
+								},
+								mode: "x"
+							}
+						}
+					}
+				}
+			});
+		}
+
+		function handleMessage(event) {
+			let payload;
+			try {
+				payload = JSON.parse(event.data);
+			} catch {
+				return;
+			}
+
+			if (payload.type === "time") {
+				if (chart) chart.destroy();
+				createWaveform(payload);
+			}
+		}
+
+		// 🔴 Required for React Native WebView
+		document.addEventListener("message", handleMessage);
+		window.addEventListener("message", handleMessage);
+	</script>
+</body>
+
+</html>

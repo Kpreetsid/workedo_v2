@@ -6,6 +6,7 @@ import { Calender, DropDownIcon } from "@/constants/IconProvider";
 import { useCMMSStore } from "@/src/store/useCMMSStore";
 import { monthlyCount } from "@/src/services/cmms.service";
 import moment from "moment";
+import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -16,10 +17,11 @@ export default function WorkOrderSummary() {
 	console.log('child assets in wo status = ', childAssets);
 
 	const [woSummaryData, setWOSummaryData] = useState<any>(null);
+	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
 		fetchSummary();
-	}, [childAssets])
+	}, [childAssets, startDate])
 
 	const transformToBarData = (input: any) => {
 		return input.map((item: any) => ({
@@ -29,13 +31,37 @@ export default function WorkOrderSummary() {
 	};
 
 	async function fetchSummary() {
+		const startTimePart = "T19:00:00.000Z";
+		const timePart = "T14:01:18.788Z";
 		try {
 			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
 			console.log('payload = ', childAssetsFormatted);
 
+
+			let finalPayload: any = {};
+			// prepare for payload
+			if (startDate) {
+				finalPayload.startDate = moment(startDate, "YYYY-MM-DD")
+					.subtract(1, "day")
+					.format("YYYY-MM-DD") + startTimePart;
+			} else {
+				finalPayload.startDate = moment().subtract(2, "months").format("YYYY-MM-DD") + startTimePart;
+			}
+
+			if (endDate) {
+				finalPayload.endDate = endDate + timePart;
+			} else {
+				finalPayload.endDate = moment().format("YYYY-MM-DD") + timePart;
+			}
+
+			finalPayload.assetIds = childAssetsFormatted
+
+			console.log('final payload = ', finalPayload);
+
+
 			const res = await monthlyCount(
-				'2025-10-11T19:00:00.000Z',
-				'2025-12-12T10:40:53.984Z',
+				finalPayload.startDate,
+				finalPayload.endDate,
 				childAssetsFormatted
 			);
 			if (res?.status) {
@@ -93,7 +119,7 @@ export default function WorkOrderSummary() {
 
 						// ⭐ ADD X-AXIS LABELS HERE
 						xAxisLabelTexts={woSummaryData.map((item: any) => {
-							console.log('item = ', item)
+							// console.log('item = ', item)
 							return item.date
 						})}
 						xAxisLabelTextStyle={styles.axisLabel}

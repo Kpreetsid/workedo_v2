@@ -7,25 +7,50 @@ import { woPending } from "@/src/services/cmms.service";
 import { WorkOrder } from "@/src/types/workOrder";
 import moment from "moment";
 import { useRouter } from "expo-router";
+import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 
 export default function PendingWorkOrders() {
 	const childAssets = useCMMSStore((state) => state.childAssets);
 	console.log('child assets in wo status = ', childAssets);
 
 	const [pendingWO, setPendingWO] = useState<any[]>([]);
+	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
 		fetchPendingWO();
 	}, [childAssets])
 
 	async function fetchPendingWO() {
+		const startTimePart = "T19:00:00.000Z";
+		const timePart = "T14:01:18.788Z";
 		try {
 			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
 			console.log('payload = ', childAssetsFormatted);
 
+
+			let finalPayload: any = {};
+			// prepare for payload
+			if (startDate) {
+				finalPayload.startDate = moment(startDate, "YYYY-MM-DD")
+					.subtract(1, "day")
+					.format("YYYY-MM-DD") + startTimePart;
+			} else {
+				finalPayload.startDate = moment().subtract(2, "months").format("YYYY-MM-DD") + startTimePart;
+			}
+
+			if (endDate) {
+				finalPayload.endDate = endDate + timePart;
+			} else {
+				finalPayload.endDate = moment().format("YYYY-MM-DD") + timePart;
+			}
+
+			finalPayload.assetIds = childAssetsFormatted
+
+			console.log('final payload = ', finalPayload);
+
 			const res = await woPending(
-				'2025-10-11T19:00:00.000Z',
-				'2025-12-12T10:40:53.984Z',
+				finalPayload.startDate,
+				finalPayload.endDate,
 				childAssetsFormatted
 			);
 			if (res?.status) {
@@ -34,6 +59,7 @@ export default function PendingWorkOrders() {
 			}
 		} catch (e) {
 			console.log('e in status = ', e);
+			setPendingWO([]);
 		}
 	}
 
@@ -44,13 +70,13 @@ export default function PendingWorkOrders() {
 				<FlatList
 					ListHeaderComponent={<Text style={styles.cardTitle}>Pending Work Orders</Text>}
 					data={pendingWO}
-					keyExtractor={({item, index}) => index}
+					keyExtractor={({ item, index }) => index}
 					contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 50 }}
 					ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
 					renderItem={({ item }) => <WorkOrderCard item={item} />}
 					showsVerticalScrollIndicator={false}
 					scrollEnabled={false}
-					ListEmptyComponent={<Text style={[styles.detailValue, {fontSize: 16, alignSelf: 'center', marginVertical: 10}]}>No Pending Work Orders</Text>}
+					ListEmptyComponent={<Text style={[styles.detailValue, { fontSize: 16, alignSelf: 'center', marginVertical: 10 }]}>No Pending Work Orders</Text>}
 				/>
 			}
 		</>

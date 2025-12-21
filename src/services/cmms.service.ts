@@ -6,7 +6,7 @@ export const woStatus = async (fromDate: string, toDate: string, assetIds: strin
     fromDate=${fromDate}
     &toDate=${toDate}
     &wo_asset_id=${assetIds}`;
-    // console.log('url = ', url);
+    console.log('url = ', url);
     return await sendRequest('GET', url);
 }
 
@@ -37,11 +37,11 @@ export const plannedUnplanned = async (fromDate: string, toDate: string, assetId
     return await sendRequest('GET', url);
 }
 
-export const woSummary = async (fromDate: string, toDate: string, assetIds: string) => {
+export const woSummary = async (payload: any) => {
     const url = `${endpoints.cmms.woSummary}?
-    fromDate=${fromDate}
-    &toDate=${toDate}
-    &wo_asset_id=${assetIds}`;
+    fromDate=${payload.startDate}
+    &toDate=${payload.endDate}
+    &wo_asset_id=${payload.assetIds}`;
     console.log('url = ', url);
     return await sendRequest('GET', url);
 }

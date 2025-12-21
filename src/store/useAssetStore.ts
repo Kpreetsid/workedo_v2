@@ -13,7 +13,7 @@ export interface AssetState {
 	selectedSignal: string;        // Velocity / Acceleration / Displacement
 	selectedValueType: string;     // Rms / Peak_to_peak / Peak / Kurtosis
 
-	graphData: null,
+	graphData: [] | null,
 
 	selectedSensor: AssetEndpoint | null,
 	selectedEndpointToEdit: AssetEndpoint | null;

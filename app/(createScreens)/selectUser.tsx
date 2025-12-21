@@ -96,7 +96,7 @@ export default function SelectUser() {
 		try {
 			const res = await getUsers();
 			if (res?.status && Array.isArray(res?.data)) {
-				console.log('users = ', res?.data);
+				// console.log('users = ', res?.data);
 				setUsers(res.data);
 			}
 		} catch (err) {

@@ -26,6 +26,7 @@ export default function EndpointCards({ asset_data }: Props) {
 	const [refreshing, setRefreshing] = useState(false);
 
 	useEffect(() => {
+		console.log('selcted sensor = ', endpoints, selectedSensor)
 		if (!selectedSensor && endpoints.length > 0) {
 			setSelectedSensor(endpoints[0]);
 		}

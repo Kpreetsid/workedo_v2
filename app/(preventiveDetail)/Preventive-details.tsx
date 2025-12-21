@@ -32,10 +32,19 @@ const PreventiveDetails = ({ item }: { item: Preventive | any }) => {
           <InfoField label="Start Date" value={item?.schedule?.start_date} />
         </View>
 
-        <View style={styles.row}>
-          <InfoField label="No. of Repetition" value={item?.schedule?.no_of_repetition} />
-          <InfoField label="Last Executed On" value={item?.schedule?.last_executed_on} />
-        </View>
+
+        {
+          item?.schedule?.end_date ?
+            <View style={styles.row}>
+              <InfoField label="End Date" value={item?.schedule?.end_date} />
+              <InfoField label="Last Executed On" value={item?.schedule?.last_executed_on} />
+            </View>
+            :
+            <View style={styles.row}>
+              <InfoField label="No. of Repetition" value={item?.schedule?.no_of_repetition || 0} />
+              <InfoField label="Last Executed On" value={item?.schedule?.last_executed_on} />
+            </View>
+        }
 
         {/* SECTION HEADER */}
         <Text style={styles.sectionTitle}>Work Order Details :</Text>

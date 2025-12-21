@@ -6,65 +6,78 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 interface HeaderProps {
-    title: string;
-    modal?: boolean;
-    dismiss?: () => void | null;
-    editAsset?: boolean;
-    handleEditAsset?: () => void;
+	title: string;
+	modal?: boolean;
+	dismiss?: () => void | null;
+	editAsset?: boolean;
+	handleEditAsset?: () => void;
+	showBack?: boolean;
+	showClose?: boolean;
 }
 
-export default function Header({ title, modal = false, dismiss, editAsset, handleEditAsset }: HeaderProps) {
-    return (
-        <SafeAreaView edges={["top"]} style={styles.safeArea}>
-            <View style={styles.headerContainer}>
-                <View style={styles.rowBetween}>
-                    <TouchableOpacity onPress={() => modal ? dismiss!() : router.back()} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={22} color={"#fff"} />
-                    </TouchableOpacity>
+export default function Header({ title, modal = false, dismiss, editAsset, handleEditAsset, showBack = true, showClose = false }: HeaderProps) {
+	return (
+		<SafeAreaView edges={["top"]} style={styles.safeArea}>
+			<View style={styles.headerContainer}>
+				<View style={[
+					styles.rowBetween,
+					showClose && {width: '100%', justifyContent: 'space-between'}
+				]}>
+					{
+						showBack && <TouchableOpacity onPress={() => modal ? dismiss!() : router.back()} style={styles.backButton} hitSlop={200}>
+							<Ionicons name="chevron-back" size={22} color={"#fff"} />
+						</TouchableOpacity>
+					}
 
-                    <Text style={styles.title}>{title}</Text>
-                </View>
+					<Text style={styles.title}>{title}</Text>
 
-                {
-                    editAsset && (
-                        <TouchableOpacity onPress={handleEditAsset} style={styles.editButton}>
-                            <Ionicons name="pencil" size={22} color={"#fff"} />
-                        </TouchableOpacity>
-                    )
-                }
-            </View>
-        </SafeAreaView>
-    );
+					{
+						showClose && <TouchableOpacity onPress={() => modal ? dismiss!() : router.back()} style={styles.backButton} hitSlop={200}>
+							<Ionicons name="close" size={22} color={"#fff"} />
+						</TouchableOpacity>
+					}
+				</View>
+
+				{
+					editAsset && (
+						<TouchableOpacity onPress={handleEditAsset} style={styles.editButton}>
+							<Ionicons name="pencil" size={22} color={"#fff"} />
+						</TouchableOpacity>
+					)
+				}
+			</View>
+		</SafeAreaView>
+	);
 }
 
 const styles = StyleSheet.create({
-    safeArea: {
-        backgroundColor: "#A259FF",
-    },
-    headerContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 25,
-        paddingVertical: 15,
-    },
-    backButton: {
-        marginRight: 5,
-        padding: 5,
-    },
-    rowBetween: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    editButton: {
-        padding: 5,
-    },
-    title: {
-        fontSize: 16,
-        fontFamily: Fonts.semiBold,
-        lineHeight: 20,
-        letterSpacing: 0.15,
-        color: "#FFFFFF",
-    },
+	safeArea: {
+		backgroundColor: "#A259FF",
+	},
+	headerContainer: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		paddingHorizontal: 25,
+		paddingVertical: 15,
+	},
+	backButton: {
+		marginRight: 5,
+		padding: 5,
+	},
+	rowBetween: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	editButton: {
+		padding: 5,
+	},
+	title: {
+		fontSize: 16,
+		fontFamily: Fonts.semiBold,
+		lineHeight: 20,
+		letterSpacing: 0.15,
+		color: "#FFFFFF",
+	},
 });
