@@ -25,6 +25,12 @@ interface ChartDetailModalProps {
 type AxisType = "Axial" | "Vertical" | "Horizontal";
 type SignalType = "acceleration" | "velocity" | "displacement";
 
+
+const timewaveformchart = "file:///android_asset/charts/time-waveform.html";
+const envelopechart = "file:///android_asset/charts/envelope-waveform.html";
+const spectrumwaveform = "file:///android_asset/charts/spectrum-waveform.html";
+const spectrumenvelopechart = "file:///android_asset/charts/spectrum-envelope-waveform.html";
+
 export default function ChartDetailModal({
 	visible,
 	onClose,
@@ -317,7 +323,8 @@ export default function ChartDetailModal({
 									<View style={styles.chartBox}>
 										<WebView
 											ref={accWebRef}
-											source={require("../../../assets/charts/time-waveform.html")}
+											// source={require("../../../assets/charts/time-waveform.html")}
+											source={{ uri: timewaveformchart }}
 											javaScriptEnabled
 											domStorageEnabled
 											mediaPlaybackRequiresUserAction={false}
@@ -344,9 +351,15 @@ export default function ChartDetailModal({
 									<View style={styles.chartBox}>
 										<WebView
 											ref={envWebRef}
-											source={require("../../../assets/charts/envelope-waveform.html")}
+											// source={require("../../../assets/charts/envelope-waveform.html")}
+											source={{ uri: envelopechart }}
 											javaScriptEnabled
 											domStorageEnabled
+											mediaPlaybackRequiresUserAction={false}
+											allowsInlineMediaPlayback={true}
+											originWhitelist={["*"]}
+											allowUniversalAccessFromFileURLs
+											allowFileAccess
 											style={{ flex: 1 }}
 										/>
 									</View>
@@ -369,9 +382,15 @@ export default function ChartDetailModal({
 										<View style={styles.chartBox}>
 											<WebView
 												ref={accWebRef}
-												source={require("../../../assets/charts/spectrum-waveform.html")}
+												// source={require("../../../assets/charts/spectrum-waveform.html")}
+												source={{ uri: spectrumwaveform }}
 												javaScriptEnabled
 												domStorageEnabled
+												mediaPlaybackRequiresUserAction={false}
+												allowsInlineMediaPlayback={true}
+												originWhitelist={["*"]}
+												allowUniversalAccessFromFileURLs
+												allowFileAccess
 												style={{ flex: 1 }}
 											/>
 										</View>
@@ -389,9 +408,15 @@ export default function ChartDetailModal({
 										<View style={styles.chartBox}>
 											<WebView
 												ref={envWebRef}
-												source={require("../../../assets/charts/spectrum-envelope-waveform.html")}
+												// source={require("../../../assets/charts/spectrum-envelope-waveform.html")}
+												source={{ uri: spectrumenvelopechart }}
 												javaScriptEnabled
 												domStorageEnabled
+												mediaPlaybackRequiresUserAction={false}
+												allowsInlineMediaPlayback={true}
+												originWhitelist={["*"]}
+												allowUniversalAccessFromFileURLs
+												allowFileAccess
 												style={{ flex: 1 }}
 											/>
 										</View>

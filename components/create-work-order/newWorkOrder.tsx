@@ -27,6 +27,8 @@ import { useAuthStore } from "@/src/store/useAuthStore";
 import { Image } from "expo-image";
 import { endpoints } from "@/src/api/endpoints";
 import { WorkOrder } from "@/src/types/workOrder";
+import AttachmentUpload from "./AttachmentUpload";
+import SelectParts from "./SelectParts";
 
 interface WorkOrderProps {
 	passedData?: Record<string, any> | null;
@@ -59,6 +61,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 			setWorkForm("nature_of_work", data?.nature_of_work);
 			setWorkForm("completion_days", String(data?.estimated_time ?? ""));
 			setWorkForm("priority", data?.priority ?? null);
+			setWorkForm("files", data?.files ?? null);
 			setWorkForm("start_date", data?.start_date ? moment(data?.start_date).format('YYYY-MM-DD') : '');
 			setWorkForm("end_date", data?.end_date ? moment(data?.end_date).format('YYYY-MM-DD') : '');
 
@@ -201,7 +204,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 		};
 
 		console.log("📦 Final Work Order Payload:", payload);
-		if(id) console.log('set id = ', id);
+		if (id) console.log('set id = ', id);
 
 		try {
 			if (passedData) {
@@ -395,12 +398,38 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 						required={false}
 					/>
 
-					<View style={{ marginHorizontal: 0 }}>
+
+					{/* attachment */}
+
+					<AttachmentUpload
+						onPress={() => pickImage()}
+					/>
+
+					{
+						useWorkOrderStore.getState().files.length > 0 &&
+						<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
+							<Image
+								source={{
+									uri: `${endpoints.baseURL}work_request/${useWorkOrderStore.getState().files[0].image_path}?t=${Date.now()}`
+								}}
+								style={{ width: 200, height: 200, borderRadius: 8 }}
+							/>
+						</View>
+					}
+
+					{/* <View style={{ marginHorizontal: 0 }}>
 						<AssignInput label="Add Parts" comingFrom="newWorkOrder" required={false} onPress={() => router.push({
 							pathname: "/addParts",
 							params: { comingFrom: "newWorkOrder" }
 						})} />
-					</View>
+					</View> */}
+
+					<SelectParts onPress={() => router.push({
+							pathname: "/addParts",
+							params: { comingFrom: "newWorkOrder" }
+						})}
+					/>
+
 
 					<View style={styles.partsContainer}>
 						{useWorkOrderStore.getState().parts.length > 0 &&
@@ -415,21 +444,9 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 							))}
 					</View>
 
-					<Pressable style={styles.uploadBtn} onPress={() => pickImage()}>
+					{/* <Pressable style={styles.uploadBtn} onPress={() => pickImage()}>
 						<Text style={styles.uploadBtnText}>Upload or Capture Photos</Text>
-					</Pressable>
-
-					{
-						useWorkOrderStore.getState().files.length > 0 &&
-						<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
-							<Image
-								source={{
-									uri: `${endpoints.baseURL}work_request/${useWorkOrderStore.getState().files[0].image_path}?t=${Date.now()}`
-								}}
-								style={{ width: 200, height: 200, borderRadius: 8 }}
-							/>
-						</View>
-					}
+					</Pressable> */}
 
 
 					<DatePicker
@@ -446,7 +463,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 						}}
 					/>
 
-					<ActionButton onPress={handleSubmit} label="Create Work Order" buttonStyle={styles.submitBtn} />
+					<ActionButton onPress={handleSubmit} label="Submit" buttonStyle={styles.submitBtn} />
 				</ScrollView>
 			</KeyboardAwareScrollView>
 		</>

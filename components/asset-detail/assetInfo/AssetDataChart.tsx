@@ -70,14 +70,23 @@ export default function AssetDataChart({
 		initializedRef.current = true;
 	}, [webReady, validSeries, xLabels, yMaxValue]);
 
+	const chartUrl = "file:///android_asset/charts/chart.html";
+
 	return (
 		<View style={styles.wrapper}>
 			{/* WebView ALWAYS mounted */}
 			<WebView
 				ref={ref}
-				source={require("../../../assets/charts/chart.html")}
-				javaScriptEnabled
-				domStorageEnabled
+				originWhitelist={["*"]}
+				// source={require("../../../assets/charts/chart.html")}
+				source={{ uri: chartUrl }}
+
+				javaScriptEnabled={true}
+				domStorageEnabled={true}
+				allowFileAccess={true}
+				allowFileAccessFromFileURLs={true}
+				allowUniversalAccessFromFileURLs={true}
+
 				webviewDebuggingEnabled
 				onLoadEnd={() => setWebReady(true)}
 				onMessage={(e) => {

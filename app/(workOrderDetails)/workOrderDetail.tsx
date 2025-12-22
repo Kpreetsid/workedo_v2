@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import Header from "@/components/global/Header";
 import Detail from "@/components/work-order-detail/Detail";
 import Comments from "@/components/work-order-detail/Comments";
@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } fro
 import { WorkOrderCompleteIcon, WorkOrderInProgressIcon, WorkOrderOnHoldIcon, WorkOrderOpenIcon } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
 import { deleteWorkOrder, getWorkOrderDetails, updateWorkOrderStatus } from "@/src/services/work-order.service";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Popover from "react-native-popover-view";
 import { Ionicons } from "@expo/vector-icons";
 import { WorkOrder } from "@/src/types/workOrder";
@@ -20,9 +20,12 @@ export default function WorkOrderDetail() {
 
 	const [workOrderData, setWorkOrderData] = useState<any>(work_order_data);
 
-	useEffect(() => {
-		fetchWorkOrderDetails();
-	}, [])
+	useFocusEffect(
+		useCallback(() => {
+			console.log('in focus order detail')
+			fetchWorkOrderDetails();
+		}, [])
+	);
 
 	const fetchWorkOrderDetails = async () => {
 		try {
