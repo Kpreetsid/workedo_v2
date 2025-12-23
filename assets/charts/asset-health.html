@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont;
+      overflow: hidden;
+    }
+
+    #container {
+      height: 100%;
+      width: 100%;
+      padding: 8px;
+      position: relative;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    #noData {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: #000069;
+      background: #fff;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="noData">No Alarm Data found for selected location</div>
+
+  <div id="container">
+    <canvas id="alarmChart"></canvas>
+  </div>
+
+  <script>
+    let chart;
+
+    function buildDatasets(payload) {
+      const sets = [];
+
+      if (payload.showAlert) {
+        sets.push({
+          label: "Alert",
+          data: payload.alert,
+          borderColor: "#FF9800",
+          tension: 0.35,
+          pointRadius: 4,
+          fill: false
+        });
+      }
+
+      if (payload.showCritical) {
+        sets.push({
+          label: "Critical",
+          data: payload.critical,
+          borderColor: "#E53935",
+          tension: 0.35,
+          pointRadius: 4,
+          fill: false
+        });
+      }
+
+      if (payload.showDanger) {
+        sets.push({
+          label: "Danger",
+          data: payload.danger,
+          borderColor: "#FFEB3B",
+          tension: 0.35,
+          pointRadius: 4,
+          fill: false
+        });
+      }
+
+      return sets;
+    }
+
+    function renderChart(payload) {
+      const ctx = document.getElementById("alarmChart");
+      const noData = document.getElementById("noData");
+
+      const hasData =
+        payload.timestamps?.length &&
+        (payload.alert?.length || payload.critical?.length || payload.danger?.length);
+
+      if (!hasData) {
+        if (chart) chart.destroy();
+        ctx.style.display = "none";
+        noData.style.display = "flex";
+        return;
+      }
+
+      ctx.style.display = "block";
+      noData.style.display = "none";
+
+      if (chart) chart.destroy();
+
+      chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: payload.timestamps,
+          datasets: buildDatasets(payload)
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: "index",
+            intersect: false
+          },
+          layout: {
+            padding: {
+              left: 0,
+              right: 10,
+              top: 10,     // 👈 extra breathing room
+              bottom: 10
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "#fff",
+              titleColor: "#111",
+              bodyColor: "#333",
+              borderColor: "#ddd",
+              borderWidth: 1,
+              padding: 10
+            },
+            zoom: {
+              pan: {
+                enabled: true,
+                mode: "x",
+                threshold: 5,
+                onPan: ({ chart }) => {
+                  chart.update("none");
+                }
+              },
+              zoom: {
+                pinch: {
+                  enabled: true
+                },
+                wheel: {
+                  enabled: false
+                },
+                mode: "x",
+                onZoom: ({ chart }) => {
+                  const visible = chart.scales.x.max - chart.scales.x.min;
+                  chart.options.scales.x._maxTicks = Math.max(6, Math.floor(visible));
+                  chart.update("none");
+                }
+              }
+            },
+          },
+          scales: {
+            x: {
+              offset: false,                 // ✅ adds space before first & after last
+              grid: { color: "rgba(0,0,0,0.05)" },
+              ticks: {
+                autoSkip: true,
+                maxRotation: 0,
+                minRotation: 0,
+                padding: 12
+              },
+            },
+            y: {
+              min: payload.minValue,
+              max: payload.maxValue,
+              ticks: {
+                stepSize: Math.max(
+                  1,
+                  Math.ceil((payload.maxValue - payload.minValue) / payload.noOfSections)
+                )
+              },
+              grid: { color: "rgba(0,0,0,0.05)" }
+            }
+          }
+        }
+      });
+
+      chart.options.scales.x._maxTicks = getMaxXTicks(chart);
+      chart.update();
+
+      ctx.onclick = () => {
+        chart.setActiveElements([]);
+        chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+        chart.update();
+      };
+    }
+
+    function handleMessage(event) {
+      try {
+        renderChart(JSON.parse(event.data));
+      } catch { }
+    }
+
+    document.addEventListener("message", handleMessage);
+    window.addEventListener("message", handleMessage);
+  </script>
+</body>
+
+</html>

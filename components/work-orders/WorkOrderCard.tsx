@@ -23,7 +23,7 @@ const WorkOrderCard = ({
 	item,
 	isSelected,
 	// onPress
-}: { item: WorkOrder; isSelected: boolean; }) => {
+}: { item: WorkOrder; isSelected?: boolean; }) => {
 	// onPress: () => void;
 
 	const priorityStyle = getPriorityColor(item.priority);

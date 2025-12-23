@@ -43,7 +43,7 @@ export const childAssetsAgainstLocation = async (data: { levelOneLocations: stri
 	return await sendRequest('POST', url, data);
 }
 
-export const assetHealthKPIHistory = async (data: { org_id: string, asset_list: string[] }) => {
+export const assetHealthKPIHistory = async (data: { org_id: string, top_level_asset: string[], electric_asset: string[], non_electric_asset: string[] }) => {
 	const url = `${endpoints.overview.assetHealthKPIHistory}`;
 	// console.log('url = ', url);
 	return await sendRequestDemo('POST', url, data);

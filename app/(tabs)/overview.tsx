@@ -4,9 +4,9 @@ import InfoCards from "@/components/overview-screen/InfoCards";
 import OverviewHeader from "@/components/overview-screen/OverviewHeader";
 import AssetHealth from "@/components/overview-screen/AssetHealth";
 import AssetHealthStatus from "@/components/overview-screen/AssetHealthStatus";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import CreateAlertBox from "@/components/overview-screen/CreateAlertBox";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AlarmSummary from "@/components/overview-screen/AlarmSummary";
 import Top10BadAssets from "@/components/overview-screen/Top10BadAssets";
 import Alarms from "@/components/overview-screen/Alarms";
@@ -19,24 +19,12 @@ import CMMSDashboard from "@/components/overview-screen/CMMSDashboard";
 import PDMDashboard from "@/components/overview-screen/PDMDashboard";
 import { TabView } from "react-native-tab-view";
 
-const PDM = () => (
-	<View style={styles.scene}>
-		<PDMDashboard />
-	</View>
-);
-
-const CMMS = () => (
-	<View style={styles.scene}>
-		<CMMSDashboard />
-	</View>
-);
-
 const renderScene = ({ route }: { route: { key: string } }) => {
 	switch (route.key) {
 		case "pdm":
-			return <PDM />;
+			return <PDMDashboard />;
 		case "cmms":
-			return <CMMS />;
+			return <CMMSDashboard />;
 		default:
 			return null;
 	}
@@ -68,10 +56,11 @@ export default function Overview() {
 		setCreateAlertBoxVisible(false);
 	}
 
-	useEffect(() => {
-		console.log('createAlertBoxVisible = ', createAlertBoxVisible)
-		fetchProfile();
-	}, [createAlertBoxVisible])
+	useFocusEffect(
+		useCallback(() => {
+			fetchProfile();
+		}, [])
+	);
 
 	const fetchProfile = async () => {
 		const latestUser = await getProfileService(user?.id);
@@ -117,6 +106,8 @@ export default function Overview() {
 				onIndexChange={setIndex}
 				initialLayout={{ width: layout.width }}
 				renderTabBar={() => null}
+				lazy
+				swipeEnabled={false}
 			/>
 
 			<FAB onPress={() => setCreateAlertBoxVisible(true)} />

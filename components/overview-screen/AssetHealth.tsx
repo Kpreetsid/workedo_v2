@@ -52,7 +52,7 @@ export default function AssetHealth() {
 			setBarData(buildBarData(data, enabledSeries));
 			setLoading(false);
 		} catch (err) {
-			console.log("asset health error =", err);
+			// console.log("asset health error =", err);
 			setLoading(false);
 		}
 	};

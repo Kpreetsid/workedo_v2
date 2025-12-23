@@ -6,20 +6,21 @@ import { useOverviewStore } from "@/src/store/useOverviewStore";
 import { useAuthStore } from "@/src/store/useAuthStore";
 
 export default function PDMDashboardLocationSelect() {
-	const {
-		parentLocations,
-		childLocations,
-		childAssets,
-		parentSelectionId,
-		childSelectionIds,
+	// state (read-only)
+	const parentLocations = useOverviewStore(s => s.parentLocations);
+	const childLocations = useOverviewStore(s => s.childLocations);
+	const childAssets = useOverviewStore(s => s.childAssets);
+	const parentSelectionId = useOverviewStore(s => s.parentSelectionId);
+	const childSelectionIds = useOverviewStore(s => s.childSelectionIds);
+	const assetKPIHistory = useOverviewStore(s => s.assetKPIHistory);
 
-		setParentLocations,
-		setChildLocations,
-		setChildAssets,
-		setParentSelectionId,
-		setChildSelectionIds,
-		setAssetKPIHistory,
-	} = useOverviewStore();
+	// actions (stable, no re-render cost)
+	const setParentLocations = useOverviewStore(s => s.setParentLocations);
+	const setChildLocations = useOverviewStore(s => s.setChildLocations);
+	const setChildAssets = useOverviewStore(s => s.setChildAssets);
+	const setParentSelectionId = useOverviewStore(s => s.setParentSelectionId);
+	const setChildSelectionIds = useOverviewStore(s => s.setChildSelectionIds);
+	const setAssetKPIHistory = useOverviewStore(s => s.setAssetKPIHistory);
 
 	const { user } = useAuthStore();
 
@@ -37,7 +38,10 @@ export default function PDMDashboardLocationSelect() {
 			setParentLocations(res.data.levelOneLocations);
 
 			const firstParent = res.data.levelOneLocations[0];
-			if (firstParent) setParentSelectionId(firstParent.id); // triggers below effect
+			if (firstParent) {
+				setParentSelectionId(firstParent.id); // triggers below effect
+				return;
+			}
 		}
 	};
 
@@ -71,7 +75,6 @@ export default function PDMDashboardLocationSelect() {
 				console.error("fetchParentLocationDetails failed:", error);
 				if (!error.status) {
 					ToastAndroid.show("No Data Found", ToastAndroid.SHORT);
-					// Select ALL child IDs by default
 					const allChildIds: string[] = []
 					setChildSelectionIds(allChildIds);
 					setChildLocations([]);
@@ -90,7 +93,11 @@ export default function PDMDashboardLocationSelect() {
 		setChildLocations([]);
 		setChildSelectionIds([]);
 		setChildAssets([]);
-		setAssetKPIHistory(null);
+		// setAssetKPIHistory(null);
+
+		if (assetKPIHistory !== null) {
+			setAssetKPIHistory(null);
+		}
 
 		ToastAndroid.show("No Data Found", ToastAndroid.SHORT);
 	};
@@ -99,7 +106,11 @@ export default function PDMDashboardLocationSelect() {
 	useEffect(() => {
 		if (!childSelectionIds.length) {
 			setChildAssets([]);
-			setAssetKPIHistory(null);
+
+			if (assetKPIHistory !== null) {
+				setAssetKPIHistory(null);
+			}
+
 			return;
 		}
 
@@ -114,7 +125,7 @@ export default function PDMDashboardLocationSelect() {
 			levelTwoLocations: childIds || childLocations.map((i) => i.id),
 		};
 
-		// console.log('payload = ', payload);
+		// console.log('payload child assets = ', payload);
 
 		const childAssetsRes = await childAssetsAgainstLocation(payload);
 		// console.log('childAssetsRes = ', childAssetsRes);
@@ -132,13 +143,14 @@ export default function PDMDashboardLocationSelect() {
 	const fetchAssetHealthKPIHistory = async () => {
 		const payload = {
 			org_id: user?.account_id,
-			asset_list: childAssets.map((item) => item.id),
+			electric_asset: [],
+			non_electric_asset: [],
+			top_level_asset: childAssets.filter(item => Boolean(item.top_level)).map(item => item.id),
 		};
 		// console.log('payload = ', payload);
 		const res = await assetHealthKPIHistory(payload);
 		setAssetKPIHistory(res.data);
 	};
-
 
 	return (
 		<>

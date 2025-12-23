@@ -9,8 +9,6 @@ import { useState } from "react";
 export default function OverviewHeader() {
 	const router = useRouter();
 	const { user } = useAuthStore();
-	console.log('user in overview header = ', user)
-
 	const [imgError, setImgError] = useState(false);
 
 	const first = user?.firstName?.[0] || "";

@@ -3,55 +3,80 @@ import { AssetStatus } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
 import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 
 export default function InfoCards() {
 	const router = useRouter();
-	const { assetKPIHistory } = useOverviewStore();
-	console.log("assetKPIHistory", assetKPIHistory);
+	const assetKPIHistory = useOverviewStore((state) => state.assetKPIHistory);
+	// console.log("assetKPIHistory", assetKPIHistory);
 
-	const Critical = assetKPIHistory?.Critical ?? 0;
-	const Danger = assetKPIHistory?.Danger ?? 0;
-	const Alert = assetKPIHistory?.Alert ?? 0;
-	const Healthy = assetKPIHistory?.Healthy ?? 0;
-	const NotDefined = assetKPIHistory?.["Not Defined"] ?? 0;
-	const openAlarms = assetKPIHistory?.openAlarms ?? 0;
-	const total_live_sensors = assetKPIHistory?.["total_live_sensors"] ?? 0;
+	// ✅ Local derived state (single source of truth for UI)
+	const [stats, setStats] = useState({
+		Critical: 0,
+		Danger: 0,
+		Alert: 0,
+		Healthy: 0,
+		NotDefined: 0,
+		openAlarms: 0,
+		total_live_sensors: 0,
+	});
+
+	useEffect(() => {
+		if (!assetKPIHistory) return;
+
+		const top = assetKPIHistory.top_level_asset;
+
+		setStats({
+			Critical: top.Critical,
+			Danger: top.Danger,
+			Alert: top.Alert,
+			Healthy: top.Healthy,
+			NotDefined: top["Not Defined"],
+			openAlarms: top.openAlarms,
+			total_live_sensors: top.total_live_sensors,
+		});
+	}, [assetKPIHistory]);
 
 	const infoCardsData = [
 		{
 			id: 1,
 			title: `Assets\nMonitored`,
-			value: Alert + Critical + Danger + Healthy + NotDefined,
+			value:
+				stats.Alert +
+				stats.Critical +
+				stats.Danger +
+				stats.Healthy +
+				stats.NotDefined,
 			color: "#3b82f6",
 		},
 		{
 			id: 2,
 			title: `Assets in\nDanger Zone`,
-			value: Danger,
+			value: stats.Danger,
 			color: "#FFC107",
 		},
 		{
 			id: 3,
 			title: `Assets in\nCritical Zone`,
-			value: Critical,
+			value: stats.Critical,
 			color: "#DC3545",
 		},
 		{
 			id: 4,
 			title: `Un-Addressed\nAlarms`,
-			value: openAlarms,
+			value: stats.openAlarms,
 			color: "#16CCF1",
 		},
 		{
 			id: 5,
 			title: `Total End\nPoints`,
-			value: total_live_sensors,
+			value: stats.total_live_sensors,
 			color: "#212529",
 		},
 	];
 
 	const handlePress = async (card_id: number) => {
-		console.log("card_id", card_id);
+		// console.log("card_id", card_id);
 		router.push({
 			pathname: "/assets",
 			params: {

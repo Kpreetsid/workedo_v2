@@ -1,18 +1,23 @@
-import { Pressable, Text, View, StyleSheet, ToastAndroid, FlatList, ActivityIndicator } from "react-native";
+import {
+	Pressable,
+	Text,
+	View,
+	StyleSheet,
+	ToastAndroid,
+	FlatList,
+	ActivityIndicator,
+} from "react-native";
 import Fonts from "@/constants/Typography";
 import { useCallback, useEffect, useState } from "react";
 import WorkOrderCard from "@/components/work-orders/WorkOrderCard";
-import { FlashList, ListRenderItem } from "@shopify/flash-list";
-import { getWorkOrders, workOrdersPaginated } from "@/src/services/work-order.service";
-import { AssignedUser, WorkOrder } from "@/src/types/workOrder";
-import { useAuthStore } from "@/src/store/useAuthStore";
+import { workOrdersPaginated } from "@/src/services/work-order.service";
+import { WorkOrder } from "@/src/types/workOrder";
 import { useFocusEffect } from "expo-router";
 
-const TABS = ['assignedToMe', "createdByMe", "openForAll"];
+const TABS = ["assignedToMe", "createdByMe", "openToAll"];
 
 export default function ToDoTab() {
-	const [selectedButton, setSelectedButton] = useState<number>(0);
-	const [selectedId, setSelectedId] = useState<string | null>(null);
+	const [selectedButton, setSelectedButton] = useState(0);
 
 	const [page, setPage] = useState(1);
 	const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
@@ -21,16 +26,9 @@ export default function ToDoTab() {
 	const [refreshing, setRefreshing] = useState(false);
 	const [hasMore, setHasMore] = useState(true);
 
-	const loggedInUser = useAuthStore((state) => state.user);
-	console.log('user in state = ', loggedInUser);
-
-	useFocusEffect(
-		useCallback(() => {
-			setLoading(true)
-			fetchWorkOrders(1);
-		}, [])
-	);
-
+	// -------------------------
+	// FETCH WORK ORDERS
+	// -------------------------
 	const fetchWorkOrders = async (pageToLoad: number, isRefresh = false) => {
 		try {
 			if (pageToLoad === 1 || isRefresh) {
@@ -45,108 +43,139 @@ export default function ToDoTab() {
 				10
 			);
 
-			console.log('res todos - ', res);
 			if (res?.status && res?.data) {
 				const incoming = res.data as WorkOrder[];
 
-				setHasMore(res?.pagination?.hasNextPage);
+				setHasMore(res?.pagination?.hasNextPage ?? false);
 
 				if (pageToLoad === 1 || isRefresh) {
-					setWorkOrders(incoming);   // reset list
+					setWorkOrders(incoming);
 				} else {
-					setWorkOrders(prev => [...prev, ...incoming]); // append
+					setWorkOrders(prev => [...prev, ...incoming]);
 				}
 
-				setPage(pageToLoad + 1);
+				setPage(prev => prev + 1); // ✅ SAFE increment
 			}
 		} catch (error: any) {
-			console.log("error =", error);
-			ToastAndroid.show(error?.message || "Something went wrong", ToastAndroid.LONG);
+			ToastAndroid.show(
+				error?.message || "Something went wrong",
+				ToastAndroid.LONG
+			);
 		} finally {
 			setLoading(false);
 			setLoadingMore(false);
 		}
 	};
 
-	const handleRefresh = async () => {
-		setRefreshing(true);
-		await fetchWorkOrders(1, true);
-		setRefreshing(false);
-	};
-
-	const renderWorkOrderItem = useCallback(
-		({ item, index }: { item: WorkOrder, index: number }) => <WorkOrderCard key={index} item={item} isSelected={selectedId === item.id} />,
-		[selectedId]
+	useFocusEffect(
+		useCallback(() => {
+			// When screen comes back into focus
+			setPage(1);
+			setHasMore(true);
+			fetchWorkOrders(1, true);
+		}, [selectedButton])
 	);
 
-	// 🚀 Infinite scroll
-	const handleEndReached = () => {
-		console.log("Reached end, loading next page...");
-		if (loadingMore || loading || !hasMore) return;
-		fetchWorkOrders(page);
-	};
 
+	// -------------------------
+	// INITIAL LOAD + TAB CHANGE
+	// -------------------------
 	useEffect(() => {
-		// reset everything when tab changes
 		setPage(1);
 		setWorkOrders([]);
 		setHasMore(true);
 
-		fetchWorkOrders(1, true); // always load first page
+		fetchWorkOrders(1, true);
 	}, [selectedButton]);
+
+	// -------------------------
+	// PULL TO REFRESH
+	// -------------------------
+	const handleRefresh = async () => {
+		setRefreshing(true);
+		setPage(1);
+		setHasMore(true);
+		await fetchWorkOrders(1, true);
+		setRefreshing(false);
+	};
+
+	// -------------------------
+	// INFINITE SCROLL
+	// -------------------------
+	const handleEndReached = () => {
+		if (!hasMore) return;
+		if (loadingMore) return;
+		if (loading) return;
+
+		fetchWorkOrders(page);
+	};
+
+	const renderWorkOrderItem = useCallback(
+		({ item }: { item: WorkOrder }) => (
+			<WorkOrderCard item={item} />
+		),
+		[]
+	);
 
 	return (
 		<>
+			{/* FILTER BUTTONS */}
 			<View style={styles.buttonContainer}>
-				{["Assigned To Me", "Created By Me", "Open For All"].map((text, index) => (
-					<Pressable
-						key={index}
-						style={[
-							styles.filterButton,
-							{ backgroundColor: selectedButton === index ? "#3F009A" : "#3F009A14" }
-						]}
-						onPress={() => setSelectedButton(index)}
-					>
-						<Text
-							style={[
-								styles.buttonText,
-								{
-									color: selectedButton === index ? "#FFFFFF" : "#000000",
-									fontFamily: selectedButton === index ? Fonts.regular : Fonts.extraLight
-								}
-							]}
-						>
-							{text}
-						</Text>
-					</Pressable>
-				))}
-
+				{["Assigned To Me", "Created By Me", "Open For All"].map(
+					(text, index) => {
+						const active = selectedButton === index;
+						return (
+							<Pressable
+								key={index}
+								style={[
+									styles.filterButton,
+									{ backgroundColor: active ? "#3F009A" : "#3F009A14" },
+								]}
+								onPress={() => setSelectedButton(index)}
+							>
+								<Text
+									style={[
+										styles.buttonText,
+										{
+											color: active ? "#fff" : "#000",
+											fontFamily: active
+												? Fonts.regular
+												: Fonts.extraLight,
+										},
+									]}
+								>
+									{text}
+								</Text>
+							</Pressable>
+						);
+					}
+				)}
 			</View>
 
-			{
-				loading && <View style={{ marginTop: 20 }}>
+			{/* INITIAL LOADER */}
+			{loading && page === 1 && (
+				<View style={{ marginTop: 20 }}>
 					<ActivityIndicator size={28} />
 				</View>
-			}
+			)}
 
+			{/* LIST */}
 			<FlatList
 				data={workOrders}
-				keyExtractor={(item, index) => index.toString()}
+				keyExtractor={(item, index) => `${item.id}-${index}`}
 				renderItem={renderWorkOrderItem}
 				removeClippedSubviews={false}
 				refreshing={refreshing}
 				onRefresh={handleRefresh}
 				contentContainerStyle={styles.listContainer}
 				onEndReached={handleEndReached}
-				onEndReachedThreshold={0.4}
+				onEndReachedThreshold={0.1}
 				ListFooterComponent={
-					loadingMore ? (
-						<ActivityIndicator size={28} />
-					) : null
+					loadingMore ? <ActivityIndicator size={28} /> : null
 				}
 			/>
 		</>
-	)
+	);
 }
 
 const styles = StyleSheet.create({
@@ -154,7 +183,7 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "center",
-		gap: 5
+		gap: 5,
 	},
 	filterButton: {
 		borderWidth: 0.2,
@@ -162,13 +191,13 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		justifyContent: "center",
 		paddingVertical: 5,
-		paddingHorizontal: 10
+		paddingHorizontal: 10,
 	},
 	buttonText: {
 		fontSize: 10,
 	},
 	listContainer: {
 		paddingHorizontal: 20,
-		paddingVertical: 12
-	}
-})
+		paddingVertical: 12,
+	},
+});

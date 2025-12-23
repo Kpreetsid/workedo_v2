@@ -18,15 +18,25 @@ const pieDataRaw = [
 
 export default function AssetHealthStatus() {
 	const assetKPIHistory = useOverviewStore((state) => state.assetKPIHistory);
+	// console.log('asset kpi history in health status = ', assetKPIHistory)
 	const [hidden, setHidden] = React.useState<string[]>([]);
+
+	// ✅ Local derived breakup state
+	const [breakup, setBreakup] = React.useState<
+		{ name: string; value: number }[]
+	>([]);
+
+	// 🔒 Sync only when KPI becomes available
+	React.useEffect(() => {
+		if (!assetKPIHistory) return;
+
+		setBreakup(assetKPIHistory.top_level_asset.health_breakup_percentage);
+	}, [assetKPIHistory]);
 
 	const screenWidth = Dimensions.get("window").width;
 	const radius = screenWidth * 0.22;
-	const gap = radius * 0.04; // gap proportional to radius for consistent spacing
+	const gap = radius * 0.04;
 	const arcPadding = 1.5;
-
-	// 🧠 Fallback to empty array if data isn't available yet
-	const breakup = assetKPIHistory?.health_breakup_percentage ?? [];
 
 	// 🎨 Color mapping for each health type
 	const colorMap: Record<string, string> = {
@@ -36,6 +46,16 @@ export default function AssetHealthStatus() {
 		Critical: "#EF4444",
 		"Not Defined": "#B0B0B0",
 	};
+
+	// 🛑 If breakup not ready yet → render UI shell only
+	if (!breakup.length) {
+		return (
+			<View style={styles.container}>
+				<Text style={styles.cardTitle}>Asset Health Status</Text>
+				<View style={styles.card} />
+			</View>
+		);
+	}
 
 	const pieDataRaw = breakup.map(item => ({
 		value: item.value,
@@ -55,11 +75,8 @@ export default function AssetHealthStatus() {
 			color: "#B0B0B0"
 		}];
 
-
-
 	// 🧮 Compute total for normalization
 	const total = finalChartData.reduce((sum, s) => sum + s.value, 0) || 1;
-
 
 	let startAngle = -90;
 
@@ -89,11 +106,19 @@ export default function AssetHealthStatus() {
 
 			<View style={styles.card}>
 				<View style={styles.pieRow}>
-					{pieData.length > 0 && <PieChart
+					{finalChartData.length > 0 && <PieChart
 						isAnimated
-						data={pieData}
+						data={finalChartData}
+
+						innerRadius={50}
+						innerCircleColor="#FFFFFF"
+						focusOnPress={false}
+						strokeWidth={2}
+						strokeColor="#FFFFFF"
+						backgroundColor="#fff"
+
 						radius={radius}
-						donut={false}
+						donut={true}
 						showText={false}
 						sectionAutoFocus={false}
 					/>}

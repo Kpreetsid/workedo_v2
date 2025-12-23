@@ -8,17 +8,19 @@ import PDMDashboardLocationSelect from "./PDMLocationSelect";
 import AssetHealthStatusPieChart from "./AssetHealthStatusPieChart";
 
 export default function PDMDashboard() {
+	console.log('running pdm');
+
 	return (
 		<FlashList
 			data={[{}]} // dummy single item
 			renderItem={() => (
 				<>
 					<PDMDashboardLocationSelect />
-					<InfoCards />
-					<AssetHealth />
-					<AssetHealthStatusPieChart />
-					{/* <AssetHealthStatus /> */}
-					<AlarmSummary />
+					{/* <InfoCards />
+					<AssetHealth /> */}
+					{/* <AssetHealthStatusPieChart /> */}
+					{/* <AssetHealthStatus />
+					<AlarmSummary /> */}
 					{/* <Top10BadAssets /> */}
 					<Alarms />
 				</>

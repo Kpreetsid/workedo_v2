@@ -61,7 +61,7 @@ export default function WoStatus() {
 
 			finalPayload.assetIds = childAssetsFormatted
 
-			console.log('final payload = ', finalPayload);
+			console.log('final payload wo status = ', finalPayload);
 
 			const res = await woStatus(
 				finalPayload.startDate,

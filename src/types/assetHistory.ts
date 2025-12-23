@@ -1,9 +1,11 @@
+// Health breakup item (unchanged)
 export interface HealthBreakupItem {
-    name: string;   // e.g. "Critical", "Danger", "Alert", etc.
+    name: string;   // "Critical", "Danger", "Alert", etc.
     value: number;  // percentage or count
 }
 
-export interface AssetHealthSummary {
+// Single asset health object (used everywhere internally)
+export interface AssetHealthStats {
     org_id: string;
 
     // individual health state counts
@@ -19,4 +21,11 @@ export interface AssetHealthSummary {
     // overall stats
     total_live_sensors: number;
     openAlarms: number;
+}
+
+// API response shape (NEW)
+export interface AssetHealthSummary {
+    top_level_asset: AssetHealthStats;
+    electric_asset: AssetHealthStats;
+    non_electric_asset: AssetHealthStats;
 }

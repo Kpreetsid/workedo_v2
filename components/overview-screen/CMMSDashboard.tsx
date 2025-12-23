@@ -9,9 +9,11 @@ import PendingWorkOrders from "./PendingWorkOders"
 import { Ionicons } from "@expo/vector-icons"
 
 export default function CMMSDashboard() {
+	console.log('running cmms');
+
 	return (
 		<ScrollView contentContainerStyle={styles.contentContainer}>
-			<CMMSDashboardLocationSelect />
+			{/* <CMMSDashboardLocationSelect />
 
 			<CMMSInfoCards />
 
@@ -23,7 +25,7 @@ export default function CMMSDashboard() {
 
 			<WorkOrderSummary />
 
-			<PendingWorkOrders />
+			<PendingWorkOrders /> */}
 
 		</ScrollView>
 	)
