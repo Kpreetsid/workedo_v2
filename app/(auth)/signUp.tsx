@@ -76,12 +76,12 @@ export default function RegisterScreen() {
 				const res = await registerService(payload);
 				console.log('res sign up = ', res);
 				if (res?.status) {
-					ToastAndroid.show(res.message, ToastAndroid.LONG);
+					ToastAndroid.show(res.message, ToastAndroid.SHORT);
 					router.push("/otpVerification");
 				}
 			} catch (e: any) {
 				console.log('error in sign up = ', e);
-				ToastAndroid.show(e.message, ToastAndroid.LONG);
+				ToastAndroid.show(e.message, ToastAndroid.SHORT);
 			}
 		} catch (err: any) {
 			console.error("Register failed:", err?.message || err);

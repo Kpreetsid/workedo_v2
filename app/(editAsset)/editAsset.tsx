@@ -245,7 +245,7 @@ const editAsset = () => {
 			if (res.status) {
 				setLoading(false)
 				resetForm();
-				ToastAndroid.show('Asset updated successfully', ToastAndroid.LONG);
+				ToastAndroid.show('Asset updated successfully', ToastAndroid.SHORT);
 				router.back();
 			} else {
 				setLoading(false)

@@ -88,7 +88,7 @@ export default function Gateways() {
 				}
 				const resp = await deleteGateway(payload);
 				console.log('resp = ', resp);
-				ToastAndroid.show(resp?.message, ToastAndroid.LONG);
+				ToastAndroid.show(resp?.message, ToastAndroid.SHORT);
 				setGateways(gateways.filter((g) => g.gateway_mac_id !== item?.gateway_mac_id));
 			} catch (error) {
 				console.log('error = ', error);

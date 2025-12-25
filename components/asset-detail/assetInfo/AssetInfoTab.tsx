@@ -338,7 +338,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 	// 4) optional: inspect final points
 	useEffect(() => {
 		if (chartSeries.length) {
-			// console.log("final chart = ", chartSeries);
+			console.log("final chart = ", chartSeries);
 
 			const orderedSeries = ["Horizontal", "Vertical", "Axial"].map(
 				(axis) => chartSeries.find((s) => s.axis === axis)

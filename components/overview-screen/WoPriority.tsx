@@ -22,7 +22,9 @@ export default function WoPriority() {
 	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
-		fetchWoPriority();
+		if(childAssets.length > 0) {
+			fetchWoPriority();
+		}
 	}, [childAssets, startDate])
 
 	// 🎨 Color mapping for each health type

@@ -203,7 +203,7 @@ const createAsset = () => {
 			console.log('res = ', res);
 			if (res.status) {
 				resetForm();
-				ToastAndroid.show('Asset created successfully', ToastAndroid.LONG);
+				ToastAndroid.show('Asset created successfully', ToastAndroid.SHORT);
 				router.back();
 				setLoading(false)
 			} else {

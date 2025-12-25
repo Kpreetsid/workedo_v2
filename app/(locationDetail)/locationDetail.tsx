@@ -14,6 +14,8 @@ import { LocationAsset } from "@/src/types/locationAsset";
 import { endpoints } from "@/src/api/endpoints";
 import { Ionicons } from "@expo/vector-icons";
 import { Location } from "@/src/types/location";
+import AssetUserInfo from "@/components/asset-detail/AssetUserInfo";
+import AssignedUsersModal from "@/components/work-order-detail/AssignUserModal";
 
 const blurhash =
 	'|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
@@ -24,6 +26,7 @@ export default function LocationDetail() {
 	const location = JSON.parse(params?.data);
 	console.log('location = ', location);
 	const { user } = useAuthStore();
+	const [visible, setVisible] = useState(false);
 	const [assets, setAssets] = useState<LocationAsset[] | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [locationData, setLocationData] = useState<Location | null>(null);
@@ -110,24 +113,26 @@ export default function LocationDetail() {
 				<View style={styles.headerCard}>
 					<Image
 						style={styles.image}
-						source={{ uri: location?.image_path ? `${endpoints.baseURL}locations/${locationData?.image_path}` : 'https://new.presageinsights.ai/cmms/assets/images/company.jpg' }}
+						source={{ uri: locationData?.image_path ? `${endpoints.baseURL}locations/${locationData?.image_path}` : 'https://new.presageinsights.ai/cmms/assets/images/company.jpg' }}
 						placeholder={{ blurhash }}
 						contentFit="cover"
-						transition={1000}
+						transition={500}
 					/>
 					<View style={styles.infoSection}>
 						<View style={{ flex: 1 }}>
 							<View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>
-								<Text style={styles.label}>Location ID</Text>
+								<Text style={styles.label}>Location Type</Text>
 								<Pressable onPress={handleEdit} style={{ width: 25, height: 25, backgroundColor: '#fff', borderRadius: 200, justifyContent: 'center', alignItems: 'center' }}>
 									<Ionicons name="pencil" size={14} color="#71717A" />
 								</Pressable>
 							</View>
 
-							<TextInput style={styles.input} value={location.id} editable={false} />
+							<TextInput style={styles.input} value={locationData?.location_type} editable={false} />
 						</View>
 
-						<View style={styles.row}>
+						<AssetUserInfo users={locationData?.userList || []} onPress={() => setVisible(true)} from={"locationDetail"} />
+
+						{/* <View style={styles.row}>
 							<View style={styles.col}>
 								<Text style={styles.label}>Location Type</Text>
 								<TextInput style={styles.input} value={locationData?.location_type} editable={false} />
@@ -136,7 +141,7 @@ export default function LocationDetail() {
 								<Text style={styles.label}>Location</Text>
 								<TextInput style={styles.input} value={locationData?.location_name} editable={false} />
 							</View>
-						</View>
+						</View> */}
 					</View>
 				</View>
 
@@ -186,6 +191,12 @@ export default function LocationDetail() {
 					</Pressable>
 				))}
 			</ScrollView>
+
+			<AssignedUsersModal
+				visible={visible}
+				onClose={() => setVisible(false)}
+				users={locationData?.userList}
+			/>
 		</>
 	);
 }
@@ -249,7 +260,6 @@ const styles = StyleSheet.create({
 		fontSize: 10,
 		backgroundColor: "#FFFFFF",
 		fontFamily: Fonts.light,
-		flex: 1
 	},
 	row: {
 		flexDirection: "row",

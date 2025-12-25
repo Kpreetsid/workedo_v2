@@ -125,8 +125,8 @@ export default function AlarmSummary() {
 				<View style={styles.webviewContainer}>
 					<WebView
 						ref={webRef}
-						source={require("../../assets/charts/asset-health.html")}
-						// source={{uri: chartUrl}}
+						// source={require("../../assets/charts/asset-health.html")}
+						source={{uri: chartUrl}}
 						originWhitelist={["*"]}
 						javaScriptEnabled
 						domStorageEnabled

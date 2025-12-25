@@ -76,7 +76,7 @@ export default function UpdateGateways() {
 			const res = await sensorValidation(payload);
 			console.log('sensor validation = ', res);
 			if (!res?.results[0].is_present) {
-				ToastAndroid.show(res?.results[0].message, ToastAndroid.LONG);
+				ToastAndroid.show(res?.results[0].message, ToastAndroid.SHORT);
 			} else {
 				saveSensor();
 			}
@@ -87,17 +87,17 @@ export default function UpdateGateways() {
 
 	const saveSensor = async () => {
 		if (macID === "") {
-			ToastAndroid.show("Please add Mac ID", ToastAndroid.LONG);
+			ToastAndroid.show("Please add Mac ID", ToastAndroid.SHORT);
 			return;
 		}
 
 		if (location == null) {
-			ToastAndroid.show("Please select Location", ToastAndroid.LONG);
+			ToastAndroid.show("Please select Location", ToastAndroid.SHORT);
 			return;
 		}
 
 		if (bleSensorID === "") {
-			ToastAndroid.show("Please add Bluetooth Sensor Mac ID", ToastAndroid.LONG);
+			ToastAndroid.show("Please add Bluetooth Sensor Mac ID", ToastAndroid.SHORT);
 			return;
 		}
 
@@ -110,7 +110,7 @@ export default function UpdateGateways() {
 			};
 
 			const res = await saveGateway(payload);
-			ToastAndroid.show(res?.message, ToastAndroid.LONG);
+			ToastAndroid.show(res?.message, ToastAndroid.SHORT);
 			router.back()
 		} catch (e) {
 			console.log('error= ', e);

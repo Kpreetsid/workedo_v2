@@ -35,7 +35,7 @@ export default function DoneTab() {
 		} catch (error: any) {
 			console.log("error =", error);
 			setLoading(false)
-			ToastAndroid.show(error?.message || "Something went wrong", ToastAndroid.LONG);
+			ToastAndroid.show(error?.message || "Something went wrong", ToastAndroid.SHORT);
 		}
 	};
 

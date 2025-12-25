@@ -106,7 +106,7 @@ export const uploadImage = async (asset: any, user: any) => {
 		const result = await response.json();
 		console.log('Upload success:', result);
 		if (result?.status) {
-			ToastAndroid.show('Image uploaded successfully!', ToastAndroid.LONG);
+			ToastAndroid.show('Image uploaded successfully!', ToastAndroid.SHORT);
 			return {
 				...user,
 				user_profile_img: result?.data?.[0]?.fileName,
@@ -117,6 +117,6 @@ export const uploadImage = async (asset: any, user: any) => {
 
 	} catch (error) {
 		console.error('Upload failed:', error);
-		ToastAndroid.show('Upload failed. Please try again.', ToastAndroid.LONG);
+		ToastAndroid.show('Upload failed. Please try again.', ToastAndroid.SHORT);
 	}
 };

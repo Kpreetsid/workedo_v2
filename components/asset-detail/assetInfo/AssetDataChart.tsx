@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { View, StyleSheet, Text, ActivityIndicator, Modal, Pressable } from "react-native";
 import { WebView } from "react-native-webview";
 import { useGestureLock } from "@/src/store/useGestureLock";
 import ChartDetailModal from "./ChartDetailModal";
+import { useFocusEffect } from "expo-router";
+
+import * as ScreenOrientation from 'expo-screen-orientation';
 
 export default function AssetDataChart({
 	chartSeries,
@@ -62,6 +65,7 @@ export default function AssetDataChart({
 				points: s.points.map((p: any) => ({
 					y: p.value,
 					fullDate: p.fullDate,
+					flag: p.flag
 				})),
 			})),
 		};
@@ -69,6 +73,14 @@ export default function AssetDataChart({
 		ref.current?.postMessage(JSON.stringify(payload));
 		initializedRef.current = true;
 	}, [webReady, validSeries, xLabels, yMaxValue]);
+
+	useFocusEffect(
+		useCallback(() => {}, [
+			ScreenOrientation.lockAsync(
+				ScreenOrientation.OrientationLock.PORTRAIT
+			)
+		])
+	);
 
 	const chartUrl = "file:///android_asset/charts/chart.html";
 

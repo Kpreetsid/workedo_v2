@@ -16,11 +16,11 @@ export default function PDMDashboard() {
 			renderItem={() => (
 				<>
 					<PDMDashboardLocationSelect />
-					{/* <InfoCards />
-					<AssetHealth /> */}
+					<InfoCards />
+					<AssetHealth />
 					{/* <AssetHealthStatusPieChart /> */}
-					{/* <AssetHealthStatus />
-					<AlarmSummary /> */}
+					<AssetHealthStatus />
+					<AlarmSummary />
 					{/* <Top10BadAssets /> */}
 					<Alarms />
 				</>

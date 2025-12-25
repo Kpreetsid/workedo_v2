@@ -15,8 +15,10 @@ export default function CMMSInfoCards() {
 	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
-		console.log('bceause of start date - ', startDate);
-		fetchInfoCards();
+		console.log('bceause of start date - ', startDate, childAssets);
+		if(childAssets.length > 0) {
+			fetchInfoCards();
+		}
 	}, [childAssets, startDate])
 
 	async function fetchInfoCards() {

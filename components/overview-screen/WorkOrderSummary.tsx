@@ -20,7 +20,9 @@ export default function WorkOrderSummary() {
 	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
-		fetchSummary();
+		if (childAssets.length > 0) {
+			fetchSummary();
+		}
 	}, [childAssets, startDate])
 
 	const transformToBarData = (input: any) => {

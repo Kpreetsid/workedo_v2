@@ -83,13 +83,13 @@ export default function OTPVerification() {
 	const verifyPin = async () => {
 		console.log('in verify pin');
 		if (otp.join('') === '') {
-			ToastAndroid.show('Please enter OTP', ToastAndroid.LONG);
+			ToastAndroid.show('Please enter OTP', ToastAndroid.SHORT);
 			return;
 		}
 
 		// check 6 digit condition
 		if (otp.join('').length < 6) {
-			ToastAndroid.show('Please enter 6 digit OTP', ToastAndroid.LONG);
+			ToastAndroid.show('Please enter 6 digit OTP', ToastAndroid.SHORT);
 			return;
 		}
 
@@ -106,12 +106,12 @@ export default function OTPVerification() {
 					const res = await resetPasswordOTPSendService(finalPayload);
 					console.log('res otp = ', res);
 					if (res?.status) {
-						ToastAndroid.show(res.message, ToastAndroid.LONG);
+						ToastAndroid.show(res.message, ToastAndroid.SHORT);
 						router.push({ pathname: "/changePassword", params: { type: "resetPassword", payload: JSON.stringify(userData) } });
 					}
 				} catch (e: any) {
 					console.log('error in otp = ', e);
-					ToastAndroid.show(e.message, ToastAndroid.LONG);
+					ToastAndroid.show(e.message, ToastAndroid.SHORT);
 				}
 			} catch (err: any) {
 				console.error("Register failed:", err?.message || err);
@@ -129,12 +129,12 @@ export default function OTPVerification() {
 					const res = await OTPVerificationService(finalPayload);
 					console.log('res otp = ', res);
 					if (res?.status) {
-						ToastAndroid.show(res.message, ToastAndroid.LONG);
+						ToastAndroid.show(res.message, ToastAndroid.SHORT);
 						router.push("/registrationComplete")
 					}
 				} catch (e: any) {
 					console.log('error in otp = ', e);
-					ToastAndroid.show(e.message, ToastAndroid.LONG);
+					ToastAndroid.show(e.message, ToastAndroid.SHORT);
 				}
 			} catch (err: any) {
 				console.error("Register failed:", err?.message || err);

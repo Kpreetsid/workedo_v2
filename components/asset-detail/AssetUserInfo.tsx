@@ -5,11 +5,11 @@ import { Ionicons } from '@expo/vector-icons'
 import Fonts from '@/constants/Typography'
 import { endpoints } from '@/src/api/endpoints'
 
-const AssetUserInfo = ({ users = [], onPress }: { users: any[], onPress: () => void }) => {
+const AssetUserInfo = ({ users = [], onPress, from }: { users: any[], onPress: () => void, from?: string }) => {
 
     return (
-        <Pressable style={styles.container} onPress={onPress}>
-            <Text style={styles.label}>Assign to User</Text>
+        <Pressable style={[styles.container, from === "locationDetail" && styles.containerSecond]} onPress={onPress}>
+            <Text style={[styles.label, from === "locationDetail" && {fontFamily: Fonts.regular}]}>Assign to User</Text>
 
             <View style={styles.rightSection}>
                 <View style={styles.avatars}>
@@ -67,6 +67,17 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginBottom: 20,
         elevation: 1,
+        shadowColor: "#000",
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 2 },
+    },
+    containerSecond: {
+        marginBottom: 0,
+        paddingHorizontal: 10,
+        backgroundColor: "transparent",
+        marginHorizontal: 0,
+        elevation: 0,
         shadowColor: "#000",
         shadowOpacity: 0.06,
         shadowRadius: 10,

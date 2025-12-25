@@ -62,7 +62,7 @@ export default function partDetail() {
 						const res = await updatePart(part?.id, data?.total);
 						if(res?.status) {
 							setPart({...part, quantity: Number(data?.total)});
-							ToastAndroid.show("Part Updated Successfully!", ToastAndroid.LONG);
+							ToastAndroid.show("Part Updated Successfully!", ToastAndroid.SHORT);
 						}
 					} catch (e: any) {
 						console.log(e);

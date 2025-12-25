@@ -1,9 +1,9 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Text, StyleSheet, View, TouchableOpacity } from "react-native";
+import { Text, StyleSheet, View, TouchableOpacity, Pressable } from "react-native";
 import { ArrowBack } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
 import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 interface HeaderProps {
 	title: string;
@@ -13,15 +13,17 @@ interface HeaderProps {
 	handleEditAsset?: () => void;
 	showBack?: boolean;
 	showClose?: boolean;
+	showOrientation?: boolean;
+	toggleOrientation?: () => void;
 }
 
-export default function Header({ title, modal = false, dismiss, editAsset, handleEditAsset, showBack = true, showClose = false }: HeaderProps) {
+export default function Header({ title, modal = false, dismiss, editAsset, handleEditAsset, showBack = true, showClose = false, showOrientation = false, toggleOrientation }: HeaderProps) {
 	return (
 		<SafeAreaView edges={["top"]} style={styles.safeArea}>
 			<View style={styles.headerContainer}>
 				<View style={[
 					styles.rowBetween,
-					showClose && {width: '100%', justifyContent: 'space-between'}
+					showClose && { width: '100%', justifyContent: 'space-between' }
 				]}>
 					{
 						showBack && <TouchableOpacity onPress={() => modal ? dismiss!() : router.back()} style={styles.backButton} hitSlop={200}>
@@ -31,11 +33,24 @@ export default function Header({ title, modal = false, dismiss, editAsset, handl
 
 					<Text style={styles.title}>{title}</Text>
 
-					{
-						showClose && <TouchableOpacity onPress={() => modal ? dismiss!() : router.back()} style={styles.backButton} hitSlop={200}>
-							<Ionicons name="close" size={22} color={"#fff"} />
-						</TouchableOpacity>
-					}
+
+					<View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+						{
+							showOrientation && (
+								<Pressable onPress={toggleOrientation} style={styles.editButton}>
+									<MaterialIcons name="screen-rotation" color={"#fff"} size={22} />
+								</Pressable>
+							)
+						}
+
+						{
+							showClose && <TouchableOpacity onPress={() => modal ? dismiss!() : router.back()} style={styles.backButton}>
+								<Ionicons name="close" size={22} color={"#fff"} />
+							</TouchableOpacity>
+						}
+					</View>
+
+
 				</View>
 
 				{

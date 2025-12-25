@@ -94,13 +94,13 @@ export default function WorkRequestDetail() {
 					try {
 						const response = await rejectWorkRequest(item?.id, reason);
 						if (response?.status) {
-							ToastAndroid.show("Request Rejected Successfully", ToastAndroid.LONG);
+							ToastAndroid.show("Request Rejected Successfully", ToastAndroid.SHORT);
 							router.back();
 						}
 					} catch (error: any) {
 						console.error("Error rejecting work request:", error);
 						if (!error?.status) {
-							ToastAndroid.show(error?.message, ToastAndroid.LONG);
+							ToastAndroid.show(error?.message, ToastAndroid.SHORT);
 						}
 					}
 				}} />

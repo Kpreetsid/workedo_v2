@@ -22,6 +22,8 @@ export interface Location {
   
     // recursive children
     childs: Location[];
+
+    userList?: string[];
   
     // optional (not in API but keeping for type safety)
     assigned_to?: string;

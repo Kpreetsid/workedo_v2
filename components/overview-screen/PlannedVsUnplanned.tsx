@@ -23,7 +23,9 @@ export default function PlannedVsUnplanned() {
 	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
-		fetchPlannedUnplanned();
+		if (childAssets.length > 0) {
+			fetchPlannedUnplanned();
+		}
 	}, [childAssets, startDate])
 
 	async function fetchPlannedUnplanned() {

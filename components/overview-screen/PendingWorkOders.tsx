@@ -17,7 +17,9 @@ export default function PendingWorkOrders() {
 	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
-		fetchPendingWO();
+		if (childAssets.length > 0) {
+			fetchPendingWO();
+		}
 	}, [childAssets])
 
 	async function fetchPendingWO() {
@@ -25,7 +27,6 @@ export default function PendingWorkOrders() {
 		const timePart = "T14:01:18.788Z";
 		try {
 			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
-			console.log('payload = ', childAssetsFormatted);
 
 
 			let finalPayload: any = {};
@@ -46,7 +47,7 @@ export default function PendingWorkOrders() {
 
 			finalPayload.assetIds = childAssetsFormatted
 
-			console.log('final payload = ', finalPayload);
+			console.log('final payload pending work orders = ', finalPayload);
 
 			const res = await woPending(
 				finalPayload.startDate,

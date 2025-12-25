@@ -31,11 +31,12 @@ export default function ToDoTab() {
 	// -------------------------
 	const fetchWorkOrders = async (pageToLoad: number, isRefresh = false) => {
 		try {
-			if (pageToLoad === 1 || isRefresh) {
-				setLoading(true);
-			} else {
-				setLoadingMore(true);
-			}
+
+			// if (pageToLoad === 1 || isRefresh) {
+			// 	setLoading(true);
+			// } else {
+			// 	setLoadingMore(true);
+			// }
 
 			const res = await workOrdersPaginated(
 				TABS[selectedButton],
@@ -43,7 +44,10 @@ export default function ToDoTab() {
 				10
 			);
 
+			console.log('res work order = ', res);
+
 			if (res?.status && res?.data) {
+				console.log('res work order if = ', res);
 				const incoming = res.data as WorkOrder[];
 
 				setHasMore(res?.pagination?.hasNextPage ?? false);
@@ -54,21 +58,26 @@ export default function ToDoTab() {
 					setWorkOrders(prev => [...prev, ...incoming]);
 				}
 
-				setPage(prev => prev + 1); // ✅ SAFE increment
+				setPage(prev => prev + 1);
+			} else {
+				console.log('res work order else = ', res);
 			}
 		} catch (error: any) {
+			console.log('res work order catch')
 			ToastAndroid.show(
 				error?.message || "Something went wrong",
-				ToastAndroid.LONG
+				ToastAndroid.SHORT
 			);
+			// setLoading(false);
 		} finally {
-			setLoading(false);
-			setLoadingMore(false);
+			// setLoading(false);
+			// setLoadingMore(false);
 		}
 	};
 
 	useFocusEffect(
 		useCallback(() => {
+			console.log('running callback')
 			// When screen comes back into focus
 			setPage(1);
 			setHasMore(true);

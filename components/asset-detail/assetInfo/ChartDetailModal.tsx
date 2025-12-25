@@ -11,9 +11,13 @@ import { useEffect, useRef, useState } from "react";
 import { WebView } from "react-native-webview";
 import moment from "moment";
 
+import * as ScreenOrientation from 'expo-screen-orientation';
+
 import { Asset } from "@/src/types/asset";
 import { getAccelerationData, getDisplacementData, getEnvelopeData, getVelocityData } from "@/src/services/chart.service";
 import { useAssetStore } from "@/src/store/useAssetStore";
+import Header from "@/components/global/Header";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 interface ChartDetailModalProps {
 	visible: boolean;
@@ -83,7 +87,7 @@ export default function ChartDetailModal({
 		if (!visible || !selectedPoint) return;
 
 		const payload = buildDetailPayload();
-		console.log('payload now = ', payload)
+		// console.log('payload now = ', payload)
 		if (!payload) return;
 
 
@@ -97,7 +101,7 @@ export default function ChartDetailModal({
 	}, [visible, signalType, axis, activeTab, selectedPoint]);
 
 	const fetchData = (payload: any) => {
-		console.log(signalType, payload.axis)
+		// console.log(signalType, payload.axis)
 		switch (signalType) {
 			case "velocity":
 				return getVelocityData(payload);
@@ -114,13 +118,13 @@ export default function ChartDetailModal({
 	const fetchWaveFormsData = async (payload: any, cancelled: boolean) => {
 		try {
 			const Res = await fetchData(payload);
-			console.log(Res)
+			// console.log(Res)
 			if (cancelled) return;
 
 			const data = Res?.[axis];
 			const fs = Res?.fs;
 
-			console.log(Array.isArray(data))
+			// console.log(Array.isArray(data))
 
 			if (!Array.isArray(data) || !fs) {
 				console.warn("Invalid data time waveform ", Res);
@@ -202,6 +206,22 @@ export default function ChartDetailModal({
 		}
 	}
 
+	const toggleOrientation = async () => {
+		console.log(await ScreenOrientation.getOrientationAsync())
+
+		let current_orientation = await ScreenOrientation.getOrientationAsync();
+
+		if (current_orientation === 1) {
+			await ScreenOrientation.lockAsync(
+				ScreenOrientation.OrientationLock.LANDSCAPE
+			);
+		} else {
+			await ScreenOrientation.lockAsync(
+				ScreenOrientation.OrientationLock.PORTRAIT
+			);
+		}
+	}
+
 	// ---------------------------
 	// RENDER
 	// ---------------------------
@@ -213,8 +233,11 @@ export default function ChartDetailModal({
 			onRequestClose={onClose}
 		>
 			<View style={styles.backdrop}>
-				<View style={styles.container}>
+				<Header title={activeTab === "time" ? "Time Waveform" : "Spectrum"} modal={true} dismiss={onClose} showClose={true} showBack={false} showOrientation={true} toggleOrientation={toggleOrientation} />
+				<ScrollView style={styles.container}>
 					{/* Tabs */}
+
+
 					<View style={styles.tabRow}>
 						<Pressable
 							onPress={() => setActiveTab("time")}
@@ -303,12 +326,13 @@ export default function ChartDetailModal({
 
 					{/* BODY */}
 					<View style={styles.body}>
+
 						{detailLoading && (
 							<ActivityIndicator size="large" style={{ marginTop: 20 }} />
 						)}
 
 						{activeTab === "time" && !detailLoading && (
-							<ScrollView>
+							<View>
 								{/* ACCELERATION */}
 								<View style={styles.chartBlock}>
 									<Text style={styles.chartTitle}>
@@ -364,12 +388,12 @@ export default function ChartDetailModal({
 										/>
 									</View>
 								</View>
-							</ScrollView>
+							</View>
 						)}
 
 						{activeTab === "spectrum" && (
 							<View style={styles.placeholder}>
-								<ScrollView style={{ width: '100%' }}>
+								<View style={{ width: '100%' }}>
 									{/* ACCELERATION */}
 									<View style={styles.chartBlock}>
 										<Text style={styles.chartTitle}>
@@ -421,15 +445,11 @@ export default function ChartDetailModal({
 											/>
 										</View>
 									</View>
-								</ScrollView>
+								</View>
 							</View>
 						)}
 					</View>
-
-					<Pressable onPress={onClose} style={styles.closeBtn}>
-						<Text style={{ fontWeight: "600" }}>Close</Text>
-					</Pressable>
-				</View>
+				</ScrollView>
 			</View>
 		</Modal>
 	);
@@ -445,16 +465,16 @@ const styles = StyleSheet.create({
 		justifyContent: "flex-end",
 	},
 	container: {
-		height: "90%",
+		height: "100%",
 		backgroundColor: "#fff",
 		borderTopLeftRadius: 16,
 		borderTopRightRadius: 16,
-		padding: 16,
 	},
 	tabRow: {
 		flexDirection: "row",
 		borderBottomWidth: 1,
 		borderBottomColor: "#eee",
+		padding: 16,
 	},
 	tab: {
 		flex: 1,
@@ -477,6 +497,7 @@ const styles = StyleSheet.create({
 	body: {
 		flex: 1,
 		marginTop: 10,
+		padding: 16,
 	},
 	chartBlock: {
 		marginBottom: 24,
@@ -506,6 +527,7 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		justifyContent: "space-between",
 		marginBottom: 8,
+		paddingHorizontal: 16,
 	},
 	selectorBtn: {
 		flex: 1,
@@ -516,7 +538,7 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 	},
 	activeBtn: {
-		backgroundColor: "#e58b4e",
+		backgroundColor: "#742BDE",
 	},
 	selectorText: {
 		fontSize: 12,

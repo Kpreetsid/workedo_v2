@@ -37,6 +37,19 @@ export const fetchParentLocationDetails = async (data: any, type: string) => {
 	return await sendRequest('GET', url);
 }
 
+export const fetchParentLocationDetails1 = async (data: any, type: string) => {
+	let url = '';
+	if (type === 'parent') {
+		url = `${endpoints.overview.locationDetails}?parent_id=${data}`;
+		// console.log('url parent = ', url);
+	} else {
+		url = `${endpoints.overview.locationDetails}?_id=${data}`;
+		// console.log('url child = ', url);
+	}
+	// console.log('url = ', url);
+	return await sendRequest('GET', url);
+}
+
 export const childAssetsAgainstLocation = async (data: { levelOneLocations: string[], levelTwoLocations: string[] }) => {
 	const url = `${endpoints.overview.childAssets}`;
 	// console.log('url = ', url);
@@ -116,7 +129,7 @@ export const locationImageUpload = async (image: any, user: any) => {
 		const result = await response.json();
 		// console.log('Upload success:', result);
 		if (result?.status) {
-			ToastAndroid.show('Image uploaded successfully!', ToastAndroid.LONG);
+			ToastAndroid.show('Image uploaded successfully!', ToastAndroid.SHORT);
 			return {
 				image_path: result?.data?.[0]?.fileName,
 			};
@@ -126,6 +139,6 @@ export const locationImageUpload = async (image: any, user: any) => {
 
 	} catch (error) {
 		console.error('Upload failed:', error);
-		ToastAndroid.show('Upload failed. Please try again.', ToastAndroid.LONG);
+		ToastAndroid.show('Upload failed. Please try again.', ToastAndroid.SHORT);
 	}
 };

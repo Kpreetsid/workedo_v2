@@ -28,7 +28,7 @@ export default function ChangePassword() {
 
 	const onSubmit = async (data: any) => {
 		if (data.password !== data.confirmPassword) {
-			ToastAndroid.show("Passwords do not match!", ToastAndroid.LONG);
+			ToastAndroid.show("Passwords do not match!", ToastAndroid.SHORT);
 			return;
 		}
 
@@ -52,12 +52,12 @@ export default function ChangePassword() {
 					const res = await changePassword(finalPayload);
 					console.log('res otp = ', res);
 					if (res?.status) {
-						ToastAndroid.show(res.message, ToastAndroid.LONG);
+						ToastAndroid.show(res.message, ToastAndroid.SHORT);
 						router.replace("/");
 					}
 				} catch (e: any) {
 					console.log('error in otp = ', e);
-					ToastAndroid.show(e.message, ToastAndroid.LONG);
+					ToastAndroid.show(e.message, ToastAndroid.SHORT);
 				}
 			} catch (err: any) {
 				console.error("Register failed:", err?.message || err);

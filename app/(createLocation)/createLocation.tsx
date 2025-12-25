@@ -124,7 +124,7 @@ const createLocation = () => {
 				if (res.status) {
 					setLoading(false)
 					resetForm();
-					ToastAndroid.show('Location updated successfully', ToastAndroid.LONG);
+					ToastAndroid.show('Location updated successfully', ToastAndroid.SHORT);
 					router.back();
 				} else {
 					setLoading(false)
@@ -135,7 +135,7 @@ const createLocation = () => {
 				if (res.status) {
 					setLoading(false)
 					resetForm();
-					ToastAndroid.show('Location created successfully', ToastAndroid.LONG);
+					ToastAndroid.show('Location created successfully', ToastAndroid.SHORT);
 					router.back();
 				} else {
 					setLoading(false)

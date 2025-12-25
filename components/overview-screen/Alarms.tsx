@@ -1,106 +1,141 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { LayoutChangeEvent, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Animated, { useSharedValue, withTiming, useAnimatedStyle } from "react-native-reanimated";
+import { useEffect, useState } from "react";
+import {
+	FlatList,
+	LayoutChangeEvent,
+	Pressable,
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View,
+} from "react-native";
+import Animated, {
+	useSharedValue,
+	withTiming,
+	useAnimatedStyle,
+} from "react-native-reanimated";
 import Fonts from "@/constants/Typography";
 import { alarmsHistory } from "@/src/services/alarms.service";
 import { AlarmItem } from "@/src/types/alarm";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
-import moment from "moment";
 import { FlashList } from "@shopify/flash-list";
 import AlarmCard from "../alarms/AlarmCard";
+import { Ionicons } from "@expo/vector-icons";
 
 const TABS = ["Un-Addressed", "Addressed"] as const;
 type TabType = (typeof TABS)[number];
 
 export default function Alarms() {
 	const [selectedTab, setSelectedTab] = useState<TabType>("Un-Addressed");
-	const [tabLayouts, setTabLayouts] = useState<{ x: number; width: number }[]>([]);
-	const indicatorX = useSharedValue(0);
-	const indicatorWidth = useSharedValue(0);
 
 	const [data, setData] = useState<AlarmItem[]>([]);
 	const [page, setPage] = useState(1);
+	const [totalPages, setTotalPages] = useState(1);
 	const [loadingMore, setLoadingMore] = useState(false);
 	const [hasMore, setHasMore] = useState(true);
 
 	const { childAssets } = useOverviewStore();
+
+	// ----------------------------
+	// TAB INDICATOR (UI ONLY)
+	// ----------------------------
+	const [tabLayouts, setTabLayouts] = useState<{ x: number; width: number }[]>(
+		[]
+	);
+	const indicatorX = useSharedValue(0);
+	const indicatorWidth = useSharedValue(0);
 
 	const indicatorStyle = useAnimatedStyle(() => ({
 		transform: [{ translateX: indicatorX.value }],
 		width: indicatorWidth.value,
 	}));
 
-	const fetchAlarmsHistory = async (nextPage = 1) => {
+	// ----------------------------
+	// FETCH ALARMS (PAGINATED)
+	// ----------------------------
+	const fetchAlarmsHistory = async (pageToLoad = 1) => {
+		console.log('pageToLoad = ', pageToLoad)
 		if (loadingMore) return;
+
 		setLoadingMore(true);
 
 		const payload = {
 			asset_list: childAssets.map((item) => item.id),
-			selectedTab: selectedTab === "Un-Addressed" ? "unAddressedAlarms" : "addressedAlarms",
-			page: nextPage,
+			selectedTab:
+				selectedTab === "Un-Addressed"
+					? "unAddressedAlarms"
+					: "addressedAlarms",
+			pageNo: pageToLoad,
 		};
 
-		console.log("payload for alarms = ", payload);
+		console.log('alarm payload = ', payload);
 
 		try {
 			const res = await alarmsHistory(payload);
-			console.log("res = ", res);
+			console.log(res)
 
 			const newAlarms =
-				(selectedTab === "Un-Addressed"
+				selectedTab === "Un-Addressed"
 					? res?.unAddressedAlarms ?? []
-					: res?.addressedAlarms ?? []) as AlarmItem[];
+					: res?.addressedAlarms ?? [];
 
-			// Attach asset names
-			const alarmsWithName = newAlarms.map((alarm) => ({
+			const alarmsWithName = newAlarms.map((alarm: any) => ({
 				...alarm,
-				asset_name: childAssets.find((a) => a.id === alarm.asset_id)?.asset_name,
+				asset_name: childAssets.find(
+					(a) => a.id === alarm.asset_id
+				)?.asset_name,
 			}));
 
-			// Append or replace data
-			if (nextPage === 1) {
+			if (pageToLoad === 1) {
 				setData(alarmsWithName);
 			} else {
 				setData((prev) => [...prev, ...alarmsWithName]);
 			}
 
-			// ✅ if fewer results than expected, stop further calls
-			if (newAlarms.length === 0 || newAlarms.length < 10) {
-				setHasMore(false);
-			}
+			const currentPage = pageToLoad;
+			const total = res?.totalPages ?? 1;
+
+			setPage(currentPage);
+			setTotalPages(total);
+			setHasMore(currentPage < total);
 		} catch (error) {
-			console.log("error = ", error);
+			console.log("alarms error =", error);
 		} finally {
 			setLoadingMore(false);
 		}
 	};
 
-	useEffect(() => {
-		console.log('data = ', data)
-	}, [data])
-
-	// 🔁 reset when tab changes
+	// ----------------------------
+	// RESET ON TAB / ASSET CHANGE
+	// ----------------------------
 	useEffect(() => {
 		if (childAssets.length === 0) return;
+
 		setPage(1);
+		setTotalPages(1);
 		setHasMore(true);
 		setData([]);
+
 		fetchAlarmsHistory(1);
 	}, [selectedTab, childAssets]);
 
-	// 🚀 Infinite scroll
+	useEffect(() => {
+		console.log(data)
+	}, [data]);
+
+	// ----------------------------
+	// INFINITE SCROLL
+	// ----------------------------
 	const handleEndReached = () => {
-		console.log("Reached end, loading next page...");
-		if (loadingMore || !hasMore) return;
-		setPage((prev) => prev + 1);
+		if (loadingMore) return;
+		if (!hasMore) return;
+
+		const nextPage = page + 1;
+		fetchAlarmsHistory(nextPage);
 	};
 
-	// ✅ fetch when page changes
-	// useEffect(() => {
-	// 	if (childAssets.length === 0) return;
-	// 	fetchAlarmsHistory(page);
-	// }, [page]);
-
+	// ----------------------------
+	// TAB UI HELPERS
+	// ----------------------------
 	const handleTabLayout = (e: LayoutChangeEvent, index: number) => {
 		const { x, width } = e.nativeEvent.layout;
 		setTabLayouts((prev) => {
@@ -108,6 +143,7 @@ export default function Alarms() {
 			next[index] = { x, width };
 			return next;
 		});
+
 		if (index === 0 && selectedTab === "Un-Addressed") {
 			indicatorX.value = x;
 			indicatorWidth.value = width;
@@ -123,9 +159,24 @@ export default function Alarms() {
 		}
 	};
 
+	// ----------------------------
+	// RENDER
+	// ----------------------------
 	return (
 		<View style={styles.container}>
-			<Text style={styles.title}>Alarms</Text>
+			<View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+				<Text style={styles.title}>Alarms</Text>
+
+				<View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
+					{/* <Pressable style={{ backgroundColor: '#D9D9D9', width: 30, height: 30, justifyContent: 'center', alignItems: 'center', borderRadius: 200 }}>
+						<Ionicons name="chevron-back" size={20} />
+					</Pressable> */}
+
+					<Pressable style={{ backgroundColor: '#fff', width: 30, height: 30, justifyContent: 'center', alignItems: 'center', borderRadius: 200 }} onPress={handleEndReached}>
+						<Ionicons name="chevron-forward" size={20} />
+					</Pressable>
+				</View>
+			</View>
 
 			<View style={styles.tabsContainer}>
 				<View style={styles.tabRow}>
@@ -137,35 +188,43 @@ export default function Alarms() {
 							style={styles.tab}
 							activeOpacity={0.7}
 						>
-							<Text style={[styles.tabText, selectedTab === tab && styles.activeTabText]}>{tab}</Text>
+							<Text
+								style={[
+									styles.tabText,
+									selectedTab === tab && styles.activeTabText,
+								]}
+							>
+								{tab}
+							</Text>
 						</TouchableOpacity>
 					))}
-					<Animated.View pointerEvents="none" style={[styles.indicator, indicatorStyle]} />
-				</View>
-
-				<View style={{ marginTop: 16 }}>
-					<FlashList
-						data={data}
-						keyExtractor={(i) => String(i.id)}
-						renderItem={({ item }) => <AlarmCard item={item} />}
-						onEndReached={handleEndReached}
-						onEndReachedThreshold={0.4}
-						// onMomentumScrollBegin={onMomentumScrollBegin}
-						ListEmptyComponent={() => (
-							<View style={styles.noAlarmsFound}>
-								<Text style={styles.noAlarmsFoundText}>No alarms found</Text>
-							</View>
-						)}
-						ListFooterComponent={
-							loadingMore ? (
-								<View style={{ paddingVertical: 12, alignItems: "center" }}>
-									<Text style={{ color: "#999", fontSize: 12 }}>Loading more…</Text>
-								</View>
-							) : null
-						}
-
+					<Animated.View
+						pointerEvents="none"
+						style={[styles.indicator, indicatorStyle]}
 					/>
 				</View>
+
+				<FlatList
+					data={data}
+					keyExtractor={(i) => String(i.id)}
+					renderItem={({ item }) => <AlarmCard item={item} />}
+					ListEmptyComponent={() => (
+						<View style={styles.noAlarmsFound}>
+							<Text style={styles.noAlarmsFoundText}>
+								No alarms found
+							</Text>
+						</View>
+					)}
+					ListFooterComponent={
+						loadingMore ? (
+							<View style={{ paddingVertical: 12, alignItems: "center" }}>
+								<Text style={{ color: "#999", fontSize: 12 }}>
+									Loading more…
+								</Text>
+							</View>
+						) : null
+					}
+				/>
 			</View>
 		</View>
 	);
@@ -174,7 +233,7 @@ export default function Alarms() {
 const styles = StyleSheet.create({
 	container: {
 		padding: 20,
-		flex: 1, // ensure list gets height
+		flex: 1,
 	},
 	title: {
 		fontSize: 16,
@@ -186,11 +245,7 @@ const styles = StyleSheet.create({
 		backgroundColor: "#fff",
 		borderRadius: 15,
 		paddingVertical: 10,
-		shadowColor: "#000",
-		shadowOpacity: 0.08,
-		shadowRadius: 8,
-		elevation: 3,
-		flex: 1, // allow list to expand
+		flex: 1,
 	},
 	tabRow: {
 		flexDirection: "row",
@@ -214,14 +269,11 @@ const styles = StyleSheet.create({
 	indicator: {
 		height: 2,
 		backgroundColor: "#742BDE",
-		borderRadius: 2,
 		position: "absolute",
 		bottom: 0,
 		left: 0,
 	},
 	noAlarmsFound: {
-		flex: 1,
-		justifyContent: "center",
 		alignItems: "center",
 		marginVertical: 20,
 	},

@@ -19,6 +19,9 @@
 			height: 100%;
 			background: #ffffff;
 			font-family: system-ui, -apple-system, BlinkMacSystemFont;
+
+			overflow: hidden;
+			touch-action: none;
 		}
 
 		#wrapper {
@@ -80,7 +83,8 @@
 				data: series.points.map((p, i) => ({
 					x: i,
 					y: p.y,
-					fullDate: p.fullDate
+					fullDate: p.fullDate,
+					flag: p.flag
 				})),
 				borderColor: series.color,
 				borderWidth: 1.5,
@@ -88,13 +92,19 @@
 				cubicInterpolationMode: "monotone",
 				borderCapStyle: "round",
 				borderJoinStyle: "round",
-				pointRadius: 0
+				// pointRadius: 0
+				pointRadius: (ctx) => {
+					const point = ctx.raw;
+					return point.flag === false ? 2 : 0;
+				},
 			}));
 
 			chart = new Chart(ctx, {
 				type: "line",
 				data: { datasets },
 				options: {
+					animation: false,     // ✅ no reflow during pan/zoom
+					normalized: true,     // ✅ stabilizes datasets
 					responsive: true,
 					maintainAspectRatio: false,
 					parsing: false,
@@ -123,7 +133,8 @@
 									axis: dataset.label,
 									index,
 									value: point.y,
-									timestamp: point.fullDate
+									timestamp: point.fullDate,
+									flag: point.flag
 								}
 							})
 						);
@@ -142,7 +153,8 @@
 							},
 
 							ticks: {
-								autoSkip: false,
+								autoSkip: true,
+								maxTicksLimit: 6,        // ✅ evenly spaced (change 5–8 as needed)
 								maxRotation: 0,
 								color: "#A0A0A0",
 								font: { size: 9 },
@@ -171,12 +183,19 @@
 						zoom: {
 							pan: {
 								enabled: true,
-								mode: "x"
+								mode: "x",
+								// threshold: 0,
 							},
 							zoom: {
-								pinch: { enabled: true },
+								pinch: { enabled: true, threshold: 0 },
 								wheel: { enabled: true },
-								mode: "x"
+								mode: "x",
+								speed: 0.08,
+								limits: {
+									x: {
+										minRange: 1, // ✅ allow deep zoom (1 data point wide)
+									}
+								}
 							}
 						},
 
@@ -209,19 +228,22 @@
 					<div>${point.y}</div>
 				</div>
 
-				<div
-					id="view-details"
-					style="
-					margin-top:6px;
-					font-size:11px;
-					font-weight:600;
-					color:#1a237e;
-					cursor:pointer;
-					text-align:right;
-					"
-				>
-					View details
-				</div>
+				${point.flag === false ? `
+					<div
+						id="view-details"
+						style="
+							margin-top:6px;
+							font-size:11px;
+							font-weight:600;
+							color:#1a237e;
+							cursor:pointer;
+							text-align:right;
+						"
+					>
+						View details
+					</div>
+				` : ""}
+
 				`;
 
 
@@ -231,6 +253,8 @@
 
 			const btn = tooltipEl.querySelector("#view-details");
 
+			if (!btn) return;
+
 			btn.onclick = () => {
 				window.ReactNativeWebView?.postMessage(
 					JSON.stringify({
@@ -238,7 +262,8 @@
 						payload: {
 							axis: tooltip.dataPoints[0].dataset.label,
 							value: point.y,
-							timestamp: point.fullDate
+							timestamp: point.fullDate,
+							flag: point.flag
 						}
 					})
 				);
@@ -273,12 +298,18 @@
 					data: series.points.map((p, i) => ({
 						x: i,
 						y: p.y,
-						fullDate: p.fullDate
+						fullDate: p.fullDate,
+						flag: p.flag
 					})),
 					borderColor: series.color,
 					borderWidth: 1.5,
 					tension: 0.35,
-					pointRadius: 0
+					// pointRadius: 0
+					pointRadius: (ctx) => {
+						const point = ctx.raw;
+						return point.flag === false ? 2 : 0;
+					},
+
 				}));
 
 				chart.update("none");

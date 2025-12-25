@@ -13,7 +13,7 @@ export default function CMMSDashboard() {
 
 	return (
 		<ScrollView contentContainerStyle={styles.contentContainer}>
-			{/* <CMMSDashboardLocationSelect />
+			<CMMSDashboardLocationSelect />
 
 			<CMMSInfoCards />
 
@@ -25,7 +25,7 @@ export default function CMMSDashboard() {
 
 			<WorkOrderSummary />
 
-			<PendingWorkOrders /> */}
+			<PendingWorkOrders />
 
 		</ScrollView>
 	)

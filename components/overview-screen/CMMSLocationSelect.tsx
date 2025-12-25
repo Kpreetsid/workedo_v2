@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { TouchableOpacity, View, StyleSheet, ToastAndroid, Pressable, Modal } from "react-native";
 import Dropdown from "@/components/overview-screen/DropDown";
 import { useAuthStore } from "@/src/store/useAuthStore";
-import { assetHealthKPIHistory, childAssetsAgainstLocation, fetchKPIFilterLocations, fetchParentLocationDetails } from "@/src/services/location.service";
+import { assetHealthKPIHistory, childAssetsAgainstLocation, fetchKPIFilterLocations, fetchParentLocationDetails, fetchParentLocationDetails1 } from "@/src/services/location.service";
 import { useCMMSStore } from "@/src/store/useCMMSStore";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -29,7 +29,6 @@ export default function CMMSDashboardLocationSelect() {
 	const [showCalendar, setShowCalendar] = useState(false);
 	const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-
 	useEffect(() => {
 		fetchLocations();
 	}, []);
@@ -37,7 +36,7 @@ export default function CMMSDashboardLocationSelect() {
 	// 🧩 Fetch all locations initially and select first parent
 	const fetchLocations = async () => {
 		const res = await fetchKPIFilterLocations();
-		console.log('res kpi = ', res);
+		// console.log('res kpi = ', res);
 		if (res.status) {
 			setParentLocations(res.data.levelOneLocations);
 
@@ -53,7 +52,7 @@ export default function CMMSDashboardLocationSelect() {
 
 		const fetchChildsForParent = async () => {
 			try {
-				const childs = await fetchParentLocationDetails(parentSelectionId, "parent");
+				const childs = await fetchParentLocationDetails1(parentSelectionId, "parent");
 				// console.log('childs = ', childs);
 
 				// 🧠 CASE 1: API returns success but "status": false (no data found)
@@ -114,14 +113,14 @@ export default function CMMSDashboardLocationSelect() {
 
 	// Fetch child assets for a parent + selected children
 	const fetchChildAssets = async (parentId?: string, childIds?: string[]) => {
-		console.log('parentId ids = ', parentId)
-		console.log('chld ids = ', childIds)
+		// console.log('parentId ids = ', parentId)
+		// console.log('chld ids = ', childIds)
 		const payload = {
 			levelOneLocations: [parentId || parentLocations[0]?.id],
 			levelTwoLocations: childIds || childLocations.map((i) => i.id),
 		};
 
-		console.log('payload for child assets = ', payload);
+		// console.log('payload for child assets = ', payload);
 
 		const childAssetsRes = await childAssetsAgainstLocation(payload);
 		// console.log('childAssetsRes = ', childAssetsRes);
@@ -130,21 +129,21 @@ export default function CMMSDashboardLocationSelect() {
 		}
 	};
 
-	// When child assets are ready, fetch KPI data
-	useEffect(() => {
-		if (!childAssets.length) return;
-		fetchAssetHealthKPIHistory();
-	}, [childAssets]);
+	// // When child assets are ready, fetch KPI data
+	// useEffect(() => {
+	// 	if (!childAssets.length) return;
+	// 	fetchAssetHealthKPIHistory();
+	// }, [childAssets]);
 
-	const fetchAssetHealthKPIHistory = async () => {
-		const payload = {
-			org_id: user?.account_id,
-			asset_list: childAssets.map((item) => item.id),
-		};
-		// console.log('payload = ', payload);
-		const res = await assetHealthKPIHistory(payload);
-		setAssetKPIHistory(res.data);
-	};
+	// const fetchAssetHealthKPIHistory = async () => {
+	// 	const payload = {
+	// 		org_id: user?.account_id,
+	// 		asset_list: childAssets.map((item) => item.id),
+	// 	};
+	// 	// console.log('payload = ', payload);
+	// 	const res = await assetHealthKPIHistory(payload);
+	// 	setAssetKPIHistory(res.data);
+	// };
 
 	return (
 		<>
@@ -175,7 +174,7 @@ export default function CMMSDashboardLocationSelect() {
 				)}
 
 				<Pressable style={styles.iconView} onPress={() => {
-					console.log('pressed')
+					// console.log('pressed')
 					setShowCalendar(true)
 				}}>
 					<Ionicons color={"#777"} name="calendar" size={20} />
@@ -229,7 +228,7 @@ const styles = StyleSheet.create({
 		backgroundColor: "rgba(0,0,0,0.4)",
 	},
 	sheet: {
-		height: "60%",
+		height: "70%",
 		backgroundColor: "#fff",
 		borderTopLeftRadius: 16,
 		borderTopRightRadius: 16,

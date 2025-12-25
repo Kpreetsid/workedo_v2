@@ -41,6 +41,8 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 	const [id, setId] = useState();
 	const { setWorkForm, isLoaded, resetForm } = useWorkOrderStore();
 	const [forms, setForms] = useState<any>([]);
+	const [imageError, setImageError] = useState(false);
+
 	const parts = useWorkOrderStore((state) => state.parts);
 	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 	const [activeDateField, setActiveDateField] = useState<any>(null);
@@ -405,16 +407,22 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 						onPress={() => pickImage()}
 					/>
 
+
 					{
 						useWorkOrderStore.getState().files.length > 0 &&
-						<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
-							<Image
-								source={{
-									uri: `${endpoints.baseURL}work_request/${useWorkOrderStore.getState().files[0].image_path}?t=${Date.now()}`
-								}}
-								style={{ width: 200, height: 200, borderRadius: 8 }}
-							/>
-						</View>
+						!imageError && (
+							<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
+								<Image
+									source={{
+										uri: `${endpoints.baseURL}work_request/${useWorkOrderStore.getState().files[0]?.image_path ||
+											useWorkOrderStore.getState().files[0]?.fileName
+											}`
+									}}
+									style={{ width: 200, height: 200, borderRadius: 8 }}
+									onError={() => setImageError(true)}
+								/>
+							</View>
+						)
 					}
 
 					{/* <View style={{ marginHorizontal: 0 }}>
@@ -425,9 +433,9 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 					</View> */}
 
 					<SelectParts onPress={() => router.push({
-							pathname: "/addParts",
-							params: { comingFrom: "newWorkOrder" }
-						})}
+						pathname: "/addParts",
+						params: { comingFrom: "newWorkOrder" }
+					})}
 					/>
 
 

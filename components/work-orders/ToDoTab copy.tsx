@@ -50,7 +50,7 @@ export default function ToDoTab() {
 			}
 		} catch (error: any) {
 			console.log("error =", error);
-			ToastAndroid.show(error?.message || "Something went wrong", ToastAndroid.LONG);
+			ToastAndroid.show(error?.message || "Something went wrong", ToastAndroid.SHORT);
 			setLoading(false)
 		}
 	};
