@@ -12,9 +12,9 @@ export const workOrdersPaginated = async (pageType: string, page: number, limit:
 
 export const getWorkOrders = async (type: string) => {
     let url = '';
-    if(type === 'todo') {
+    if (type === 'todo') {
         url = `${endpoints.workOrders.workOrders}?status=Open&status=In-Progress&status=On-Hold`;
-    } else if(type === 'done') {
+    } else if (type === 'done') {
         url = `${endpoints.workOrders.workOrders}?status=Completed`;
     }
     return await sendRequest('GET', url);
@@ -27,6 +27,12 @@ export const getWorkOrderDetails = async (id: string) => {
 export const updateWorkOrder = async (id: any, data: any) => {
     const url = `${endpoints.workOrders.workOrders}/${id}`;
     return await sendRequest("PUT", url, data);
+};
+
+export const getFormData = async (id: string) => {
+    console.log('init 123123 = ', id)
+    const url = `${endpoints.preventive.getSOPs}/${id}`;
+    return await sendRequest("GET", url);
 };
 
 export const deleteWorkOrder = async (id: string) => {

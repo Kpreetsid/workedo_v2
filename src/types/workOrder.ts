@@ -28,7 +28,8 @@ export interface WorkOrder {
     location: WorkOrderLocation;
     id: string;
     comments: WorkOrderComment[];
-    nature_of_work?: string
+    nature_of_work?: string;
+    sop_form_data?: { [key: string]: string };
 }
 
 export interface WorkOrderTask {

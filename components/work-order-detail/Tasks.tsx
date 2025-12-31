@@ -192,11 +192,13 @@ const Tasks = ({ params }: Props) => {
 					</View>
 				))}
 
-				<ActionButton
-					label="Submit"
-					onPress={() => updateWorkOrderFunc()}
-					style={{ width: '100%', alignSelf: 'center', marginBottom: 40 }}
-				/>
+				{
+					tasks.length > 0 && <ActionButton
+						label="Submit"
+						onPress={() => updateWorkOrderFunc()}
+						style={{ width: '100%', alignSelf: 'center', marginBottom: 40 }}
+					/>
+				}
 
 			</ScrollView>
 		</KeyboardAwareScrollView>

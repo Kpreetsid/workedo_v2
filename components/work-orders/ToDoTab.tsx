@@ -89,13 +89,13 @@ export default function ToDoTab() {
 	// -------------------------
 	// INITIAL LOAD + TAB CHANGE
 	// -------------------------
-	useEffect(() => {
-		setPage(1);
-		setWorkOrders([]);
-		setHasMore(true);
+	// useEffect(() => {
+	// 	setPage(1);
+	// 	setWorkOrders([]);
+	// 	setHasMore(true);
 
-		fetchWorkOrders(1, true);
-	}, [selectedButton]);
+	// 	fetchWorkOrders(1, true);
+	// }, [selectedButton]);
 
 	// -------------------------
 	// PULL TO REFRESH
@@ -140,7 +140,10 @@ export default function ToDoTab() {
 									styles.filterButton,
 									{ backgroundColor: active ? "#3F009A" : "#3F009A14" },
 								]}
-								onPress={() => setSelectedButton(index)}
+								onPress={() => {
+									setPage(1);
+									setSelectedButton(index);
+								}}
 							>
 								<Text
 									style={[
