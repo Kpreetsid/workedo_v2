@@ -11,7 +11,7 @@ import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 
 export default function PendingWorkOrders() {
 	const childAssets = useCMMSStore((state) => state.childAssets);
-	console.log('child assets in wo status = ', childAssets);
+	// console.log('child assets in wo status = ', childAssets);
 
 	const [pendingWO, setPendingWO] = useState<any[]>([]);
 	const { startDate, endDate } = useDateRangeStore();
@@ -47,7 +47,7 @@ export default function PendingWorkOrders() {
 
 			finalPayload.assetIds = childAssetsFormatted
 
-			console.log('final payload pending work orders = ', finalPayload);
+			// console.log('final payload pending work orders = ', finalPayload);
 
 			const res = await woPending(
 				finalPayload.startDate,
@@ -55,11 +55,11 @@ export default function PendingWorkOrders() {
 				childAssetsFormatted
 			);
 			if (res?.status) {
-				console.log('res = ', res?.data);
+				// console.log('res = ', res?.data);
 				setPendingWO(res?.data.reverse())
 			}
 		} catch (e) {
-			console.log('e in status = ', e);
+			// console.log('e in status = ', e);
 			setPendingWO([]);
 		}
 	}

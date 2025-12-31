@@ -28,6 +28,7 @@ export interface WorkOrder {
     location: WorkOrderLocation;
     id: string;
     comments: WorkOrderComment[];
+    nature_of_work?: string
 }
 
 export interface WorkOrderTask {

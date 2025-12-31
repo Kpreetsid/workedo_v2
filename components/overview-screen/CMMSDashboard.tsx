@@ -7,32 +7,48 @@ import PlannedVsUnplanned from "./PlannedVsUnplanned"
 import WorkOrderSummary from "./WorkOrderSummary"
 import PendingWorkOrders from "./PendingWorkOders"
 import { Ionicons } from "@expo/vector-icons"
+import { FlashList } from "@shopify/flash-list"
+import { useCallback, useState } from "react"
+import { useFocusEffect } from "expo-router"
 
 export default function CMMSDashboard() {
-	console.log('running cmms');
+	console.log('cmms dashboard')
+	const [refreshing, setRefreshing] = useState(false);
+	const [refreshKey, setRefreshKey] = useState(0);
+
+	const onRefresh = useCallback(() => {
+		setRefreshing(true);
+
+		// 🔥 Force remount of ALL children
+		setRefreshKey((prev) => prev + 1);
+
+		setRefreshing(false);
+	}, []);
+
+	// 🔥 Auto refresh when screen is focused
+	// useFocusEffect(
+	// 	useCallback(() => {
+	// 		setRefreshKey((k) => k + 1);
+	// 	}, [])
+	// );
 
 	return (
-		<ScrollView contentContainerStyle={styles.contentContainer}>
-			<CMMSDashboardLocationSelect />
-
-			<CMMSInfoCards />
-
-			<WoStatus />
-
-			<WoPriority />
-
-			<PlannedVsUnplanned />
-
-			<WorkOrderSummary />
-
-			<PendingWorkOrders />
-
-		</ScrollView>
-	)
+		<FlashList
+			key={refreshKey}           // 👈 THIS is the trick
+			data={[{}]}
+			renderItem={() => (
+				<>
+					<CMMSDashboardLocationSelect />
+					<CMMSInfoCards />
+					<WoStatus />
+					<WoPriority />
+					<PlannedVsUnplanned />
+					<WorkOrderSummary />
+					<PendingWorkOrders />
+				</>
+			)}
+			refreshing={refreshing}
+			onRefresh={onRefresh}
+		/>
+	);
 }
-
-const styles = StyleSheet.create({
-	contentContainer: {
-		// flexGrow: 1
-	}
-})

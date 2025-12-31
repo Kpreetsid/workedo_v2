@@ -1,6 +1,6 @@
 import Header from "@/components/global/Header";
 import FormInput from "@/components/create-screens/FormInput";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View } from "react-native";
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View } from "react-native";
 import AssignInput from "@/components/create-screens/AssignInput";
 import Fonts from "@/constants/Typography";
 import { DropDownIcon } from "@/constants/IconProvider";
@@ -29,14 +29,17 @@ import { endpoints } from "@/src/api/endpoints";
 import { WorkOrder } from "@/src/types/workOrder";
 import AttachmentUpload from "./AttachmentUpload";
 import SelectParts from "./SelectParts";
+import ModalCalendar from "../global/ModalCalendar";
+import { mapUserToLocation } from "@/src/services/location.service";
 
 interface WorkOrderProps {
 	passedData?: Record<string, any> | null;
 }
 
 export default function NewWorkOrder({ passedData }: WorkOrderProps) {
-	console.log('work order props = ', passedData)
+	// console.log('work order props = ', passedData)
 	const router = useRouter();
+	const [showCalendar, setShowCalendar] = useState(false);
 	const params: any = useLocalSearchParams();
 	const [id, setId] = useState();
 	const { setWorkForm, isLoaded, resetForm } = useWorkOrderStore();
@@ -58,7 +61,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 			setWorkForm("title", data?.title);
 			setWorkForm("message", data?.description);
 			setWorkForm("location", data?.location);
-			setWorkForm("assigned_users", data?.assignedUsers);
+			// setWorkForm("assigned_users", data?.assignedUsers);
 			setWorkForm("selected_asset", data?.asset);
 			setWorkForm("nature_of_work", data?.nature_of_work);
 			setWorkForm("completion_days", String(data?.estimated_time ?? ""));
@@ -82,11 +85,30 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 
 			setWorkForm("tasks", data?.tasks ?? []);
 
+			mapUserToLocationFunc(data?.location.id)
+
 			// finally mark as loaded ONCE
 			setWorkForm("isLoaded", true);
 
 		}
 	}, [passedData]);
+
+	const mapUserToLocationFunc = async (location_id: string) => {
+		try {
+			const res = await mapUserToLocation(location_id);
+			console.log('res = ', res);
+			if (res?.status) {
+				// console.log('assigned_users = ', res?.data);
+				// TODO: make sure to remove users from res?.data whih doesn't exist in passedData?.assignedUsers
+				const assignedUsers = passedData?.assignedUsers?.map((u: any) => u.user.id);
+				console.log('here = ', res?.data.filter((u: any) => assignedUsers.includes(u.user.id)))
+				setWorkForm("assigned_users", res?.data.filter((u: any) => assignedUsers.includes(u.user.id)));
+			}
+		} catch (err) {
+			console.log('error = ', err);
+			setWorkForm("assigned_users", []);
+		}
+	}
 
 	useEffect(() => {
 		const fetchForms = async () => {
@@ -170,6 +192,10 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 			}
 		}
 
+		if (data.start_date > data.end_date) {
+			ToastAndroid.show(`End date should be greater than start date`, ToastAndroid.SHORT);
+			return;
+		}
 
 		// ✅ Build final payload matching your structure
 		let payload = {
@@ -196,7 +222,11 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 			status: "Open",
 			title: data.title,
 			type: data.nature_of_work,
-			userIdList: data.assigned_users?.map((u: any) => u.id) || [],
+			userIdList:
+				data.assigned_users
+					?.map((u: any) => u.user?.id ?? u.id)
+					.filter(Boolean) || [],
+
 			wo_asset_id: data.selected_asset?.id || "",
 			wo_location_id: data.location?.id || "",
 			image_path: data.files.length > 0 ? data.files[0].image_path : "",
@@ -207,6 +237,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 
 		console.log("📦 Final Work Order Payload:", payload);
 		if (id) console.log('set id = ', id);
+		// return;
 
 		try {
 			if (passedData) {
@@ -356,7 +387,8 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 
 						<Pressable style={styles.container1} onPress={() => {
 							setActiveDateField("start_date");
-							setIsDatePickerVisible(true);
+							// setIsDatePickerVisible(true);
+							setShowCalendar(true)
 						}}>
 							<TextInput
 								placeholder={"dd-mm-yyyy"}
@@ -369,6 +401,21 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 						</Pressable>
 					</View>
 
+					<ModalCalendar
+						showCalendar={showCalendar}
+						setShowCalendar={setShowCalendar}
+						activeDateField={activeDateField}
+						startDate={useWorkOrderStore.getState().start_date}
+						onSelectDate={(date) => {
+							console.log("Selected date:", date);
+							const formatted = moment(date).format("YYYY-MM-DD");
+							console.log('active date field = ', activeDateField)
+							if (activeDateField) {
+								useWorkOrderStore.getState().setWorkForm(activeDateField, formatted);
+								setActiveDateField(null);
+							}
+						}}
+					/>
 
 					<View style={styles.labelContainer}>
 						<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
@@ -378,7 +425,8 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 
 						<Pressable style={styles.container1} onPress={() => {
 							setActiveDateField("end_date");
-							setIsDatePickerVisible(true);
+							// setIsDatePickerVisible(true);
+							setShowCalendar(true)
 						}}>
 							<TextInput
 								placeholder={"dd-mm-yyyy"}
@@ -474,6 +522,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 					<ActionButton onPress={handleSubmit} label="Submit" buttonStyle={styles.submitBtn} />
 				</ScrollView>
 			</KeyboardAwareScrollView>
+
 		</>
 	)
 }

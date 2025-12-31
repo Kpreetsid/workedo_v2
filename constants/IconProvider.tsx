@@ -398,7 +398,8 @@ export const More: FC<IconProps> = ({ color }) => <Svg width="20" height="12" vi
         fill={color} />
 </Svg>
 
-export const Drawer: FC = () => <Svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+// export const Drawer: FC = () => <Svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+export const Drawer: FC = () => <Svg width="18" height="14" viewBox="0 0 0 0" fill="none">
     <Path fill-rule="evenodd" clip-rule="evenodd"
         d="M18 13C18 13.5523 17.4801 14 16.8387 14L1.16129 14C0.519924 14 -3.88255e-06 13.5523 -3.85841e-06 13C-3.83427e-06 12.4477 0.519924 12 1.16129 12L16.8387 12C17.4801 12 18 12.4477 18 13Z"
         fill="#343C6A" />

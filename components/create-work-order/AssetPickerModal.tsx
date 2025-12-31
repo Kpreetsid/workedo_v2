@@ -34,7 +34,7 @@ export default function AssetPickerModal
 			}
 	) {
 
-	console.log('comingFrom = ', comingFrom);
+	// console.log('comingFrom = ', comingFrom);
 
 	const { setWorkForm } = useWorkOrderStore();
 	const { setWorkRequestForm } = useWorkRequestStore();

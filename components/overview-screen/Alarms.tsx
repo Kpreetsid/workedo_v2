@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+	ActivityIndicator,
 	FlatList,
 	LayoutChangeEvent,
 	Pressable,
@@ -34,6 +35,7 @@ export default function Alarms() {
 	const [hasMore, setHasMore] = useState(true);
 
 	const { childAssets } = useOverviewStore();
+	const [loading, setLoading] = useState(false);
 
 	// ----------------------------
 	// TAB INDICATOR (UI ONLY)
@@ -53,6 +55,7 @@ export default function Alarms() {
 	// FETCH ALARMS (PAGINATED)
 	// ----------------------------
 	const fetchAlarmsHistory = async (pageToLoad = 1) => {
+		setLoading(true)
 		console.log('pageToLoad = ', pageToLoad)
 		if (loadingMore) return;
 
@@ -88,7 +91,8 @@ export default function Alarms() {
 			if (pageToLoad === 1) {
 				setData(alarmsWithName);
 			} else {
-				setData((prev) => [...prev, ...alarmsWithName]);
+				// setData((prev) => [...prev, ...alarmsWithName]);
+				setData(alarmsWithName);
 			}
 
 			const currentPage = pageToLoad;
@@ -101,6 +105,7 @@ export default function Alarms() {
 			console.log("alarms error =", error);
 		} finally {
 			setLoadingMore(false);
+			setLoading(false)
 		}
 	};
 
@@ -173,7 +178,9 @@ export default function Alarms() {
 					</Pressable> */}
 
 					<Pressable style={{ backgroundColor: '#fff', width: 30, height: 30, justifyContent: 'center', alignItems: 'center', borderRadius: 200 }} onPress={handleEndReached}>
-						<Ionicons name="chevron-forward" size={20} />
+						{
+							loading ? <ActivityIndicator size="small" color="#742BDE" /> : <Ionicons name="chevron-forward" size={20} />
+						}
 					</Pressable>
 				</View>
 			</View>
@@ -203,6 +210,12 @@ export default function Alarms() {
 						style={[styles.indicator, indicatorStyle]}
 					/>
 				</View>
+
+				{
+					loading && <View style={{ marginVertical: 5 }}>
+						<ActivityIndicator size="small" color="#742BDE" />
+					</View>
+				}
 
 				<FlatList
 					data={data}

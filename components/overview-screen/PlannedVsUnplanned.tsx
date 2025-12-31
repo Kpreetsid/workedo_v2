@@ -3,16 +3,21 @@ import { plannedUnplanned } from "@/src/services/cmms.service";
 import { useCMMSStore } from "@/src/store/useCMMSStore";
 import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, Dimensions } from "react-native";
-import { LineChart, lineDataItem } from "react-native-gifted-charts";
+// import { LineChart, lineDataItem } from "react-native-gifted-charts";
+import { WebView } from "react-native-webview";
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function PlannedVsUnplanned() {
+	const webViewRef = useRef<WebView>(null);
+	const [chartPayload, setChartPayload] = useState<any>(null);
+
+
 	const [noData, setNoData] = useState(false)
 	const childAssets = useCMMSStore((state) => state.childAssets);
-	console.log('child assets in planned unplanned = ', childAssets);
+	// console.log('child assets in planned unplanned = ', childAssets);
 
 	const [workOrderData, setWorkOrderData] = useState([]);
 	const [preventiveData, setPreventiveData] = useState([]);
@@ -53,9 +58,7 @@ export default function PlannedVsUnplanned() {
 
 			finalPayload.assetIds = childAssetsFormatted
 
-			console.log('final payload = ', finalPayload);
-
-
+			// console.log('final payload = ', finalPayload);
 
 			const res = await plannedUnplanned(
 				finalPayload.startDate,
@@ -67,18 +70,22 @@ export default function PlannedVsUnplanned() {
 				const input = res.data;
 
 				const work = input.date.map((date: string, index: number) => ({
-					value: input["Work Order"][index],
+					value: input["Work Order"][index] - 1,
 					label: date,
 				}));
 
 				const prev = input.date.map((date: string, index: number) => ({
-					value: input["Preventive"][index],
+					value: input["Preventive"][index] - 1,
 					label: date,
 				}));
 
-				console.log('work daiofnosdnfod', work)
+				// console.log('work = ', work)
+				// console.log('prev = ', prev)
+
+				// console.log('work daiofnosdnfod', work)
 				setWorkOrderData(work as any)
 				setPreventiveData(prev as any);
+
 
 				// Show preventive only if it has >=1 non-zero value
 				setHasPreventive(prev.some((x: any) => x.value > 0));
@@ -90,27 +97,41 @@ export default function PlannedVsUnplanned() {
 					...work.map((i: any) => i.value),
 					...prev.map((i: any) => i.value)
 				);
-				setMaxY(computedMax === 0 ? 1 : computedMax);
+				const maxVertical = computedMax === 0 ? 1 : computedMax;
+				setMaxY(maxVertical);
 
 				// ------------------------------
 				// CALCULATE SPACING BASED ON POINT COUNT
 				// ------------------------------
 				const totalPoints = work.length;
-				console.log('totalpo = ', totalPoints)
+				// console.log('totalpo = ', totalPoints)
 				const intervals = Math.max(totalPoints - 1, 1);
-				console.log('intervals = ', intervals)
+				// console.log('intervals = ', intervals)
 
 				// leave 40px padding (20px left, 20px right)
 				const usableWidth = SCREEN_WIDTH - 40;
 
 				// spacing for LineChart
 				const spacing = (usableWidth / intervals) - (100 / intervals);
-				console.log('spacing = ', spacing)
+				// console.log('spacing = ', spacing)
 
 				setSpacingValue(spacing);
+
+				const labels = input.date;
+				const workValues = work.map((i: any) => i.value);
+				const preventiveValues = hasPreventive
+					? prev.map((i: any) => i.value)
+					: null;
+
+				setChartPayload({
+					labels,
+					workData: workValues,
+					preventiveData: preventiveValues,
+					maxVertical,
+				});
 			}
 		} catch (e: any) {
-			console.log("fetch error = ", e);
+			// console.log("fetch error = ", e);
 
 			if (!e.status) {
 				if (e.message === "No data found") {
@@ -133,6 +154,16 @@ export default function PlannedVsUnplanned() {
 		}
 	}
 
+	useEffect(() => {
+		if (chartPayload && webViewRef.current) {
+			webViewRef.current.postMessage(
+				JSON.stringify(chartPayload)
+			);
+		}
+	}, [chartPayload]);
+
+	const chartUrl = "file:///android_asset/charts/PlannedUnplannedChart.html";
+
 	return (
 		<View style={styles.container}>
 			<Text style={styles.cardTitle}>Planned vs Unplanned</Text>
@@ -150,41 +181,18 @@ export default function PlannedVsUnplanned() {
 				)}
 
 				{workOrderData.length > 0 && (
-					<LineChart
-						data={workOrderData}
-						data2={hasPreventive ? preventiveData : undefined}
-						curved
-						thickness={3}
-						thickness2={3}
-						color="#742BDE"
-						color2="#24b7d8"
-						hideDataPoints={false}
-						startFillColor="transparent"
-						endFillColor="transparent"
-						yAxisTextStyle={styles.yAxisText}
-						xAxisLabelTextStyle={styles.xAxisText}
-						noOfSections={8}
-						yAxisColor="#DFE5EE"
-						xAxisColor="#DFE5EE"
-						rulesColor="#F0F0F0"
-
-
-
-						// 👇 force chart to fill width for 2 points
-						initialSpacing={0}
-						endSpacing={0}
-
-						// 👇 dynamic spacing applied here
-						adjustToWidth={true}
-						spacing={spacingValue}
-
-						// 👇 custom dynamic max Y-axis
-						maxValue={maxY}
-
-						showYAxisIndices
-						showXAxisIndices
+					<WebView
+						ref={webViewRef}
+						source={require("../../assets/charts/PlannedUnplannedChart.html")}
+						// source={{ uri: chartUrl }}
+						originWhitelist={["*"]}
+						javaScriptEnabled
+						domStorageEnabled
+						scrollEnabled={false}
+						style={{ height: 260, width: "100%" }}
 					/>
 				)}
+
 			</View>
 
 		</View>

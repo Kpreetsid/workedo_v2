@@ -17,7 +17,7 @@ export default function DoneTab() {
 	useFocusEffect(
 		useCallback(() => {
 			setLoading(true)
-		fetchWorkOrders();
+			fetchWorkOrders();
 		}, [])
 	);
 
@@ -36,6 +36,9 @@ export default function DoneTab() {
 			console.log("error =", error);
 			setLoading(false)
 			ToastAndroid.show(error?.message || "Something went wrong", ToastAndroid.SHORT);
+			if (error?.message === "No data found") {
+				setWorkOrders([])
+			}
 		}
 	};
 

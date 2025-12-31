@@ -3,7 +3,7 @@ import Header from "@/components/global/Header";
 import Detail from "@/components/work-order-detail/Detail";
 import Comments from "@/components/work-order-detail/Comments";
 import SegmentedPager from "@/components/global/SegmentPager";
-import { Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { WorkOrderCompleteIcon, WorkOrderInProgressIcon, WorkOrderOnHoldIcon, WorkOrderOpenIcon } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
 import { deleteWorkOrder, getWorkOrderDetails, updateWorkOrderStatus } from "@/src/services/work-order.service";
@@ -11,6 +11,8 @@ import { useCallback, useEffect, useState } from "react";
 import Popover from "react-native-popover-view";
 import { Ionicons } from "@expo/vector-icons";
 import { WorkOrder } from "@/src/types/workOrder";
+import Tasks from "@/components/work-order-detail/Tasks";
+import Forms from "@/components/work-order-detail/Forms";
 
 export default function WorkOrderDetail() {
 	const router = useRouter();
@@ -41,20 +43,37 @@ export default function WorkOrderDetail() {
 	}
 
 	const handleDeleteWo = async (item: WorkOrder) => {
-		console.log('deleting WO = ', item);
-		// setDeleteLoading(true)
-		try {
-			const resp = await deleteWorkOrder(item?.id);
-			console.log('resp = ', resp);
-			if (resp?.status) {
-				ToastAndroid.show("Work Order Deleted", ToastAndroid.SHORT);
-				router.back();
-				// setDeleteLoading(false)
-			}
-		} catch (e) {
-			// setDeleteLoading(false)
-			console.log('error deleting = ', e);
-		}
+		Alert.alert(
+			"Delete Work Order",
+			`Are you sure you want to delete ${item.title}?`,
+			[
+				{
+					text: "Cancel",
+					style: "cancel",
+				},
+				{
+					text: "Delete",
+					style: "destructive",
+					onPress: async () => {
+						console.log('deleting WO = ', item);
+						// setDeleteLoading(true)
+						try {
+							const resp = await deleteWorkOrder(item?.id);
+							console.log('resp = ', resp);
+							if (resp?.status) {
+								ToastAndroid.show("Work Order Deleted", ToastAndroid.SHORT);
+								router.back();
+								// setDeleteLoading(false)
+							}
+						} catch (e) {
+							// setDeleteLoading(false)
+							console.log('error deleting = ', e);
+						}
+					},
+				},
+			],
+			{ cancelable: true }
+		);
 	}
 
 	return (
@@ -76,7 +95,10 @@ export default function WorkOrderDetail() {
 							isVisible={openPopoverId === workOrderData.id}
 							onRequestClose={() => setOpenPopoverId(null)}
 							from={(
-								<TouchableOpacity style={{ padding: 6 }} onPress={() => setOpenPopoverId(workOrderData.id)}>
+								<TouchableOpacity style={{ padding: 6 }} onPress={() => {
+									console.log('in it = ', workOrderData);
+									setOpenPopoverId(workOrderData.id)
+								}}>
 									<Ionicons name="ellipsis-vertical" size={20} color="#fff" />
 								</TouchableOpacity>
 							)}>
@@ -190,6 +212,8 @@ export default function WorkOrderDetail() {
 
 			<SegmentedPager tabs={[
 				{ label: "Details", component: <Detail params={workOrderData} /> },
+				{ label: "Tasks", component: <Tasks params={workOrderData} /> },
+				{ label: "Forms", component: <Forms params={workOrderData} /> },
 				{ label: "Comments", component: <Comments params={workOrderData} /> }
 			]} />
 		</View>

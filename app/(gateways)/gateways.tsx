@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import { Alert, FlatList, Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import SearchBar from "@/components/global/SearchBar";
 import Fonts from "@/constants/Typography";
 import { ArrowDown } from "@/constants/IconProvider";
@@ -82,17 +82,37 @@ export default function Gateways() {
 		console.log('action = ', action);
 
 		if (action === 'delete') {
-			try {
-				let payload = {
-					gateway_mac_id: item?.gateway_mac_id
-				}
-				const resp = await deleteGateway(payload);
-				console.log('resp = ', resp);
-				ToastAndroid.show(resp?.message, ToastAndroid.SHORT);
-				setGateways(gateways.filter((g) => g.gateway_mac_id !== item?.gateway_mac_id));
-			} catch (error) {
-				console.log('error = ', error);
-			}
+			Alert.alert(
+				"Delete Gateway",
+				`Are you sure you want to delete this gateway?`,
+				[
+					{
+						text: "Cancel",
+						style: "cancel",
+					},
+					{
+						text: "Delete",
+						style: "destructive",
+						onPress: async () => {
+							console.log('deleting gateway = ', item);
+
+							try {
+								let payload = {
+									gateway_mac_id: item?.gateway_mac_id
+								}
+								const resp = await deleteGateway(payload);
+								console.log('resp = ', resp);
+								ToastAndroid.show(resp?.message, ToastAndroid.SHORT);
+								setGateways(gateways.filter((g) => g.gateway_mac_id !== item?.gateway_mac_id));
+							} catch (error) {
+								console.log('error = ', error);
+							}
+
+						},
+					},
+				],
+				{ cancelable: true }
+			);
 		} else if (action === 'edit') {
 			router.push({
 				pathname: "/updateGateway",

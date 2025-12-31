@@ -17,7 +17,7 @@ export default function WoPriority() {
 
 
 	const childAssets = useCMMSStore((state) => state.childAssets);
-	console.log('child assets in wo status = ', childAssets);
+	// console.log('child assets in wo status = ', childAssets);
 
 	const { startDate, endDate } = useDateRangeStore();
 
@@ -40,7 +40,7 @@ export default function WoPriority() {
 		const timePart = "T14:01:18.788Z";
 		try {
 			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
-			console.log('payload = ', childAssetsFormatted);
+			// console.log('payload = ', childAssetsFormatted);
 
 
 			let finalPayload: any = {};
@@ -61,7 +61,7 @@ export default function WoPriority() {
 
 			finalPayload.assetIds = childAssetsFormatted
 
-			console.log('final payload = ', finalPayload);
+			// console.log('final payload = ', finalPayload);
 
 
 			const res = await woPriority(
@@ -69,7 +69,7 @@ export default function WoPriority() {
 				finalPayload.endDate,
 				childAssetsFormatted
 			);
-			console.log('res = ', res);
+			// console.log('res = ', res);
 			if (res?.status) {
 
 				// 🎨 Color mapping for each health type
@@ -95,11 +95,11 @@ export default function WoPriority() {
 				const chartDataRaw = pieDataRaw.filter(
 					(item: any) => !hidden.includes(item.text)
 				);
-				console.log('chart data raw = ', chartDataRaw)
+				// console.log('chart data raw = ', chartDataRaw)
 				setChartDataFinal(chartDataRaw);
 			}
 		} catch (e: any) {
-			console.log('e in priority = ', e);
+			// console.log('e in priority = ', e);
 
 			if (!e.status) {
 				if (e.message === "No data found") {
@@ -150,7 +150,7 @@ export default function WoPriority() {
 
 	useEffect(() => {
 		if (chartDataFinal) {
-			console.log('this is chart data final = ', chartDataFinal);
+			// console.log('this is chart data final = ', chartDataFinal);
 		}
 	}, [chartDataFinal])
 

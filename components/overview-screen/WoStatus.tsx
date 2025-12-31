@@ -23,7 +23,7 @@ export default function WoStatus() {
 	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
-		console.log(' in wo status = ', childAssets, startDate)
+		// console.log(' in wo status = ', childAssets, startDate)
 		if (childAssets.length > 0) {
 			fetchWoStatus();
 		}
@@ -61,14 +61,14 @@ export default function WoStatus() {
 
 			finalPayload.assetIds = childAssetsFormatted
 
-			console.log('final payload wo status = ', finalPayload);
+			// console.log('final payload wo status = ', finalPayload);
 
 			const res = await woStatus(
 				finalPayload.startDate,
 				finalPayload.endDate,
 				childAssetsFormatted
 			);
-			console.log('wo status res = ', res);
+			// console.log('wo status res = ', res);
 			if (res?.status) {
 
 				// 🎨 Color mapping for each health type
@@ -98,7 +98,7 @@ export default function WoStatus() {
 				setChartDataFinal(chartDataRaw);
 			}
 		} catch (e: any) {
-			console.log('e in status = ', e);
+			// console.log('e in status = ', e);
 
 			if (!e.status) {
 				if (e.message === "No data found") {

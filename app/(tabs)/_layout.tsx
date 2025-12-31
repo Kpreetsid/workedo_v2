@@ -2,7 +2,7 @@ import { Tabs } from "expo-router";
 import { useEffect, useState } from "react";
 import CustomTabBar from "@/components/tab-bar/CustomTabBar";
 import MoreTabModal from "@/components/tab-bar/MoreTabModal";
-import { StyleSheet, View } from "react-native";
+import { BackHandler, StyleSheet, View } from "react-native";
 
 export default function TabsLayout() {
 	const [modalVisible, setModalVisible] = useState(false);
@@ -10,6 +10,26 @@ export default function TabsLayout() {
 	useEffect(() => {
 		console.log('modal visible', modalVisible);
 	}, [modalVisible]);
+
+	// 🔥 Handle Android hardware back
+	useEffect(() => {
+		const onBackPress = () => {
+			if (modalVisible) {
+				setModalVisible(false);
+				return true; // ⛔ prevent navigation back
+			}
+			return false; // ✅ allow normal back behavior
+		};
+
+		const subscription = BackHandler.addEventListener(
+			"hardwareBackPress",
+			onBackPress
+		);
+
+		return () => subscription.remove();
+	}, [modalVisible]);
+
+
 
 	return (
 		<View style={styles.container}>

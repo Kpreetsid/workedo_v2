@@ -15,7 +15,7 @@ export default function CMMSInfoCards() {
 	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
-		console.log('bceause of start date - ', startDate, childAssets);
+		// console.log('bceause of start date - ', startDate, childAssets);
 		if(childAssets.length > 0) {
 			fetchInfoCards();
 		}
@@ -45,15 +45,15 @@ export default function CMMSInfoCards() {
 
 			finalPayload.assetIds = childAssetsFormatted
 
-			console.log('final payload = ', finalPayload);
+			// console.log('final payload = ', finalPayload);
 
 			const res = await woSummary(finalPayload);
 			if (res?.status) {
-				console.log('res WO info cards = ', res?.data);
+				// console.log('res WO info cards = ', res?.data);
 				setWOInfoCards(res?.data)
 			}
 		} catch (e) {
-			console.log('e in status = ', e);
+			// console.log('e in status = ', e);
 		}
 	}
 

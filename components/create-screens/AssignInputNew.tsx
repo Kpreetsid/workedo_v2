@@ -62,12 +62,12 @@ const AssignInputNew: FC<AssignInputProps> = ({
 	// ✅ Call Zustand hook only if both store and field exist
 	let value: any = null;
 	if (store && field) {
-		console.log('store = ', store)
-		console.log('field = ', field)
+		// console.log('store = ', store)
+		// console.log('field = ', field)
 
 		try {
 			value = store((state: any) => state[field]);
-			console.log('store value = ', value);
+			// console.log('store value = ', value);
 		} catch (err) {
 			value = null;
 		}
@@ -99,10 +99,18 @@ const AssignInputNew: FC<AssignInputProps> = ({
 		console.log('setter = ', setter)
 		console.log('current = ', current)
 
-		const updated = current.filter(
-			(u: any) => (u._id || u.id) !== (user._id || user.id)
-		);
+		let updated;
+		if (comingFrom === 'newWorkOrder') {
+			updated = current.filter(
+				(u: any) => (u.userId) !== (user.userId)
+			);
+		} else {
+			updated = current.filter(
+				(u: any) => (u._id || u.id) !== (user._id || user.id)
+			);
+		}
 
+		console.log('updated = ', updated);
 		setter("assigned_users", updated);
 	};
 

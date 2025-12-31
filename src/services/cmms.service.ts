@@ -6,7 +6,7 @@ export const woStatus = async (fromDate: string, toDate: string, assetIds: strin
     fromDate=${fromDate}
     &toDate=${toDate}
     &wo_asset_id=${assetIds}`;
-    console.log('url = ', url);
+    // console.log('url = ', url);
     return await sendRequest('GET', url);
 }
 
@@ -15,7 +15,7 @@ export const woPriority = async (fromDate: string, toDate: string, assetIds: str
     fromDate=${fromDate}
     &toDate=${toDate}
     &wo_asset_id=${assetIds}`;
-    console.log('url = ', url);
+    // console.log('url = ', url);
     return await sendRequest('GET', url);
 }
 
@@ -24,7 +24,7 @@ export const monthlyCount = async (fromDate: string, toDate: string, assetIds: s
     fromDate=${fromDate}
     &toDate=${toDate}
     &wo_asset_id=${assetIds}`;
-    console.log('url = ', url);
+    // console.log('url = ', url);
     return await sendRequest('GET', url);
 }
 
@@ -33,7 +33,7 @@ export const plannedUnplanned = async (fromDate: string, toDate: string, assetId
     fromDate=${fromDate}
     &toDate=${toDate}
     &wo_asset_id=${assetIds}`;
-    console.log('url = ', url);
+    // console.log('url = ', url);
     return await sendRequest('GET', url);
 }
 
@@ -42,7 +42,7 @@ export const woSummary = async (payload: any) => {
     fromDate=${payload.startDate}
     &toDate=${payload.endDate}
     &wo_asset_id=${payload.assetIds}`;
-    console.log('url = ', url);
+    // console.log('url = ', url);
     return await sendRequest('GET', url);
 }
 
@@ -51,6 +51,6 @@ export const woPending = async (fromDate: string, toDate: string, assetIds: stri
     fromDate=${fromDate}
     &toDate=${toDate}
     &wo_asset_id=${assetIds}`;
-    console.log('url = ', url);
+    // console.log('url = ', url);
     return await sendRequest('GET', url);
 }

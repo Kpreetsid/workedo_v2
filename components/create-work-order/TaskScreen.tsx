@@ -15,7 +15,6 @@ const TYPE_MAP: Record<string, string> = {
 };
 
 const TaskScreen = () => {
-
 	const tasks = useWorkOrderStore((s) => s.tasks);
 	const setWorkForm = useWorkOrderStore((s) => s.setWorkForm);
 

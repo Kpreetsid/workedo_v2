@@ -35,15 +35,15 @@ export default function SelectUser() {
 
 	// ------------- Load from param or API -------------
 	useEffect(() => {
-		if(users.length > 0) return;
+		if (users.length > 0) return;
 		if (usersData && usersData.length > 0 && Array.isArray(usersData)) {
 			setUsers(usersData);
 			return;
 		}
-		
+
 		// if(comingFrom !== "createAsset") fetchUsers();
 		fetchUsers();
-		
+
 	}, [usersData]);
 
 	useEffect(() => {
@@ -79,11 +79,11 @@ export default function SelectUser() {
 			);
 
 			setSelectedUsers(preselected);
-		}
+		} 
 		else {
 			const preselected = users.filter((u) =>
 				(workOrderAssignedUsers || []).some(
-					(sel: any) => (sel._id || sel.id) === (u._id || u.id)
+					(sel: any) => (sel.user?.id || sel.id) === (u._id || u.id)
 				)
 			);
 

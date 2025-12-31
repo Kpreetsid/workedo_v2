@@ -6,6 +6,7 @@ import { useOverviewStore } from "@/src/store/useOverviewStore";
 import { useAuthStore } from "@/src/store/useAuthStore";
 
 export default function PDMDashboardLocationSelect() {
+	console.log('pdm location')
 	// state (read-only)
 	const parentLocations = useOverviewStore(s => s.parentLocations);
 	const childLocations = useOverviewStore(s => s.childLocations);
@@ -33,7 +34,7 @@ export default function PDMDashboardLocationSelect() {
 	// 🧩 Fetch all locations initially and select first parent
 	const fetchLocations = async () => {
 		const res = await fetchKPIFilterLocations();
-		// console.log('res kpi = ', res);
+		console.log('res kpi = ', res);
 		if (res.status) {
 			setParentLocations(res.data.levelOneLocations);
 

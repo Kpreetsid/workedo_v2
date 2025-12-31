@@ -184,6 +184,7 @@ const EditProfile = () => {
 								required: "Username is required"
 							}}
 							readonly={true}
+							comingFrom="editProfile"
 							style={{ flex: 1 }}
 						/>
 
@@ -197,6 +198,7 @@ const EditProfile = () => {
 								required: "Email is required"
 							}}
 							readonly={true}
+							comingFrom="editProfile"
 							style={{ flex: 1 }}
 						/>
 
@@ -209,6 +211,7 @@ const EditProfile = () => {
 								required: "User Status is required"
 							}}
 							readonly={true}
+							comingFrom="editProfile"
 							style={{ flex: 1 }}
 						/>
 
@@ -221,6 +224,7 @@ const EditProfile = () => {
 								required: "User Role is required"
 							}}
 							readonly={true}
+							comingFrom="editProfile"
 							style={{ flex: 1 }}
 						/>
 

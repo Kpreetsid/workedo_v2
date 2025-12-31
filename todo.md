@@ -206,3 +206,38 @@ Changes to do latest: 16th December 2025
 
 1. On the *detail page, views should be displayed **according to the saved Preventive data*.
 - Done (No. of repitition, or end date will show depending on data)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+To Do - kamal 31st december 2025 list
+
+1. While creating work order, start and end date should be autofilled, end date will be 3 days after start date. - Done
+2. Calendar view while creating work order - Done
+3. CMSS and PDM doesn't reload. - pull to refresh - Done
+4. Work Order users getting undefined - Done
+5. End date should be greater than start date - filter while submitting work order - Done
+6. Validation on delete - Done
+7. Complete Work Orders was not refreshing - Done
+8. Validation on delete on preventive, gateway etc as well implemented - Done
+9. Close More box when user press back button - Done
+10. Menu icon from header removed - Done
+11. Make non editable fields on edit profile dim - Done
+12. Switched positions of asset health status and asset health
+13. Alarms pagination should only show 10 alarms at max - Done
+14. Planned vs Unplanned graph - Done
+15. Show Tasks, Forms on work order details page - 

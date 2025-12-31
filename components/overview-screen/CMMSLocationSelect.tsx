@@ -10,6 +10,7 @@ import DateRangeCalendar from "./DateRangeCalendar";
 import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 
 export default function CMMSDashboardLocationSelect() {
+	console.log('cmms location')
 	const {
 		parentLocations,
 		childLocations,
@@ -72,7 +73,7 @@ export default function CMMSDashboardLocationSelect() {
 				fetchChildAssets(parentSelectionId ?? undefined, allChildIds);
 
 			} catch (error: any) {
-				console.error("fetchParentLocationDetails failed:", error);
+				// console.error("fetchParentLocationDetails failed:", error);
 				if (!error.status) {
 					ToastAndroid.show("No Data Found", ToastAndroid.SHORT);
 					// Select ALL child IDs by default
@@ -120,10 +121,10 @@ export default function CMMSDashboardLocationSelect() {
 			levelTwoLocations: childIds || childLocations.map((i) => i.id),
 		};
 
-		// console.log('payload for child assets = ', payload);
+		console.log('payload for child assets = ', payload);
 
 		const childAssetsRes = await childAssetsAgainstLocation(payload);
-		// console.log('childAssetsRes = ', childAssetsRes);
+		console.log('childAssetsRes = ', childAssetsRes);
 		if (childAssetsRes.status) {
 			setChildAssets(childAssetsRes.data.assetList);
 		}

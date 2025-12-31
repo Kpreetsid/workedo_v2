@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+
+	<!-- Chart.js -->
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+
+	<style>
+		html,
+		body {
+			margin: 0;
+			padding: 0;
+			background: #ffffff;
+			font-family: system-ui, -apple-system, BlinkMacSystemFont;
+			overflow: hidden;
+		}
+
+		#wrapper {
+			width: 100%;
+			height: 100%;
+			padding: 10px;
+			box-sizing: border-box;
+		}
+
+		canvas {
+			width: 100% !important;
+			height: 260px !important;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="wrapper">
+		<canvas id="chart"></canvas>
+	</div>
+
+	<script>
+		let chartInstance = null;
+
+		function renderChart(payload) {
+			const ctx = document.getElementById("chart").getContext("2d");
+
+			if (chartInstance) {
+				chartInstance.destroy();
+			}
+
+			chartInstance = new Chart(ctx, {
+				type: "line",
+				data: {
+					labels: payload.labels,
+					datasets: [
+						{
+							label: "Work Order",
+							data: payload.workData,
+							borderColor: "#742BDE",
+							borderWidth: 3,
+							tension: 0.4,
+							fill: false,
+						},
+						...(payload.preventiveData
+							? [{
+								label: "Preventive",
+								data: payload.preventiveData,
+								borderColor: "#24b7d8",
+								borderWidth: 3,
+								tension: 0.4,
+								fill: false,
+							}]
+							: [])
+					],
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+
+					layout: {
+						padding: {
+							left: 0,
+							right: 0,
+							bottom: 10, // ✅ prevents x-label cut
+						},
+					},
+
+					scales: {
+						y: {
+							beginAtZero: true,
+							suggestedMax: payload.maxY > 0 ? payload.maxY : 1,
+							ticks: {
+								stepSize: 1,
+								precision: 0,
+							},
+							grid: { color: "#F0F0F0" },
+						},
+						x: {
+							offset: payload.labels.length === 1, // ✅ center single point
+							ticks: {
+								autoSkip: false,
+								maxRotation: 0,
+								minRotation: 0,
+								padding: 6,
+							},
+							grid: { color: "#F0F0F0" },
+						},
+					},
+					plugins: {
+						legend: { display: false },
+					},
+				},
+			});
+		}
+
+		// 👇 Listen for data from React Native
+		document.addEventListener("message", (event) => {
+			const payload = JSON.parse(event.data);
+			renderChart(payload);
+		});
+	</script>
+</body>
+
+</html>

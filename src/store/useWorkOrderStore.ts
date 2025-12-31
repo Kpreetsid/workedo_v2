@@ -1,7 +1,8 @@
+import moment from "moment";
 import { create } from "zustand";
 
 interface WorkOrderStore {
-  isLoaded: boolean;
+	isLoaded: boolean;
 	title: string;
 	message: string;
 	location: any | null;
@@ -23,14 +24,14 @@ interface WorkOrderStore {
 }
 
 export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
-  isLoaded: false,
+	isLoaded: false,
 	title: "",
 	message: "",
 	location: null,
 	assigned_users: [],
 	selected_asset: null,
-	start_date: "",
-	end_date: "",
+	start_date: moment().format('YYYY-MM-DD'),
+	end_date: moment().add(2, 'days').format('YYYY-MM-DD'),
 	nature_of_work: "Preventive",
 	sop_form_id: "",
 	sop_form_name: "",
@@ -51,8 +52,8 @@ export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
 			location: null,
 			assigned_users: [],
 			selected_asset: null,
-			start_date: "",
-			end_date: "",
+			start_date: moment().format('YYYY-MM-DD'),
+			end_date: moment().add(2, 'days').format('YYYY-MM-DD'),
 			nature_of_work: "",
 			sop_form_id: "",
 			sop_form_name: "",

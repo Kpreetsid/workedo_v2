@@ -14,7 +14,7 @@ export default function WorkOrderSummary() {
 	const [selectedBar, setSelectedBar] = useState<number | null>(null);
 
 	const childAssets = useCMMSStore((state) => state.childAssets);
-	console.log('child assets in wo status = ', childAssets);
+	// console.log('child assets in wo status = ', childAssets);
 
 	const [woSummaryData, setWOSummaryData] = useState<any>(null);
 	const { startDate, endDate } = useDateRangeStore();
@@ -37,7 +37,7 @@ export default function WorkOrderSummary() {
 		const timePart = "T14:01:18.788Z";
 		try {
 			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
-			console.log('payload = ', childAssetsFormatted);
+			// console.log('payload = ', childAssetsFormatted);
 
 
 			let finalPayload: any = {};
@@ -58,7 +58,7 @@ export default function WorkOrderSummary() {
 
 			finalPayload.assetIds = childAssetsFormatted
 
-			console.log('final payload = ', finalPayload);
+			// console.log('final payload = ', finalPayload);
 
 
 			const res = await monthlyCount(
@@ -67,15 +67,15 @@ export default function WorkOrderSummary() {
 				childAssetsFormatted
 			);
 			if (res?.status) {
-				console.log('res WO SUMMARY = ', res?.data);
+				// console.log('res WO SUMMARY = ', res?.data);
 
 				const barData = transformToBarData(res?.data);
-				console.log('barData ', barData);
+				// console.log('barData ', barData);
 
 				setWOSummaryData(barData)
 			}
 		} catch (e) {
-			console.log('e in status = ', e);
+			// console.log('e in status = ', e);
 		}
 	}
 

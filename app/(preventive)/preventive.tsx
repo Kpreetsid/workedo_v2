@@ -3,7 +3,7 @@ import { router, useFocusEffect } from "expo-router";
 import CreateFAB from "@/components/global/CreateFAB";
 import SearchBar from "@/components/global/SearchBar";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import Fonts from "@/constants/Typography";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { deletePreventive, getPreventives } from "@/src/services/preventive.service";
@@ -53,20 +53,39 @@ export default function PreventivePage() {
 	}
 
 	const handleDeletePreventive = async (item: Preventive) => {
-		console.log('deleting preventive = ', item);
-		// setDeleteLoading(true)
-		try {
-			const resp = await deletePreventive(item?.id);
-			console.log('resp = ', resp);
-			if (resp?.status) {
-				ToastAndroid.show("Preventive Deleted", ToastAndroid.SHORT);
-				fetchPreventives();
-				// setDeleteLoading(false)
-			}
-		} catch (e) {
-			// setDeleteLoading(false)
-			console.log('error deleting = ', e);
-		}
+		Alert.alert(
+			"Delete Gateway",
+			`Are you sure you want to delete this gateway?`,
+			[
+				{
+					text: "Cancel",
+					style: "cancel",
+				},
+				{
+					text: "Delete",
+					style: "destructive",
+					onPress: async () => {
+
+						console.log('deleting preventive = ', item);
+						// setDeleteLoading(true)
+						try {
+							const resp = await deletePreventive(item?.id);
+							console.log('resp = ', resp);
+							if (resp?.status) {
+								ToastAndroid.show("Preventive Deleted", ToastAndroid.SHORT);
+								fetchPreventives();
+								// setDeleteLoading(false)
+							}
+						} catch (e) {
+							// setDeleteLoading(false)
+							console.log('error deleting = ', e);
+						}
+					},
+				},
+			],
+			{ cancelable: true }
+		);
+
 	}
 
 	return (
