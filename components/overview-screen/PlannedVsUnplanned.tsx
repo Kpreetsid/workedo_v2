@@ -183,8 +183,8 @@ export default function PlannedVsUnplanned() {
 				{workOrderData.length > 0 && (
 					<WebView
 						ref={webViewRef}
-						source={require("../../assets/charts/PlannedUnplannedChart.html")}
-						// source={{ uri: chartUrl }}
+						// source={require("../../assets/charts/PlannedUnplannedChart.html")}
+						source={{ uri: chartUrl }}
 						originWhitelist={["*"]}
 						javaScriptEnabled
 						domStorageEnabled

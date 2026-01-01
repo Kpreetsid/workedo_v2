@@ -240,4 +240,4 @@ To Do - kamal 31st december 2025 list
 12. Switched positions of asset health status and asset health
 13. Alarms pagination should only show 10 alarms at max - Done
 14. Planned vs Unplanned graph - Done
-15. Show Tasks, Forms on work order details page - 
+15. Show Tasks, Forms on work order details page - Done
