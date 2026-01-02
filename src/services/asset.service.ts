@@ -93,3 +93,9 @@ export const copyAsset = async (id: string) => {
 	const url = `${endpoints.asset.copy}/${id}`;
 	return await sendRequest('GET', url);
 }
+
+export const addSensor = async (payload: any) => {
+	const url = `${endpoints.asset.addSensor}`;
+	return await sendRequestDemo('POST', url, payload);
+}
+

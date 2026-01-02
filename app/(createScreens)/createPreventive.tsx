@@ -412,6 +412,7 @@ export default function CreatePreventive() {
 					field="title"
 					store={usePreventiveStore}
 					setterName="setPreventiveValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -421,6 +422,7 @@ export default function CreatePreventive() {
 					store={usePreventiveStore}
 					setterName="setPreventiveValue"
 					required={false}
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField

@@ -7,6 +7,7 @@ type AssetUsersProps = {
 };
 
 export default function AssetUsers({ users }: AssetUsersProps) {
+  // console.log('users = ', users);
   const [visible, setVisible] = useState(false);
 
   return (

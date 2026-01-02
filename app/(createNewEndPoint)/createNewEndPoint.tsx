@@ -16,6 +16,7 @@ import DropDownLocation from "@/components/create-endpoint/DropDownLocation";
 export default function CreateNewEndPoint() {
 	const { id } = useLocalSearchParams();
 	console.log('asset id = ', id);
+	const setSelectedEndpointToEdit = useAssetStore((state) => state.setSelectedEndpointToEdit);
 
 	const [loading, setLoading] = useState(false);
 	const selectedEndpointToEdit = useAssetStore((state) => state.selectedEndpointToEdit);
@@ -37,6 +38,12 @@ export default function CreateNewEndPoint() {
 		ftf: "",
 	});
 
+	useEffect(() => {
+		return () => {
+			setSelectedEndpointToEdit(null)
+		}
+	}, [])
+
 	// ✅ Prefill fields when editing
 	useEffect(() => {
 		if (selectedEndpointToEdit) {
@@ -51,14 +58,14 @@ export default function CreateNewEndPoint() {
 		const rpm = rpmRef.current?.trim();
 		const bearingNo = bearingNoRef.current?.trim();
 
-		if (!name || !measuringPointLocation || !rpm || !bearingNo || !bearingData.bpfo || !bearingData.bpfi || !bearingData.bsf || !bearingData.ftf) {
+		if (!name || !measuringPointLocation) {
 			let missingField = "";
 
 			if (!name) missingField = "Data Collection Point Name";
 			else if (!measuringPointLocation) missingField = "Measuring Point Location";
-			else if (!rpm) missingField = "RPM";
-			else if (!bearingNo) missingField = "Bearing Number";
-			else if (!bearingData.bpfo || !bearingData.bpfi || !bearingData.bsf || !bearingData.ftf) missingField = "Bearing Details";
+			// else if (!rpm) missingField = "RPM";
+			// else if (!bearingNo) missingField = "Bearing Number";
+			// else if (!bearingData.bpfo || !bearingData.bpfi || !bearingData.bsf || !bearingData.ftf) missingField = "Bearing Details";
 
 			ToastAndroid.show(`${missingField} required`, ToastAndroid.SHORT);
 			return;
@@ -192,7 +199,13 @@ export default function CreateNewEndPoint() {
 			<KeyboardAwareScrollView bottomOffset={30}>
 				<View style={{ marginVertical: 5 }} />
 
-				<FormInput label="Data Collection Point Name" placeholder="Use a descriptive name" defaultValue={selectedEndpointToEdit?.point_name || ""} onChangeText={(text) => (nameRef.current = text)} />
+				<FormInput
+					label="Data Collection Point Name"
+					placeholder="Use a descriptive name"
+					defaultValue={selectedEndpointToEdit?.point_name || ""}
+					onChangeText={(text) => (nameRef.current = text)}
+					containerStyle={{ paddingHorizontal: 25 }}
+				/>
 
 				<DropDownLocation
 					label="Measuring Point Location"
@@ -205,25 +218,35 @@ export default function CreateNewEndPoint() {
 				<FormInput
 					readOnly={selectedEndpointToEdit ? true : false}
 					label="RPM"
+					required={false}
+					showKeyboardType="numeric"
 					placeholder="Input machine RPM"
 					onChangeText={(text) => (rpmRef.current = text)}
+					containerStyle={{ paddingHorizontal: 25 }}
 				/>
 
 				<View style={styles.row}>
-					<FormInput readOnly={selectedEndpointToEdit ? true : false} label="Bearing Number" placeholder="Bearing No. of Measuring Point" containerStyle={styles.inputContainer} onChangeText={(text) => (bearingNoRef.current = text)} />
+					<FormInput
+						required={false}
+						readOnly={selectedEndpointToEdit ? true : false}
+						label="Bearing Number"
+						placeholder="Bearing No. of Measuring Point"
+						containerStyle={styles.inputContainer}
+						onChangeText={(text) => (bearingNoRef.current = text)}
+					/>
 					<Pressable style={styles.buttonContainer} onPress={fetchBearingDetails}>
 						<Text style={styles.buttonText}>Get Details</Text>
 					</Pressable>
 				</View>
 
 				<View style={styles.row}>
-					<FormInput label="BPFO" placeholder={bearingData.bpfo} editable={false} value={bearingData.bpfo} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bpfo = text)} />
-					<FormInput label="BPFI" placeholder={bearingData.bpfi} editable={false} value={bearingData.bpfi} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bpfi = text)} />
+					<FormInput required={false} label="BPFO" placeholder={bearingData.bpfo} editable={false} value={bearingData.bpfo} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bpfo = text)} />
+					<FormInput required={false} label="BPFI" placeholder={bearingData.bpfi} editable={false} value={bearingData.bpfi} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bpfi = text)} />
 				</View>
 
 				<View style={styles.row}>
-					<FormInput label="BSF" placeholder={bearingData.bsf} editable={false} value={bearingData.bsf} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bsf = text)} />
-					<FormInput label="FTF" placeholder={bearingData.ftf} editable={false} value={bearingData.ftf} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.ftf = text)} />
+					<FormInput required={false} label="BSF" placeholder={bearingData.bsf} editable={false} value={bearingData.bsf} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bsf = text)} />
+					<FormInput required={false} label="FTF" placeholder={bearingData.ftf} editable={false} value={bearingData.ftf} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.ftf = text)} />
 				</View>
 
 			</KeyboardAwareScrollView>

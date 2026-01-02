@@ -95,11 +95,11 @@ const createAsset = () => {
 			return;
 		}
 
-		if(locationObject && mode === 'child') {
+		if (locationObject && mode === 'child') {
 			mapUserToAssetFunc(data.asset_data?.id);
 		}
 	}, [locationObject])
-	
+
 	const mapUserToLocationFunc = async (location_id: string) => {
 		try {
 			const res = await mapUserToLocation(location_id);
@@ -226,6 +226,7 @@ const createAsset = () => {
 					field="title"
 					store={useCreateAssetStore}
 					setterName="setCreateAssetValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -235,6 +236,7 @@ const createAsset = () => {
 					store={useCreateAssetStore}
 					setterName="setCreateAssetValue"
 					required={false}
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -395,6 +397,7 @@ const createAsset = () => {
 					field="manufacturer"
 					store={useCreateAssetStore}
 					setterName="setCreateAssetValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -404,6 +407,7 @@ const createAsset = () => {
 					field="model"
 					store={useCreateAssetStore}
 					setterName="setCreateAssetValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -413,6 +417,7 @@ const createAsset = () => {
 					field="year"
 					store={useCreateAssetStore}
 					setterName="setCreateAssetValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -422,6 +427,7 @@ const createAsset = () => {
 					field="description"
 					store={useCreateAssetStore}
 					setterName="setCreateAssetValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<TouchableOpacity style={[styles.createBtn, { marginBottom: insets.bottom + 60 }]} onPress={handleCreateAsset}>

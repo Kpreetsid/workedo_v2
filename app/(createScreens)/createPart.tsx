@@ -86,6 +86,7 @@ export default function CreatePart() {
 					field="part_name"
 					store={usePartFormStore}
 					setterName="setPartFormValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -94,6 +95,7 @@ export default function CreatePart() {
 					field="description"
 					store={usePartFormStore}
 					setterName="setPartFormValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -136,6 +138,7 @@ export default function CreatePart() {
 					field="part_number"
 					store={usePartFormStore}
 					setterName="setPartFormValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -144,6 +147,7 @@ export default function CreatePart() {
 					field="available_quantity"
 					store={usePartFormStore}
 					setterName="setPartFormValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -152,6 +156,7 @@ export default function CreatePart() {
 					field="min_stock_quantity"
 					store={usePartFormStore}
 					setterName="setPartFormValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -160,6 +165,7 @@ export default function CreatePart() {
 					field="unit_cost"
 					store={usePartFormStore}
 					setterName="setPartFormValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<ActionButton label="Submit" onPress={handleSubmit} />

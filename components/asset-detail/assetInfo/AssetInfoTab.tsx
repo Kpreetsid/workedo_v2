@@ -406,7 +406,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 				xLabels={xLabels}
 				yMaxValue={yMaxValue}
 				loading={graphLoading}
-				asset_data = {asset_data}
+				asset_data={asset_data}
 			/>
 
 

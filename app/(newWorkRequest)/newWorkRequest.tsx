@@ -99,6 +99,7 @@ export default function NewWorkRequest() {
 							field="title"
 							store={useWorkRequestStore}
 							setterName="setWorkRequestForm"
+							styles={{paddingHorizontal: 25}}
 						/>
 
 						<FormField
@@ -107,6 +108,7 @@ export default function NewWorkRequest() {
 							field="message"
 							store={useWorkRequestStore}
 							setterName="setWorkRequestForm"
+							styles={{paddingHorizontal: 25}}
 						/>
 
 					</View>

@@ -241,3 +241,109 @@ To Do - kamal 31st december 2025 list
 13. Alarms pagination should only show 10 alarms at max - Done
 14. Planned vs Unplanned graph - Done
 15. Show Tasks, Forms on work order details page - Done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+To Do - kamal report 2nd January 2026
+Please find below the pending points for Asset/Location
+
+
+1.	Unable to upload image while creating location, app crashing. Issue with camera option as well.
+    - Unable to reproduce
+
+2.	Add touch animation on all clickable elements (whole app).
+
+
+3.	Parent location name info missing while selecting child location.
+
+
+4.	Not able to click any location when location list is scrolled to bottom.
+    - Unable to reproduce
+
+5.	Create Asset => Not auto fetching users assigned to selected location.
+    - Unable to reproduce
+
+6.	Create Asset => showing some static temp value.
+7.	Remove asset_id from edit asset screen, this is auto generated and remains fixed for each created asset.
+    - Done
+
+8.	Not able to update users for created asset, can remove users but on adding new user it removes all existing ones from it.
+    - Done
+
+9.	Upload image for asset missing while creating/updating asset.
+10.	Create endpoint in asset => RPM should be integer only.
+    - Done
+
+11.	Create endpoint => RPM and bearing details are not mandatory.
+    - Done
+
+12.	Create endpoint => Page not auto populating newly created endpoint.
+    - Done
+
+13.	Edit endpoint => Not able to update because of RPM and BFF missing, should be non-mandatory.
+    - Done
+
+14.	Deleting and endpoint => Page should auto refresh and select any endpoint as currently app shows config values of deleted endpoints.
+    - Done
+
+15.	Not able to attach sensor to an endpoint.
+    - Done
+    
+16.	Icons for edit and attach sensor not working.
+17.	Need to implement auto scroll in all pages where we are showing elements as list, currently need to scroll every time if coming back from an asset detail view screen.
+
+18.	Asset trend graph zoom issue, once zoomed in, not able to zoom out.	
+19.	Units are missing in trend chart for y-axis (will share units for all functions).
+20.	Change aspect ratio of graph, rectangle not square.
+21.	Color code of axis as per web application.
+22.	Spectrum screen of any point => too much padding on top, need to reduce broad header.
+23.	Acceleration Spectrum Envelope missing x-axis values, should be like Acceleration spectrum and units should be Hz.
+24.	Selecting any axis in the trend line to view twf/spectrum should also highlight same axis in next screen, currently app is selecting previously selected axis.
+25.	Spectrum data not correct => spectrum values for acceleration while clicking from RMS should be different from Peak. Api returns different response in web. Mobile app plotting both spectrums with same values, should be different.
+26.	Selecting an asset with no sensor mapped shows trend data from previous selected asset and loader is present all the time. Remove loader on api call error.
+27.	Change order of menu on “+” button on KPI page. Location>Asset>Work Order>Preventive>Parts>Work Request>Gateway. - Done
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pending points for Work Request / Preventive
+
+
+•	Create WR => unable to select location.
+•	Unable to attach images in create WR.
+•	WR list not filtered, approved WR populating in pending section.
+•	Create Parts => Available quantity/Minimum stock/Unit cost should be integers.
+•	Create new part => app should redirect to parts home page, current populating create new parts model.
+•	Part title missing on view part screen.
+•	Delete and update options missing in parts.
+•	Remove “Config” button from “More” option menu.
+•	Change Calander for PM model.

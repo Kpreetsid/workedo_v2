@@ -59,6 +59,17 @@ export default function SelectUser() {
 
 			setSelectedUsers(preselected);
 
+		} else if (comingFrom === "editAsset") {
+			const getUserId = (obj: any) => obj?.user?.id ?? obj?.id;
+
+			const preselected = users.filter((u) =>
+				(createAssetAssignedUsers || []).some(
+					(sel: any) => getUserId(sel) === getUserId(u)
+				)
+			);
+
+			setSelectedUsers(preselected);
+
 		} else if (comingFrom === "createLocation") {
 			// no need to preselect because its a new location, so no user will be preselected
 
@@ -79,7 +90,7 @@ export default function SelectUser() {
 			);
 
 			setSelectedUsers(preselected);
-		} 
+		}
 		else {
 			const preselected = users.filter((u) =>
 				(workOrderAssignedUsers || []).some(
@@ -128,6 +139,9 @@ export default function SelectUser() {
 			console.log('selected users in select user = ', selectedUsers);
 			setWorkForm("assigned_users", selectedUsers);
 		} else if (comingFrom === "createAsset") {
+			setCreateAssetValue("assigned_users", selectedUsers);
+		} else if (comingFrom === "editAsset") {
+			console.log('selected users', selectedUsers)
 			setCreateAssetValue("assigned_users", selectedUsers);
 		} else if (comingFrom === "createLocation") {
 			setCreateLocationValue("assigned_users", selectedUsers);

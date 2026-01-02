@@ -77,7 +77,8 @@ export const endpoints = {
     get_velocity_data: 'get_velocity_data/',
     get_displacement_data: 'get_displacement_data/',
     
-    get_envelope_data: 'get_envelope_data/'
+    get_envelope_data: 'get_envelope_data/',
+    addSensor: 'add_sensor/'
   },
   workOrders: {
     workOrders: 'work/orders',

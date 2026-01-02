@@ -338,6 +338,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 							field="title"
 							store={useWorkOrderStore}
 							setterName="setWorkForm"
+							styles={{ paddingHorizontal: 25 }}
 						/>
 
 						<FormField
@@ -347,6 +348,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 							store={useWorkOrderStore}
 							setterName="setWorkForm"
 							required={false}
+							styles={{ paddingHorizontal: 25 }}
 						/>
 
 					</View>
@@ -445,6 +447,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 						field="completion_days"
 						store={useWorkOrderStore}
 						setterName="setWorkForm"
+						styles={{ paddingHorizontal: 25 }}
 						required={false}
 					/>
 

@@ -2,24 +2,39 @@ import { Pressable, ScrollView, Text, TouchableOpacity, View, StyleSheet, Refres
 import { Fontisto, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { AssetEndpoint } from "@/src/types/assetEndpoint";
 import { useAssetStore } from "@/src/store/useAssetStore";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Asset } from "@/src/types/asset";
-import { deleteEndpoint, getAllEndpoints } from "@/src/services/asset.service";
+import { deleteEndpoint, getAllEndpoints, getSensorConfig } from "@/src/services/asset.service";
 import Popover from "react-native-popover-view";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import Fonts from "@/constants/Typography";
+import AttachSensor from "./AttachSensor";
+import { useSensorStore } from "@/src/store/useSensorStore";
+import { useGlobal } from "@/hooks/useGlobal";
 
 interface Props {
 	asset_data: Asset;
 }
 
 export default function EndpointCards({ asset_data }: Props) {
+	const { mapAPItoConfigData } = useGlobal();
 	const endpoints = useAssetStore<AssetEndpoint[]>((state) => state.endpoints);
+	const { deviceInfo, setDeviceInfo } = useAssetStore((state) => state);
 	const setEndpoints = useAssetStore((state) => state.setEndpoints);
 	const selectedSensor = useAssetStore((state) => state.selectedSensor);
 	const setSelectedSensor = useAssetStore((state) => state.setSelectedSensor);
 	const setSelectedEndpointToEdit = useAssetStore((state) => state.setSelectedEndpointToEdit);
 	const [openPopoverId, setOpenPopoverId] = useState<number | null>(null);
+
+	const [showAttachSensor, setShowAttachSensor] = useState<{ state: boolean, data: AssetEndpoint | null, action: string }>
+		(
+			{
+				state: false,
+				data: null,
+				action: ""
+			}
+		);
+	const setSensorForm = useSensorStore((s) => s.setSensorForm);
 
 	const router = useRouter();
 
@@ -48,7 +63,12 @@ export default function EndpointCards({ asset_data }: Props) {
 		setSelectedSensor(ep);
 	};
 
-	const fetchEndpoints = async () => {
+	useFocusEffect(useCallback(() => {
+		console.log('in endpoints cards')
+		fetchEndpoints()
+	}, []))
+
+	const fetchEndpoints = async (type?: string) => {
 		console.log('fetching endpoints');
 		try {
 			console.log('asset_data = ', asset_data);
@@ -60,11 +80,57 @@ export default function EndpointCards({ asset_data }: Props) {
 
 			if (endpointsRes?.data?.length > 0) {
 				setEndpoints(endpointsRes.data);
+				setSelectedSensor(endpointsRes.data[0]);
+				if (type === 'afterDelete') {
+					setSelectedSensor(endpointsRes.data[endpointsRes.data.length - 1]);
+				}
+			} else {
+				setEndpoints([]);
+				setSelectedSensor(null);
 			}
 		} catch (err) {
 			console.error("Error fetching endpoints:", err);
 		}
 	}
+
+	async function handleAttachSensor(ep: AssetEndpoint) {
+		console.log('attach sensor');
+		// setSensorForm("mac_id", )
+		let finalEp = await fetchSensorData(ep)
+		console.log('final epi', finalEp);
+		setShowAttachSensor({ state: true, data: finalEp, action: "open" });
+	}
+
+	const fetchSensorData = async (ep: any) => {
+		console.log('sadfdsf', ep)
+		setSelectedSensor(ep)
+		const payload = {
+			composite_key: ep?.composite_id,
+			mount_id: ep?.id,
+		}
+
+		const res = await getSensorConfig(payload);
+		console.log('sensor config = ', res);
+
+		const mapped = mapAPItoConfigData(res?.config);
+		console.log('mapped data = ', mapped);
+		ep.deviceInfo = mapped;
+		setDeviceInfo(mapped)
+		return ep;
+	}
+
+	useEffect(() => {
+		if (selectedSensor) {
+			fetchSensorData(selectedSensor);
+		}
+	}, [selectedSensor])
+
+	useEffect(() => {
+		console.log('action. = ', showAttachSensor.action)
+		if (showAttachSensor.action === "close") {
+			fetchEndpoints();
+		}
+	}, [showAttachSensor])
 
 	return (
 		<ScrollView
@@ -108,7 +174,7 @@ export default function EndpointCards({ asset_data }: Props) {
 									)}>
 									<View style={styles.popoverContent}>
 										{
-											["Attach a sensor", "Edit Endpoint", "Delete Endpoint"].map((item, index) => {
+											["Edit Endpoint", "Delete Endpoint"].map((item, index) => {
 												return (
 													<Pressable
 														style={styles.popoverItem}
@@ -116,27 +182,21 @@ export default function EndpointCards({ asset_data }: Props) {
 														onPress={async () => {
 															setOpenPopoverId(null);
 
-															if (index === 2) {
+															if (index === 1) {
 																const re = await deleteEndpoint(ep?.id?.toString() || "")
 																console.log('re = ', re);
 																if (re?.message === "End Point deleted successfully.") {
 																	ToastAndroid.show("Endpoint deleted successfully", ToastAndroid.SHORT);
-																	fetchEndpoints();
+																	fetchEndpoints('afterDelete');
 																}
 															}
 
-															if (index === 1) {
+															if (index === 0) {
 																setSelectedEndpointToEdit(ep);
 																// Small timeout helps ensure popover unmounts smoothly before navigation
 																setTimeout(() => {
 																	router.push("/createNewEndPoint");
 																}, 150);
-															}
-
-															if (index === 0) {
-																console.log("Attach Sensor");
-															} else if (index === 2) {
-																console.log("Delete Endpoint");
 															}
 														}}
 													>
@@ -186,7 +246,7 @@ export default function EndpointCards({ asset_data }: Props) {
 								</TouchableOpacity>
 								<TouchableOpacity
 									style={styles.iconBtn}
-									onPress={() => console.log("Some action")}
+									onPress={() => handleAttachSensor(ep)}
 								>
 									<Ionicons name="radio" size={13} color="#fff" />
 								</TouchableOpacity>
@@ -195,6 +255,8 @@ export default function EndpointCards({ asset_data }: Props) {
 					</Pressable>
 				);
 			})}
+
+			<AttachSensor showAttachSensor={showAttachSensor} setShowAttachSensor={setShowAttachSensor} />
 		</ScrollView>
 	)
 }

@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 interface CreateAlertProps {
 	visible: boolean;
 	onClose: () => void;
-	onSelect: (choice: "parts" | "preventive" | "location" | "asset" | "work_order") => void;
+	onSelect: (choice: "parts" | "preventive" | "location" | "asset" | "work_order" | "work_request" | "gateway") => void;
 }
 
 const screenWidth = Dimensions.get("window").width;
@@ -25,16 +25,6 @@ export default function CreateAlertBox({ visible, onClose, onSelect }: CreateAle
 
 						<Text style={styles.title}>What would you like to create?</Text>
 
-						<TouchableOpacity activeOpacity={0.8} style={styles.optionButton} onPress={() => onSelect("parts")}>
-							<Text style={styles.optionText}>Parts</Text>
-						</TouchableOpacity>
-
-						{/* <Text style={styles.orText}>or</Text> */}
-
-						<TouchableOpacity activeOpacity={0.8} style={styles.optionButton} onPress={() => onSelect("preventive")}>
-							<Text style={styles.optionText}>Preventive</Text>
-						</TouchableOpacity>
-
 						<TouchableOpacity activeOpacity={0.8} style={styles.optionButton} onPress={() => onSelect("location")}>
 							<Text style={styles.optionText}>Location</Text>
 						</TouchableOpacity>
@@ -46,6 +36,24 @@ export default function CreateAlertBox({ visible, onClose, onSelect }: CreateAle
 						<TouchableOpacity activeOpacity={0.8} style={styles.optionButton} onPress={() => onSelect("work_order")}>
 							<Text style={styles.optionText}>Work Order</Text>
 						</TouchableOpacity>
+
+						<TouchableOpacity activeOpacity={0.8} style={styles.optionButton} onPress={() => onSelect("preventive")}>
+							<Text style={styles.optionText}>Preventive</Text>
+						</TouchableOpacity>
+
+						<TouchableOpacity activeOpacity={0.8} style={styles.optionButton} onPress={() => onSelect("parts")}>
+							<Text style={styles.optionText}>Parts</Text>
+						</TouchableOpacity>
+
+						<TouchableOpacity activeOpacity={0.8} style={styles.optionButton} onPress={() => onSelect("work_request")}>
+							<Text style={styles.optionText}>Work Request</Text>
+						</TouchableOpacity>
+
+						<TouchableOpacity activeOpacity={0.8} style={styles.optionButton} onPress={() => onSelect("gateway")}>
+							<Text style={styles.optionText}>Gateway</Text>
+						</TouchableOpacity>
+
+
 					</View>
 				</LinearGradient>
 			</Pressable>
@@ -68,7 +76,7 @@ const styles = StyleSheet.create({
 	},
 	container: {
 		width: screenWidth * 0.83,
-		height: 350,
+		height: 400,
 		backgroundColor: "#fff",
 		borderRadius: 20,
 		paddingVertical: 20,

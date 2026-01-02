@@ -48,7 +48,7 @@ const createLocation = () => {
 			setCreateLocationValue("title", data?.location_data?.location_name);
 			setCreateLocationValue("location_type", data?.location_data?.location_type);
 			setCreateLocationValue("description", data?.location_data?.description);
-			setCreateLocationValue("attachments", [{image_path: data?.location_data?.image_path}]);
+			setCreateLocationValue("attachments", [{ image_path: data?.location_data?.image_path }]);
 
 			fetchLocationData();
 
@@ -159,6 +159,7 @@ const createLocation = () => {
 					field="title"
 					store={useCreateLocationStore}
 					setterName="setCreateLocationValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -187,6 +188,7 @@ const createLocation = () => {
 					field="description"
 					store={useCreateLocationStore}
 					setterName="setCreateLocationValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 

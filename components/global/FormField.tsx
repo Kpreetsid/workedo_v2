@@ -213,6 +213,7 @@ export const FormField = React.memo(
 				placeholder={placeholder}
 				required={required}
 				value={value}
+					containerStyle={styles}
 				onChangeText={(text) => setValue(field, text)}
 			/>
 		);

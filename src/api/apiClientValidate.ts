@@ -12,7 +12,6 @@ const apiClientDemo = axios.create({
 apiClientDemo.interceptors.request.use((config) => {
     const token = storage.getString('token');
     const { user } = useAuthStore.getState();
-    console.log('user in api client validate = ', user);
 
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;

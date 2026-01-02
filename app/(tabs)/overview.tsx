@@ -40,6 +40,8 @@ export default function Overview() {
 		if (option === "location") router.push("/createLocation");
 		if (option === "asset") router.push("/createAsset");
 		if (option === "work_order") router.push("/createWorkOrder");
+		if (option === "work_request") router.push("/newWorkRequest");
+		if (option === "gateway") router.push("/updateGateway");
 
 		if (option === "preventive") {
 			router.push({

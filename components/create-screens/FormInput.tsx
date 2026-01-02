@@ -15,9 +15,10 @@ interface FormInputProps extends TextInputProps {
 	inputContainer?: ViewStyle;
 	labelStyle?: TextStyle;
 	inputStyle?: TextStyle;
+	showKeyboardType?: string;
 }
 
-const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", selectedPart, setSelectedPart, containerStyle, labelStyle, inputStyle, inputContainer, onPress, ...textInputProps }) => {
+const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", selectedPart, showKeyboardType, setSelectedPart, containerStyle, labelStyle, inputStyle, inputContainer, onPress, ...textInputProps }) => {
 
 	return (
 		<>
@@ -31,6 +32,7 @@ const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", 
 
 						<Pressable style={[styles.field, inputContainer]} onPress={onPress}>
 							<TextInput
+								keyboardType={showKeyboardType ? (showKeyboardType as any) : "default"}
 								style={[styles.inputField, inputStyle, (label === "Message" || label === "Description") && styles.messageInput]}
 								placeholderTextColor="#6B788899"
 								multiline={label === "Message" || label === "Description"}
@@ -50,7 +52,7 @@ export default FormInput;
 
 const styles = StyleSheet.create({
 	container: {
-		paddingHorizontal: 25,
+		// paddingHorizontal: 25,
 		paddingVertical: 7.5,
 	},
 	labelContainer: {
