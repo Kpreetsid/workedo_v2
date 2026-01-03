@@ -6,7 +6,6 @@ import { launchCamera, launchImageLibrary } from "react-native-image-picker";
 export function useImageUpload() {
 	const { user, setUser } = useAuthStore();
 
-
 	const pickImage = (fromCamera = false) => {
 		const options: any = {
 			mediaType: 'photo' as const,

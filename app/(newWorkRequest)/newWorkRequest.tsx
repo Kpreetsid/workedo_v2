@@ -20,6 +20,8 @@ import { useRouter } from "expo-router";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 import { FormField } from "@/components/global/FormField";
 import AssignSectionNew from "@/components/create-work-order/AssignSectionNew";
+import { Image } from "expo-image";
+import { endpoints } from "@/src/api/endpoints";
 
 export default function NewWorkRequest() {
 	const router = useRouter();
@@ -61,12 +63,12 @@ export default function NewWorkRequest() {
 		const payload = {
 			asset_id: data.selected_asset?.id || "",
 			description: data.message,
-			files: data.files || [],
+			files: data.attachments || [],
 			location_id: data.location?.id || "",
 			priority: data.priority,
 			problemType: data.nature_of_work,
 			status: "Open",
-			title: data.title
+			title: data.title,
 		};
 
 		console.log("📦 Final Work Request Payload:", payload);
@@ -99,7 +101,7 @@ export default function NewWorkRequest() {
 							field="title"
 							store={useWorkRequestStore}
 							setterName="setWorkRequestForm"
-							styles={{paddingHorizontal: 25}}
+							styles={{ paddingHorizontal: 25 }}
 						/>
 
 						<FormField
@@ -108,7 +110,7 @@ export default function NewWorkRequest() {
 							field="message"
 							store={useWorkRequestStore}
 							setterName="setWorkRequestForm"
-							styles={{paddingHorizontal: 25}}
+							styles={{ paddingHorizontal: 25 }}
 						/>
 
 					</View>
@@ -126,9 +128,13 @@ export default function NewWorkRequest() {
 							field="nature_of_work"
 							options={["Preventive", "Electrical", "Break Down", "Inspection", "Corrective", "Safety", "Upgrade", "Meter Reading", "Mechanical", "Other"]}
 							router={router}
-							comingFrom="createPart"
+							comingFrom="newWorkRequest"
+							required={false}
 							store={useWorkRequestStore}
 							setterName="setWorkRequestForm"
+							styles={{
+								flex: 1,
+							}}
 						/>
 
 						<FormField
@@ -137,16 +143,44 @@ export default function NewWorkRequest() {
 							field="priority"
 							options={["None", "Low", "Medium", "High"]}
 							router={router}
-							comingFrom="createPart"
+							required={false}
+							comingFrom="newWorkRequest"
 							store={useWorkRequestStore}
 							setterName="setWorkRequestForm"
+							styles={{
+								flex: 1,
+							}}
 						/>
 
 					</View>
 
-					<Pressable style={styles.uploadBtn}>
+					{/* <Pressable style={styles.uploadBtn}>
 						<Text style={styles.uploadBtnText}>Upload or Capture Photos</Text>
-					</Pressable>
+					</Pressable> */}
+
+					<FormField
+						label="Attachments"
+						type="attachments"
+						placeholder=""
+						field="attachments"
+						router={router}
+						required={false}
+						comingFrom="newWorkRequest"
+						store={useWorkRequestStore}
+						setterName="setWorkRequestForm"
+					/>
+
+					{
+						useWorkRequestStore.getState().attachments.length > 0 &&
+						<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
+							<Image
+								source={{
+									uri: `${endpoints.baseURL}work_request/${useWorkRequestStore.getState().attachments[0]?.fileName}`
+								}}
+								style={{ width: 200, height: 200, borderRadius: 8 }}
+							/>
+						</View>
+					}
 
 					<ActionButton onPress={handleSubmit} label="Create Work Request" buttonStyle={styles.submitBtn} />
 				</ScrollView>

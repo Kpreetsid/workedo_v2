@@ -16,7 +16,7 @@ interface WorkOrderStore {
 	priority: string;
 	completion_days: string;
 	parts: any[];
-	files: any[];
+	attachments: any[];
 	tasks: any[];
 	work_request_id?: string;
 	setWorkForm: (key: keyof Omit<WorkOrderStore, "setWorkForm" | "resetForm">, value: any) => void;
@@ -38,7 +38,7 @@ export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
 	priority: "",
 	completion_days: "",
 	parts: [],
-	files: [],
+	attachments: [],
 	tasks: [],
 	work_request_id: "",
 
@@ -60,7 +60,7 @@ export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
 			priority: "",
 			completion_days: "",
 			parts: [],
-			files: [],
+			attachments: [],
 			tasks: [],
 			work_request_id: "",
 		}),

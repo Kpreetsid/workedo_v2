@@ -18,7 +18,7 @@ export default function partDetail() {
 
 	return (
 		<>
-			<Header title="Part Detail" />
+			<Header title={part?.part_name || "Part Detail"} />
 			<View style={styles.container}>
 
 				<View style={styles.addBtnContainer}>

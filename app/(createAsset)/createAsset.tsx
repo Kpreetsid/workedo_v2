@@ -18,6 +18,8 @@ import { useGlobalStore } from '@/src/store/useGlobal'
 import { Asset } from '@/src/types/asset'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import LocationPickerModal from '@/components/create-work-order/LocationPickerModal'
+import { Image } from 'expo-image'
+import { endpoints } from '@/src/api/endpoints'
 
 interface createAssetParams {
 	asset_data: Asset;
@@ -188,6 +190,7 @@ const createAsset = () => {
 			asset_build_type: "Not Defined",
 			locationId: values.locationObject?.id,
 			userIdList: values.assigned_users.map((u: any) => u.id),
+			image_path: values.attachments.length > 0 ? values.attachments[0].image_path : "",
 		};
 
 		if (data?.mode === 'child') {
@@ -429,6 +432,31 @@ const createAsset = () => {
 					setterName="setCreateAssetValue"
 					styles={{ paddingHorizontal: 25 }}
 				/>
+
+				<FormField
+					label="Attachments"
+					type="attachments"
+					placeholder=""
+					field="attachments"
+					router={router}
+					required={false}
+					comingFrom="createAsset"
+					store={useCreateAssetStore}
+					setterName="setCreateAssetValue"
+				/>
+
+				{
+					useCreateAssetStore.getState().attachments.length > 0 &&
+					<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
+						<Image
+							source={{
+								uri: `${endpoints.baseURL}assets/${useCreateAssetStore.getState().attachments[0].image_path}?t=${Date.now()}`
+							}}
+							style={{ width: 200, height: 200, borderRadius: 8 }}
+						/>
+					</View>
+				}
+
 
 				<TouchableOpacity style={[styles.createBtn, { marginBottom: insets.bottom + 60 }]} onPress={handleCreateAsset}>
 					<Text style={styles.createBtnText}>

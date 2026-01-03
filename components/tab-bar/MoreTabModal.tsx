@@ -13,7 +13,8 @@ type MoreTabItem =
 	| "PartsInventory"
 	| "Config"
 	| "Monitoring"
-	| "Preventive";
+	| "Preventive"
+	| "";
 
 interface MoreTabModalProps {
 	setModalVisible: (visible: boolean) => void;
@@ -23,9 +24,10 @@ const items: MoreTabItem[] = [
 	"Gateways",
 	"Requests",
 	"PartsInventory",
-	"Config",
+	// "Config",
 	"Monitoring",
 	"Preventive",
+	""
 ];
 
 export default function MoreTabModal({ setModalVisible }: MoreTabModalProps) {
@@ -82,7 +84,7 @@ export default function MoreTabModal({ setModalVisible }: MoreTabModalProps) {
 						return (
 							<View style={styles.gridItem}>
 								<Pressable
-									style={styles.sheetButton}
+									style={[styles.sheetButton, item === "" && {backgroundColor: 'transparent'}]}
 									onPress={() => {
 										closeModal();
 										if (item === "Gateways") router.push("/gateways");

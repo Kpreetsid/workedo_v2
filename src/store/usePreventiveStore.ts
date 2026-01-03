@@ -1,3 +1,4 @@
+import moment from "moment";
 import { create } from "zustand";
 
 export interface PreventiveFormData {
@@ -57,7 +58,7 @@ export const usePreventiveStore = create<PreventiveStore>((set) => ({
   location: null,
   assigned_users: [],
   selected_asset: null,
-  start_date: "",
+  start_date: moment().format('YYYY-MM-DD'),
   end_date: "",
   schedule: "daily",
   assign_to: "",
@@ -84,7 +85,7 @@ export const usePreventiveStore = create<PreventiveStore>((set) => ({
       location: null,
       assigned_users: [],
       selected_asset: null,
-      start_date: "",
+      start_date: moment().format('YYYY-MM-DD'),
       end_date: "",
       schedule: "daily",
       assign_to: "",

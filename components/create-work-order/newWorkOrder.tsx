@@ -66,7 +66,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 			setWorkForm("nature_of_work", data?.nature_of_work);
 			setWorkForm("completion_days", String(data?.estimated_time ?? ""));
 			setWorkForm("priority", data?.priority ?? null);
-			setWorkForm("files", data?.files ?? null);
+			setWorkForm("attachments", data?.files ?? null);
 			setWorkForm("start_date", data?.start_date ? moment(data?.start_date).format('YYYY-MM-DD') : '');
 			setWorkForm("end_date", data?.end_date ? moment(data?.end_date).format('YYYY-MM-DD') : '');
 
@@ -322,7 +322,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 		const updatedWorkOrderImage = await workOrderImageUpload(asset, user);
 		console.log('Updated work order image: ', updatedWorkOrderImage);
 
-		setWorkForm("files", [updatedWorkOrderImage]);
+		setWorkForm("attachments", [updatedWorkOrderImage]);
 	};
 
 	return (
@@ -460,13 +460,13 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 
 
 					{
-						useWorkOrderStore.getState().files.length > 0 &&
+						useWorkOrderStore.getState().attachments.length > 0 &&
 						!imageError && (
 							<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
 								<Image
 									source={{
-										uri: `${endpoints.baseURL}work_request/${useWorkOrderStore.getState().files[0]?.image_path ||
-											useWorkOrderStore.getState().files[0]?.fileName
+										uri: `${endpoints.baseURL}work_request/${useWorkOrderStore.getState().attachments[0]?.image_path ||
+											useWorkOrderStore.getState().attachments[0]?.fileName
 											}`
 									}}
 									style={{ width: 200, height: 200, borderRadius: 8 }}

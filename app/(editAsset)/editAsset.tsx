@@ -14,6 +14,8 @@ import { FormField } from '@/components/global/FormField';
 import { DateDropDownIcon } from '@/constants/IconProvider';
 import LocationPickerModal from '@/components/create-work-order/LocationPickerModal';
 import { mapUserToLocation } from '@/src/services/location.service';
+import { Image } from 'expo-image';
+import { endpoints } from '@/src/api/endpoints';
 
 interface editAssetParams {
   asset_data: Asset;
@@ -130,6 +132,7 @@ const editAsset = () => {
       setCreateAssetValue("year", data?.asset_data?.year ?? "");
       setCreateAssetValue("description", data?.asset_data?.description ?? "");
       setCreateAssetValue("assigned_users", data?.asset_data?.userList ?? []);
+      setCreateAssetValue("attachments", [{ image_path: data?.asset_data?.image_path }]);
 
       if (data?.asset_data?.asset_build_type) {
         setCreateAssetValue(
@@ -226,7 +229,8 @@ const editAsset = () => {
       asset_id: values.asset_id,
       asset_build_type: "Not Defined",
       locationId: values.locationObject?.id,
-      
+			image_path: values.attachments.length > 0 ? values.attachments[0].image_path : "",
+
       // because of backend user object has changed, applying this logic to look for user object, it can be inside nested user object sometimes.
 
       userIdList: values.assigned_users.map((u: any) => getUserId(u)).filter(Boolean)
@@ -277,6 +281,7 @@ const editAsset = () => {
                 field="title"
                 store={useCreateAssetStore}
                 setterName="setCreateAssetValue"
+                styles={{ paddingHorizontal: 25 }}
               />
 
               {/* <FormField
@@ -446,6 +451,7 @@ const editAsset = () => {
                 field="manufacturer"
                 store={useCreateAssetStore}
                 setterName="setCreateAssetValue"
+                styles={{ paddingHorizontal: 25 }}
               />
 
               <FormField
@@ -455,6 +461,7 @@ const editAsset = () => {
                 field="model"
                 store={useCreateAssetStore}
                 setterName="setCreateAssetValue"
+                styles={{ paddingHorizontal: 25 }}
               />
 
               <FormField
@@ -464,6 +471,7 @@ const editAsset = () => {
                 field="year"
                 store={useCreateAssetStore}
                 setterName="setCreateAssetValue"
+                styles={{ paddingHorizontal: 25 }}
               />
 
               <FormField
@@ -473,7 +481,32 @@ const editAsset = () => {
                 field="description"
                 store={useCreateAssetStore}
                 setterName="setCreateAssetValue"
+                styles={{ paddingHorizontal: 25 }}
               />
+
+              <FormField
+                label="Attachments"
+                type="attachments"
+                placeholder=""
+                field="attachments"
+                router={router}
+                required={false}
+                comingFrom="createAsset"
+                store={useCreateAssetStore}
+                setterName="setCreateAssetValue"
+              />
+
+              {
+                useCreateAssetStore.getState().attachments.length > 0 &&
+                <View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
+                  <Image
+                    source={{
+                      uri: `${endpoints.baseURL}assets/${useCreateAssetStore.getState().attachments[0].image_path}?t=${Date.now()}`
+                    }}
+                    style={{ width: 200, height: 200, borderRadius: 8 }}
+                  />
+                </View>
+              }
 
               <TouchableOpacity style={[styles.createBtn, { marginBottom: insets.bottom + 60 }]} onPress={handleEditAsset}>
                 <Text style={styles.createBtnText}>

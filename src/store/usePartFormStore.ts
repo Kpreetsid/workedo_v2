@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 interface PartFormState {
+  isLoaded: boolean;
   part_name: string;
   description: string;
   location: any | null;
@@ -14,6 +15,7 @@ interface PartFormState {
 }
 
 export const usePartFormStore = create<PartFormState>((set) => ({
+  isLoaded: false,
   part_name: "",
   description: "",
   location: null,
@@ -29,6 +31,7 @@ export const usePartFormStore = create<PartFormState>((set) => ({
     })),
   resetPartForm: () =>
     set({
+      isLoaded: false,
       part_name: "",
       description: "",
       location: null,

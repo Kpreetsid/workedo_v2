@@ -744,7 +744,8 @@ export const MoreTabIcons = {
     PartsInventory: PartsInventoryIcon,
     Config: ConfigIcon,
     Monitoring: MonitoringIcon,
-    Preventive: PreventiveIcon
+    Preventive: PreventiveIcon,
+    "" : ""
 };
 
 export const ContactSupport: FC = () => <Svg width="14" height="13" viewBox="0 0 14 13" fill="none">

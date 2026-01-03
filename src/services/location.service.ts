@@ -92,7 +92,7 @@ export const deleteLocation = async (locationId: string) => {
 	return await sendRequest('DELETE', url);
 }
 
-export const locationImageUpload = async (image: any, user: any) => {
+export const imageUploadFunc = async (image: any, user: any, comingFrom: string) => {
 	// console.log('Uploading image...', image);
 	try {
 		// Step 1: Show loader
@@ -115,8 +115,18 @@ export const locationImageUpload = async (image: any, user: any) => {
 		// console.log('Form data: ', formData);
 		// console.log('BASEURL data: ', endpoints.baseURL + 'api/' + endpoints.location.uploadImage);
 
+		console.log('coming from is = ', comingFrom)
+		let url = '';
+		if (comingFrom === 'createLocation') {
+			url = endpoints.location.uploadImage;
+		} else if (comingFrom === 'createAsset') {
+			url = endpoints.asset.uploadImage;
+		} else if (comingFrom === 'newWorkRequest') {
+			url = endpoints.workOrders.uploadImage;
+		}
+
 		// Step 4: Upload with axios or fetch
-		const response = await fetch(endpoints.baseURL + 'api/' + endpoints.location.uploadImage, {
+		const response = await fetch(endpoints.baseURL + 'api/' + url, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'multipart/form-data',
@@ -127,12 +137,18 @@ export const locationImageUpload = async (image: any, user: any) => {
 		});
 
 		const result = await response.json();
-		// console.log('Upload success:', result);
+		console.log('Upload success:', result);
 		if (result?.status) {
 			ToastAndroid.show('Image uploaded successfully!', ToastAndroid.SHORT);
-			return {
-				image_path: result?.data?.[0]?.fileName,
-			};
+			if (comingFrom === "newWorkRequest") {
+				return {
+					data: result?.data?.[0]
+				};
+			} else {
+				return {
+					image_path: result?.data?.[0].fileName
+				};
+			}
 		}
 
 		return result;

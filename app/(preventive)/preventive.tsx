@@ -173,10 +173,6 @@ export default function PreventivePage() {
 																		}>
 																			{option.text}
 																		</Text>
-
-																		{/* {
-														(deleteLoading && index === 3) && <ActivityIndicator size={"small"} color={"#71717A"} />
-													} */}
 																	</View>
 																</Pressable>
 															);

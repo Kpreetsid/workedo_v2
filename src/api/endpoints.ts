@@ -78,7 +78,8 @@ export const endpoints = {
     get_displacement_data: 'get_displacement_data/',
     
     get_envelope_data: 'get_envelope_data/',
-    addSensor: 'add_sensor/'
+    addSensor: 'add_sensor/',
+    uploadImage: 'upload/assets'
   },
   workOrders: {
     workOrders: 'work/orders',

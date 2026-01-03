@@ -35,7 +35,7 @@ export default function AssetDetailScreen() {
 		// console.log('fetching asset details', id);
 		try {
 			const assetDataRes = await getAssetData(id);
-			// console.log('res asset data = ', assetDataRes);
+			console.log('res asset data = ', assetDataRes);
 			if (assetDataRes.status) {
 				setAssetData(assetDataRes.data[0]);
 			}

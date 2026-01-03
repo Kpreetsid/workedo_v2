@@ -29,6 +29,7 @@ export default function WorkRequestDetail() {
 		setWorkForm("nature_of_work", item?.problemType);
 		setWorkForm("priority", item?.priority);
 		setWorkForm("work_request_id", item?.id);
+		setWorkForm("attachments", item?.files ?? null);
 
 		// router.push("/newWorkOrder");
 		router.push("/createWorkOrder");

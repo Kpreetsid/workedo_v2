@@ -24,6 +24,7 @@ import LocationPickerModal from "@/components/create-work-order/LocationPickerMo
 import AssetPickerModal from "@/components/create-work-order/AssetPickerModal";
 import WeekDays from "@/components/create-preventive/weekDaysComponent";
 import MonthDays from "@/components/create-preventive/monthDaysComponent";
+import ModalCalendar from "@/components/global/ModalCalendar";
 
 const MODE_FIELD_MAP: Record<string, string> = {
 	daily: "everyNDays",
@@ -44,6 +45,7 @@ const weekdayNames = [
 export default function CreatePreventive() {
 	const params: any = useLocalSearchParams();
 	console.log('params = ', params);
+	const [showCalendar, setShowCalendar] = useState(false);
 
 	const comingFrom = params?.comingFrom;
 
@@ -643,7 +645,8 @@ export default function CreatePreventive() {
 
 					<Pressable style={styles.container1} onPress={() => {
 						setActiveDateField("start_date");
-						setIsDatePickerVisible(true);
+						// setIsDatePickerVisible(true);
+						setShowCalendar(true)
 					}}>
 						<TextInput
 							placeholder={"dd-mm-yyyy"}
@@ -656,6 +659,29 @@ export default function CreatePreventive() {
 					</Pressable>
 				</View>
 
+				<ModalCalendar
+					showCalendar={showCalendar}
+					setShowCalendar={setShowCalendar}
+					activeDateField={activeDateField}
+					startDate={usePreventiveStore.getState().start_date}
+					onSelectDate={(date) => {
+						const formatted = moment(date).format("YYYY-MM-DD");
+						console.log('active date field = ', activeDateField)
+						if (activeDateField) {
+							usePreventiveStore.getState().setPreventiveValue(activeDateField, formatted);
+							setIsDatePickerVisible(false);
+							setActiveDateField(null);
+							return;
+						}
+
+						if (activeIndex !== null) {
+							updateSkipDate(activeIndex, formatted);
+							// setIsDatePickerVisible(false);
+							return;
+						}
+					}}
+				/>
+
 
 				<View style={styles.labelContainer}>
 					<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
@@ -664,7 +690,8 @@ export default function CreatePreventive() {
 
 					<Pressable style={styles.container1} onPress={() => {
 						setActiveDateField("end_date");
-						setIsDatePickerVisible(true);
+						// setIsDatePickerVisible(true);
+						setShowCalendar(true)
 					}}>
 						<TextInput
 							placeholder={"dd-mm-yyyy"}

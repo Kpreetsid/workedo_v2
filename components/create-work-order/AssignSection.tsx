@@ -7,6 +7,8 @@ import DatePicker from "../global/DatePicker";
 import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 import { FormField } from "../global/FormField";
+import LocationPickerModal from "./LocationPickerModal";
+import AssetPickerModal from "./AssetPickerModal";
 
 export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => {
 	const router = useRouter();
@@ -14,6 +16,9 @@ export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => 
 
 	const workOrderLocation = useWorkOrderStore((state) => state.location);
 	const workRequestLocation = useWorkRequestStore((state) => state.location);
+
+	const [visible, setVisible] = useState(false);
+	const [visibleAsset, setVisibleAsset] = useState(false);
 
 	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 	const [activeDateField, setActiveDateField] = useState<"start_date" | "end_date" | null>(null);
@@ -25,18 +30,22 @@ export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => 
 				type === "requests" ?
 					<FormField
 						label="Location"
-						type="location"
+						type="new-location"
 						placeholder="Enter Location"
 						field="location"
 						router={router}
 						comingFrom="newWorkRequest"
 						store={useWorkRequestStore}
 						setterName="setWorkRequestForm"
+						openPicker={() => {
+							console.log('opening')
+							setVisible(true)
+						}}
 					/>
 					:
 					<FormField
 						label="Location"
-						type="location"
+						type="new-location"
 						placeholder="Enter Location"
 						field="location"
 						router={router}
@@ -47,24 +56,35 @@ export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => 
 			}
 
 
+			<LocationPickerModal
+				visible={visible}
+				onClose={() => setVisible(false)}
+				comingFrom="newWorkRequest"
+			/>
+
+
 			{
 				type === "requests" ?
 					workRequestLocation && (
 						<FormField
 							label="Asset"
-							type="asset"
+							type="new-asset"
 							field="selected_asset"
 							router={router}
 							comingFrom="newWorkRequest"
 							store={useWorkRequestStore}
 							setterName="setWorkRequestForm"
+							openPicker={() => {
+								console.log('opening asset')
+								setVisibleAsset(true)
+							}}
 						/>
 					)
 					:
 					workOrderLocation && (
 						<FormField
 							label="Asset"
-							type="asset"
+							type="new-asset"
 							field="selected_asset"
 							router={router}
 							comingFrom="newWorkOrder"
@@ -74,6 +94,13 @@ export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => 
 					)
 			}
 
+
+			<AssetPickerModal
+				visible={visibleAsset}
+				comingFrom="newWorkRequest"
+				onClose={() => setVisibleAsset(false)}
+			/>
+
 			{
 				type === "workOrders" &&
 				<View>
@@ -81,7 +108,7 @@ export const AssignSection = ({ type }: { type: "workOrders" | "requests" }) => 
 					{/* --- Assign User --- */}
 					<FormField
 						label="Assign User"
-						type="user"
+						type="new-user"
 						field="assigned_users"
 						router={router}
 						comingFrom="newWorkOrder"

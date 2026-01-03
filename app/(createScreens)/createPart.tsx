@@ -4,25 +4,54 @@ import FormInput from "@/components/create-screens/FormInput";
 import AssignInput from "@/components/create-screens/AssignInput";
 import ActionButton from "@/components/create-screens/ActionButton";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { router, useRouter } from "expo-router";
+import { router, useLocalSearchParams, useRouter } from "expo-router";
 import DropDownInput from "@/components/create-screens/DropDownInput";
 import React, { useEffect, useRef, useState } from "react";
 import { useLocationStore } from "@/src/store/useLocationStore";
 import { usePartFormStore } from "@/src/store/usePartFormStore";
-import { createPart } from "@/src/services/part.service";
+import { createPart, updateFullPart, updatePart } from "@/src/services/part.service";
 import { FormField } from "@/components/global/FormField";
 import LocationPickerModal from "@/components/create-work-order/LocationPickerModal";
 
 export default function CreatePart() {
+	const params: any = useLocalSearchParams();
+	console.log('params = ', params);
+
+	const data = params?.data;
+
 	const router = useRouter();
 	const [visible, setVisible] = useState(false);
-	const { setPartFormValue, resetPartForm } = usePartFormStore();
+	const [partId, setPartId] = useState("");
+	const { setPartFormValue, resetPartForm, isLoaded } = usePartFormStore();
 
 	useEffect(() => {
 		return () => {
 			resetPartForm();
 		}
 	}, [])
+
+
+	useEffect(() => {
+		if (params?.data && !isLoaded) {
+			const data = JSON.parse(params.data);
+			console.log('data here in params = ', data);
+
+			// all setters here
+			setPartId(data?.id);
+			setPartFormValue("part_name", data?.part_name);
+			setPartFormValue("description", data?.description);
+			setPartFormValue("location", data?.location);
+			setPartFormValue("selected_part", data?.part_type);
+			setPartFormValue("part_number", data?.part_number);
+			setPartFormValue("available_quantity", String(data?.quantity) ?? "");
+			setPartFormValue("min_stock_quantity", String(data?.min_quantity) ?? "");
+			setPartFormValue("unit_cost", data?.unit);
+
+			// finally mark as loaded ONCE
+			setPartFormValue("isLoaded", true);
+		}
+	}, [params]);
+
 
 	const handleSubmit = async () => {
 		console.log('in handle submit');
@@ -60,12 +89,21 @@ export default function CreatePart() {
 		console.log("📦 Final Payload:", payload);
 
 		try {
-			const res = await createPart(payload);
-			console.log("✅ Response:", res);
+			if (params && params.data) {
+				const res = await updateFullPart(partId, payload);
+				console.log("✅ Response:", res);
+				if (res?.status) {
+					ToastAndroid.show("Part updated successfully!", ToastAndroid.SHORT);
+					usePartFormStore.getState().resetPartForm();
+					router.back();
+				}
+			} else {
+				const res = await createPart(payload);
+				console.log("✅ Response:", res);
 
-			ToastAndroid.show("Part created successfully!", ToastAndroid.SHORT);
-
-			resetPartForm();
+				ToastAndroid.show("Part created successfully!", ToastAndroid.SHORT);
+				router.back();
+			}
 		} catch (error) {
 			console.error("❌ Error creating part:", error);
 			ToastAndroid.show("Failed to create part!", ToastAndroid.SHORT);
@@ -148,6 +186,7 @@ export default function CreatePart() {
 					store={usePartFormStore}
 					setterName="setPartFormValue"
 					styles={{ paddingHorizontal: 25 }}
+					showKeyboardType="numeric"
 				/>
 
 				<FormField
@@ -157,6 +196,7 @@ export default function CreatePart() {
 					store={usePartFormStore}
 					setterName="setPartFormValue"
 					styles={{ paddingHorizontal: 25 }}
+					showKeyboardType="numeric"
 				/>
 
 				<FormField
@@ -166,6 +206,7 @@ export default function CreatePart() {
 					store={usePartFormStore}
 					setterName="setPartFormValue"
 					styles={{ paddingHorizontal: 25 }}
+					showKeyboardType="numeric"
 				/>
 
 				<ActionButton label="Submit" onPress={handleSubmit} />

@@ -20,7 +20,8 @@ export const FormField = React.memo(
 		required = true,
 		styles,
 		openPicker,
-		usersData
+		usersData,
+		showKeyboardType
 	}: {
 		label: string;
 		placeholder?: string;
@@ -36,7 +37,8 @@ export const FormField = React.memo(
 		required?: boolean;
 		styles?: any;
 		openPicker?: () => void;
-		usersData?: any[]
+		usersData?: any[];
+		showKeyboardType?: string;
 	}) => {
 		const value = store((s: any) => s[field]);
 		const setValue = store((s: any) => s[setterName]);
@@ -213,8 +215,9 @@ export const FormField = React.memo(
 				placeholder={placeholder}
 				required={required}
 				value={value}
-					containerStyle={styles}
+				containerStyle={styles}
 				onChangeText={(text) => setValue(field, text)}
+				showKeyboardType={showKeyboardType}
 			/>
 		);
 	}

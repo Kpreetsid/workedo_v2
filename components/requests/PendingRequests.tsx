@@ -8,73 +8,62 @@ import { WorkRequest } from "@/src/types/workRequest";
 import moment from "moment";
 import { FlashList } from "@shopify/flash-list";
 
-export default function PendingRequests() {
-	console.log('pending requests');
-	const [loading, setLoading] = useState(false);
-	const [pendingRequests, setPendingRequests] = useState<WorkRequest[]>([]);
-	const [refreshing, setRefreshing] = useState(false);
+interface Props {
+	data: WorkRequest[];
+	loading: boolean;
+	refreshing: boolean;
+	onRefresh: () => void;
+}
 
-	useFocusEffect(
-		useCallback(() => {
-			fetchPendingRequests();
-		}, [])
-	);
-
-	const fetchPendingRequests = async () => {
-		setLoading(true)
-		try {
-			const res = await getWorkRequests();
-			if (res?.status) {
-				console.log(res);
-				setPendingRequests(res?.data.reverse());
-				setLoading(false)
-			}
-		} catch (e) {
-			console.log(e);
-			setLoading(false)
-		}
-	}
-
-	const onRefresh = () => {
-		setRefreshing(true);
-		fetchPendingRequests();
-		setRefreshing(false);
+export default function PendingRequests({
+	data,
+	loading,
+	refreshing,
+	onRefresh,
+}: Props) {
+	console.log('in pending')
+	if (loading) {
+		return <ActivityIndicator size="large" />;
 	}
 
 	return (
-		<>
-			{
-				loading ?
-					<ActivityIndicator size={"large"} />
-					:
-					<FlashList
-						removeClippedSubviews={false}
-						data={pendingRequests}
-						keyExtractor={(item) => item.id}
-						renderItem={({ item }: { item: WorkRequest }) => (
-							<Pressable style={styles.card} onPress={() => router.push({ pathname: "/requestDetail", params: { data: JSON.stringify(item) } })}>
+		<FlashList
+			removeClippedSubviews={false}
+			data={data}
+			keyExtractor={(item) => item.id}
+			renderItem={({ item, index }) => (
+				<Pressable
+					style={[styles.card, index === data.length - 1 && { marginBottom: 100 }]}
+					onPress={() =>
+						router.push({
+							pathname: "/requestDetail",
+							params: { data: JSON.stringify(item) },
+						})
+					}
+				>
+					<View style={styles.textContainer}>
+						<Text style={styles.title}>{item.title}</Text>
+						<Text style={styles.subText}>
+							Requested By: {item.createdBy.firstName} {item.createdBy.lastName}
+						</Text>
+						<Text style={styles.subText}>
+							Created On: {moment(item.createdAt).format("MMM D, YYYY")}
+						</Text>
+					</View>
 
-								<View style={styles.textContainer}>
-									<Text style={styles.title}>{item.title}</Text>
-									<Text style={styles.subText}>Requested By : {item.createdBy.firstName + " " + item.createdBy.lastName}</Text>
-									<Text style={styles.subText}>Created On : {moment(item.createdAt).format("MMM D, YYYY")}</Text>
-								</View>
-
-								<View style={styles.rightContainer}>
-									<WorkOrderCardLogo />
-									<View style={styles.tagButton}>
-										<Text style={styles.tagText}>{item.status}</Text>
-									</View>
-								</View>
-							</Pressable>
-						)}
-						showsVerticalScrollIndicator={false}
-						contentContainerStyle={styles.listContainer}
-						refreshing={refreshing}
-						onRefresh={onRefresh}
-					/>
-			}
-		</>
+					<View style={styles.rightContainer}>
+						<WorkOrderCardLogo />
+						<View style={styles.tagButton}>
+							<Text style={styles.tagText}>{item.status}</Text>
+						</View>
+					</View>
+				</Pressable>
+			)}
+			showsVerticalScrollIndicator={false}
+			contentContainerStyle={styles.listContainer}
+			refreshing={refreshing}
+			onRefresh={onRefresh}
+		/>
 	);
 }
 

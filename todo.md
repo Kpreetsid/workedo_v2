@@ -291,6 +291,8 @@ Please find below the pending points for Asset/Location
     - Done
 
 9.	Upload image for asset missing while creating/updating asset.
+    - Done
+    
 10.	Create endpoint in asset => RPM should be integer only.
     - Done
 
@@ -310,6 +312,8 @@ Please find below the pending points for Asset/Location
     - Done
     
 16.	Icons for edit and attach sensor not working.
+    - Done
+    
 17.	Need to implement auto scroll in all pages where we are showing elements as list, currently need to scroll every time if coming back from an asset detail view screen.
 
 18.	Asset trend graph zoom issue, once zoomed in, not able to zoom out.	
@@ -339,11 +343,20 @@ Pending points for Work Request / Preventive
 
 
 •	Create WR => unable to select location.
+    - Done
 •	Unable to attach images in create WR.
+    - Done
 •	WR list not filtered, approved WR populating in pending section.
+    - Done
 •	Create Parts => Available quantity/Minimum stock/Unit cost should be integers.
+    - Done
 •	Create new part => app should redirect to parts home page, current populating create new parts model.
+    - Done
 •	Part title missing on view part screen.
+    - Done
 •	Delete and update options missing in parts.
+    - Done
 •	Remove “Config” button from “More” option menu.
+    - Done
 •	Change Calander for PM model.
+    - Done

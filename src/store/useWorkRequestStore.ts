@@ -19,7 +19,7 @@ interface WorkRequestStore {
 	nature_of_work: string;
 	priority: string;
 	completion_days: string;
-	files: any[];
+	attachments: any[];
 	setWorkRequestForm: (key: keyof WorkRequestFormData, value: any) => void;
 	resetWorkRequestForm: () => void;
 }
@@ -32,7 +32,7 @@ export const useWorkRequestStore = create<WorkRequestStore>((set) => ({
 	nature_of_work: "",
 	priority: "",
 	completion_days: "",
-	files: [],
+	attachments: [],
 
 	setWorkRequestForm: (key, value) =>
 		set((state) => ({
@@ -48,6 +48,6 @@ export const useWorkRequestStore = create<WorkRequestStore>((set) => ({
 			nature_of_work: "",
 			priority: "",
 			completion_days: "",
-			files: [],
+			attachments: [],
 		}),
 }));

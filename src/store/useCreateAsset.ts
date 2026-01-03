@@ -16,6 +16,7 @@ export interface CreateAssetFormData {
 	model: string;
 	year: string;
 	description: string;
+	attachments: any[];
 }
 
 interface CreateAssetStore extends CreateAssetFormData {
@@ -34,6 +35,7 @@ interface CreateAssetStore extends CreateAssetFormData {
 	setModel: (data: string) => void;
 	setYear: (data: string) => void;
 	setDescription: (data: string) => void;
+	setAttachments: (data: any[]) => void;
 
 	/** Generic setter if you ever need it */
 	setCreateAssetValue: <K extends keyof CreateAssetFormData>(
@@ -60,6 +62,7 @@ const initialState: CreateAssetFormData = {
 	model: "",
 	year: "",
 	description: "",
+	attachments: [],
 };
 
 export const useCreateAssetStore = create<CreateAssetStore>((set) => ({
@@ -81,6 +84,7 @@ export const useCreateAssetStore = create<CreateAssetStore>((set) => ({
 	setModel: (data: string) => set({ model: data }),
 	setYear: (data: string) => set({ year: data }),
 	setDescription: (data) => set({ description: data }),
+	setAttachments: (data: any[]) => set({ attachments: data }),
 
 	// GENERIC SETTER
 	setCreateAssetValue: (key, value) =>

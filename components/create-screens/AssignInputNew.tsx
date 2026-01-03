@@ -15,7 +15,7 @@ import { ArrowRight } from "@/constants/IconProvider";
 import { FC } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
-import { locationImageUpload } from "@/src/services/location.service";
+import { imageUploadFunc } from "@/src/services/location.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 
 interface AssignInputProps {
@@ -140,17 +140,22 @@ const AssignInputNew: FC<AssignInputProps> = ({
 
 		console.log('Selected image: ', asset.uri);
 
-		const updatedLocationImage = await locationImageUpload(asset, user);
-		console.log('Updated location image: ', updatedLocationImage);
+		const imageRes = await imageUploadFunc(asset, user, comingFrom!);
+		console.log('Updated image res : ', imageRes);
 
 		console.log('coming from value = ', comingFrom)
 
-		if (comingFrom === "createLocation") {
-			const setter = store.getState()[setterName!];
-			console.log('setter = ', setter);
-			setter("attachments", [updatedLocationImage]);
-			console.log('attachments set to: ', [updatedLocationImage]);
+		// if (comingFrom === "createLocation") {
+		const setter = store.getState()[setterName!];
+		console.log('setter = ', setter);
+		if (comingFrom === 'newWorkRequest') {
+			setter("attachments", [imageRes?.data]);
+			console.log('attachments set to: ', [imageRes?.data]);
+		} else {
+			setter("attachments", [imageRes]);
+			console.log('attachments set to: ', [imageRes]);
 		}
+		// }
 	};
 
 	return (
