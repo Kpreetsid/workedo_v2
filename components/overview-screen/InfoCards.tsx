@@ -93,7 +93,11 @@ export default function InfoCards() {
 				return (
 					<Pressable
 						key={card.id}
-						style={[styles.card, { borderColor: card.color }]}
+						style={({ pressed }) => [
+							styles.card,
+							{ borderColor: card.color },
+							pressed && { backgroundColor: "#fadb7d" },
+						]}
 						onPress={() => handlePress(card.id)}
 					>
 						<View style={styles.topRow}>

@@ -33,7 +33,11 @@ export default function DoneRequests({
 			keyExtractor={(item) => item.id}
 			renderItem={({ item, index }) => (
 				<Pressable
-					style={[styles.card, index === data.length - 1 && { marginBottom: 100 }]}
+					style={({ pressed }) => [
+						styles.card,
+						pressed && { backgroundColor: '#fadb7d' },
+						index === data.length - 1 && { marginBottom: 100 },
+					]}
 					onPress={() =>
 						router.push({
 							pathname: "/requestDetail",

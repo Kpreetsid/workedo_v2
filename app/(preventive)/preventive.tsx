@@ -103,8 +103,13 @@ export default function PreventivePage() {
 							keyExtractor={(item) => item.id}
 							renderItem={({ item }) => {
 								return (
-									<Pressable style={styles.preventiveItem} onPress={() =>
-										router.push({ pathname: "/preventiveDetail", params: { data: JSON.stringify(item) } })}>
+									<Pressable
+										style={({ pressed }) => [
+											styles.preventiveItem,
+											pressed && { backgroundColor: "#fadb7d" },
+										]}
+										onPress={() =>
+											router.push({ pathname: "/preventiveDetail", params: { data: JSON.stringify(item) } })}>
 										<View style={styles.leftContentBox}>
 											<View style={styles.makeRow}>
 												<Text style={styles.itemTitle}>{item?.title}</Text>

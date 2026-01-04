@@ -88,7 +88,10 @@ export default function PartsInventory() {
 					showsVerticalScrollIndicator={false}
 					renderItem={({ item }) => (
 						<Pressable
-							style={styles.partInfoCard}
+							style={({ pressed }) => [
+								styles.partInfoCard,
+								pressed && { backgroundColor: '#fadb7d' },
+							]}
 							onPress={() => router.push({
 								pathname: "partDetail",
 								params: { data: JSON.stringify(item) }

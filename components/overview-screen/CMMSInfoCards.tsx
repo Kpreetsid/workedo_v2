@@ -16,7 +16,7 @@ export default function CMMSInfoCards() {
 
 	useEffect(() => {
 		// console.log('bceause of start date - ', startDate, childAssets);
-		if(childAssets.length > 0) {
+		if (childAssets.length > 0) {
 			fetchInfoCards();
 		}
 	}, [childAssets, startDate])

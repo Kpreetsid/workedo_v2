@@ -1,35 +1,40 @@
-import {Pressable, StyleSheet, View, Text} from "react-native";
-import {useState} from "react";
+import { Pressable, StyleSheet, View, Text } from "react-native";
+import { useState } from "react";
 import RadioSelector from "@/components/monitoring/RadioSelector";
 import FormInput from "@/components/create-screens/FormInput";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Fonts from "@/constants/Typography";
 
 export default function MonitoringTabs() {
     const [selectedOption, setSelectedOption] = useState("Default");
     return (
         <View style={styles.container}>
-            <RadioSelector selected={selectedOption} onSelect={setSelectedOption}/>
+            <RadioSelector selected={selectedOption} onSelect={setSelectedOption} />
 
             {selectedOption === "Custom" && <>
                 <FormInput label="Host" placeholder="Enter Host Name" labelStyle={styles.label} inputStyle={styles.value}
-                           inputContainer={styles.inputContainer}/>
+                    containerStyle={{ paddingHorizontal: 25 }}
+                    inputContainer={styles.inputContainer} />
 
                 <FormInput label="Port Number" placeholder="Enter Port Number" labelStyle={styles.label} inputStyle={styles.value}
-                           inputContainer={styles.inputContainer}/>
+                    containerStyle={{ paddingHorizontal: 25 }}
+                    inputContainer={styles.inputContainer} />
 
                 <FormInput label="User Name" placeholder="Enter User Name" labelStyle={styles.label} inputStyle={styles.value}
-                           inputContainer={styles.inputContainer}/>
+                    containerStyle={{ paddingHorizontal: 25 }}
+                    inputContainer={styles.inputContainer} />
 
                 <FormInput label="Password" placeholder="Enter Password" labelStyle={styles.label} inputStyle={styles.value}
-                           inputContainer={styles.inputContainer}/>
+                    containerStyle={{ paddingHorizontal: 25 }}
+                    inputContainer={styles.inputContainer} />
             </>}
 
             <FormInput label="MAC ID" placeholder="Enter Mac ID" labelStyle={styles.label} inputStyle={styles.value}
-                       inputContainer={styles.inputContainer}/>
+                containerStyle={{ paddingHorizontal: 25 }}
+                inputContainer={styles.inputContainer} />
 
 
-            <Pressable style={[styles.connectBtn, {bottom: useSafeAreaInsets().bottom + 30}]}>
+            <Pressable style={[styles.connectBtn, { bottom: useSafeAreaInsets().bottom + 30 }]}>
                 <Text style={styles.btnText}>Connect</Text>
             </Pressable>
         </View>

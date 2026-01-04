@@ -40,20 +40,30 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 
 	return (
 		<>
-			<Pressable style={
-				[
+			<Pressable
+				style={({ pressed }) => [
 					styles.locationButton,
-					isExpanded ? {
+
+					isExpanded && {
 						borderBottomLeftRadius: 0,
 						borderBottomRightRadius: 0,
-					} : {},
-					{
-						backgroundColor: selectedLocation?.id === item.id ? "#FFBF0080" : "#fff",
-						borderColor: selectedLocation?.id === item.id ? "#FFC1074D" : "#99999933"
 					},
-					{ marginBottom: 10 }
-				]
-			}
+
+					{
+						backgroundColor: pressed
+							? "#fadb7d"
+							: selectedLocation?.id === item.id
+								? "#FFBF0080"
+								: "#fff",
+
+						borderColor:
+							selectedLocation?.id === item.id
+								? "#FFC1074D"
+								: "#99999933",
+					},
+
+					{ marginBottom: 10 },
+				]}
 				onPress={() => {
 					if (selection) {
 						setSelectedLocation(item);

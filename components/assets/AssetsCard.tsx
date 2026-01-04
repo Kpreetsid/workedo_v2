@@ -68,20 +68,23 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset, hand
 
 	return (
 		<>
-			<Pressable style={
-				[
+			<Pressable
+				style={({ pressed }) => [
 					styles.locationButton,
+					pressed && {backgroundColor: '#fadb7d'},
+
 					asset?.asset_status && {
 						borderLeftWidth: 8,
-						borderLeftColor: COLORS[asset?.asset_status],
+						borderLeftColor: COLORS[asset.asset_status],
 					},
-					isExpanded ? {
+
+					isExpanded && {
 						borderBottomLeftRadius: 0,
 						borderBottomRightRadius: 0,
-					} : {},
-					{ marginBottom: 20 }
-				]
-			}
+					},
+
+					{ marginBottom: 20 },
+				]}
 				onPress={() => {
 					router.push({
 						pathname: "/assetDetail",

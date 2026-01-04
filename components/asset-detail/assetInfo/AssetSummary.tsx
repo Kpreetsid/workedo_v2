@@ -9,6 +9,7 @@ type AssetSummaryProps = {
 };
 
 export default function AssetSummary({ asset, assetHealth }: AssetSummaryProps) {
+  console.log('assetHealth = ', assetHealth);
   return (
     <>
       {/* 🔹 Health + Temperature Card */}
@@ -41,7 +42,7 @@ export default function AssetSummary({ asset, assetHealth }: AssetSummaryProps) 
             <View style={[styles.rowBetween, { gap: 5 }]}>
               <FontAwesome name="thermometer-half" size={15} color="#CA8A04" />
               <Text style={[styles.summaryValue, { color: "#FFB84D" }]}>
-                39°C
+                N/A
               </Text>
             </View>
           </View>

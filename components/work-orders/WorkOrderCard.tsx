@@ -38,7 +38,11 @@ const WorkOrderCard = ({
 	}
 
 	return (
-		<Pressable style={[styles.card, isSelected && styles.selectedCard]} onPress={onCardPress}>
+		<Pressable style={({ pressed }) => [
+			styles.card,
+			isSelected && styles.selectedCard,
+			pressed && {backgroundColor: '#fadb7d'},
+		]} onPress={onCardPress}>
 
 			<View style={styles.leftSection}>
 				<Text style={styles.id}>#{item?.order_no}</Text>

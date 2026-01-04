@@ -128,6 +128,16 @@ export default function LocationDetail() {
 							</View>
 
 							<TextInput style={styles.input} value={locationData?.location_type} editable={false} />
+
+							{
+								locationData?.parent_id &&
+								(
+									<>
+										<Text style={[styles.label, { paddingVertical: 10 }]}>Parent Location</Text>
+										<TextInput style={styles.input} value={locationData?.parent_id?.location_name} editable={false} />
+									</>
+								)
+							}
 						</View>
 
 						<AssetUserInfo users={locationData?.userList || []} onPress={() => setVisible(true)} from={"locationDetail"} />
@@ -236,7 +246,8 @@ const styles = StyleSheet.create({
 	},
 	image: {
 		width: 145,
-		height: 77,
+		height: '80%',
+		// height: 77,
 		borderRadius: 10
 	},
 	infoSection: {

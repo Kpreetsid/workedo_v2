@@ -272,9 +272,10 @@ Please find below the pending points for Asset/Location
     - Unable to reproduce
 
 2.	Add touch animation on all clickable elements (whole app).
-
+    - Done
 
 3.	Parent location name info missing while selecting child location.
+    - Done
 
 
 4.	Not able to click any location when location list is scrolled to bottom.
@@ -284,6 +285,8 @@ Please find below the pending points for Asset/Location
     - Unable to reproduce
 
 6.	Create Asset => showing some static temp value.
+    - Unable to find how to get temperature value
+
 7.	Remove asset_id from edit asset screen, this is auto generated and remains fixed for each created asset.
     - Done
 
@@ -317,6 +320,8 @@ Please find below the pending points for Asset/Location
 17.	Need to implement auto scroll in all pages where we are showing elements as list, currently need to scroll every time if coming back from an asset detail view screen.
 
 18.	Asset trend graph zoom issue, once zoomed in, not able to zoom out.	
+    - In Progress
+
 19.	Units are missing in trend chart for y-axis (will share units for all functions).
     - Done
 
@@ -339,7 +344,10 @@ Please find below the pending points for Asset/Location
     - Done
     
 26.	Selecting an asset with no sensor mapped shows trend data from previous selected asset and loader is present all the time. Remove loader on api call error.
-27.	Change order of menu on “+” button on KPI page. Location>Asset>Work Order>Preventive>Parts>Work Request>Gateway. - Done
+    - Done
+
+27.	Change order of menu on “+” button on KPI page. Location>Asset>Work Order>Preventive>Parts>Work Request>Gateway.
+    - Done
 
 
 

@@ -16,56 +16,60 @@ interface Props {
 }
 
 export default function RejectedRequests({
-    data,
-    loading,
-    refreshing,
-    onRefresh,
+	data,
+	loading,
+	refreshing,
+	onRefresh,
 }: Props) {
 	console.log('in rejected')
-    if (loading) {
-        return <ActivityIndicator size="large" />;
-    }
+	if (loading) {
+		return <ActivityIndicator size="large" />;
+	}
 
 
-    return (
-        <FlashList
-            removeClippedSubviews={false}
-            data={data}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item, index }) => (
-                <Pressable
-                    style={[styles.card, index === data.length - 1 && { marginBottom: 100 }]}
-                    onPress={() =>
-                        router.push({
-                            pathname: "/requestDetail",
-                            params: { data: JSON.stringify(item) },
-                        })
-                    }
-                >
-                    <View style={styles.textContainer}>
-                        <Text style={styles.title}>{item.title}</Text>
-                        <Text style={styles.subText}>
-                            Requested By: {item.createdBy.firstName} {item.createdBy.lastName}
-                        </Text>
-                        <Text style={styles.subText}>
-                            Created On: {moment(item.createdAt).format("MMM D, YYYY")}
-                        </Text>
-                    </View>
+	return (
+		<FlashList
+			removeClippedSubviews={false}
+			data={data}
+			keyExtractor={(item) => item.id}
+			renderItem={({ item, index }) => (
+				<Pressable
+					style={({ pressed }) => [
+						styles.card,
+						pressed && { backgroundColor: '#fadb7d' },
+						index === data.length - 1 && { marginBottom: 100 },
+					]}
+					onPress={() =>
+						router.push({
+							pathname: "/requestDetail",
+							params: { data: JSON.stringify(item) },
+						})
+					}
+				>
+					<View style={styles.textContainer}>
+						<Text style={styles.title}>{item.title}</Text>
+						<Text style={styles.subText}>
+							Requested By: {item.createdBy.firstName} {item.createdBy.lastName}
+						</Text>
+						<Text style={styles.subText}>
+							Created On: {moment(item.createdAt).format("MMM D, YYYY")}
+						</Text>
+					</View>
 
-                    <View style={styles.rightContainer}>
-                        <WorkOrderCardLogo />
-                        <View style={styles.tagButton}>
-                            <Text style={styles.tagText}>{item.status}</Text>
-                        </View>
-                    </View>
-                </Pressable>
-            )}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContainer}
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-        />
-    );
+					<View style={styles.rightContainer}>
+						<WorkOrderCardLogo />
+						<View style={styles.tagButton}>
+							<Text style={styles.tagText}>{item.status}</Text>
+						</View>
+					</View>
+				</Pressable>
+			)}
+			showsVerticalScrollIndicator={false}
+			contentContainerStyle={styles.listContainer}
+			refreshing={refreshing}
+			onRefresh={onRefresh}
+		/>
+	);
 }
 
 const styles = StyleSheet.create({

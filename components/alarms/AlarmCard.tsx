@@ -9,13 +9,18 @@ const AlarmCard = ({ item }: { item: AlarmItem }) => {
 	const router = useRouter();
 
 	return (
-		<Pressable key={item.id} style={styles.card} onPress={() => {
-			console.log('item clicked = ', item);
-			router.push({
-				pathname: "/assetDetail",
-				params: { id: item.asset_id },
-			});
-		}}>
+		<Pressable key={item.id}
+			style={({ pressed }) => [
+				styles.card,
+				pressed && { backgroundColor: "#fadb7d" },
+			]}
+			onPress={() => {
+				console.log('item clicked = ', item);
+				router.push({
+					pathname: "/assetDetail",
+					params: { id: item.asset_id },
+				});
+			}}>
 			<View style={styles.cardHeader}>
 				<View>
 					<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
