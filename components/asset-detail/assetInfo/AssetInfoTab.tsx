@@ -71,7 +71,10 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 
 		return () => {
 			// console.log('clearing')
-			// clearAssetState(); // cleanup when leaving page
+			clearAssetState(); // cleanup when leaving page
+			setChartSeries([])
+			setXLabels([])
+			setYMaxValue(0)
 		};
 	}, []);
 

@@ -76,6 +76,7 @@
 		let chart;
 
 		function createChart(payload) {
+			console.log("INIT payload.yUnit =", payload.yUnit);
 			const ctx = document.getElementById("chart").getContext("2d");
 
 			const datasets = payload.series.map(series => ({
@@ -164,6 +165,19 @@
 						y: {
 							min: payload.yMin,
 							max: payload.yMax,
+
+							title: {
+								display: !!payload.yUnit,
+								text: payload.yUnit,
+								position: "left",
+								align: "center",
+								color: "#666",
+								font: {
+									size: 11,
+									weight: "600"
+								},
+								padding: { top: 4, bottom: 4 }
+							},
 
 							// grid: {
 							// 	display: false,      // 🔴 hides horizontal grid lines
@@ -292,6 +306,9 @@
 
 				chart.options.scales.y.min = payload.yMin;
 				chart.options.scales.y.max = payload.yMax;
+
+				chart.options.scales.y.title.text = payload.yUnit || "";
+				chart.options.scales.y.title.display = !!payload.yUnit;
 
 				chart.data.datasets = payload.series.map(series => ({
 					label: series.axis,

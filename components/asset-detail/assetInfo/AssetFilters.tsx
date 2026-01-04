@@ -77,13 +77,13 @@ const styles = StyleSheet.create({
 		marginBottom: 10,
 	},
 	modeTab: {
-    width: '30%',
+		width: '30%',
 		backgroundColor: "#fff",
 		paddingVertical: 6,
 		borderRadius: 5,
 		borderWidth: 0.3,
 		borderColor: "#00000020",
-    marginVertical: 10,
+		marginVertical: 10,
 		alignItems: "center",
 	},
 	modeTabActive: {

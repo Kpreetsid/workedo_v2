@@ -3,6 +3,10 @@
 export const formatGraphData = (arr: any[]) => {
     return arr.map((item) => ({
         axis: item.axis,
+
+        // 🔴 KEEP THE UNIT
+        unit: item.unit ?? "",
+
         points: item.data.map(([ts, amp, flag]: [number, number, boolean]) => {
             const date = new Date(ts * 1000);
 
@@ -15,7 +19,7 @@ export const formatGraphData = (arr: any[]) => {
                     minute: "2-digit",
                     second: "2-digit",
                 }),
-                fullDate: date.toLocaleString("en-GB"), // add this if you want full date
+                fullDate: date.toLocaleString("en-GB"),
             };
         }),
     }));

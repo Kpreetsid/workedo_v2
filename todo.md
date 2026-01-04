@@ -318,12 +318,26 @@ Please find below the pending points for Asset/Location
 
 18.	Asset trend graph zoom issue, once zoomed in, not able to zoom out.	
 19.	Units are missing in trend chart for y-axis (will share units for all functions).
+    - Done
+
 20.	Change aspect ratio of graph, rectangle not square.
+    - Done
+
 21.	Color code of axis as per web application.
+    - Done
+
 22.	Spectrum screen of any point => too much padding on top, need to reduce broad header.
+    - Done
+
 23.	Acceleration Spectrum Envelope missing x-axis values, should be like Acceleration spectrum and units should be Hz.
+    - Done
+
 24.	Selecting any axis in the trend line to view twf/spectrum should also highlight same axis in next screen, currently app is selecting previously selected axis.
+    - Done
+
 25.	Spectrum data not correct => spectrum values for acceleration while clicking from RMS should be different from Peak. Api returns different response in web. Mobile app plotting both spectrums with same values, should be different.
+    - Done
+    
 26.	Selecting an asset with no sensor mapped shows trend data from previous selected asset and loader is present all the time. Remove loader on api call error.
 27.	Change order of menu on “+” button on KPI page. Location>Asset>Work Order>Preventive>Parts>Work Request>Gateway. - Done
 

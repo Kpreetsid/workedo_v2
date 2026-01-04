@@ -53,10 +53,18 @@
 			const rawData = payload.data;
 
 			// Convert samples → time-domain points
-			const points = rawData.map((y, i) => ({
-				x: i / fs,                // time (seconds)
+			const N = rawData.length;
+
+			// 🔴 Use only half spectrum (Nyquist)
+			const halfN = Math.floor(N / 2);
+
+			const points = rawData.slice(0, halfN).map((y, i) => ({
+				x: (i * fs) / N,   // frequency in Hz
 				y
 			}));
+
+			console.log(points.slice(0, 10));
+			console.log(points.at(-1));
 
 			chart = new Chart(ctx, {
 				type: "line",
@@ -65,7 +73,7 @@
 						{
 							label: payload.axis || "Waveform",
 							data: points,
-							borderColor: "#1e3cff",
+							borderColor: "#000069",
 							borderWidth: 1,
 							pointRadius: 0,
 							tension: 0
@@ -102,13 +110,17 @@
 						);
 					},
 
-
 					scales: {
 						x: {
 							type: "linear",
+							min: 0,
+							max: fs / 2,
 							title: {
 								display: true,
-								text: "Time (s)"
+								text: "Hz"
+							},
+							ticks: {
+								maxTicksLimit: 10
 							},
 							grid: {
 								display: false
@@ -124,24 +136,19 @@
 
 					plugins: {
 						legend: { display: false },
-
 						zoom: {
 							pan: {
 								enabled: true,
 								mode: "x"
 							},
 							zoom: {
-								pinch: {
-									enabled: true
-								},
-								wheel: {
-									enabled: false   // ❌ disable wheel for RN
-								},
+								pinch: { enabled: true },
+								wheel: { enabled: false },
 								mode: "x"
 							}
 						}
 					}
-				}
+				},
 			});
 		}
 

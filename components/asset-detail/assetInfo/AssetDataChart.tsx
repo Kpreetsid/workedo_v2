@@ -17,8 +17,6 @@ export default function AssetDataChart({
 	const [detailModalVisible, setDetailModalVisible] = useState(false);
 	const [selectedPoint, setSelectedPoint] = useState<any>(null);
 
-
-
 	const ref = useRef<WebView>(null);
 	const initializedRef = useRef(false);
 	const [webReady, setWebReady] = useState(false);
@@ -27,6 +25,7 @@ export default function AssetDataChart({
 	const unlock = useGestureLock((s) => s.unlock);
 
 	// console.log('chart series in assets data chart =  = ', chartSeries)
+	console.log('chart series = ', chartSeries.map((s: any) => ({ axis: s.axis, unit: s.unit })));
 
 	// ✅ SAFELY sanitize once (no hooks involved)
 	const validSeries = Array.isArray(chartSeries)
@@ -48,20 +47,24 @@ export default function AssetDataChart({
 		const maxX =
 			Math.max(...validSeries.map((s: any) => s.points.length)) - 1;
 
+		const yUnit = validSeries[0]?.unit ?? "";
+
 		const payload = {
 			type: initializedRef.current ? "UPDATE" : "INIT",
 			yMax: yMaxValue,
 			yMin: derivedMin,
 			maxX,
 			xLabels,
+			// 🔴 MUST EXIST ON INIT
+			yUnit,
 			series: validSeries.map((s: any) => ({
 				axis: s.axis,
 				color:
 					s.axis === "Horizontal"
 						? "#01d711"
 						: s.axis === "Vertical"
-							? "#ff0000"
-							: "#1237ff",
+							? "#1237ff"
+							: "#ff0000",
 				points: s.points.map((p: any) => ({
 					y: p.value,
 					fullDate: p.fullDate,
@@ -75,7 +78,7 @@ export default function AssetDataChart({
 	}, [webReady, validSeries, xLabels, yMaxValue]);
 
 	useFocusEffect(
-		useCallback(() => {}, [
+		useCallback(() => { }, [
 			ScreenOrientation.lockAsync(
 				ScreenOrientation.OrientationLock.PORTRAIT
 			)
@@ -90,8 +93,8 @@ export default function AssetDataChart({
 			<WebView
 				ref={ref}
 				originWhitelist={["*"]}
-				// source={require("../../../assets/charts/chart.html")}
-				source={{ uri: chartUrl }}
+				source={require("../../../assets/charts/chart.html")}
+				// source={{ uri: chartUrl }}
 
 				javaScriptEnabled={true}
 				domStorageEnabled={true}
@@ -148,12 +151,11 @@ export default function AssetDataChart({
 
 		</View>
 	);
-
 }
 
 const styles = StyleSheet.create({
 	wrapper: {
-		height: 300,
+		height: 200,
 		marginHorizontal: 20,
 		marginTop: 20,
 		borderRadius: 10,

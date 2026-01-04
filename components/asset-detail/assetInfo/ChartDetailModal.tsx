@@ -18,6 +18,7 @@ import { getAccelerationData, getDisplacementData, getEnvelopeData, getVelocityD
 import { useAssetStore } from "@/src/store/useAssetStore";
 import Header from "@/components/global/Header";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { SegmentedCheckboxRow } from "./SimpleDropdown";
 
 interface ChartDetailModalProps {
 	visible: boolean;
@@ -41,7 +42,15 @@ export default function ChartDetailModal({
 	selectedPoint,
 	asset_data,
 }: ChartDetailModalProps) {
-	const [axis, setAxis] = useState<AxisType>("Horizontal");
+	const [orientation, setOrientation] = useState("portrait");
+
+	// ---------------------------
+	// signal value, and axis
+	// ---------------------------
+	const selectedAxis = useAssetStore((s) => s.selectedAxis);
+	const selectedValueType = useAssetStore((s) => s.selectedValueType);
+
+	const [axis, setAxis] = useState<AxisType | any>(selectedAxis[0]);
 	const [signalType, setSignalType] = useState<SignalType>("acceleration");
 
 	const [activeTab, setActiveTab] = useState<"time" | "spectrum">("time");
@@ -73,7 +82,7 @@ export default function ChartDetailModal({
 
 		// ✅ ONLY signal spectrum needs trendFunc
 		if (isSpectrum && !forEnvelope) {
-			payload.trendFunc = "rms";
+			payload.trendFunc = selectedValueType.toLowerCase();
 		}
 
 		return payload;
@@ -87,7 +96,7 @@ export default function ChartDetailModal({
 		if (!visible || !selectedPoint) return;
 
 		const payload = buildDetailPayload();
-		// console.log('payload now = ', payload)
+		console.log('payload now = ', payload)
 		if (!payload) return;
 
 
@@ -118,13 +127,10 @@ export default function ChartDetailModal({
 	const fetchWaveFormsData = async (payload: any, cancelled: boolean) => {
 		try {
 			const Res = await fetchData(payload);
-			// console.log(Res)
 			if (cancelled) return;
 
 			const data = Res?.[axis];
 			const fs = Res?.fs;
-
-			// console.log(Array.isArray(data))
 
 			if (!Array.isArray(data) || !fs) {
 				console.warn("Invalid data time waveform ", Res);
@@ -180,6 +186,7 @@ export default function ChartDetailModal({
 		try {
 			const env = await getEnvelopeData(payload);
 			// console.log(env)
+
 			if (cancelled) return;
 
 			const data = env?.[axis];
@@ -212,10 +219,12 @@ export default function ChartDetailModal({
 		let current_orientation = await ScreenOrientation.getOrientationAsync();
 
 		if (current_orientation === 1) {
+			setOrientation("landscape");
 			await ScreenOrientation.lockAsync(
 				ScreenOrientation.OrientationLock.LANDSCAPE
 			);
 		} else {
+			setOrientation("portrait");
 			await ScreenOrientation.lockAsync(
 				ScreenOrientation.OrientationLock.PORTRAIT
 			);
@@ -233,12 +242,22 @@ export default function ChartDetailModal({
 			onRequestClose={onClose}
 		>
 			<View style={styles.backdrop}>
-				<Header title={activeTab === "time" ? "Time Waveform" : "Spectrum"} modal={true} dismiss={onClose} showClose={true} showBack={false} showOrientation={true} toggleOrientation={toggleOrientation} />
+				<Header
+					title={activeTab === "time" ? "Time Waveform" : "Spectrum"}
+					modal={true}
+					dismiss={onClose}
+					showClose={true}
+					showBack={false}
+					showOrientation={true}
+					toggleOrientation={toggleOrientation}
+					styling={{
+						paddingVertical: orientation === "landscape" ? 4 : 15
+					}}
+				/>
 				<ScrollView style={styles.container}>
 					{/* Tabs */}
 
-
-					<View style={styles.tabRow}>
+					<View style={[styles.tabRow, orientation === "landscape" && { padding: 2 }]}>
 						<Pressable
 							onPress={() => setActiveTab("time")}
 							style={[
@@ -275,53 +294,87 @@ export default function ChartDetailModal({
 					</View>
 
 
-					{/* SIGNAL TYPE ROW */}
-					<View style={styles.selectorRow}>
-						{(["acceleration", "velocity", "displacement"] as SignalType[]).map(
-							(type) => (
-								<Pressable
-									key={type}
-									onPress={() => setSignalType(type)}
-									style={[
-										styles.selectorBtn,
-										signalType === type && styles.activeBtn,
-									]}
-								>
-									<Text
-										style={[
-											styles.selectorText,
-											signalType === type && styles.activeText,
-										]}
-									>
-										{type}
-									</Text>
-								</Pressable>
-							)
-						)}
+					<View style={{
+						width: '90%',
+						justifyContent: 'center',
+						alignItems: 'center',
+						flexDirection: orientation === "landscape" ? "row" : "column",
+						gap: 10,
+					}}>
+						<SegmentedCheckboxRow
+							value={axis}
+							options={["Axial", "Horizontal", "Vertical"]}
+							onChange={(val) => setAxis(val as AxisType)}
+						/>
+
+						{
+							orientation === "landscape" && <View style={{ width: 2, height: 20, backgroundColor: "#d3d3d3" }} />
+						}
+
+						<SegmentedCheckboxRow
+							value={signalType}
+							options={["Acceleration", "Velocity", "Displacement"]}
+							onChange={(val) =>
+								setSignalType(val.toLowerCase() as SignalType)
+							}
+						/>
+
 					</View>
 
-					{/* AXIS ROW */}
-					<View style={styles.selectorRow}>
-						{(["Vertical", "Horizontal", "Axial"] as AxisType[]).map((a) => (
-							<Pressable
-								key={a}
-								onPress={() => setAxis(a)}
-								style={[
-									styles.selectorBtn,
-									axis === a && styles.activeBtn,
-								]}
-							>
-								<Text
-									style={[
-										styles.selectorText,
-										axis === a && styles.activeText,
-									]}
-								>
-									{a}
-								</Text>
-							</Pressable>
-						))}
-					</View>
+
+					{/* {
+						orientation === "portrait" &&
+						(
+							<>
+
+								<View style={styles.selectorRow}>
+									{(["acceleration", "velocity", "displacement"] as SignalType[]).map(
+										(type) => (
+											<Pressable
+												key={type}
+												onPress={() => setSignalType(type)}
+												style={[
+													styles.selectorBtn,
+													signalType === type && styles.activeBtn,
+												]}
+											>
+												<Text
+													style={[
+														styles.selectorText,
+														signalType === type && styles.activeText,
+													]}
+												>
+													{type}
+												</Text>
+											</Pressable>
+										)
+									)}
+								</View>
+
+								<View style={styles.selectorRow}>
+									{(["Vertical", "Horizontal", "Axial"] as AxisType[]).map((a) => (
+										<Pressable
+											key={a}
+											onPress={() => setAxis(a)}
+											style={[
+												styles.selectorBtn,
+												axis === a && styles.activeBtn,
+											]}
+										>
+											<Text
+												style={[
+													styles.selectorText,
+													axis === a && styles.activeText,
+												]}
+											>
+												{a}
+											</Text>
+										</Pressable>
+									))}
+								</View>
+							</>
+						)
+					} */}
 
 
 					{/* BODY */}
@@ -347,8 +400,8 @@ export default function ChartDetailModal({
 									<View style={styles.chartBox}>
 										<WebView
 											ref={accWebRef}
-											// source={require("../../../assets/charts/time-waveform.html")}
-											source={{ uri: timewaveformchart }}
+											source={require("../../../assets/charts/time-waveform.html")}
+											// source={{ uri: timewaveformchart }}
 											javaScriptEnabled
 											domStorageEnabled
 											mediaPlaybackRequiresUserAction={false}
@@ -375,8 +428,8 @@ export default function ChartDetailModal({
 									<View style={styles.chartBox}>
 										<WebView
 											ref={envWebRef}
-											// source={require("../../../assets/charts/envelope-waveform.html")}
-											source={{ uri: envelopechart }}
+											source={require("../../../assets/charts/envelope-waveform.html")}
+											// source={{ uri: envelopechart }}
 											javaScriptEnabled
 											domStorageEnabled
 											mediaPlaybackRequiresUserAction={false}
@@ -404,10 +457,10 @@ export default function ChartDetailModal({
 											Spectrum
 										</Text>
 										<View style={styles.chartBox}>
+											{/* // source={{ uri: spectrumwaveform }} */}
 											<WebView
 												ref={accWebRef}
-												// source={require("../../../assets/charts/spectrum-waveform.html")}
-												source={{ uri: spectrumwaveform }}
+												source={require("../../../assets/charts/spectrum-waveform.html")}
 												javaScriptEnabled
 												domStorageEnabled
 												mediaPlaybackRequiresUserAction={false}
@@ -432,8 +485,8 @@ export default function ChartDetailModal({
 										<View style={styles.chartBox}>
 											<WebView
 												ref={envWebRef}
-												// source={require("../../../assets/charts/spectrum-envelope-waveform.html")}
-												source={{ uri: spectrumenvelopechart }}
+												source={require("../../../assets/charts/spectrum-envelope-waveform.html")}
+												// source={{ uri: spectrumenvelopechart }}
 												javaScriptEnabled
 												domStorageEnabled
 												mediaPlaybackRequiresUserAction={false}
@@ -450,8 +503,8 @@ export default function ChartDetailModal({
 						)}
 					</View>
 				</ScrollView>
-			</View>
-		</Modal>
+			</View >
+		</Modal >
 	);
 }
 

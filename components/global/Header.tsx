@@ -1,5 +1,5 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Text, StyleSheet, View, TouchableOpacity, Pressable } from "react-native";
+import { Text, StyleSheet, View, TouchableOpacity, Pressable, ViewStyle } from "react-native";
 import { ArrowBack } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
 import { router } from "expo-router";
@@ -15,12 +15,13 @@ interface HeaderProps {
 	showClose?: boolean;
 	showOrientation?: boolean;
 	toggleOrientation?: () => void;
+	styling?: ViewStyle;
 }
 
-export default function Header({ title, modal = false, dismiss, editAsset, handleEditAsset, showBack = true, showClose = false, showOrientation = false, toggleOrientation }: HeaderProps) {
+export default function Header({ title, modal = false, dismiss, editAsset, handleEditAsset, showBack = true, showClose = false, showOrientation = false, toggleOrientation, styling }: HeaderProps) {
 	return (
 		<SafeAreaView edges={["top"]} style={styles.safeArea}>
-			<View style={styles.headerContainer}>
+			<View style={[styles.headerContainer, styling]}>
 				<View style={[
 					styles.rowBetween,
 					showClose && { width: '100%', justifyContent: 'space-between' }
@@ -34,7 +35,7 @@ export default function Header({ title, modal = false, dismiss, editAsset, handl
 					<Text style={styles.title}>{title}</Text>
 
 
-					<View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+					<View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
 						{
 							showOrientation && (
 								<Pressable onPress={toggleOrientation} style={styles.editButton}>
