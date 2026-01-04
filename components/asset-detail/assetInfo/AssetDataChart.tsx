@@ -93,8 +93,8 @@ export default function AssetDataChart({
 			<WebView
 				ref={ref}
 				originWhitelist={["*"]}
-				source={require("../../../assets/charts/chart.html")}
-				// source={{ uri: chartUrl }}
+				// source={require("../../../assets/charts/chart.html")}
+				source={{ uri: chartUrl }}
 
 				javaScriptEnabled={true}
 				domStorageEnabled={true}

@@ -400,8 +400,8 @@ export default function ChartDetailModal({
 									<View style={styles.chartBox}>
 										<WebView
 											ref={accWebRef}
-											source={require("../../../assets/charts/time-waveform.html")}
-											// source={{ uri: timewaveformchart }}
+											// source={require("../../../assets/charts/time-waveform.html")}
+											source={{ uri: timewaveformchart }}
 											javaScriptEnabled
 											domStorageEnabled
 											mediaPlaybackRequiresUserAction={false}
@@ -428,8 +428,8 @@ export default function ChartDetailModal({
 									<View style={styles.chartBox}>
 										<WebView
 											ref={envWebRef}
-											source={require("../../../assets/charts/envelope-waveform.html")}
-											// source={{ uri: envelopechart }}
+											// source={require("../../../assets/charts/envelope-waveform.html")}
+											source={{ uri: envelopechart }}
 											javaScriptEnabled
 											domStorageEnabled
 											mediaPlaybackRequiresUserAction={false}
@@ -457,10 +457,11 @@ export default function ChartDetailModal({
 											Spectrum
 										</Text>
 										<View style={styles.chartBox}>
-											{/* // source={{ uri: spectrumwaveform }} */}
+
 											<WebView
 												ref={accWebRef}
-												source={require("../../../assets/charts/spectrum-waveform.html")}
+												// source={require("../../../assets/charts/spectrum-waveform.html")}
+												source={{ uri: spectrumwaveform }}
 												javaScriptEnabled
 												domStorageEnabled
 												mediaPlaybackRequiresUserAction={false}
@@ -485,8 +486,8 @@ export default function ChartDetailModal({
 										<View style={styles.chartBox}>
 											<WebView
 												ref={envWebRef}
-												source={require("../../../assets/charts/spectrum-envelope-waveform.html")}
-												// source={{ uri: spectrumenvelopechart }}
+												// source={require("../../../assets/charts/spectrum-envelope-waveform.html")}
+												source={{ uri: spectrumenvelopechart }}
 												javaScriptEnabled
 												domStorageEnabled
 												mediaPlaybackRequiresUserAction={false}
