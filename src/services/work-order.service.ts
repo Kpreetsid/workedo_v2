@@ -93,9 +93,7 @@ export const workOrderImageUpload = async (image: any, user: any) => {
         console.log('Upload success:', result);
         if (result?.status) {
             ToastAndroid.show('Image uploaded successfully!', ToastAndroid.SHORT);
-            return {
-                image_path: result?.data?.[0]?.fileName,
-            };
+            return result?.data?.[0]
         }
 
         return result;

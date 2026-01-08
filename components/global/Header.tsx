@@ -16,9 +16,12 @@ interface HeaderProps {
 	showOrientation?: boolean;
 	toggleOrientation?: () => void;
 	styling?: ViewStyle;
+	showEllipses?: boolean;
+	openEllipses?: () => void;
+	ellipsesRef?: any;
 }
 
-export default function Header({ title, modal = false, dismiss, editAsset, handleEditAsset, showBack = true, showClose = false, showOrientation = false, toggleOrientation, styling }: HeaderProps) {
+export default function Header({ title, modal = false, dismiss, editAsset, handleEditAsset, showBack = true, showClose = false, showOrientation = false, toggleOrientation, styling, showEllipses = false, openEllipses, ellipsesRef }: HeaderProps) {
 	return (
 		<SafeAreaView edges={["top"]} style={styles.safeArea}>
 			<View style={[styles.headerContainer, styling]}>
@@ -60,6 +63,13 @@ export default function Header({ title, modal = false, dismiss, editAsset, handl
 							<Ionicons name="pencil" size={22} color={"#fff"} />
 						</TouchableOpacity>
 					)
+				}
+
+
+				{
+					showEllipses && <TouchableOpacity ref={ellipsesRef} onPress={openEllipses} style={styles.backButton}>
+						<Ionicons name="ellipsis-vertical" size={22} color={"#fff"} />
+					</TouchableOpacity>
 				}
 			</View>
 		</SafeAreaView>

@@ -21,3 +21,15 @@ export const approveWorkRequest = async (id: string) => {
 export const rejectWorkRequest = async (id: string, remarks: string) => {
     return await sendRequest('PATCH', `${endpoints.workOrders.rejectRequest}/${id}`, {remarks: remarks});
 };
+
+export const deleteWorkRequest = async (id: string) => {
+    return await sendRequest('DELETE', `${endpoints.workOrders.requests}/${id}`);
+};
+
+export const editWorkRequest = async (id: string, payload: any) => {
+    return await sendRequest('PUT', `${endpoints.workOrders.requests}/${id}`, payload);
+};
+
+export const getWorkRequestDetails = async (id: string) => {
+    return await sendRequest('GET', `${endpoints.workOrders.requests}/${id}`);
+}

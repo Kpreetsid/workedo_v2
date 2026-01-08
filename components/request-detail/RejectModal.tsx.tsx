@@ -11,7 +11,6 @@ interface RejectModalProps {
 }
 
 export default function RejectModal({ visible, item, onCancel, onSubmit }: RejectModalProps) {
-	console.log('item in reject = ', item);
 	const [reason, setReason] = useState("");
 	const shakeAnim = new Animated.Value(0);
 

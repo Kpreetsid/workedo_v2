@@ -1,6 +1,6 @@
 import Header from "@/components/global/Header";
 import FormInput from "@/components/create-screens/FormInput";
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View } from "react-native";
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from "react-native";
 import AssignInput from "@/components/create-screens/AssignInput";
 import Fonts from "@/constants/Typography";
 import { DropDownIcon } from "@/constants/IconProvider";
@@ -8,7 +8,7 @@ import ActionButton from "@/components/create-screens/ActionButton";
 import AssignInputContainer from "@/components/create-work-order/AssignInputContainer";
 import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import DropDownInput from "@/components/create-screens/DropDownInput";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { approveWorkRequest, createWorkOrder } from "@/src/services/work-request.service";
 import { useEffect, useRef, useState } from "react";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -51,6 +51,8 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 	const [activeDateField, setActiveDateField] = useState<any>(null);
 
 	const { user } = useAuthStore();
+
+	const workOrderImageTest = useWorkOrderStore((s) => s.attachments)
 
 	useEffect(() => {
 		if (passedData && !isLoaded) {
@@ -203,7 +205,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 			description: data.message,
 			end_date: data.end_date || new Date().toISOString().split("T")[0],
 			estimated_time: data.completion_days, // using completion_days for hours/days input
-			files: data.files || [],
+			files: data.attachments || [],
 			oldParts: null,
 			parts: data.parts?.map((p: any) => ({
 				actualQuantity: null,
@@ -229,7 +231,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 
 			wo_asset_id: data.selected_asset?.id || "",
 			wo_location_id: data.location?.id || "",
-			image_path: data.files.length > 0 ? data.files[0].image_path : "",
+			// image_path: data.attchments.length > 0 ? data.attchments : "",
 
 			// ✅ Conditionally include work_request_id
 			...(data.work_request_id && { work_request_id: data.work_request_id }),
@@ -320,7 +322,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 		console.log('Selected image: ', asset.uri);
 
 		const updatedWorkOrderImage = await workOrderImageUpload(asset, user);
-		console.log('Updated work order image: ', updatedWorkOrderImage);
+		console.log('Updated work order image: ', [updatedWorkOrderImage]);
 
 		setWorkForm("attachments", [updatedWorkOrderImage]);
 	};
@@ -458,30 +460,47 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 						onPress={() => pickImage()}
 					/>
 
-
 					{
 						useWorkOrderStore.getState().attachments.length > 0 &&
 						!imageError && (
-							<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
-								<Image
-									source={{
-										uri: `${endpoints.baseURL}work_request/${useWorkOrderStore.getState().attachments[0]?.image_path ||
-											useWorkOrderStore.getState().attachments[0]?.fileName
-											}`
-									}}
-									style={{ width: 200, height: 200, borderRadius: 8 }}
-									onError={() => setImageError(true)}
-								/>
+							<View
+								style={{
+									backgroundColor: "transparent",
+									padding: 10,
+									marginHorizontal: 20,
+									alignSelf: "flex-start",
+								}}
+							>
+								{/* Image wrapper */}
+								<View style={{ position: "relative" }}>
+									<Image
+										source={{
+											uri: `${endpoints.baseURL}work_request/${useWorkOrderStore.getState().attachments[0]?.fileName
+												}`,
+										}}
+										style={{ width: 200, height: 200, borderRadius: 8 }}
+										onError={() => setImageError(true)}
+									/>
+
+									<TouchableOpacity
+										onPress={() => {
+											setWorkForm("attachments", [])
+										}}
+										style={{
+											position: "absolute",
+											top: -8,
+											right: -8,
+											backgroundColor: "#000",
+											borderRadius: 12,
+											padding: 4,
+										}}
+									>
+										<Feather name="x" size={16} color="#fff" />
+									</TouchableOpacity>
+								</View>
 							</View>
 						)
 					}
-
-					{/* <View style={{ marginHorizontal: 0 }}>
-						<AssignInput label="Add Parts" comingFrom="newWorkOrder" required={false} onPress={() => router.push({
-							pathname: "/addParts",
-							params: { comingFrom: "newWorkOrder" }
-						})} />
-					</View> */}
 
 					<SelectParts onPress={() => router.push({
 						pathname: "/addParts",

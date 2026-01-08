@@ -350,17 +350,6 @@ Please find below the pending points for Asset/Location
     - Done
 
 
-
-
-
-
-
-
-
-
-
-
-
 Pending points for Work Request / Preventive
 
 
@@ -381,4 +370,39 @@ Pending points for Work Request / Preventive
 •	Remove “Config” button from “More” option menu.
     - Done
 •	Change Calander for PM model.
+    - Done
+
+
+
+
+Janak Review:
+
+unable to create work order. - Error
+    - Done
+
+Delete a newly created work order
+    - Unable to reproduce
+
+Work order should not be makred as complete until forms and tasks are submitted.
+    - Done
+
+Delete uploaded work order image, craete location, create asset.
+    - Done
+
+Work Request edit and delete functionality.
+    - Done
+
+Edit Asset crashing the app on production.
+    - Unable to reproduce
+
+Remove wl_ from endpoint cards in asset details page and show wireless/wired/bluetooth respecetively - look at figma.
+    - Done
+
+Settings icon figma needed on endpoints details.
+    - Please provide figma for this
+
+Missing UOM while creating create part.
+    - Done
+
+Time Waveform and Spectrum graphs now selects multiple axis.
     - Done

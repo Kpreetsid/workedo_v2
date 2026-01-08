@@ -175,9 +175,11 @@ export default function WorkOrderDetail() {
 								} else {
 									ToastAndroid.show("Failed to update status.", ToastAndroid.SHORT);
 								}
-							} catch (err) {
+							} catch (err: any) {
 								console.error("Error updating status:", err);
-								ToastAndroid.show("Error updating status.", ToastAndroid.SHORT);
+								if (!err.status) {
+									ToastAndroid.show(err.message, ToastAndroid.SHORT);
+								}
 							}
 						};
 

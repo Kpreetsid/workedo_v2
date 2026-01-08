@@ -12,6 +12,7 @@ import { DateDropDownIcon } from '@/constants/IconProvider'
 import { Image } from 'expo-image'
 import { endpoints } from '@/src/api/endpoints'
 import { useCreateAssetStore } from '@/src/store/useCreateAsset'
+import { Feather } from '@expo/vector-icons'
 
 interface createLocationParams {
 	location_data: Location;
@@ -48,7 +49,9 @@ const createLocation = () => {
 			setCreateLocationValue("title", data?.location_data?.location_name);
 			setCreateLocationValue("location_type", data?.location_data?.location_type);
 			setCreateLocationValue("description", data?.location_data?.description);
-			setCreateLocationValue("attachments", [{ image_path: data?.location_data?.image_path }]);
+			if (data?.location_data?.image_path) {
+				setCreateLocationValue("attachments", [{ image_path: data?.location_data?.image_path }]);
+			}
 
 			fetchLocationData();
 
@@ -250,13 +253,35 @@ const createLocation = () => {
 
 				{
 					useCreateLocationStore.getState().attachments.length > 0 &&
-					<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
-						<Image
-							source={{
-								uri: `${endpoints.baseURL}locations/${useCreateLocationStore.getState().attachments[0].image_path}?t=${Date.now()}`
-							}}
-							style={{ width: 200, height: 200, borderRadius: 8 }}
-						/>
+					<View style={{
+						backgroundColor: 'transparent', padding: 10, marginHorizontal: 20,
+						alignItems: "flex-start",
+					}}>
+						{/* Image wrapper */}
+						<View style={{ position: "relative" }}>
+							<Image
+								source={{
+									uri: `${endpoints.baseURL}locations/${useCreateLocationStore.getState().attachments[0].image_path}?t=${Date.now()}`
+								}}
+								style={{ width: 200, height: 200, borderRadius: 8 }}
+							/>
+
+							<TouchableOpacity
+								onPress={() => {
+									setCreateLocationValue("attachments", [])
+								}}
+								style={{
+									position: "absolute",
+									top: -8,
+									right: -8,
+									backgroundColor: "#000",
+									borderRadius: 12,
+									padding: 4,
+								}}
+							>
+								<Feather name="x" size={16} color="#fff" />
+							</TouchableOpacity>
+						</View>
 					</View>
 				}
 

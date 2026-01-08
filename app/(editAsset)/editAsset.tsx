@@ -16,6 +16,7 @@ import LocationPickerModal from '@/components/create-work-order/LocationPickerMo
 import { mapUserToLocation } from '@/src/services/location.service';
 import { Image } from 'expo-image';
 import { endpoints } from '@/src/api/endpoints';
+import { Feather } from '@expo/vector-icons';
 
 interface editAssetParams {
   asset_data: Asset;
@@ -132,7 +133,10 @@ const editAsset = () => {
       setCreateAssetValue("year", data?.asset_data?.year ?? "");
       setCreateAssetValue("description", data?.asset_data?.description ?? "");
       setCreateAssetValue("assigned_users", data?.asset_data?.userList ?? []);
-      setCreateAssetValue("attachments", [{ image_path: data?.asset_data?.image_path }]);
+
+      if (data?.asset_data?.image_path) {
+        setCreateAssetValue("attachments", [{ image_path: data?.asset_data?.image_path }]);
+      }
 
       if (data?.asset_data?.asset_build_type) {
         setCreateAssetValue(
@@ -229,7 +233,7 @@ const editAsset = () => {
       asset_id: values.asset_id,
       asset_build_type: "Not Defined",
       locationId: values.locationObject?.id,
-			image_path: values.attachments.length > 0 ? values.attachments[0].image_path : "",
+      image_path: values.attachments.length > 0 ? values.attachments[0].image_path : "",
 
       // because of backend user object has changed, applying this logic to look for user object, it can be inside nested user object sometimes.
 
@@ -498,13 +502,32 @@ const editAsset = () => {
 
               {
                 useCreateAssetStore.getState().attachments.length > 0 &&
-                <View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
-                  <Image
-                    source={{
-                      uri: `${endpoints.baseURL}assets/${useCreateAssetStore.getState().attachments[0].image_path}?t=${Date.now()}`
-                    }}
-                    style={{ width: 200, height: 200, borderRadius: 8 }}
-                  />
+                <View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20, alignItems: 'flex-start' }}>
+                  <View style={{ position: "relative" }}>
+
+                    <Image
+                      source={{
+                        uri: `${endpoints.baseURL}assets/${useCreateAssetStore.getState().attachments[0].image_path}?t=${Date.now()}`
+                      }}
+                      style={{ width: 200, height: 200, borderRadius: 8 }}
+                    />
+
+                    <TouchableOpacity
+                      onPress={() => {
+                        setCreateAssetValue("attachments", [])
+                      }}
+                      style={{
+                        position: "absolute",
+                        top: -8,
+                        right: -8,
+                        backgroundColor: "#000",
+                        borderRadius: 12,
+                        padding: 4,
+                      }}
+                    >
+                      <Feather name="x" size={16} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               }
 

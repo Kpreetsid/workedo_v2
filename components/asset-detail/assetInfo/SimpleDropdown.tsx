@@ -4,40 +4,47 @@ export function SegmentedCheckboxRow<T extends string>({
   value,
   options,
   onChange,
+  mode = "single",
 }: {
-  value: T;
+  value: T | T[];
   options: T[];
-  onChange: (val: T) => void;
+  onChange: (val: T | T[]) => void;
+  mode?: "single" | "multiple";
 }) {
+  const isActive = (opt: T) =>
+    mode === "multiple"
+      ? (value as T[]).includes(opt)
+      : value === opt;
+
+  const handlePress = (opt: T) => {
+    if (mode === "multiple") {
+      const arr = value as T[];
+      onChange(
+        arr.includes(opt)
+          ? arr.filter(v => v !== opt)
+          : [...arr, opt]
+      );
+    } else {
+      onChange(opt);
+    }
+  };
+
   return (
     <View style={styles.row}>
       {options.map((opt) => {
-        const active = opt.toLowerCase() === value.toLowerCase();
+        const active = isActive(opt);
 
         return (
           <Pressable
             key={opt}
-            onPress={() => onChange(opt)}
-            style={[
-              styles.item,
-              active && styles.itemActive,
-            ]}
+            onPress={() => handlePress(opt)}
+            style={[styles.item, active && styles.itemActive]}
           >
-            <View
-              style={[
-                styles.checkbox,
-                active && styles.checkboxActive,
-              ]}
-            >
+            <View style={[styles.checkbox, active && styles.checkboxActive]}>
               {active && <View style={styles.checkboxInner} />}
             </View>
 
-            <Text
-              style={[
-                styles.label,
-                active && styles.labelActive,
-              ]}
-            >
+            <Text style={[styles.label, active && styles.labelActive]}>
               {opt}
             </Text>
           </Pressable>
@@ -46,6 +53,7 @@ export function SegmentedCheckboxRow<T extends string>({
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   row: {

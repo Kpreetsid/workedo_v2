@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import LocationPickerModal from '@/components/create-work-order/LocationPickerModal'
 import { Image } from 'expo-image'
 import { endpoints } from '@/src/api/endpoints'
+import { Feather } from '@expo/vector-icons'
 
 interface createAssetParams {
 	asset_data: Asset;
@@ -189,7 +190,9 @@ const createAsset = () => {
 			asset_id: values.asset_id,
 			asset_build_type: "Not Defined",
 			locationId: values.locationObject?.id,
-			userIdList: values.assigned_users.map((u: any) => u.id),
+			userIdList: values.assigned_users
+				.map((u: any) => u?.user?.id ?? u?.id)
+				.filter(Boolean),
 			image_path: values.attachments.length > 0 ? values.attachments[0].image_path : "",
 		};
 
@@ -199,7 +202,7 @@ const createAsset = () => {
 			payload.parent_id = data?.asset_data?.id;
 		}
 
-		console.log('payload = ', payload);
+		console.log('payload create asset = ', payload);
 
 		try {
 			const res = await createNewAsset(payload);
@@ -445,15 +448,35 @@ const createAsset = () => {
 					setterName="setCreateAssetValue"
 				/>
 
+
 				{
 					useCreateAssetStore.getState().attachments.length > 0 &&
-					<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
-						<Image
-							source={{
-								uri: `${endpoints.baseURL}assets/${useCreateAssetStore.getState().attachments[0].image_path}?t=${Date.now()}`
-							}}
-							style={{ width: 200, height: 200, borderRadius: 8 }}
-						/>
+					<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20, alignItems: 'flex-start' }}>
+						<View style={{ position: "relative" }}>
+
+							<Image
+								source={{
+									uri: `${endpoints.baseURL}assets/${useCreateAssetStore.getState().attachments[0].image_path}?t=${Date.now()}`
+								}}
+								style={{ width: 200, height: 200, borderRadius: 8 }}
+							/>
+
+							<TouchableOpacity
+								onPress={() => {
+									setCreateAssetValue("attachments", [])
+								}}
+								style={{
+									position: "absolute",
+									top: -8,
+									right: -8,
+									backgroundColor: "#000",
+									borderRadius: 12,
+									padding: 4,
+								}}
+							>
+								<Feather name="x" size={16} color="#fff" />
+							</TouchableOpacity>
+						</View>
 					</View>
 				}
 

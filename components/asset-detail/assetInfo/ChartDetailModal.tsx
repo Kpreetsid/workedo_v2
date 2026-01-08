@@ -48,9 +48,10 @@ export default function ChartDetailModal({
 	// signal value, and axis
 	// ---------------------------
 	const selectedAxis = useAssetStore((s) => s.selectedAxis);
+	console.log('selected axis changed in modal = ', selectedAxis)
 	const selectedValueType = useAssetStore((s) => s.selectedValueType);
 
-	const [axis, setAxis] = useState<AxisType | any>(selectedAxis[0]);
+	const [axis, setAxis] = useState<any[]>([]);
 	const [signalType, setSignalType] = useState<SignalType>("acceleration");
 
 	const [activeTab, setActiveTab] = useState<"time" | "spectrum">("time");
@@ -60,6 +61,10 @@ export default function ChartDetailModal({
 	const envWebRef = useRef<WebView>(null);
 
 	const { endpointSelected } = useAssetStore();
+
+	useEffect(() => {
+		setAxis(selectedAxis)
+	}, [selectedAxis])
 
 	// ---------------------------
 	// BUILD PAYLOAD
@@ -124,15 +129,59 @@ export default function ChartDetailModal({
 		}
 	};
 
+	const normalizeAxesData = (axesData: any[]) => {
+		return axesData
+			.map((obj) => {
+				const keys = Object.keys(obj).filter(k =>
+					axis.map(a => a.toLowerCase()).includes(k.toLowerCase())
+				);
+
+				const values = keys.map(k => obj[k]);
+
+				console.log(keys)
+				console.log(values)
+
+				// const [[axis1, raw]] = Object.entries(obj);
+
+				return {
+					axis: keys[0],
+					values: values[0],
+					fs: obj.fs
+				};
+			});
+	};
+
 	const fetchWaveFormsData = async (payload: any, cancelled: boolean) => {
 		try {
 			const Res = await fetchData(payload);
+			console.log(Res?.data[0])
 			if (cancelled) return;
 
-			const data = Res?.[axis];
-			const fs = Res?.fs;
+			const axesData = Res?.data[0].axes_data ?? [];
 
-			if (!Array.isArray(data) || !fs) {
+			const normalizedAxes = normalizeAxesData(axesData || []);
+			console.log('normalizedAxes = ', normalizedAxes)
+
+			const AXIS_COLORS: Record<string, string> = {
+				axial: "#ff0000",
+				horizontal: "#01d711",
+				vertical: "#1237ff",
+			};
+
+			let datasets: any = normalizedAxes.map(a => ({
+				axis: a.axis,
+				data: a.values,
+				fs: a.fs,
+				color: AXIS_COLORS[a.axis.toLowerCase()],
+			}));
+
+			if (activeTab === 'spectrum') {
+				datasets['x_axis_spectrum_data'] = Res?.data[0].x_axis_spectrum_data;
+			}
+
+			console.log('data set = ', datasets)
+
+			if (!Array.isArray(normalizedAxes[0]?.values)) {
 				console.warn("Invalid data time waveform ", Res);
 				return;
 			}
@@ -141,39 +190,32 @@ export default function ChartDetailModal({
 
 			setTimeout(() => {
 				if (activeTab === "time") {
-
 					accWebRef.current?.postMessage(
 						JSON.stringify({
 							type: activeTab,
-							axis,
-							data,
-							fs,
-							audio_base64: Res?.audio_base64,
-							audio_mime: Res?.audio_mime,
+							datasets,
 							yLabel:
-								(
-									signalType === "acceleration"
-										? "Amplitude (g)"
-										: signalType === "velocity"
-											? "Amplitude (mm/sec)"
-											: "Amplitude (micron)"
-								)
-						})
-					);
-				} else {
-					accWebRef.current?.postMessage(
-						JSON.stringify({
-							type: activeTab,
-							axis: axis, // Vertical / Horizontal / Axial
-							amplitude: data, // array of amplitudes
-							xAxis: Res?.x_axis_spectrum_data, // frequency bins
-							yLabel: (
 								signalType === "acceleration"
 									? "Amplitude (g)"
 									: signalType === "velocity"
 										? "Amplitude (mm/sec)"
-										: "Amplitude (micron)"
-							)
+										: "Amplitude (micron)",
+							audio_base64: Res?.audio_base64,
+							audio_mime: Res?.audio_mime,
+						})
+					);
+
+				} else {
+					accWebRef.current?.postMessage(
+						JSON.stringify({
+							type: "spectrum",
+							datasets, // same datasets
+							xAxis: Res?.data[0].x_axis_spectrum_data,
+							yLabel: signalType === "acceleration"
+								? "Amplitude (g)"
+								: signalType === "velocity"
+									? "Amplitude (mm/sec)"
+									: "Amplitude (micron)",
 						})
 					);
 
@@ -185,14 +227,34 @@ export default function ChartDetailModal({
 
 		try {
 			const env = await getEnvelopeData(payload);
-			// console.log(env)
-
+			console.log(env)
 			if (cancelled) return;
 
-			const data = env?.[axis];
-			const fs = env?.fs;
+			const axesData = env?.data[0].axes_data ?? [];
 
-			if (!Array.isArray(data) || !fs) {
+			const normalizedAxes = normalizeAxesData(axesData || []);
+			console.log('normalizedAxes = ', normalizedAxes)
+
+			const AXIS_COLORS: Record<string, string> = {
+				axial: "#ff0000",
+				horizontal: "#01d711",
+				vertical: "#1237ff",
+			};
+
+			let datasets: any = normalizedAxes.map(a => ({
+				axis: a.axis,
+				data: a.values,
+				fs: a.fs,
+				color: AXIS_COLORS[a.axis.toLowerCase()],
+			}));
+
+			if (activeTab === 'spectrum') {
+				datasets['x_axis_spectrum_data'] = env?.data[0].x_axis_spectrum_data;
+			}
+
+			console.log('data set = ', datasets)
+
+			if (!Array.isArray(normalizedAxes[0]?.values)) {
 				console.warn("Invalid data envelope ", env);
 				return;
 			}
@@ -201,10 +263,12 @@ export default function ChartDetailModal({
 				envWebRef.current?.postMessage(
 					JSON.stringify({
 						type: activeTab,
-						axis,
-						data,
-						fs,
-						yLabel: 'g'
+						data: datasets,   // array of axes datasets
+						xAxis:
+							activeTab === "spectrum"
+								? env?.data[0].x_axis_spectrum_data
+								: undefined,
+						yLabel: "g"
 					})
 				);
 			}, 300);
@@ -301,10 +365,12 @@ export default function ChartDetailModal({
 						flexDirection: orientation === "landscape" ? "row" : "column",
 						gap: 10,
 					}}>
+
 						<SegmentedCheckboxRow
+							mode="multiple"
 							value={axis}
 							options={["Axial", "Horizontal", "Vertical"]}
-							onChange={(val) => setAxis(val as AxisType)}
+							onChange={(val) => setAxis(val as AxisType[])}
 						/>
 
 						{
@@ -312,70 +378,15 @@ export default function ChartDetailModal({
 						}
 
 						<SegmentedCheckboxRow
+							mode="single"
 							value={signalType}
-							options={["Acceleration", "Velocity", "Displacement"]}
+							options={["acceleration", "velocity", "displacement"]}
 							onChange={(val) =>
-								setSignalType(val.toLowerCase() as SignalType)
+								setSignalType(val as SignalType)
 							}
 						/>
 
 					</View>
-
-
-					{/* {
-						orientation === "portrait" &&
-						(
-							<>
-
-								<View style={styles.selectorRow}>
-									{(["acceleration", "velocity", "displacement"] as SignalType[]).map(
-										(type) => (
-											<Pressable
-												key={type}
-												onPress={() => setSignalType(type)}
-												style={[
-													styles.selectorBtn,
-													signalType === type && styles.activeBtn,
-												]}
-											>
-												<Text
-													style={[
-														styles.selectorText,
-														signalType === type && styles.activeText,
-													]}
-												>
-													{type}
-												</Text>
-											</Pressable>
-										)
-									)}
-								</View>
-
-								<View style={styles.selectorRow}>
-									{(["Vertical", "Horizontal", "Axial"] as AxisType[]).map((a) => (
-										<Pressable
-											key={a}
-											onPress={() => setAxis(a)}
-											style={[
-												styles.selectorBtn,
-												axis === a && styles.activeBtn,
-											]}
-										>
-											<Text
-												style={[
-													styles.selectorText,
-													axis === a && styles.activeText,
-												]}
-											>
-												{a}
-											</Text>
-										</Pressable>
-									))}
-								</View>
-							</>
-						)
-					} */}
-
 
 					{/* BODY */}
 					<View style={styles.body}>

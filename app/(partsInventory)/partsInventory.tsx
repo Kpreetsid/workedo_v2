@@ -44,7 +44,7 @@ export default function PartsInventory() {
 
 	const handleDeletePart = async (item: Part) => {
 		Alert.alert(
-			"Delete Gateway",
+			"Delete Part",
 			`Are you sure you want to delete ${item?.part_name}?`,
 			[
 				{

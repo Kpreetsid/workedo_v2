@@ -148,6 +148,7 @@ export default function EndpointCards({ asset_data }: Props) {
 			}
 		>
 			{endpoints.map((ep) => {
+				console.log('ep e p= ', ep)
 				const isSelected = selectedSensor?.id === ep.id;
 				return (
 					<Pressable key={ep.id} onPress={() => handleSelect(ep)}>
@@ -163,7 +164,23 @@ export default function EndpointCards({ asset_data }: Props) {
 							]}
 						>
 							<View style={styles.cardHeader}>
-								<Text style={styles.cardMac}>{ep.mac_id || "No Sensor Mapped"}</Text>
+								<Text style={styles.cardMac}>
+									{
+										ep.mac_id ?
+										(
+											ep.mac_id.startsWith('wl_') ? ep.mac_id.split('wl_') :
+												(
+													ep.mac_id.startsWith('w_') ?
+														ep.mac_id.split('w_')
+														:
+														ep.mac_id.split('bl_')
+												)
+												|| "No Sensor Mapped"
+										)
+										:
+										"No Sensor Mapped"
+									}
+								</Text>
 								<Popover
 									isVisible={openPopoverId === Number(ep.id)}
 									onRequestClose={() => setOpenPopoverId(null)}
@@ -209,7 +226,7 @@ export default function EndpointCards({ asset_data }: Props) {
 								</Popover>
 							</View>
 
-							<View>
+							<View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
 								<View style={styles.kindRow}>
 									<View
 										style={[
@@ -221,6 +238,28 @@ export default function EndpointCards({ asset_data }: Props) {
 										{ep.online === "True" ? "Online" : "Offline"}
 									</Text>
 								</View>
+
+								<View style={styles.kindRow}>
+									<Text style={styles.kindText}>
+										{
+
+											ep.mac_id &&
+											(
+												ep.mac_id && ep.mac_id.startsWith('wl_') ?
+													"Wireless"
+													:
+													(
+														ep.mac_id.startsWith('w_')
+															?
+															"Wired"
+															:
+															"Bluetooth"
+													)
+											)
+										}
+									</Text>
+								</View>
+
 							</View>
 
 							<View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>

@@ -78,6 +78,13 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 		};
 	}, []);
 
+
+	useEffect(() => {
+		if(selectedAxis) {
+			console.log('in changing selected axis = ', selectedAxis)
+		}
+	}, [selectedAxis])
+
 	const fetchEndpoints = async () => {
 		// console.log('fetching endpoints');
 

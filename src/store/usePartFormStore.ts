@@ -10,6 +10,7 @@ interface PartFormState {
   available_quantity: string;
   min_stock_quantity: string;
   unit_cost: string;
+  uom: string;
   setPartFormValue: (key: keyof PartFormState, value: any) => void;
   resetPartForm: () => void;
 }
@@ -24,6 +25,7 @@ export const usePartFormStore = create<PartFormState>((set) => ({
   available_quantity: "",
   min_stock_quantity: "",
   unit_cost: "",
+  uom: "",
 
   setPartFormValue: (key, value) =>
     set((state) => ({
@@ -40,5 +42,6 @@ export const usePartFormStore = create<PartFormState>((set) => ({
       available_quantity: "",
       min_stock_quantity: "",
       unit_cost: "",
+      uom: ""
     }),
 }));

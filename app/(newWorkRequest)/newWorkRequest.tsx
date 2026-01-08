@@ -1,6 +1,6 @@
 import Header from "@/components/global/Header";
 import FormInput from "@/components/create-screens/FormInput";
-import { Pressable, ScrollView, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import AssignInput from "@/components/create-screens/AssignInput";
 import Fonts from "@/constants/Typography";
 import { DropDownIcon } from "@/constants/IconProvider";
@@ -8,32 +8,86 @@ import ActionButton from "@/components/create-screens/ActionButton";
 import AssignInputContainer from "@/components/create-work-order/AssignInputContainer";
 import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import DropDownInput from "@/components/create-screens/DropDownInput";
-import { Ionicons } from "@expo/vector-icons";
-import { createWorkOrder, createWorkRequest } from "@/src/services/work-request.service";
+import { Feather, Ionicons } from "@expo/vector-icons";
+import { createWorkOrder, createWorkRequest, editWorkRequest } from "@/src/services/work-request.service";
 import { useEffect, useRef, useState } from "react";
 import { getSOPs } from "@/src/services/preventive.service";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import DatePicker from "@/components/global/DatePicker";
 import moment from "moment";
 import { AssignSection } from "@/components/create-work-order/AssignSection";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 import { FormField } from "@/components/global/FormField";
 import AssignSectionNew from "@/components/create-work-order/AssignSectionNew";
 import { Image } from "expo-image";
 import { endpoints } from "@/src/api/endpoints";
+import { WorkRequest } from "@/src/types/workRequest";
 
 export default function NewWorkRequest() {
 	const router = useRouter();
+	const params = useLocalSearchParams();
+	// 🔒 SAFE PARSE
+	const [data, setData] = useState<{ passedData: WorkRequest | null; isEdit: string | undefined }>({ passedData: null, isEdit: undefined });
+	const [initialized, setInitialized] = useState(false);
 	const { setWorkRequestForm, resetWorkRequestForm } = useWorkRequestStore();
 	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 	const [activeDateField, setActiveDateField] = useState<"start_date" | "end_date" | null>(null);
+
+	const [requestId, setRequestId] = useState<string>("");
 
 	useEffect(() => {
 		return () => {
 			resetWorkRequestForm();
 		}
 	}, [])
+
+	// typed, parsed object
+	useEffect(() => {
+		if (initialized) return;
+
+		const { passedData, isEdit } = params as { passedData?: string; isEdit?: string };
+
+		if (!passedData) {
+			console.warn("❌ passedData: passedData param missing");
+			setData({ passedData: null, isEdit: undefined });
+			return;
+		}
+
+		try {
+			const parsed = JSON.parse(passedData) as WorkRequest;
+			console.log('parsed now = ', parsed)
+			setData({
+				passedData: parsed,
+				isEdit,
+			});
+			console.log("Parsed Data:", { passedData: parsed, isEdit });
+		} catch (e) {
+			console.error("❌ editAsset: failed to parse asset_data", e);
+			setData({ passedData: null, isEdit: undefined });
+		}
+	}, [params]);
+
+	useEffect(() => {
+		if (!data) return; // ← only return if data isn't ready
+		console.log('data parsed = ', data)
+
+		if (!initialized && data.passedData) {
+			setRequestId(data?.passedData?.id);
+			setWorkRequestForm("title", data?.passedData?.title);
+			setWorkRequestForm("message", data?.passedData?.description);
+			setWorkRequestForm("location", data?.passedData?.location_id);
+			setWorkRequestForm("selected_asset", data?.passedData?.asset_id);
+			setWorkRequestForm("nature_of_work", data?.passedData?.problemType ?? null);
+			setWorkRequestForm("priority", data?.passedData?.priority ?? "");
+
+			if (data?.passedData?.files?.length! > 0) {
+				setWorkRequestForm("attachments", data?.passedData?.files);
+			}
+
+			setInitialized(true); // ← only set here
+		}
+	}, [data])
 
 	const handleSubmit = async () => {
 		const data: any = useWorkRequestStore.getState();
@@ -45,8 +99,8 @@ export default function NewWorkRequest() {
 			"message",
 			"location",
 			"selected_asset",
-			"nature_of_work",
-			"priority",
+			// "nature_of_work",
+			// "priority",
 		];
 
 		for (const field of required) {
@@ -74,13 +128,25 @@ export default function NewWorkRequest() {
 		console.log("📦 Final Work Request Payload:", payload);
 
 		try {
-			const res = await createWorkRequest(payload);
-			console.log("✅ Response:", res);
-			if (res?.status) {
-				ToastAndroid.show("Work Order created successfully!", ToastAndroid.SHORT);
-				useWorkRequestStore.getState().resetWorkRequestForm();
-				router.back();
+			if (params) {
+				console.log('data.id = ', requestId)
+				const res = await editWorkRequest(requestId, payload);
+				console.log("✅ Response:", res);
+				if (res?.status) {
+					ToastAndroid.show("Work Order updated successfully!", ToastAndroid.SHORT);
+					useWorkRequestStore.getState().resetWorkRequestForm();
+					router.back();
+				}
+			} else {
+				const res = await createWorkRequest(payload);
+				console.log("✅ Response:", res);
+				if (res?.status) {
+					ToastAndroid.show("Work Order created successfully!", ToastAndroid.SHORT);
+					useWorkRequestStore.getState().resetWorkRequestForm();
+					router.back();
+				}
 			}
+
 		} catch (error) {
 			console.error("❌ Error creating work order:", error);
 			ToastAndroid.show("Failed to create work order!", ToastAndroid.SHORT);
@@ -89,7 +155,7 @@ export default function NewWorkRequest() {
 
 	return (
 		<View style={{ backgroundColor: "#F5F7FA", flex: 1 }}>
-			<Header title="New Work Request" />
+			<Header title={params ? "Edit Work Request" : "New Work Request"} />
 
 			<KeyboardAwareScrollView bottomOffset={30} style={{ backgroundColor: "#F5F7FA" }}>
 				<ScrollView style={styles.container}>
@@ -172,17 +238,39 @@ export default function NewWorkRequest() {
 
 					{
 						useWorkRequestStore.getState().attachments.length > 0 &&
-						<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20 }}>
-							<Image
-								source={{
-									uri: `${endpoints.baseURL}work_request/${useWorkRequestStore.getState().attachments[0]?.fileName}`
-								}}
-								style={{ width: 200, height: 200, borderRadius: 8 }}
-							/>
+						<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20, alignItems: 'flex-start' }}>
+							<View style={{ position: "relative" }}>
+								<Image
+									source={{
+										uri: `${endpoints.baseURL}work_request/${useWorkRequestStore.getState().attachments[0]?.fileName}`
+									}}
+									style={{ width: 200, height: 200, borderRadius: 8 }}
+								/>
+
+								<TouchableOpacity
+									onPress={() => {
+										setWorkRequestForm("attachments", [])
+									}}
+									style={{
+										position: "absolute",
+										top: -8,
+										right: -8,
+										backgroundColor: "#000",
+										borderRadius: 12,
+										padding: 4,
+									}}
+								>
+									<Feather name="x" size={16} color="#fff" />
+								</TouchableOpacity>
+							</View>
 						</View>
 					}
 
-					<ActionButton onPress={handleSubmit} label="Create Work Request" buttonStyle={styles.submitBtn} />
+					<ActionButton
+						onPress={handleSubmit}
+						label={params ? "Update Work Request" : "Create Work Request"}
+						buttonStyle={styles.submitBtn}
+					/>
 				</ScrollView>
 			</KeyboardAwareScrollView>
 		</View>

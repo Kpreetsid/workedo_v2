@@ -45,7 +45,8 @@ export default function CreatePart() {
 			setPartFormValue("part_number", data?.part_number);
 			setPartFormValue("available_quantity", String(data?.quantity) ?? "");
 			setPartFormValue("min_stock_quantity", String(data?.min_quantity) ?? "");
-			setPartFormValue("unit_cost", data?.unit);
+			setPartFormValue("unit_cost", String(data?.cost) ?? "");
+			setPartFormValue("uom", data?.unit);
 
 			// finally mark as loaded ONCE
 			setPartFormValue("isLoaded", true);
@@ -81,7 +82,7 @@ export default function CreatePart() {
 			description: data.description.trim(),
 			quantity: Number(data.available_quantity) || 0,
 			min_quantity: Number(data.min_stock_quantity) || 0,
-			unit: data.unit_cost.trim(), // if “unit” represents size/type (like kg, pcs)
+			unit: data.uom,
 			cost: Number(data.unit_cost) || 0,
 			location_id: data.location?.id || "",
 		};
@@ -112,7 +113,7 @@ export default function CreatePart() {
 
 	return (
 		<>
-			<Header title="Create Part" />
+			<Header title={params ? "Edit Part" : "Create Part"} />
 
 			<KeyboardAwareScrollView bottomOffset={30} style={{ backgroundColor: '#F5F7FA' }}>
 
@@ -200,6 +201,15 @@ export default function CreatePart() {
 				/>
 
 				<FormField
+					label="Unit of Measurement (UOM)"
+					placeholder="Enter UOM"
+					field="uom"
+					store={usePartFormStore}
+					setterName="setPartFormValue"
+					styles={{ paddingHorizontal: 25 }}
+				/>
+
+				<FormField
 					label="Unit Cost"
 					placeholder="Enter Cost"
 					field="unit_cost"
@@ -209,7 +219,7 @@ export default function CreatePart() {
 					showKeyboardType="numeric"
 				/>
 
-				<ActionButton label="Submit" onPress={handleSubmit} />
+				<ActionButton label={params? "Update" : "Submit"} onPress={handleSubmit} />
 			</KeyboardAwareScrollView>
 		</>
 	);

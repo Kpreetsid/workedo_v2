@@ -45,6 +45,9 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 		// MAC + SENSOR TYPE
 		// -----------------------
 		const macId = data.mac_id;
+		console.log('mac id here = ', macId)
+
+		if(!macId) return;
 
 		if (typeof macId === "string") {
 			if (macId.startsWith("wl_")) {

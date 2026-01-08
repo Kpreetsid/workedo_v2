@@ -49,30 +49,27 @@
 
 		function createWaveform(payload) {
 			const ctx = document.getElementById("chart").getContext("2d");
+			const fs = payload.datasets[0].fs;
 
-			const fs = payload.fs;       // sampling frequency
-			const rawData = payload.data;
+			const datasets = payload.datasets.map(ds => {
+				const points = ds.data.map((y, i) => ({
+					x: i / fs,
+					y
+				}));
 
-			// Convert samples → time-domain points
-			const points = rawData.map((y, i) => ({
-				x: i / fs,                // time (seconds)
-				y
-			}));
+				return {
+					label: ds.axis,
+					data: points,
+					borderColor: ds.color,
+					borderWidth: 1,
+					pointRadius: 0,
+					tension: 0
+				};
+			});
 
 			chart = new Chart(ctx, {
 				type: "line",
-				data: {
-					datasets: [
-						{
-							label: payload.axis || "Waveform",
-							data: points,
-							borderColor: "#000069",
-							borderWidth: 1,
-							pointRadius: 0,
-							tension: 0
-						}
-					]
-				},
+				data: { datasets },
 				options: {
 					responsive: true,
 					maintainAspectRatio: false,
@@ -95,49 +92,32 @@
 							JSON.stringify({
 								type: "POINT_TAP",
 								payload: {
-									x: point.x,        // time or Hz
-									y: point.y,        // amplitude
+									x: point.x,
+									y: point.y,
 									axis: dataset.label
 								}
 							})
 						);
 					},
 
-
 					scales: {
 						x: {
 							type: "linear",
-							title: {
-								display: true,
-								text: "Time (s)"
-							},
-							grid: {
-								display: false
-							}
+							title: { display: true, text: "Time (s)" },
+							grid: { display: false }
 						},
 						y: {
-							title: {
-								display: true,
-								text: payload.yLabel || ""
-							}
+							title: { display: true, text: payload.yLabel || "" }
 						}
 					},
 
 					plugins: {
-						legend: { display: false },
-
+						legend: { display: false }, // ✅ show axis legend now
 						zoom: {
-							pan: {
-								enabled: true,
-								mode: "x"
-							},
+							pan: { enabled: true, mode: "x" },
 							zoom: {
-								pinch: {
-									enabled: true
-								},
-								wheel: {
-									enabled: false   // ❌ disable wheel for RN
-								},
+								pinch: { enabled: true },
+								wheel: { enabled: false },
 								mode: "x"
 							}
 						}

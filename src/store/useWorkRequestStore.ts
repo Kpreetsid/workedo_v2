@@ -8,7 +8,7 @@ export interface WorkRequestFormData {
 	nature_of_work: string;
 	priority: string;
 	completion_days: string;
-	files: any[];
+	attachments: any[];
 }
 
 interface WorkRequestStore {
@@ -29,8 +29,8 @@ export const useWorkRequestStore = create<WorkRequestStore>((set) => ({
 	message: "",
 	location: null,
 	selected_asset: null,
-	nature_of_work: "",
-	priority: "",
+	nature_of_work: "General",
+	priority: "None",
 	completion_days: "",
 	attachments: [],
 

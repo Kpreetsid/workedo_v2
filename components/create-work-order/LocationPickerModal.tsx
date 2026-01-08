@@ -74,6 +74,7 @@ export default function LocationPickerModal({ comingFrom, visible, onClose }: { 
 			setWorkForm("assigned_users", []);
 		} else if (comingFrom === "newWorkRequest") {
 			setWorkRequestForm("location", item);
+			setWorkRequestForm("selected_asset", null);
 		} else if (comingFrom === "createPart") {
 			setPartFormValue("location", item);
 		} else if (comingFrom === "createPreventive") {

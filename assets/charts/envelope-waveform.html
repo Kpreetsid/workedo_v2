@@ -46,32 +46,33 @@
 	<script>
 		let chart;
 
-		function createWaveform(payload) {
+		function createEnvelope(payload) {
 			const ctx = document.getElementById("chart").getContext("2d");
+			const datasets = payload.data;
+			const yLabel = payload.yLabel || "";
 
-			const fs = payload.fs;       // sampling frequency
-			const rawData = payload.data;
+			if (!Array.isArray(datasets) || datasets.length === 0) return;
 
-			// Convert samples → time-domain points
-			const points = rawData.map((y, i) => ({
-				x: i / fs,                // time (seconds)
-				y
+			// All axes share same fs (assumed)
+			const fs = datasets[0].fs;
+
+			const chartDatasets = datasets.map(ds => ({
+				label: ds.axis,
+				data: ds.data.map((y, i) => ({
+					x: i / fs,
+					y
+				})),
+				borderColor: ds.color,
+				borderWidth: 1,
+				pointRadius: 0,
+				tension: 0
 			}));
+
+			if (chart) chart.destroy();
 
 			chart = new Chart(ctx, {
 				type: "line",
-				data: {
-					datasets: [
-						{
-							label: payload.axis || "Waveform",
-							data: points,
-							borderColor: "#000069",
-							borderWidth: 1,
-							pointRadius: 0,
-							tension: 0
-						}
-					]
-				},
+				data: { datasets: chartDatasets },
 				options: {
 					responsive: true,
 					maintainAspectRatio: false,
@@ -83,26 +84,6 @@
 						intersect: false
 					},
 
-					onClick: (evt, elements) => {
-						if (!elements.length) return;
-
-						const el = elements[0];
-						const dataset = chart.data.datasets[el.datasetIndex];
-						const point = dataset.data[el.index];
-
-						window.ReactNativeWebView?.postMessage(
-							JSON.stringify({
-								type: "POINT_TAP",
-								payload: {
-									x: point.x,        // time or Hz
-									y: point.y,        // amplitude
-									axis: dataset.label
-								}
-							})
-						);
-					},
-
-
 					scales: {
 						x: {
 							type: "linear",
@@ -110,33 +91,23 @@
 								display: true,
 								text: "Time (s)"
 							},
-							grid: {
-								display: false
-							}
+							grid: { display: false }
 						},
 						y: {
 							title: {
 								display: true,
-								text: payload.yLabel || ""
+								text: yLabel
 							}
 						}
 					},
 
 					plugins: {
-						legend: { display: false },
-
+						legend: { display: true }, // ✅ envelope needs legend
 						zoom: {
-							pan: {
-								enabled: true,
-								mode: "x"
-							},
+							pan: { enabled: true, mode: "x" },
 							zoom: {
-								pinch: {
-									enabled: true
-								},
-								wheel: {
-									enabled: false   // ❌ disable wheel for RN
-								},
+								pinch: { enabled: true },
+								wheel: { enabled: false },
 								mode: "x"
 							}
 						}
@@ -154,15 +125,14 @@
 			}
 
 			if (payload.type === "time") {
-				if (chart) chart.destroy();
-				createWaveform(payload);
+				createEnvelope(payload);
 			}
 		}
 
-		// 🔴 Required for React Native WebView
 		document.addEventListener("message", handleMessage);
 		window.addEventListener("message", handleMessage);
 	</script>
+
 </body>
 
 </html>
