@@ -87,6 +87,8 @@
 					scales: {
 						y: {
 							beginAtZero: true,
+							min: 0,
+							max: payload.maxVertical,
 							suggestedMax: payload.maxY > 0 ? payload.maxY : 1,
 							ticks: {
 								stepSize: 1,

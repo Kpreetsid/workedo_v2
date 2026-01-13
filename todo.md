@@ -406,3 +406,18 @@ Missing UOM while creating create part.
 
 Time Waveform and Spectrum graphs now selects multiple axis.
     - Done
+
+
+
+8th January 2026
+
+Janak review
+1. Pie charts - click to view data on graph - Done
+2. Planned vs Unplanned graph - Done
+3. Monthly/weekly (both on pdm and cmms) - Done
+4. Check acc spectrum envelope graph peak values - not matching with dashboard - Unable to see the issue.
+5. Timestamp on spectrum graphs same as dashboard - Done
+6. Show legends on spectrum graphs. - Done
+7. New API for envelope play (analyse button on dashboard) - Unable to implement as admin panel spectrum graphs are not loading, so I can't check this API.
+8. Edit endpoint - show non editable inputs as dim same as edit profile. - Done
+9. mount_material and mount_type, both are optional inside attach sensor. - Done

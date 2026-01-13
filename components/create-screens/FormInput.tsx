@@ -16,9 +16,10 @@ interface FormInputProps extends TextInputProps {
 	labelStyle?: TextStyle;
 	inputStyle?: TextStyle;
 	showKeyboardType?: string;
+	readOnly?: boolean;
 }
 
-const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", selectedPart, showKeyboardType, setSelectedPart, containerStyle, labelStyle, inputStyle, inputContainer, onPress, ...textInputProps }) => {
+const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", selectedPart, showKeyboardType, setSelectedPart, containerStyle, labelStyle, inputStyle, inputContainer, onPress, readOnly = false, ...textInputProps }) => {
 
 	return (
 		<>
@@ -30,8 +31,9 @@ const FormInput: FC<FormInputProps> = ({ label, required = true, type = "text", 
 							{required && <Text style={styles.asterisk}>*</Text>}
 						</View>
 
-						<Pressable style={[styles.field, inputContainer]} onPress={onPress}>
+						<Pressable style={[styles.field, inputContainer, readOnly && { backgroundColor: "#F6F4FF" }]} onPress={onPress}>
 							<TextInput
+								readOnly={readOnly}
 								keyboardType={showKeyboardType ? (showKeyboardType as any) : "default"}
 								style={[styles.inputField, inputStyle, (label === "Message" || label === "Description") && styles.messageInput]}
 								placeholderTextColor="#6B788899"

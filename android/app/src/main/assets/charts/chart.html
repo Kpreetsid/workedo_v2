@@ -192,7 +192,27 @@
 					},
 
 					plugins: {
-						legend: { display: false },
+						legend: {
+							display: true,
+							position: "top",
+							align: "center",
+
+							labels: {
+								color: "#45515C",
+								font: {
+									family: "system-ui, -apple-system, BlinkMacSystemFont",
+									size: 12,
+									weight: "500",
+								},
+
+								boxWidth: 10,
+								boxHeight: 10,
+								padding: 16,
+
+								usePointStyle: true,   // 👈 circle instead of square
+								pointStyle: "circle",
+							},
+						},
 
 						zoom: {
 							pan: {

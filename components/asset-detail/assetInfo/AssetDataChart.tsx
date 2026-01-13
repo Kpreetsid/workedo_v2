@@ -93,8 +93,8 @@ export default function AssetDataChart({
 			<WebView
 				ref={ref}
 				originWhitelist={["*"]}
-				// source={require("../../../assets/charts/chart.html")}
-				source={{ uri: chartUrl }}
+				source={require("../../../assets/charts/chart.html")}
+				// source={{ uri: chartUrl }}
 
 				javaScriptEnabled={true}
 				domStorageEnabled={true}
@@ -155,7 +155,7 @@ export default function AssetDataChart({
 
 const styles = StyleSheet.create({
 	wrapper: {
-		height: 200,
+		height: 220,
 		marginHorizontal: 20,
 		marginTop: 20,
 		borderRadius: 10,

@@ -12,6 +12,12 @@ export default function WoPriority() {
 	const [hidden, setHidden] = useState<string[]>([]);
 	const [noData, setNoData] = useState(false)
 
+	const [selectedSlice, setSelectedSlice] = useState<{
+		text: string;
+		value: number;
+		color: string;
+	} | null>(null);
+
 	const [rawPieData, setRawPieData] = useState([]);
 	const [chartDataFinal, setChartDataFinal] = useState([]);
 
@@ -22,7 +28,7 @@ export default function WoPriority() {
 	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
-		if(childAssets.length > 0) {
+		if (childAssets.length > 0) {
 			fetchWoPriority();
 		}
 	}, [childAssets, startDate])
@@ -154,6 +160,27 @@ export default function WoPriority() {
 		}
 	}, [chartDataFinal])
 
+	// STEP 2: add onPress to pie slices
+	const pieDataWithPress =
+		chartDataFinal.length > 0
+			? chartDataFinal.map((item: any) => ({
+				...item,
+				onPress: () => {
+					setSelectedSlice({
+						text: item.text,
+						value: item.value,
+						color: item.color,
+					});
+				},
+			}))
+			: [
+				{
+					text: "",
+					value: 1,
+					color: "#B0B0B0",
+				},
+			];
+
 	return (
 		<View style={styles.container}>
 			<View style={styles.cardHeader}>
@@ -170,7 +197,7 @@ export default function WoPriority() {
 					</View>
 				)}
 
-				{
+				{/* {
 					chartDataFinal.length > 0 ?
 						<PieChart
 							data={chartDataFinal}
@@ -203,7 +230,44 @@ export default function WoPriority() {
 							backgroundColor="transparent"
 							isAnimated
 						/>
-				}
+				} */}
+
+				<View
+					style={{
+						width: 170, // radius * 2
+						height: 170,
+						position: "relative",
+						justifyContent: "center",
+						alignItems: "center",
+					}}
+				>
+					<PieChart
+						data={pieDataWithPress}
+						donut
+						radius={85}
+						innerRadius={50}
+						innerCircleColor="#FFFFFF"
+						focusOnPress={false}
+						showText={false}
+						strokeWidth={8}
+						strokeColor="#FFFFFF"
+						backgroundColor="transparent"
+						isAnimated
+					/>
+
+					{selectedSlice && chartDataFinal.length > 0 && (
+						<View style={styles.centerOverlay}>
+							<View
+								style={[
+									styles.centerDot,
+									{ backgroundColor: selectedSlice.color },
+								]}
+							/>
+							<Text style={styles.centerLabel}>{selectedSlice.text}</Text>
+							<Text style={styles.centerValue}>{selectedSlice.value}</Text>
+						</View>
+					)}
+				</View>
 
 
 				<View>
@@ -360,4 +424,34 @@ const styles = StyleSheet.create({
 		textAlign: "center",
 		paddingHorizontal: 20,
 	},
+	centerOverlay: {
+		position: "absolute",
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		justifyContent: "center",
+		alignItems: "center",
+		pointerEvents: "none", // CRITICAL
+	},
+
+	centerDot: {
+		width: 10,
+		height: 10,
+		borderRadius: 5,
+		marginBottom: 6,
+	},
+
+	centerLabel: {
+		fontSize: 12,
+		fontFamily: Fonts.medium,
+		color: "#6B7280",
+	},
+
+	centerValue: {
+		fontSize: 18,
+		fontFamily: Fonts.semiBold,
+		color: "#201F23",
+	},
+
 });

@@ -19,6 +19,7 @@ import { useAssetStore } from "@/src/store/useAssetStore";
 import Header from "@/components/global/Header";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { SegmentedCheckboxRow } from "./SimpleDropdown";
+import Fonts from "@/constants/Typography";
 
 interface ChartDetailModalProps {
 	visible: boolean;
@@ -42,6 +43,7 @@ export default function ChartDetailModal({
 	selectedPoint,
 	asset_data,
 }: ChartDetailModalProps) {
+	console.log('selectedPoint on modal = ', selectedPoint)
 	const [orientation, setOrientation] = useState("portrait");
 
 	// ---------------------------
@@ -138,8 +140,8 @@ export default function ChartDetailModal({
 
 				const values = keys.map(k => obj[k]);
 
-				console.log(keys)
-				console.log(values)
+				// console.log(keys)
+				// console.log(values)
 
 				// const [[axis1, raw]] = Object.entries(obj);
 
@@ -154,7 +156,7 @@ export default function ChartDetailModal({
 	const fetchWaveFormsData = async (payload: any, cancelled: boolean) => {
 		try {
 			const Res = await fetchData(payload);
-			console.log(Res?.data[0])
+			console.log('all data = ', Res?.data[0])
 			if (cancelled) return;
 
 			const axesData = Res?.data[0].axes_data ?? [];
@@ -223,6 +225,13 @@ export default function ChartDetailModal({
 			}, 300);
 		} catch (er) {
 			console.log(er)
+			setDetailLoading(false)
+			accWebRef.current?.postMessage(
+				JSON.stringify({
+					type: "error",
+					message: "No data found for any of the requested axes/timestamps.",
+				})
+			);
 		}
 
 		try {
@@ -274,6 +283,13 @@ export default function ChartDetailModal({
 			}, 300);
 		} catch (er) {
 			console.log(er)
+			setDetailLoading(false)
+			envWebRef.current?.postMessage(
+				JSON.stringify({
+					type: "error",
+					message: "No data found for any of the requested axes/timestamps.",
+				})
+			);
 		}
 	}
 
@@ -388,6 +404,10 @@ export default function ChartDetailModal({
 
 					</View>
 
+					<Text style={{ paddingHorizontal: 25, fontSize: 14, fontFamily: Fonts.bold, color: "#1a237e", textAlign: "left", marginTop: 0 }}>
+						Timestamp: {selectedPoint?.timestamp || ''}
+					</Text>
+
 					{/* BODY */}
 					<View style={styles.body}>
 
@@ -428,9 +448,10 @@ export default function ChartDetailModal({
 								{/* ENVELOPE */}
 								<View style={styles.chartBlock}>
 									<Text style={styles.chartTitle}>
-										{
+										{/* {
 											String(signalType).charAt(0).toUpperCase() + String(signalType).slice(1)
-										}
+										} */}
+										Acceleration
 										{" "}
 										Timewave
 										{" "}
@@ -488,9 +509,10 @@ export default function ChartDetailModal({
 									{/* ENVELOPE */}
 									<View style={styles.chartBlock}>
 										<Text style={styles.chartTitle}>
-											{
+											{/* {
 												String(signalType).charAt(0).toUpperCase() + String(signalType).slice(1)
-											}
+											} */}
+											Acceleration
 											{" "}
 											Spectrum Envelope
 										</Text>

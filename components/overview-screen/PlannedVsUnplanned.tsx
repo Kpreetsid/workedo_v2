@@ -5,6 +5,7 @@ import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 import moment from "moment";
 import { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { G } from "react-native-svg";
 // import { LineChart, lineDataItem } from "react-native-gifted-charts";
 import { WebView } from "react-native-webview";
 
@@ -21,7 +22,7 @@ export default function PlannedVsUnplanned() {
 
 	const [workOrderData, setWorkOrderData] = useState([]);
 	const [preventiveData, setPreventiveData] = useState([]);
-	const [hasPreventive, setHasPreventive] = useState(false);
+	// const [hasPreventive, setHasPreventive] = useState(false);
 	const [maxY, setMaxY] = useState(10); // fallback default
 	const [spacingValue, setSpacingValue] = useState(40);
 
@@ -66,21 +67,33 @@ export default function PlannedVsUnplanned() {
 				childAssetsFormatted
 			);
 
+
 			if (res?.status) {
 				const input = res.data;
+				console.log('res data = ', res?.data)
 
 				const work = input.date.map((date: string, index: number) => ({
-					value: input["Work Order"][index] - 1,
+					value: input["Work Order"][index],
 					label: date,
 				}));
 
 				const prev = input.date.map((date: string, index: number) => ({
-					value: input["Preventive"][index] - 1,
+					value: input["Preventive"][index],
 					label: date,
 				}));
 
-				// console.log('work = ', work)
-				// console.log('prev = ', prev)
+				// const work = input.date.map((date: string, index: number) => ({
+				// 	value: input["Work Order"][index] - 1,
+				// 	label: date,
+				// }));
+
+				// const prev = input.date.map((date: string, index: number) => ({
+				// 	value: input["Preventive"][index] - 1,
+				// 	label: date,
+				// }));
+
+				console.log('work = ', work)
+				console.log('prev = ', prev)
 
 				// console.log('work daiofnosdnfod', work)
 				setWorkOrderData(work as any)
@@ -88,7 +101,7 @@ export default function PlannedVsUnplanned() {
 
 
 				// Show preventive only if it has >=1 non-zero value
-				setHasPreventive(prev.some((x: any) => x.value > 0));
+				// setHasPreventive(prev.some((x: any) => x.value > 0));
 
 				// ------------------------------
 				// CALCULATE MAX-Y
@@ -119,9 +132,11 @@ export default function PlannedVsUnplanned() {
 
 				const labels = input.date;
 				const workValues = work.map((i: any) => i.value);
-				const preventiveValues = hasPreventive
-					? prev.map((i: any) => i.value)
-					: null;
+				// const preventiveValues = hasPreventive
+				// 	? prev.map((i: any) => i.value)
+				// 	: null;
+
+				const preventiveValues = prev.map((i: any) => i.value);
 
 				setChartPayload({
 					labels,
@@ -183,8 +198,8 @@ export default function PlannedVsUnplanned() {
 				{workOrderData.length > 0 && (
 					<WebView
 						ref={webViewRef}
-						// source={require("../../assets/charts/PlannedUnplannedChart.html")}
-						source={{ uri: chartUrl }}
+						source={require("../../assets/charts/PlannedUnplannedChart.html")}
+						// source={{ uri: chartUrl }}
 						originWhitelist={["*"]}
 						javaScriptEnabled
 						domStorageEnabled

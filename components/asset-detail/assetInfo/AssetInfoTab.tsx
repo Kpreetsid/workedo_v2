@@ -57,8 +57,8 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 	// ✅ fixed color mapping
 	const axisColors: Record<string, string> = {
 		Horizontal: "#01d711", // green
-		Vertical: "#ff0000",   // red
-		Axial: "#1237ff",      // blue
+		Vertical: "#1237ff",   // red
+		Axial: "#ff0000",      // blue
 	};
 
 	// ✅ sort chartSeries in correct order
@@ -423,7 +423,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 			{/* ----------------------------- */}
 			{/*            LEGEND             */}
 			{/* ----------------------------- */}
-			<View style={styles.legendRow}>
+			{/* <View style={styles.legendRow}>
 				{orderedSeries.filter(Boolean).map((s: any) => (
 					<View key={s.axis} style={styles.legendItem}>
 						<View
@@ -437,7 +437,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 						</Text>
 					</View>
 				))}
-			</View>
+			</View> */}
 
 		</ScrollView >
 	)

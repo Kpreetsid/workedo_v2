@@ -54,7 +54,7 @@ export default function AlarmSummary() {
 			};
 
 			const res = await alarmsSummary(payload);
-			console.log(res)
+			// console.log(res)
 			const data = res?.data?.[0];
 
 

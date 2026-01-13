@@ -18,6 +18,13 @@ const pieDataRaw = [
 
 export default function AssetHealthStatus() {
 	const assetKPIHistory = useOverviewStore((state) => state.assetKPIHistory);
+
+	const [selectedSlice, setSelectedSlice] = React.useState<{
+		text: string;
+		value: number;
+		color: string;
+	} | null>(null);
+
 	// console.log('asset kpi history in health status = ', assetKPIHistory)
 	const [hidden, setHidden] = React.useState<string[]>([]);
 
@@ -67,13 +74,36 @@ export default function AssetHealthStatus() {
 	const chartDataRaw = pieDataRaw.filter(item => !hidden.includes(item.text));
 
 	// 3) If empty → show one grey slice
-	let finalChartData = chartDataRaw.length > 0
-		? chartDataRaw
+	// let finalChartData = chartDataRaw.length > 0
+	// 	? chartDataRaw
+	// 	: [{
+	// 		text: "Not Defined",
+	// 		value: 1,
+	// 		color: "#B0B0B0"
+	// 	}];
+
+	const finalChartData = chartDataRaw.length > 0
+		? chartDataRaw.map(item => ({
+			...item,
+			onPress: () => {
+				setSelectedSlice(item);
+			},
+		}))
 		: [{
 			text: "Not Defined",
 			value: 1,
-			color: "#B0B0B0"
+			color: "#B0B0B0",
+			onPress: () => {
+				setSelectedSlice({
+					text: "Not Defined",
+					value: 0,
+					color: "#B0B0B0",
+				});
+			},
 		}];
+
+
+	console.log('finalChartData = ', finalChartData);
 
 	// 🧮 Compute total for normalization
 	const total = finalChartData.reduce((sum, s) => sum + s.value, 0) || 1;
@@ -106,22 +136,52 @@ export default function AssetHealthStatus() {
 
 			<View style={styles.card}>
 				<View style={styles.pieRow}>
-					{finalChartData.length > 0 && <PieChart
-						isAnimated
-						data={finalChartData}
+					<View
+						style={{
+							width: radius * 2,
+							height: radius * 2,
+							justifyContent: "center",
+							alignItems: "center",
+							position: "relative",
+						}}
+					>
+						{finalChartData.length > 0 && <PieChart
+							isAnimated
+							data={finalChartData}
 
-						innerRadius={50}
-						innerCircleColor="#FFFFFF"
-						focusOnPress={false}
-						strokeWidth={2}
-						strokeColor="#FFFFFF"
-						backgroundColor="#fff"
+							innerRadius={50}
+							innerCircleColor="#FFFFFF"
+							focusOnPress={false}
+							strokeWidth={2}
+							strokeColor="#FFFFFF"
+							backgroundColor="#fff"
 
-						radius={radius}
-						donut={true}
-						showText={false}
-						sectionAutoFocus={false}
-					/>}
+							radius={radius}
+							donut={true}
+							showText={false}
+							sectionAutoFocus={false}
+						/>}
+
+
+						{selectedSlice && (
+							<View style={styles.centerOverlay}>
+								<View
+									style={[
+										styles.selectedDot,
+										{ backgroundColor: selectedSlice.color },
+									]}
+								/>
+								<Text style={styles.centerText}>
+									{selectedSlice.text}
+								</Text>
+								<Text style={styles.centerValue}>
+									{selectedSlice.value}
+								</Text>
+							</View>
+						)}
+
+					</View>
+
 
 
 
@@ -219,4 +279,46 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.regular,
 		color: "#45515C",
 	},
+	selectedInfo: {
+		position: 'absolute',
+		top: 25,
+		left: 25,
+		transform: [{ translateX: 25 }, { translateY: 25 }],
+		marginTop: 12,
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	centerOverlay: {
+		position: "absolute",
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		justifyContent: "center",
+		alignItems: "center",
+		pointerEvents: "none", // 👈 IMPORTANT: allow pie clicks
+	},
+
+	centerText: {
+		fontSize: 12,
+		color: "#6B7280",
+		marginTop: 4,
+		fontFamily: Fonts.medium,
+	},
+
+	centerValue: {
+		fontSize: 18,
+		color: "#111",
+		fontFamily: Fonts.bold,
+	},
+
+	selectedDot: {
+		width: 10,
+		height: 10,
+		borderRadius: 5,
+		marginBottom: 6,
+	},
+
+
 });

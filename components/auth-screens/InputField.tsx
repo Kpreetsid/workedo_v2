@@ -148,7 +148,6 @@ export default function Field({
 							{IconComponent && <IconComponent />}
 							<TextInput
 								readOnly={readonly}
-								// placeholder={placeholder}
 								placeholderTextColor="#222"
 								style={[styles.inputField]}
 								// , comingFrom === "editProfile" && { opacity: 0.5 }

@@ -69,13 +69,13 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 			setSensorForm("mount_orientation", data.mount_direction);
 		}
 
-		if (data.mount_material) {
-			setSensorForm("mount_material", data.mount_material);
-		}
+		// if (data.mount_material) {
+		// 	setSensorForm("mount_material", data.mount_material);
+		// }
 
-		if (data.mount_type) {
-			setSensorForm("mount_type", data.mount_type);
-		}
+		// if (data.mount_type) {
+		// 	setSensorForm("mount_type", data.mount_type);
+		// }
 
 		// -----------------------
 		// 👇 AXIS MAPPING (CUSTOM)
@@ -307,7 +307,7 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 								options={["steel", "non ferrous", "alloy"]}
 								store={useSensorStore}
 								setterName="setSensorForm"
-								required={true}
+								required={false}
 							/>
 
 							<FormField
@@ -317,7 +317,7 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 								options={["magnet", "magnet + adhesive", "adhesive"]}
 								store={useSensorStore}
 								setterName="setSensorForm"
-								required={true}
+								required={false}
 							/>
 
 						</View>

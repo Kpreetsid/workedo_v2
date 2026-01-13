@@ -240,13 +240,17 @@ export default function CreateNewEndPoint() {
 				</View>
 
 				<View style={styles.row}>
-					<FormInput required={false} label="BPFO" placeholder={bearingData.bpfo} editable={false} value={bearingData.bpfo} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bpfo = text)} />
-					<FormInput required={false} label="BPFI" placeholder={bearingData.bpfi} editable={false} value={bearingData.bpfi} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bpfi = text)} />
+					<FormInput
+						readOnly={selectedEndpointToEdit ? true : false} required={false} label="BPFO" placeholder={bearingData.bpfo} editable={false} value={bearingData.bpfo} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bpfo = text)} />
+					<FormInput
+						readOnly={selectedEndpointToEdit ? true : false} required={false} label="BPFI" placeholder={bearingData.bpfi} editable={false} value={bearingData.bpfi} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bpfi = text)} />
 				</View>
 
 				<View style={styles.row}>
-					<FormInput required={false} label="BSF" placeholder={bearingData.bsf} editable={false} value={bearingData.bsf} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bsf = text)} />
-					<FormInput required={false} label="FTF" placeholder={bearingData.ftf} editable={false} value={bearingData.ftf} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.ftf = text)} />
+					<FormInput
+						readOnly={selectedEndpointToEdit ? true : false} required={false} label="BSF" placeholder={bearingData.bsf} editable={false} value={bearingData.bsf} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.bsf = text)} />
+					<FormInput
+						readOnly={selectedEndpointToEdit ? true : false} required={false} label="FTF" placeholder={bearingData.ftf} editable={false} value={bearingData.ftf} containerStyle={styles.inputContainer} onChangeText={(text) => (bearingData.ftf = text)} />
 				</View>
 
 			</KeyboardAwareScrollView>

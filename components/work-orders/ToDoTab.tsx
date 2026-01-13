@@ -64,6 +64,7 @@ export default function ToDoTab() {
 			}
 		} catch (error: any) {
 			console.log('res work order catch')
+			setWorkOrders([])
 			ToastAndroid.show(
 				error?.message || "Something went wrong",
 				ToastAndroid.SHORT
