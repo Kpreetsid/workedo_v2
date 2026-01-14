@@ -1,4 +1,4 @@
-import { StyleSheet, TouchableOpacity, View, Text } from "react-native";
+import { StyleSheet, TouchableOpacity, View, Text, Pressable } from "react-native";
 import { PieChart, pieDataItem } from "react-native-gifted-charts";
 import { Calender, DropDownIcon } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
@@ -187,7 +187,10 @@ export default function WoPriority() {
 				<Text style={styles.cardTitle}>Wo - Priority</Text>
 			</View>
 
-			<View style={styles.chartWrapper}>
+			<Pressable
+				onPress={() => setSelectedSlice(null)}
+				style={styles.chartWrapper}
+			>
 
 				{chartDataFinal.length === 0 && (
 					<View style={styles.noDataOverlay}>
@@ -196,41 +199,6 @@ export default function WoPriority() {
 						</Text>
 					</View>
 				)}
-
-				{/* {
-					chartDataFinal.length > 0 ?
-						<PieChart
-							data={chartDataFinal}
-							donut
-							radius={85}
-							innerRadius={50}
-							innerCircleColor="#FFFFFF"
-							focusOnPress={false}
-							showText={false}
-							strokeWidth={8}
-							strokeColor="#FFFFFF"
-							backgroundColor="transparent"
-							isAnimated
-						/>
-						:
-						<PieChart
-							data={[{
-								text: "",
-								value: 1,
-								color: "#B0B0B0"
-							}]}
-							donut
-							radius={85}
-							innerRadius={50}
-							innerCircleColor="#FFFFFF"
-							focusOnPress={false}
-							showText={false}
-							strokeWidth={8}
-							strokeColor="#FFFFFF"
-							backgroundColor="transparent"
-							isAnimated
-						/>
-				} */}
 
 				<View
 					style={{
@@ -308,8 +276,8 @@ export default function WoPriority() {
 				</View>
 
 
-			</View>
-		</View>
+			</Pressable>
+		</View >
 	);
 }
 

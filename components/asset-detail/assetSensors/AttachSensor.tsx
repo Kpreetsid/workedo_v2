@@ -69,13 +69,13 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 			setSensorForm("mount_orientation", data.mount_direction);
 		}
 
-		// if (data.mount_material) {
-		// 	setSensorForm("mount_material", data.mount_material);
-		// }
+		if (data.mount_material) {
+			setSensorForm("mount_material", data.mount_material);
+		}
 
-		// if (data.mount_type) {
-		// 	setSensorForm("mount_type", data.mount_type);
-		// }
+		if (data.mount_type) {
+			setSensorForm("mount_type", data.mount_type);
+		}
 
 		// -----------------------
 		// 👇 AXIS MAPPING (CUSTOM)
@@ -147,18 +147,6 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 				);
 				return;
 			}
-		}
-
-		if (!useSensorStore.getState().mount_material) {
-			console.log('Mount Material is required');
-			ToastAndroid.show("Mount Material is required", ToastAndroid.SHORT)
-			return;
-		}
-
-		if (!useSensorStore.getState().mount_type) {
-			console.log('Mount Type is required');
-			ToastAndroid.show("Mount Type is required", ToastAndroid.SHORT)
-			return;
 		}
 
 		setLoading(true)

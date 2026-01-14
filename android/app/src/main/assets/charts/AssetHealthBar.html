@@ -2,147 +2,184 @@
 <html>
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
 
-    <style>
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            background: #ffffff;
-        }
+	<style>
+		html,
+		body {
+			margin: 0;
+			padding: 0;
+			background: #ffffff;
+		}
 
-        #wrapper {
-            width: 100%;
-            height: 260px;
-        }
+		#wrapper {
+			width: 100%;
+			height: 260px;
+		}
 
-        canvas {
-            width: 100% !important;
-            height: 100% !important;
-        }
-    </style>
+		canvas {
+			width: 100% !important;
+			height: 100% !important;
+		}
+	</style>
 </head>
 
 <body>
-    <div id="wrapper">
-        <canvas id="chart"></canvas>
-    </div>
+	<div id="wrapper">
+		<canvas id="chart"></canvas>
+	</div>
 
-    <script>
-        let chart = null;
-        let lastPayload = null;
+	<script>
+		function clearTooltip() {
+			if (!chart) return;
 
-        function renderChart(payload) {
-            if (!payload || !payload.labels) return;
+			chart.setActiveElements([]);
+			chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+			chart.update();
+		}
 
-            lastPayload = payload;
+		let chart = null;
+		let lastPayload = null;
 
-            const canvas = document.getElementById("chart");
-            const ctx = canvas.getContext("2d");
+		function renderChart(payload) {
+			const isWeekly = payload.groupBy === "week";
 
-            if (chart) {
-                chart.destroy();
-            }
+			if (!payload || !payload.labels) return;
 
-            chart = new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels: payload.labels,
-                    datasets: [
-                        {
-                            label: "Healthy",
-                            data: payload.Healthy,
-                            backgroundColor: "#22C55E",
-                            borderRadius: 6,
-                            barThickness: 12,
-                            categoryPercentage: 0.7,
-                            barPercentage: 0.8,
-                        },
-                        {
-                            label: "Alert",
-                            data: payload.Alert,
-                            backgroundColor: "#FACC15",
-                            borderRadius: 6,
-                            barThickness: 12,
-                            categoryPercentage: 0.7,
-                            barPercentage: 0.8,
-                        },
-                        {
-                            label: "Danger",
-                            data: payload.Danger,
-                            backgroundColor: "#F97316",
-                            borderRadius: 6,
-                            barThickness: 12,
-                            categoryPercentage: 0.7,
-                            barPercentage: 0.8,
-                        },
-                        {
-                            label: "Critical",
-                            data: payload.Critical,
-                            backgroundColor: "#EF4444",
-                            borderRadius: 6,
-                            barThickness: 12,
-                            categoryPercentage: 0.7,
-                            barPercentage: 0.8,
-                        },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: "index",
-                        intersect: false,
-                    },
-                    plugins: {
-                        legend: { display: false },
-                    },
-                    scales: {
-                        x: {
-                            stacked: false,
-                            grid: { display: false },
-                            ticks: {
-                                color: "#6B7280",
-                                autoSkip: true,
-                                maxTicksLimit: payload.groupBy === "week" ? 6 : 12,
-                            },
-                        },
-                        y: {
-                            beginAtZero: true,
-                            suggestedMin: 0,
-                            grid: { color: "#E5E7EB" },
-                        },
-                    },
-                },
-            });
-        }
+			lastPayload = payload;
 
-        /* ✅ ANDROID */
-        document.addEventListener("message", (event) => {
-            try {
-                const payload = JSON.parse(event.data);
-                renderChart(payload);
-            } catch (e) { }
-        });
+			const canvas = document.getElementById("chart");
+			const ctx = canvas.getContext("2d");
 
-        /* ✅ iOS */
-        window.addEventListener("message", (event) => {
-            try {
-                const payload = JSON.parse(event.data);
-                renderChart(payload);
-            } catch (e) { }
-        });
+			if (chart) {
+				chart.destroy();
+			}
 
-        /* ✅ SAFETY */
-        window.onload = () => {
-            if (lastPayload) {
-                renderChart(lastPayload);
-            }
-        };
-    </script>
+			chart = new Chart(ctx, {
+				type: "bar",
+				data: {
+					labels: payload.labels,
+					datasets: [
+						{
+							label: "Healthy",
+							data: payload.Healthy,
+							backgroundColor: "#22C55E",
+							borderRadius: 6,
+							barThickness: isWeekly ? 6 : 12,
+							maxBarThickness: isWeekly ? 8 : 14,
+							categoryPercentage: isWeekly ? 0.55 : 0.8, // ✅ GAP BETWEEN DATES
+							barPercentage: 0.9,
+						},
+						{
+							label: "Alert",
+							data: payload.Alert,
+							backgroundColor: "#FACC15",
+							borderRadius: 6,
+							barThickness: isWeekly ? 6 : 12,
+							maxBarThickness: isWeekly ? 8 : 14,
+							categoryPercentage: isWeekly ? 0.55 : 0.8,
+							barPercentage: 0.9,
+						},
+						{
+							label: "Danger",
+							data: payload.Danger,
+							backgroundColor: "#F97316",
+							borderRadius: 6,
+							barThickness: isWeekly ? 6 : 12,
+							maxBarThickness: isWeekly ? 8 : 14,
+							categoryPercentage: isWeekly ? 0.55 : 0.8,
+							barPercentage: 0.9,
+						},
+						{
+							label: "Critical",
+							data: payload.Critical,
+							backgroundColor: "#EF4444",
+							borderRadius: 6,
+							barThickness: isWeekly ? 6 : 12,
+							maxBarThickness: isWeekly ? 8 : 14,
+							categoryPercentage: isWeekly ? 0.55 : 0.8,
+							barPercentage: 0.9,
+						},
+					],
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					interaction: {
+						mode: "index",
+						intersect: false,
+					},
+					plugins: {
+						legend: { display: false },
+						tooltip: {
+							enabled: true,
+							backgroundColor: "#111827",
+							titleColor: "#fff",
+							bodyColor: "#fff",
+						},
+					},
+					scales: {
+						x: {
+							stacked: false,
+							offset: true,
+							grid: { display: false },
+							ticks: {
+								color: "#6B7280",
+								autoSkip: true,
+								maxTicksLimit: isWeekly ? 6 : 12,
+							},
+						},
+						y: {
+							stacked: false,
+							beginAtZero: true,
+							suggestedMin: 0,
+							grid: { color: "#E5E7EB" },
+						},
+					},
+				},
+			});
+
+			canvas.onclick = function (evt) {
+				const points = chart.getElementsAtEventForMode(
+					evt,
+					"nearest",
+					{ intersect: true },
+					false
+				);
+
+				// 👉 If clicked on EMPTY AREA
+				if (!points.length) {
+					clearTooltip();
+				}
+			};
+
+		}
+
+		/* ✅ ANDROID */
+		document.addEventListener("message", (event) => {
+			try {
+				const payload = JSON.parse(event.data);
+				renderChart(payload);
+			} catch (e) { }
+		});
+
+		/* ✅ iOS */
+		window.addEventListener("message", (event) => {
+			try {
+				const payload = JSON.parse(event.data);
+				renderChart(payload);
+			} catch (e) { }
+		});
+
+		/* ✅ SAFETY */
+		window.onload = () => {
+			if (lastPayload) {
+				renderChart(lastPayload);
+			}
+		};
+	</script>
 
 </body>
 

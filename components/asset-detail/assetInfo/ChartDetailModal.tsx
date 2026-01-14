@@ -6,6 +6,9 @@ import {
 	Pressable,
 	ActivityIndicator,
 	ScrollView,
+	TouchableOpacity,
+	TextInput,
+	ToastAndroid,
 } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { WebView } from "react-native-webview";
@@ -20,6 +23,7 @@ import Header from "@/components/global/Header";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { SegmentedCheckboxRow } from "./SimpleDropdown";
 import Fonts from "@/constants/Typography";
+import { envelopePlay } from "@/src/services/asset.service";
 
 interface ChartDetailModalProps {
 	visible: boolean;
@@ -46,6 +50,11 @@ export default function ChartDetailModal({
 	console.log('selectedPoint on modal = ', selectedPoint)
 	const [orientation, setOrientation] = useState("portrait");
 
+	const [analyzeLoading, setAnalyzeLoading] = useState(false);
+
+	const [start, setStart] = useState("");
+	const [end, setEnd] = useState("");
+
 	// ---------------------------
 	// signal value, and axis
 	// ---------------------------
@@ -61,6 +70,8 @@ export default function ChartDetailModal({
 
 	const accWebRef = useRef<WebView>(null);
 	const envWebRef = useRef<WebView>(null);
+
+	const envAnalyze = useRef<WebView>(null);
 
 	const { endpointSelected } = useAssetStore();
 
@@ -311,6 +322,85 @@ export default function ChartDetailModal({
 		}
 	}
 
+	const handleAnalyze = async () => {
+		console.log("analyze clicked");
+		console.log(start);
+		console.log(end);
+		// start should be greater than 10 and end should be less than 10000.
+		if (Number(start) < 10 || Number(end) > 10000) {
+			ToastAndroid.show("The range must be between 10 and 10000", ToastAndroid.SHORT);
+			return;
+		}
+
+		try {
+			setAnalyzeLoading(true)
+			let payload = {
+				"axis": axis,
+				"composite_id": endpointSelected?.composite_id,
+				// "timestamp": moment.utc(selectedPoint?.timestamp, "DD/MM/YYYY HH:mm:ss").unix(),
+				"timestamp": 1705037400,
+				"high_pass": Number(start),
+				"low_pass": Number(end)
+			};
+
+			console.log('envelope play = ', payload);
+			const res = await envelopePlay(payload);
+			console.log('envelope play res = ', res);
+
+
+			const axesData = res?.data[0].axes_data ?? [];
+
+			const normalizedAxes = normalizeAxesData(axesData || []);
+			console.log('normalizedAxes = ', normalizedAxes)
+
+			const AXIS_COLORS: Record<string, string> = {
+				axial: "#ff0000",
+				horizontal: "#01d711",
+				vertical: "#1237ff",
+			};
+
+			let datasets: any = normalizedAxes.map(a => ({
+				axis: a.axis,
+				data: a.values,
+				fs: a.fs,
+				color: AXIS_COLORS[a.axis.toLowerCase()],
+			}));
+
+			if (activeTab === 'spectrum') {
+				datasets['x_axis_spectrum_data'] = res?.data[0].x_axis_spectrum_data;
+			}
+
+			console.log('data set = ', datasets)
+
+			if (!Array.isArray(normalizedAxes[0]?.values)) {
+				console.warn("Invalid data envelope ", res);
+				return;
+			}
+
+			setTimeout(() => {
+				setAnalyzeLoading(false)
+				envWebRef.current?.postMessage(
+					JSON.stringify({
+						type: activeTab,
+						data: datasets,   // array of axes datasets
+						xAxis:
+							activeTab === "spectrum"
+								? res?.data[0].x_axis_spectrum_data
+								: undefined,
+						yLabel: "g"
+					})
+				);
+			}, 300);
+
+		} catch (error: any) {
+			console.log(error);
+			setAnalyzeLoading(false)
+			if (error.message === "No data found for any of the requested axes/timestamps.") {
+				ToastAndroid.show("No data found for any of the requested axes/timestamps.", ToastAndroid.SHORT);
+			}
+		}
+	};
+
 	// ---------------------------
 	// RENDER
 	// ---------------------------
@@ -339,7 +429,11 @@ export default function ChartDetailModal({
 
 					<View style={[styles.tabRow, orientation === "landscape" && { padding: 2 }]}>
 						<Pressable
-							onPress={() => setActiveTab("time")}
+							onPress={() => {
+								setStart("")
+								setEnd("")
+								setActiveTab("time")
+							}}
 							style={[
 								styles.tab,
 								activeTab === "time" && styles.activeTab,
@@ -356,7 +450,11 @@ export default function ChartDetailModal({
 						</Pressable>
 
 						<Pressable
-							onPress={() => setActiveTab("spectrum")}
+							onPress={() => {
+								setStart("")
+								setEnd("")
+								setActiveTab("spectrum")
+							}}
 							style={[
 								styles.tab,
 								activeTab === "spectrum" && styles.activeTab,
@@ -517,6 +615,36 @@ export default function ChartDetailModal({
 											Spectrum Envelope
 										</Text>
 										<View style={styles.chartBox}>
+											{/* analyze button */}
+											<View style={{ flexDirection: "row", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
+
+												<TextInput
+													style={styles.inputBtn}
+													placeholder="Start"
+													placeholderTextColor="#666"
+													value={start}
+													onChangeText={setStart}
+												/>
+
+												<TextInput
+													style={styles.inputBtn}
+													placeholder="End"
+													placeholderTextColor="#666"
+													value={end}
+													onChangeText={setEnd}
+												/>
+
+
+												<TouchableOpacity onPress={handleAnalyze} style={{ backgroundColor: "#742BDE", padding: 10, borderRadius: 5 }}>
+													{
+														analyzeLoading ?
+															<ActivityIndicator size="small" color="white" />
+															:
+															<Text style={{ color: "white" }}>Analyze</Text>
+													}
+												</TouchableOpacity>
+											</View>
+
 											<WebView
 												ref={envWebRef}
 												// source={require("../../../assets/charts/spectrum-envelope-waveform.html")}
@@ -530,8 +658,11 @@ export default function ChartDetailModal({
 												allowFileAccess
 												style={{ flex: 1 }}
 											/>
+
 										</View>
 									</View>
+
+
 								</View>
 							</View>
 						)}
@@ -641,4 +772,12 @@ const styles = StyleSheet.create({
 		flex: 1,
 		marginTop: 10,
 	},
+	inputBtn: {
+		flex: 1,
+		borderColor: '#d3d3d3',
+		borderWidth: 1,
+		padding: 10,
+		borderRadius: 5,
+		backgroundColor: '#fff',
+	}
 });

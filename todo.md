@@ -421,3 +421,13 @@ Janak review
 7. New API for envelope play (analyse button on dashboard) - Unable to implement as admin panel spectrum graphs are not loading, so I can't check this API.
 8. Edit endpoint - show non editable inputs as dim same as edit profile. - Done
 9. mount_material and mount_type, both are optional inside attach sensor. - Done
+
+
+
+Janak review
+1. show sensor_location on alarms on pdm dashboard - Done
+2. Required check should get remoeved from attach sensor - Done
+3. ERROR CODE 2 - Done
+4. weekly graph - Done
+5. analyze button on spectrum graphs - Done
+6. Click Outside of the pie chart should hide the legend - Done

@@ -52,7 +52,13 @@ const AlarmCard = ({ item }: { item: AlarmItem }) => {
 				</View>
 			</View>
 
-			<Text style={styles.timestamp}>{moment(item.timestamp).format("MMM DD, YYYY, h:mm:ss")}</Text>
+			<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+				<Text style={[styles.assetSubtitle, { marginTop: 5 }]}>
+					{item.sensor_location}
+				</Text>
+
+				<Text style={styles.timestamp}>{moment(item.timestamp).format("MMM DD, YYYY, h:mm:ss")}</Text>
+			</View>
 		</Pressable>
 	);
 }

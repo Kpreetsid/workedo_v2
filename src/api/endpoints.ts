@@ -79,7 +79,8 @@ export const endpoints = {
     
     get_envelope_data: 'get_envelope_data/',
     addSensor: 'add_sensor/',
-    uploadImage: 'upload/assets'
+    uploadImage: 'upload/assets',
+    envelopePlay: 'envelope_play/'
   },
   workOrders: {
     workOrders: 'work/orders',

@@ -1,4 +1,4 @@
-import { StyleSheet, TouchableOpacity, View, Text } from "react-native";
+import { StyleSheet, TouchableOpacity, View, Text, Pressable } from "react-native";
 import { PieChart, pieDataItem } from "react-native-gifted-charts";
 import { Calender, DropDownIcon } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
@@ -189,7 +189,10 @@ export default function WoStatus() {
 				</TouchableOpacity>
 			</View>
 
-			<View style={styles.chartWrapper}>
+			<Pressable
+				onPress={() => setSelectedSlice(null)}
+				style={styles.chartWrapper}
+			>
 
 				{chartDataFinal.length === 0 && (
 					<View style={styles.noDataOverlay}>
@@ -311,7 +314,7 @@ export default function WoStatus() {
 				</View>
 
 
-			</View>
+			</Pressable>
 		</View>
 	);
 }

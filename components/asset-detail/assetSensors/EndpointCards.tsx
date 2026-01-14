@@ -277,12 +277,12 @@ export default function EndpointCards({ asset_data }: Props) {
 							</View>
 
 							<View style={styles.cardFooter}>
-								<TouchableOpacity
+								{/* <TouchableOpacity
 									style={styles.iconBtn}
 									onPress={() => console.log("Settings pressed")}
 								>
 									<MaterialCommunityIcons name="cog-outline" size={13} color="#fff" />
-								</TouchableOpacity>
+								</TouchableOpacity> */}
 								<TouchableOpacity
 									style={styles.iconBtn}
 									onPress={() => handleAttachSensor(ep)}

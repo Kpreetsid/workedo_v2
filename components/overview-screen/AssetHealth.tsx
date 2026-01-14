@@ -151,8 +151,8 @@ export default function AssetHealth() {
 					<WebView
 						key={groupBy} // 🔥 FORCE REMOUNT ON MONTH/WEEK CHANGE
 						ref={webViewRef}
-						source={{ uri: chartURL }}
-						// source={require("../../assets/charts/AssetHealthBar.html")}
+						// source={{ uri: chartURL }}
+						source={require("../../assets/charts/AssetHealthBar.html")}
 						originWhitelist={["*"]}
 						javaScriptEnabled
 						domStorageEnabled

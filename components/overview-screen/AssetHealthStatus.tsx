@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Pressable } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
 import Fonts from "@/constants/Typography";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
@@ -134,7 +134,11 @@ export default function AssetHealthStatus() {
 		<View style={styles.container}>
 			<Text style={styles.cardTitle}>Asset Health Status</Text>
 
-			<View style={styles.card}>
+			<Pressable
+				onPress={() => setSelectedSlice(null)}
+				style={styles.card}
+			>
+
 				<View style={styles.pieRow}>
 					<View
 						style={{
@@ -223,8 +227,8 @@ export default function AssetHealthStatus() {
 
 
 				</View>
-			</View>
-		</View>
+			</Pressable>
+		</View >
 	);
 }
 

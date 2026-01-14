@@ -99,3 +99,7 @@ export const addSensor = async (payload: any) => {
 	return await sendRequestDemo('POST', url, payload);
 }
 
+export const envelopePlay = async (payload: any) => {
+	const url = `${endpoints.asset.envelopePlay}`;
+	return await sendRequestDemo('POST', url, payload);
+}
