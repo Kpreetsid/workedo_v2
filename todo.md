@@ -442,7 +442,9 @@ Janak Review
 7. asset details page - pull to refresh - Done
 8. Crash on update asset page
 9. Info icon across each endpoint on asset details page - Done
-10. Asset details page - update image option, and show image - Done (check updated image not showing on create asset)
+10. Asset details page - update image option, and show image - Done 
+(check updated image not showing on create asset)
+
 11. Remove ble_ as well from endpoint cards. - Done
 12. attach sensor - remove anything before _ on mac id. - Done
 13. High pass and low pass placeholder for input on spectrum graphs. - Done
