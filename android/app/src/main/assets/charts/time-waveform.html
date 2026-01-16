@@ -50,6 +50,11 @@
 		function createWaveform(payload) {
 			const ctx = document.getElementById("chart").getContext("2d");
 			const fs = payload.datasets[0].fs;
+			const maxY = Math.max(
+				0,
+				...payload.datasets.flatMap(ds => ds.data || [])
+			);
+			const yAxisMax = maxY > 0 ? maxY * 1.2 : undefined;
 
 			const datasets = payload.datasets.map(ds => {
 				const points = ds.data.map((y, i) => ({
@@ -107,7 +112,8 @@
 							grid: { display: false }
 						},
 						y: {
-							title: { display: true, text: payload.yLabel || "" }
+							title: { display: true, text: payload.yLabel || "" },
+							suggestedMax: yAxisMax
 						}
 					},
 

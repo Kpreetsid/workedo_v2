@@ -166,11 +166,15 @@ export default function WoPriority() {
 			? chartDataFinal.map((item: any) => ({
 				...item,
 				onPress: () => {
-					setSelectedSlice({
-						text: item.text,
-						value: item.value,
-						color: item.color,
-					});
+					setSelectedSlice(prev =>
+						prev?.text === item.text
+							? null
+							: {
+								text: item.text,
+								value: item.value,
+								color: item.color,
+							}
+					);
 				},
 			}))
 			: [

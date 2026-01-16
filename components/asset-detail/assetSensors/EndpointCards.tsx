@@ -165,21 +165,9 @@ export default function EndpointCards({ asset_data }: Props) {
 						>
 							<View style={styles.cardHeader}>
 								<Text style={styles.cardMac}>
-									{
-										ep.mac_id ?
-										(
-											ep.mac_id.startsWith('wl_') ? ep.mac_id.split('wl_') :
-												(
-													ep.mac_id.startsWith('w_') ?
-														ep.mac_id.split('w_')
-														:
-														ep.mac_id.split('bl_')
-												)
-												|| "No Sensor Mapped"
-										)
-										:
-										"No Sensor Mapped"
-									}
+									{ep.mac_id
+										? ep.mac_id.split("_").slice(1).join("_") || "No Sensor Mapped"
+										: "No Sensor Mapped"}
 								</Text>
 								<Popover
 									isVisible={openPopoverId === Number(ep.id)}

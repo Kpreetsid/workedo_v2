@@ -52,6 +52,8 @@
 			const yLabel = payload.yLabel || "";
 
 			if (!Array.isArray(datasets) || datasets.length === 0) return;
+			const maxY = Math.max(0, ...datasets.flatMap(ds => ds.data || []));
+			const yAxisMax = maxY > 0 ? maxY * 1.2 : undefined;
 
 			// All axes share same fs (assumed)
 			const fs = datasets[0].fs;
@@ -97,7 +99,8 @@
 							title: {
 								display: true,
 								text: yLabel
-							}
+							},
+							suggestedMax: yAxisMax
 						}
 					},
 

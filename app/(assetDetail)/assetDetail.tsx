@@ -11,12 +11,14 @@ import AssetSensorsTab from "@/components/asset-detail/assetSensors/AssetSensors
 
 export default function AssetDetailScreen() {
 	const [activeTab, setActiveTab] = useState<"info" | "sensors">("info");
+	const [refreshing, setRefreshing] = useState(false);
 
 	const router = useRouter();
 	const params: any = useLocalSearchParams();
 	// const asset_data = JSON.parse(params?.data);
 
 	const id = params?.id;
+	const composite_id = params?.composite_id;
 
 	const [assetData, setAssetData] = useState<Asset | null>(null);
 
@@ -44,6 +46,12 @@ export default function AssetDetailScreen() {
 			ToastAndroid.show("Failed to load asset details.", ToastAndroid.SHORT);
 		}
 	}
+
+	const handleRefresh = useCallback(async () => {
+		setRefreshing(true);
+		await fetchAssetData();
+		setRefreshing(false);
+	}, [id]);
 
 	const handleEditAsset = () => {
 		// console.log('handleEditAsset');
@@ -113,9 +121,18 @@ export default function AssetDetailScreen() {
 				assetData &&
 				(
 					activeTab === "info" ? (
-						<AssetInfoTab asset_data={assetData} />
+						<AssetInfoTab
+							asset_data={assetData}
+							composite_idFromParams={composite_id}
+							refreshing={refreshing}
+							onRefresh={handleRefresh}
+						/>
 					) : (
-						<AssetSensorsTab asset_data={assetData!} />
+						<AssetSensorsTab
+							asset_data={assetData!}
+							refreshing={refreshing}
+							onRefresh={handleRefresh}
+						/>
 					)
 				)
 			}

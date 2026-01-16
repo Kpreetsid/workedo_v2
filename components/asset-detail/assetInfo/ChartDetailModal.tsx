@@ -620,16 +620,16 @@ export default function ChartDetailModal({
 
 												<TextInput
 													style={styles.inputBtn}
-													placeholder="Start"
-													placeholderTextColor="#666"
+													placeholder="High Pass"
+													placeholderTextColor="#888"
 													value={start}
 													onChangeText={setStart}
 												/>
 
 												<TextInput
 													style={styles.inputBtn}
-													placeholder="End"
-													placeholderTextColor="#666"
+													placeholder="Low Pass"
+													placeholderTextColor="#888"
 													value={end}
 													onChangeText={setEnd}
 												/>

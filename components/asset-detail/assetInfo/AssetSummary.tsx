@@ -1,49 +1,135 @@
-import { View, Text, StyleSheet } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { Feather, FontAwesome6, FontAwesome } from "@expo/vector-icons";
 import Fonts from "@/constants/Typography";
 import { Asset } from "@/src/types/asset";
+import { Image } from "expo-image";
+import { endpoints } from "@/src/api/endpoints";
+import { launchCamera, launchImageLibrary } from "react-native-image-picker";
+import { imageUploadFunc } from "@/src/services/location.service";
+import { patchAsset, updateNewAsset } from "@/src/services/asset.service";
+import { useAuthStore } from "@/src/store/useAuthStore";
+import { useEffect, useState } from "react";
 
 type AssetSummaryProps = {
   asset: Asset;
   assetHealth: any;
+  temperature: number | null;
 };
 
-export default function AssetSummary({ asset, assetHealth }: AssetSummaryProps) {
-  console.log('assetHealth = ', assetHealth);
+export default function AssetSummary({ asset, assetHealth, temperature }: AssetSummaryProps) {
+  const { user } = useAuthStore();
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const fallbackImageUri = "https://new.presageinsights.ai/cmms/assets/images/Asset_page/Pumps.png";
+  const [uploadedImagePath, setUploadedImagePath] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!asset?.image_path) {
+      setImageUri(null);
+      return;
+    }
+
+    setImageUri(`${endpoints.baseURL}assets/${asset.image_path}?t=${Date.now()}`);
+  }, [asset?.image_path]);
+
+  const handleImageResponse = async (response: any) => {
+    if (response.didCancel) return;
+    if (response.errorCode) {
+      Alert.alert("Error", response.errorMessage || "Image selection failed");
+      return;
+    }
+
+    const selectedAsset = response.assets?.[0];
+    if (!selectedAsset) return;
+
+    setImageUri(selectedAsset.uri);
+
+    const uploadResult = await imageUploadFunc(selectedAsset, user, "createAsset");
+    if (uploadResult?.image_path) {
+      setUploadedImagePath(uploadResult.image_path);
+      setImageUri(`${endpoints.baseURL}assets/${uploadResult.image_path}?t=${Date.now()}`);
+    }
+  };
+
+  const updateAssetWithImagePath = async (imagePath: string) => {
+    const payload: any = {
+      image_path: imagePath,
+    };
+
+    console.log('payload update = ', payload)
+
+    try {
+      const res = await patchAsset(payload, asset?.id);
+      console.log('res = ', res)
+    } catch (err) {
+      console.log("error updating asset image = ", err);
+    }
+  };
+
+  const pickImage = (fromCamera = false) => {
+    const options: any = {
+      mediaType: "photo" as const,
+      quality: 0.8,
+    };
+
+    if (fromCamera) {
+      launchCamera(options, handleImageResponse);
+    } else {
+      launchImageLibrary(options, handleImageResponse);
+    }
+  };
+
+  const openImagePicker = () => {
+    Alert.alert("Upload Image", "Choose a source", [
+      { text: "Camera", onPress: () => pickImage(true) },
+      { text: "Gallery", onPress: () => pickImage(false) },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+
+  useEffect(() => {
+    if (!uploadedImagePath) return;
+    updateAssetWithImagePath(uploadedImagePath);
+  }, [uploadedImagePath]);
+
   return (
     <>
       {/* 🔹 Health + Temperature Card */}
       <View style={styles.summaryCard}>
-        <View style={styles.rowBetween}>
-          <View style={styles.cameraIcon}>
-            <Feather name="camera" size={20} color="#201f23" />
-          </View>
+        <View style={styles.summaryRow}>
+          <Pressable style={styles.cameraIcon} onPress={openImagePicker}>
+            <Image
+              source={{ uri: imageUri || fallbackImageUri }}
+              style={{ width: 80, height: 80, borderRadius: 8 }}
+            />
+          </Pressable>
 
-          <View>
-            <Text style={styles.summaryTitle}>Assets Health</Text>
-            {assetHealth && (
-              <Text
-                style={[
-                  styles.summaryValue,
-                  assetHealth.assetHealth === "Healthy" && styles.healthy,
-                  assetHealth.assetHealth === "Alert" && styles.alert,
-                  assetHealth.assetHealth === "Danger" && styles.danger,
-                  assetHealth.assetHealth === "Critical" && styles.critical,
-                  assetHealth.assetHealth === "Not Defined" && styles.not_defined,
-                ]}
-              >
-                {assetHealth?.assetScore ? assetHealth.assetScore : "N/A"}
-              </Text>
-            )}
-          </View>
+          <View style={styles.summaryInfo}>
+            <View style={styles.summaryBlock}>
+              <Text style={styles.summaryTitle}>Assets Health</Text>
+              {assetHealth && (
+                <Text
+                  style={[
+                    styles.summaryValue,
+                    assetHealth.assetHealth === "Healthy" && styles.healthy,
+                    assetHealth.assetHealth === "Alert" && styles.alert,
+                    assetHealth.assetHealth === "Danger" && styles.danger,
+                    assetHealth.assetHealth === "Critical" && styles.critical,
+                    assetHealth.assetHealth === "Not Defined" && styles.not_defined,
+                  ]}
+                >
+                  {assetHealth?.assetScore ? assetHealth.assetScore : "N/A"}
+                </Text>
+              )}
+            </View>
 
-          <View>
-            <Text style={styles.summaryTitle}>Temperature</Text>
-            <View style={[styles.rowBetween, { gap: 5 }]}>
-              <FontAwesome name="thermometer-half" size={15} color="#CA8A04" />
-              <Text style={[styles.summaryValue, { color: "#FFB84D" }]}>
-                N/A
-              </Text>
+            <View style={styles.summaryBlock}>
+              <Text style={styles.summaryTitle}>Temperature</Text>
+              <View style={styles.tempRow}>
+                <FontAwesome name="thermometer-half" size={15} color="#CA8A04" />
+                <Text style={[styles.summaryValue, { color: "#FFB84D" }]}>
+                  {temperature || "N/A"} °C
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -102,7 +188,8 @@ const DetailPill = ({
 
 const styles = StyleSheet.create({
   summaryCard: {
-    backgroundColor: "#FEFCE8",
+    // backgroundColor: "#FEFCE8",
+    backgroundColor: "#fffdecff",
     borderRadius: 10,
     paddingVertical: 15,
     paddingHorizontal: 25,
@@ -110,20 +197,40 @@ const styles = StyleSheet.create({
     borderColor: "#FFE000",
     marginHorizontal: 20,
   },
-  rowBetween: {
+  summaryRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 25,
+    gap: 16,
+  },
+  summaryInfo: {
+    flex: 1,
+    gap: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+  },
+  summaryBlock: {
+    gap: 4,
   },
   cameraIcon: {
     backgroundColor: "#fff",
-    height: 36,
-    width: 43,
+    height: 80,
+    width: 80,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 8,
     borderColor: "#000",
     borderWidth: 0.1,
+  },
+  imagePlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  placeholderText: {
+    fontSize: 10,
+    color: "#201f23",
+    fontFamily: Fonts.medium,
   },
   summaryTitle: {
     fontSize: 12,
@@ -134,6 +241,11 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semiBold,
     color: "#CA8A04",
     lineHeight: 18,
+  },
+  tempRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
 
   healthy: {

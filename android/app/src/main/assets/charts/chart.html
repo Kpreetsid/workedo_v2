@@ -164,7 +164,7 @@
 						},
 						y: {
 							min: payload.yMin,
-							max: payload.yMax,
+							max: payload.yMax > 0 ? payload.yMax * 1.2 : payload.yMax,
 
 							title: {
 								display: !!payload.yUnit,
@@ -325,7 +325,7 @@
 				// chart.options.scales.x.max = payload.maxX;
 
 				chart.options.scales.y.min = payload.yMin;
-				chart.options.scales.y.max = payload.yMax;
+				chart.options.scales.y.max = payload.yMax > 0 ? payload.yMax * 1.2 : payload.yMax;
 
 				chart.options.scales.y.title.text = payload.yUnit || "";
 				chart.options.scales.y.title.display = !!payload.yUnit;

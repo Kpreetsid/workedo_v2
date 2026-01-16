@@ -86,7 +86,9 @@ export default function AssetHealthStatus() {
 		? chartDataRaw.map(item => ({
 			...item,
 			onPress: () => {
-				setSelectedSlice(item);
+				setSelectedSlice(prev =>
+					prev?.text === item.text ? null : item
+				);
 			},
 		}))
 		: [{
@@ -94,11 +96,15 @@ export default function AssetHealthStatus() {
 			value: 1,
 			color: "#B0B0B0",
 			onPress: () => {
-				setSelectedSlice({
-					text: "Not Defined",
-					value: 0,
-					color: "#B0B0B0",
-				});
+				setSelectedSlice(prev =>
+					prev?.text === "Not Defined"
+						? null
+						: {
+							text: "Not Defined",
+							value: 0,
+							color: "#B0B0B0",
+						}
+				);
 			},
 		}];
 

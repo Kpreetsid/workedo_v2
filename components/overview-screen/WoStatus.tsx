@@ -157,11 +157,15 @@ export default function WoStatus() {
 	const pieDataWithPress = chartDataFinal.map((item: any) => ({
 		...item,
 		onPress: () => {
-			setSelectedSlice({
-				text: item.text,
-				value: item.value,
-				color: item.color,
-			});
+			setSelectedSlice(prev =>
+				prev?.text === item.text
+					? null
+					: {
+						text: item.text,
+						value: item.value,
+						color: item.color,
+					}
+			);
 		},
 	}));
 
@@ -182,11 +186,11 @@ export default function WoStatus() {
 			<View style={styles.cardHeader}>
 				<Text style={styles.cardTitle}>Wo - Status</Text>
 
-				<TouchableOpacity style={styles.badge} activeOpacity={0.8}>
+				{/* <TouchableOpacity style={styles.badge} activeOpacity={0.8}>
 					<Calender />
 					<Text style={styles.badgeText}>Monthly</Text>
 					<DropDownIcon />
-				</TouchableOpacity>
+				</TouchableOpacity> */}
 			</View>
 
 			<Pressable

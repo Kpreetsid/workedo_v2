@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
 import { MaterialIcons, } from "@expo/vector-icons";
 import Fonts from "@/constants/Typography";
 import { JSX } from "react";
@@ -10,12 +10,20 @@ import EndpointCards from "./EndpointCards";
 
 interface Props {
 	asset_data: Asset;
+	refreshing: boolean;
+	onRefresh: () => void;
 }
 
-export default function AssetSensorsTab({ asset_data }: Props) {
+export default function AssetSensorsTab({ asset_data, refreshing, onRefresh }: Props) {
 
 	return (
-		<ScrollView contentContainerStyle={styles.screenContainer} showsVerticalScrollIndicator={false}>
+		<ScrollView
+			contentContainerStyle={styles.screenContainer}
+			showsVerticalScrollIndicator={false}
+			refreshControl={
+				<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+			}
+		>
 
 			<View style={styles.createRow}>
 				<Text style={styles.headerTitle}>New End Point</Text>

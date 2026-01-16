@@ -431,3 +431,20 @@ Janak review
 4. weekly graph - Done
 5. analyze button on spectrum graphs - Done
 6. Click Outside of the pie chart should hide the legend - Done
+
+Janak Review
+1. Clicking on alarm card should redirect to that same endpoint in assets page - Done
+2. Spacing on y axis on all graphs - Done
+3. Click on pie chart segement again, it will get removed. - Done
+4. Remove monthly/weekly from cmms - Done
+5. Date selection should be max upto today. - Done
+6. temperature value comes from socket, show latest temperature. - Done
+7. asset details page - pull to refresh - Done
+8. Crash on update asset page
+9. Info icon across each endpoint on asset details page - Done
+10. Asset details page - update image option, and show image - Done (check updated image not showing on create asset)
+11. Remove ble_ as well from endpoint cards. - Done
+12. attach sensor - remove anything before _ on mac id. - Done
+13. High pass and low pass placeholder for input on spectrum graphs. - Done
+14. tooltip on spectrum graphs needs to be changed as per admin panel.
+15. PDM Dashboard, search parent and child locations, and if data is empty, show no data found.

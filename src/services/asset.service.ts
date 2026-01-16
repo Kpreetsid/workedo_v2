@@ -74,6 +74,11 @@ export const updateNewAsset = async (payload: any, id?: string) => {
     return await sendRequest('PUT', url, payload);
 }
 
+export const patchAsset = async (payload: any, id?: string) => {
+    const url = `${endpoints.asset.assetData}/${id}`;
+    return await sendRequest('PATCH', url, payload);
+}
+
 export const createNewAsset = async (payload: any) => {
     const url = `${endpoints.asset.add}`;
     return await sendRequest('POST', url, payload);

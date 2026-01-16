@@ -47,19 +47,11 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 		const macId = data.mac_id;
 		console.log('mac id here = ', macId)
 
-		if(!macId) return;
+		if (!macId) return;
 
 		if (typeof macId === "string") {
-			if (macId.startsWith("wl_")) {
-				setSensorForm("mac_id", macId.split("wl_")[1] || "");
-				setSensorForm("sensor_type", "wireless");
-			} else if (macId.startsWith("w_")) {
-				setSensorForm("mac_id", macId.split("w_")[1] || "");
-				setSensorForm("sensor_type", "wired");
-			} else {
-				setSensorForm("mac_id", macId);
-				setSensorForm("sensor_type", "bluetooth");
-			}
+			setSensorForm("mac_id", macId.split("_")[1] || "");
+			setSensorForm("sensor_type", "wireless");
 		}
 
 		// -----------------------

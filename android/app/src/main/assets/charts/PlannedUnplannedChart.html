@@ -88,8 +88,8 @@
 						y: {
 							beginAtZero: true,
 							min: 0,
-							max: payload.maxVertical,
-							suggestedMax: payload.maxY > 0 ? payload.maxY : 1,
+							max: payload.maxVertical > 0 ? payload.maxVertical * 1.2 : payload.maxVertical,
+							suggestedMax: payload.maxY > 0 ? payload.maxY * 1.2 : 1,
 							ticks: {
 								stepSize: 1,
 								precision: 0,

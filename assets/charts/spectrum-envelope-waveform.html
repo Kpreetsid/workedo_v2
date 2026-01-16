@@ -52,6 +52,8 @@
 			const yLabel = payload.yLabel || "";
 
 			if (!Array.isArray(datasets) || datasets.length === 0) return;
+			const maxY = Math.max(0, ...datasets.flatMap(ds => ds.data || []));
+			const yAxisMax = maxY > 0 ? maxY * 1.2 : undefined;
 
 			const chartDatasets = datasets.map(ds => {
 				const raw = ds.data;
@@ -93,7 +95,8 @@
 							grid: { display: false }
 						},
 						y: {
-							title: { display: true, text: yLabel }
+							title: { display: true, text: yLabel },
+							suggestedMax: yAxisMax
 						}
 					},
 

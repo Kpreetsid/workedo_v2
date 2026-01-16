@@ -14,6 +14,7 @@ interface SelectEndpointProps {
 
 export default function SelectEndpoint({ endpointSelected, endpoints, asset_data, onEndpointSelect }: SelectEndpointProps) {
 	const [modalVisible, setModalVisible] = useState(false);
+	const [infoModalVisible, setInfoModalVisible] = useState(false);
 	const [selectedEndpoint, setSelectedEndpoint] = useState<AssetEndpoint>();
 	const [buttonLayout, setButtonLayout] = useState<LayoutRectangle | null>(null);
 	const buttonRef = useRef<View>(null);
@@ -36,13 +37,49 @@ export default function SelectEndpoint({ endpointSelected, endpoints, asset_data
 		});
 	};
 
+	const infoRows = [
+		{
+			label: "Asset Name",
+			value: endpointSelected?.asset_name || "Id Fan Updated",
+		},
+		{
+			label: "Asset Type",
+			value: endpointSelected?.asset_type || "",
+		},
+		{
+			label: "Composite ID",
+			value: endpointSelected?.composite_id || "",
+		},
+		{
+			label: "MAC ID",
+			value: endpointSelected?.mac_id || "",
+		},
+		{
+			label: "Mount Direction",
+			value: endpointSelected?.mount_direction,
+		},
+		{
+			label: "Linked Status",
+			value: endpointSelected?.is_linked == false ? "Not Linked" : "Linked",
+		},
+	];
+
 	return (
 		<View style={styles.selectCard}>
-			<View>
-				<Text style={styles.assetName}>
-					{endpointSelected?.point_name}-{endpointSelected?.mount_location}
-				</Text>
-				<Text style={styles.assetDesc}>{endpointSelected?.asset_name}</Text>
+			<View style={styles.assetInfoRow}>
+				<View>
+					<Text style={styles.assetName}>
+						{endpointSelected?.point_name}-{endpointSelected?.mount_location}
+					</Text>
+					<Text style={styles.assetDesc}>{endpointSelected?.asset_name}</Text>
+				</View>
+				<Pressable
+					onPress={() => setInfoModalVisible(true)}
+					style={styles.infoButton}
+					hitSlop={8}
+				>
+					<Ionicons name="information-circle-outline" size={14} color="#742BDE" />
+				</Pressable>
 			</View>
 
 			<Pressable ref={buttonRef} style={styles.selectBtn} onPress={openModal}>
@@ -82,6 +119,52 @@ export default function SelectEndpoint({ endpointSelected, endpoints, asset_data
 					</View>
 				)}
 			</Modal>
+
+			<Modal
+				visible={infoModalVisible}
+				transparent
+				animationType="fade"
+				onRequestClose={() => setInfoModalVisible(false)}
+			>
+				<View style={styles.infoOverlay}>
+					<View style={styles.infoCard}>
+						<View style={styles.infoHeader}>
+							<Text style={styles.infoTitle}>Device Details</Text>
+							<Pressable
+								onPress={() => setInfoModalVisible(false)}
+								style={styles.infoClose}
+								hitSlop={6}
+							>
+								<Ionicons name="close" size={16} color="#fff" />
+							</Pressable>
+						</View>
+
+						<View style={styles.infoBody}>
+							{infoRows.map((row) => (
+								<View key={row.label} style={styles.infoRow}>
+									<Text style={styles.infoLabel}>{row.label}</Text>
+									<Text style={styles.infoColon}>:</Text>
+									<Text
+										style={[
+											styles.infoValue,
+											row.label === "Linked Status" && styles.infoStatusValue,
+										]}
+									>
+										{row.value}
+									</Text>
+								</View>
+							))}
+						</View>
+
+						<Pressable
+							style={styles.infoCloseButton}
+							onPress={() => setInfoModalVisible(false)}
+						>
+							<Text style={styles.infoCloseText}>Close</Text>
+						</Pressable>
+					</View>
+				</View>
+			</Modal>
 		</View>
 	);
 }
@@ -98,6 +181,11 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		elevation: 2,
 	},
+	assetInfoRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 6,
+	},
 	assetName: {
 		fontSize: 10,
 		color: "#201f23",
@@ -107,6 +195,10 @@ const styles = StyleSheet.create({
 		fontSize: 10,
 		color: "#201f23",
 		fontFamily: Fonts.regular,
+	},
+	infoButton: {
+		alignSelf: "center",
+		paddingLeft: 2,
 	},
 	selectBtn: {
 		backgroundColor: "#742BDE",
@@ -176,5 +268,84 @@ const styles = StyleSheet.create({
 		fontSize: 11,
 		color: "#000",
 		fontFamily: Fonts.light,
+	},
+	infoOverlay: {
+		flex: 1,
+		backgroundColor: "rgba(0,0,0,0.35)",
+		justifyContent: "center",
+		alignItems: "center",
+		paddingHorizontal: 16,
+	},
+	infoCard: {
+		width: "100%",
+		backgroundColor: "#fff",
+		borderRadius: 10,
+		overflow: "hidden",
+	},
+	infoHeader: {
+		backgroundColor: "#742BDE",
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+	},
+	infoTitle: {
+		color: "#fff",
+		fontSize: 16,
+		fontFamily: Fonts.semiBold,
+	},
+	infoClose: {
+		width: 24,
+		height: 24,
+		borderRadius: 12,
+		backgroundColor: "rgba(255,255,255,0.25)",
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	infoBody: {
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+	},
+	infoRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		paddingVertical: 10,
+		borderBottomWidth: 1,
+		borderBottomColor: "#E5E7EB",
+	},
+	infoLabel: {
+		width: 110,
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
+		color: "#111827",
+	},
+	infoColon: {
+		marginHorizontal: 6,
+		color: "#111827",
+		fontFamily: Fonts.semiBold,
+	},
+	infoValue: {
+		flex: 1,
+		fontSize: 12,
+		color: "#111827",
+		fontFamily: Fonts.regular,
+	},
+	infoStatusValue: {
+		color: "#EF4444",
+		fontFamily: Fonts.semiBold,
+	},
+	infoCloseButton: {
+		alignSelf: "flex-end",
+		backgroundColor: "#6B7280",
+		paddingHorizontal: 16,
+		paddingVertical: 8,
+		borderRadius: 8,
+		margin: 16,
+	},
+	infoCloseText: {
+		color: "#fff",
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
 	},
 });

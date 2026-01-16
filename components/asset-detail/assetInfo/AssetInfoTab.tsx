@@ -1,4 +1,4 @@
-import { Dimensions, FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
+import { Dimensions, FlatList, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getAllEndpoints, getAssetData, getChildren, getGraphTrendData, getSingleAssetHealthHistory } from "@/src/services/asset.service";
 import { Asset } from "@/src/types/asset";
@@ -15,11 +15,16 @@ import { useTrendSocket } from "@/hooks/useTrendSocket";
 
 interface AssetInfoTabProps {
 	asset_data: Asset;
+	composite_idFromParams?: string;
+	refreshing: boolean;
+	onRefresh: () => void;
 }
 
-export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
+export default function AssetInfoTab({ asset_data, composite_idFromParams, refreshing, onRefresh }: AssetInfoTabProps) {
+	console.log('composite_idFromParams on asset infotab = ', composite_idFromParams);
 	const graphBufferRef = useRef<any[]>([]);
 	const [fftEnabled, setFftEnabled] = useState(false);
+	const [temperatureValue, setTemperatureValue] = useState<number | null>(null);
 
 	const gestureLocked = useGestureLock((s) => s.locked);
 
@@ -80,7 +85,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 
 
 	useEffect(() => {
-		if(selectedAxis) {
+		if (selectedAxis) {
 			console.log('in changing selected axis = ', selectedAxis)
 		}
 	}, [selectedAxis])
@@ -95,11 +100,20 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 			let payload: string[] = [asset_data?.id];
 			// console.log('payload for endpoints = ', payload);
 			const endpointsRes = await getAllEndpoints(payload);
-			// console.log('res endpoints = ', endpointsRes);
+			console.log('res endpoints = ', endpointsRes);
 
 			if (endpointsRes?.data?.length > 0) {
 				setEndpoints(endpointsRes.data);
-				setEndpointSelected(endpointsRes.data[0]);
+				
+				if(composite_idFromParams) {
+					// find endpoint with sensor_location matching sensor_location
+					const endpoint = endpointsRes.data.find((endpoint: any) => (endpoint.composite_id &&endpoint.composite_id) === composite_idFromParams);
+					console.log('composite_idFromParams from behind = ', composite_idFromParams)
+					console.log('found endpoint = ', endpoint);
+					setEndpointSelected(endpoint);
+				} else {
+					setEndpointSelected(endpointsRes.data[0]);
+				}
 			} else {
 				setEndpointSelected(null);
 				ToastAndroid.show("No endpoints created against selected asset.", ToastAndroid.SHORT);
@@ -176,7 +190,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 			],
 			function: {
 				Vibration: [graphKey],
-				Temperature: [],
+				Temperature: ["temperature"],
 				Acoustics: [],
 				"Magnetic Flux": [],
 				Current: [],
@@ -202,12 +216,32 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 		payload: trendPayload,
 		enabled: !!trendPayload,
 		onStatus: (status) => {
-			// console.log('status = ', status)
+			console.log('status 123 = ', status)
 			// if (status === "connected") setGraphLoading(true);
 		},
 
 		onData: (message) => {
 			if (!message?.data || !Array.isArray(message.data)) return;
+
+			if (message.metric === "temperature") {
+				if (message.data.length === 0) {
+					setTemperatureValue(null);
+					setGraphLoading(false);
+					return;
+				}
+
+				const points = Array.isArray(message.data[0]?.data)
+					? message.data[0].data
+					: [];
+				const lastPoint = points[points.length - 1];
+				const latestValue = Array.isArray(lastPoint) ? lastPoint[1] : null;
+
+				setTemperatureValue(
+					typeof latestValue === "number" ? latestValue : null
+				);
+				setGraphLoading(false);
+				return;
+			}
 
 			if (message.data.length === 0) {
 				setGraphLoading(false);
@@ -215,6 +249,11 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 				return;
 			}
 
+			console.log("trend socket message:", message);
+			console.log(
+				"trend socket data:",
+				JSON.stringify(message.data, null, 2)
+			);
 			// push each axis payload into buffer
 			message.data.forEach((series: any) => {
 				graphBufferRef.current.push(series);
@@ -365,8 +404,11 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 			scrollEnabled={!gestureLocked}
 			style={styles.container}
 			contentContainerStyle={{ paddingBottom: 50 }}
+			refreshControl={
+				<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+			}
 		>
-			<AssetSummary asset={asset_data} assetHealth={assetHealth} />
+			<AssetSummary asset={asset_data} assetHealth={assetHealth} temperature={temperatureValue} />
 			<AssetUsers users={asset_data?.userList || []} />
 
 			{/* Endpoint Selector */}

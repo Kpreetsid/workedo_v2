@@ -184,7 +184,7 @@
             },
             y: {
               min: payload.minValue,
-              max: payload.maxValue,
+              max: payload.maxValue ? payload.maxValue * 1.2 : payload.maxValue,
               ticks: {
                 stepSize: Math.max(
                   1,

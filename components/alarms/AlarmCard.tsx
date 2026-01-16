@@ -18,7 +18,7 @@ const AlarmCard = ({ item }: { item: AlarmItem }) => {
 				console.log('item clicked = ', item);
 				router.push({
 					pathname: "/assetDetail",
-					params: { id: item.asset_id },
+					params: { id: item.asset_id, composite_id: item.composite },
 				});
 			}}>
 			<View style={styles.cardHeader}>

@@ -7,6 +7,10 @@ import ActionButton from "../auth-screens/ActionButton";
 
 export default function DateRangeCalendar({ onClose }: any) {
   const { setRange } = useDateRangeStore();
+  const now = new Date();
+  const todayString = `${now.getFullYear()}-${String(
+    now.getMonth() + 1
+  ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
   // UI STATE (YYYY-MM-DD ONLY)
   const [startDate, setStartDate] = useState<string | null>(null);
@@ -17,6 +21,7 @@ export default function DateRangeCalendar({ onClose }: any) {
   // -----------------------------
   const onDayPress = (day: any) => {
     const selected = day.dateString; // YYYY-MM-DD
+    if (selected > todayString) return;
 
     // start fresh
     if (!startDate || endDate) {
@@ -115,6 +120,7 @@ export default function DateRangeCalendar({ onClose }: any) {
           markingType="period"
           markedDates={getMarkedDates()}
           onDayPress={onDayPress}
+          maxDate={todayString}
         />
 
         <View style={{ marginTop: 32 }} />

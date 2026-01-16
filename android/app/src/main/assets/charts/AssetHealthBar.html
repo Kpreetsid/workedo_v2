@@ -49,6 +49,14 @@
 			if (!payload || !payload.labels) return;
 
 			lastPayload = payload;
+			const maxValue = Math.max(
+				0,
+				...(payload.Healthy || []),
+				...(payload.Alert || []),
+				...(payload.Danger || []),
+				...(payload.Critical || [])
+			);
+			const yAxisMax = maxValue > 0 ? maxValue * 1.2 : undefined;
 
 			const canvas = document.getElementById("chart");
 			const ctx = canvas.getContext("2d");
@@ -135,6 +143,7 @@
 							stacked: false,
 							beginAtZero: true,
 							suggestedMin: 0,
+							suggestedMax: yAxisMax,
 							grid: { color: "#E5E7EB" },
 						},
 					},
