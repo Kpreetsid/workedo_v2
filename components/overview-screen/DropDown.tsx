@@ -1,7 +1,7 @@
 import { StyleSheet, TouchableOpacity, Text, View, TextInput, ScrollView } from "react-native";
 import Fonts from "@/constants/Typography";
 import { ArrowRight, DropDownIcon, SearchIcon, TickMark } from "@/constants/IconProvider";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 
 interface DropdownOption {
 	id: string;
@@ -34,6 +34,21 @@ export default function Dropdown(
 
 	const isMulti = Array.isArray(value);
 	const selectedIds = isMulti ? (value as string[]) : [value as string];
+	const [searchTerm, setSearchTerm] = useState("");
+
+	useEffect(() => {
+		if (!isOpen && searchTerm) {
+			setSearchTerm("");
+		}
+	}, [isOpen, searchTerm]);
+
+	const filteredOptions = useMemo(() => {
+		const trimmed = searchTerm.trim().toLowerCase();
+		if (!trimmed) return options;
+		return options.filter((option) =>
+			option.location_name.toLowerCase().includes(trimmed)
+		);
+	}, [options, searchTerm]);
 
 	const toggleSelection = (id: string) => {
 		if (!onValueChange) return;
@@ -67,11 +82,13 @@ export default function Dropdown(
 								placeholder="Search"
 								placeholderTextColor="#71717A"
 								style={styles.input}
+								value={searchTerm}
+								onChangeText={setSearchTerm}
 							/>
 						</View>
 
 						<ScrollView style={styles.scrollView} showsVerticalScrollIndicator={true} nestedScrollEnabled>
-							{options.map((option) => {
+							{filteredOptions.map((option) => {
 								const isChecked = selectedIds.includes(option.id);
 								return (
 									<TouchableOpacity

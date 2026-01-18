@@ -448,5 +448,5 @@ Janak Review
 11. Remove ble_ as well from endpoint cards. - Done
 12. attach sensor - remove anything before _ on mac id. - Done
 13. High pass and low pass placeholder for input on spectrum graphs. - Done
-14. tooltip on spectrum graphs needs to be changed as per admin panel.
-15. PDM Dashboard, search parent and child locations, and if data is empty, show no data found.
+14. tooltip on spectrum graphs needs to be changed as per admin panel. - Done
+15. PDM Dashboard, search parent and child locations, and if data is empty, show no data found. - Done

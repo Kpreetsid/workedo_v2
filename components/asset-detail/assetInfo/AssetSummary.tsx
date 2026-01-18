@@ -96,7 +96,8 @@ export default function AssetSummary({ asset, assetHealth, temperature }: AssetS
       {/* 🔹 Health + Temperature Card */}
       <View style={styles.summaryCard}>
         <View style={styles.summaryRow}>
-          <Pressable style={styles.cameraIcon} onPress={openImagePicker}>
+          {/* onPress={openImagePicker} */}
+          <Pressable style={styles.cameraIcon}>
             <Image
               source={{ uri: imageUri || fallbackImageUri }}
               style={{ width: 80, height: 80, borderRadius: 8 }}

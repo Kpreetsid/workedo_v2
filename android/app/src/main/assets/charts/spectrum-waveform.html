@@ -35,6 +35,43 @@
 			touch-action: none;
 			/* 🔴 critical: prevent WebView zoom */
 		}
+
+		.chart-tooltip {
+			position: absolute;
+			top: 8px;
+			left: 50%;
+			transform: translateX(-50%);
+			background: #ffffff;
+			border-radius: 12px;
+			padding: 14px 16px;
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+			pointer-events: none;
+			font-family: system-ui, -apple-system, BlinkMacSystemFont;
+			color: #45515C;
+			min-width: 220px;
+			z-index: 10;
+		}
+
+		.tooltip-title {
+			font-size: 12px;
+			font-weight: 500;
+			margin-bottom: 8px;
+		}
+
+		.tooltip-row {
+			display: flex;
+			justify-content: space-between;
+			font-size: 12px;
+			margin-bottom: 4px;
+		}
+
+		.tooltip-label {
+			color: #45515C;
+		}
+
+		.tooltip-value {
+			font-weight: 500;
+		}
 	</style>
 </head>
 
@@ -45,6 +82,8 @@
 
 	<script>
 		let chart;
+		let tooltipLocked = false;
+
 
 		function createWaveform(payload) {
 			const ctx = document.getElementById("chart").getContext("2d");
@@ -77,7 +116,15 @@
 					parsing: false,
 					animation: false,
 
-					interaction: { mode: "nearest", intersect: false },
+					interaction: {
+						mode: "nearest",
+						intersect: true
+					},
+
+					onClick: (evt, elements) => {
+						if (!elements.length) return;
+						tooltipLocked = true;   // 🔴 THIS WAS MISSING
+					},
 
 					scales: {
 						x: {
@@ -92,26 +139,66 @@
 					},
 
 					plugins: {
-						legend: {
-							display: true,
-							position: "top",
-							align: "center",
+						tooltip: {
+							enabled: false,
+							external(context) {
+								const { chart, tooltip } = context;
+								const tooltipEl = getOrCreateTooltip(chart);
 
-							labels: {
-								color: "#45515C",
-								font: {
-									family: "system-ui, -apple-system, BlinkMacSystemFont",
-									size: 12,
-									weight: "500",
-								},
+								// If tooltip is locked, ignore Chart.js hide events
+								if (tooltip.opacity === 0 && !tooltipLocked) {
+									tooltipEl.style.opacity = 0;
+									return;
+								}
 
-								boxWidth: 10,
-								boxHeight: 10,
-								padding: 16,
+								// if locked but no datapoint, do nothing
+								if (!tooltip.dataPoints || !tooltip.dataPoints.length) {
+									return;
+								}
 
-								usePointStyle: true,   // 👈 circle instead of square
-								pointStyle: "circle",
+								if (!tooltip.dataPoints || !tooltip.dataPoints.length) return;
+
+								const point = tooltip.dataPoints[0];
+								const frequency = point.raw.x.toFixed(4);
+								const amplitude = point.raw.y.toFixed(4);
+
+								tooltipEl.innerHTML = `
+    <div class="tooltip-title">Spectrum</div>
+    <div class="tooltip-row">
+      <div class="tooltip-label">Frequency</div>
+      <div class="tooltip-value">${frequency}</div>
+    </div>
+    <div class="tooltip-row">
+      <div class="tooltip-label">Amplitude</div>
+      <div class="tooltip-value">${amplitude}</div>
+    </div>
+  `;
+
+								tooltipEl.style.opacity = 1;
 							},
+						},
+
+
+						legend: {
+							display: false,
+							// position: "top",
+							// align: "center",
+
+							// labels: {
+							// 	color: "#45515C",
+							// 	font: {
+							// 		family: "system-ui, -apple-system, BlinkMacSystemFont",
+							// 		size: 12,
+							// 		weight: "500",
+							// 	},
+
+							// 	boxWidth: 10,
+							// 	boxHeight: 10,
+							// 	padding: 16,
+
+							// 	usePointStyle: true,   // 👈 circle instead of square
+							// 	pointStyle: "circle",
+							// },
 						},
 						zoom: {
 							pan: { enabled: true, mode: "x" },
@@ -126,11 +213,32 @@
 			});
 		}
 
+		function getOrCreateTooltip(chart) {
+			let el = chart.canvas.parentNode.querySelector(".chart-tooltip");
+			if (!el) {
+				el = document.createElement("div");
+				el.className = "chart-tooltip";
+				chart.canvas.parentNode.appendChild(el);
+			}
+			return el;
+		}
+
+		function hideTooltip() {
+			const el = document.querySelector(".chart-tooltip");
+			if (el) el.style.opacity = 0;
+			tooltipLocked = false;
+		}
+
 		function handleMessage(event) {
 			let payload;
 			try {
 				payload = JSON.parse(event.data);
 			} catch {
+				return;
+			}
+
+			if (payload.type === "HIDE_TOOLTIP") {
+				hideTooltip();
 				return;
 			}
 

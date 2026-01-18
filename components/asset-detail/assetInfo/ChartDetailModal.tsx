@@ -411,7 +411,18 @@ export default function ChartDetailModal({
 			animationType="slide"
 			onRequestClose={onClose}
 		>
-			<View style={styles.backdrop}>
+			<Pressable
+				style={styles.backdrop}
+				onPress={() => {
+					accWebRef.current?.postMessage(
+						JSON.stringify({ type: "HIDE_TOOLTIP" })
+					);
+
+					envWebRef.current?.postMessage(
+						JSON.stringify({ type: "HIDE_TOOLTIP" })
+					);
+				}}
+			>
 				<Header
 					title={activeTab === "time" ? "Time Waveform" : "Spectrum"}
 					modal={true}
@@ -526,7 +537,9 @@ export default function ChartDetailModal({
 										{" "}
 										Waveform
 									</Text>
-									<View style={styles.chartBox}>
+									<View style={styles.chartBox}
+										onStartShouldSetResponder={() => true}
+									>
 										<WebView
 											ref={accWebRef}
 											// source={require("../../../assets/charts/time-waveform.html")}
@@ -555,7 +568,9 @@ export default function ChartDetailModal({
 										{" "}
 										Envelope
 									</Text>
-									<View style={styles.chartBox}>
+									<View style={styles.chartBox}
+										onStartShouldSetResponder={() => true}
+									>
 										<WebView
 											ref={envWebRef}
 											// source={require("../../../assets/charts/envelope-waveform.html")}
@@ -586,8 +601,9 @@ export default function ChartDetailModal({
 											{" "}
 											Spectrum
 										</Text>
-										<View style={styles.chartBox}>
-
+										<View style={styles.chartBox}
+											onStartShouldSetResponder={() => true}
+										>
 											<WebView
 												ref={accWebRef}
 												// source={require("../../../assets/charts/spectrum-waveform.html")}
@@ -614,7 +630,9 @@ export default function ChartDetailModal({
 											{" "}
 											Spectrum Envelope
 										</Text>
-										<View style={styles.chartBox}>
+										<View style={styles.chartBox}
+											onStartShouldSetResponder={() => true}
+										>
 											{/* analyze button */}
 											<View style={{ flexDirection: "row", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
 
@@ -668,7 +686,7 @@ export default function ChartDetailModal({
 						)}
 					</View>
 				</ScrollView>
-			</View >
+			</Pressable>
 		</Modal >
 	);
 }
