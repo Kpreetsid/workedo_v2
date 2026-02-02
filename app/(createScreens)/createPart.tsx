@@ -18,6 +18,7 @@ export default function CreatePart() {
 	console.log('params = ', params);
 
 	const data = params?.data;
+	const isEdit = !!params?.data;
 
 	const router = useRouter();
 	const [visible, setVisible] = useState(false);
@@ -113,7 +114,7 @@ export default function CreatePart() {
 
 	return (
 		<>
-			<Header title={params ? "Edit Part" : "Create Part"} />
+			<Header title={isEdit ? "Edit Part" : "Create Part"} />
 
 			<KeyboardAwareScrollView bottomOffset={30} style={{ backgroundColor: '#F5F7FA' }}>
 
@@ -161,7 +162,7 @@ export default function CreatePart() {
 
 
 				<FormField
-					label="Select Spare Type"
+					label="Part Type"
 					type="dropdown"
 					field="selected_part"
 					options={["Spare 1", "Spare 2", "Spare 3"]}
@@ -169,6 +170,7 @@ export default function CreatePart() {
 					comingFrom="createPart"
 					store={usePartFormStore}
 					setterName="setPartFormValue"
+					styles={{ paddingHorizontal: 25 }}
 				/>
 
 				<FormField
@@ -219,7 +221,7 @@ export default function CreatePart() {
 					showKeyboardType="numeric"
 				/>
 
-				<ActionButton label={params? "Update" : "Submit"} onPress={handleSubmit} />
+				<ActionButton label={isEdit ? "Update" : "Create"} onPress={handleSubmit} />
 			</KeyboardAwareScrollView>
 		</>
 	);

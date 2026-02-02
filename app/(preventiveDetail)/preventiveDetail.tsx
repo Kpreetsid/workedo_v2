@@ -1,6 +1,6 @@
 import Header from "@/components/global/Header";
 import { useLocalSearchParams } from "expo-router";
-import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Dimensions, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Fonts from "@/constants/Typography";
 import { AssignUserRightIcon } from "@/constants/IconProvider";
 import { useEffect, useState } from "react";
@@ -10,9 +10,10 @@ import MoreInfoModal from "@/components/work-order-detail/MoreInfoModal";
 import { endpoints } from "@/src/api/endpoints";
 import moment from "moment";
 import { getSOPs, toggleWorkOrderStatus } from "@/src/services/preventive.service";
-import SegmentedPager from "@/components/global/SegmentPager";
 import PreventiveDetails from "./Preventive-details";
 import PreventiveForm from "./Preventive-form";
+import Tasks from "@/components/work-order-detail/Tasks";
+import { TabView } from "react-native-tab-view";
 
 export default function PreventiveDetail() {
 	const params: any = useLocalSearchParams();
@@ -20,6 +21,13 @@ export default function PreventiveDetail() {
 
 	const [preventiveDetails, setPreventiveDetails] = useState(item);
 	const [preventiveStatus, setPreventiveStatus] = useState(item?.schedule?.enabled);
+	const layout = Dimensions.get("window");
+	const [index, setIndex] = useState(0);
+	const [routes] = useState([
+		{ key: "details", title: "Details" },
+		{ key: "tasks", title: "Tasks" },
+		{ key: "forms", title: "Forms" },
+	]);
 
 	const [userModalVisible, setUserModalVisible] = useState(false);
 	const [partsModalVisible, setPartsModalVisible] = useState(false);
@@ -48,18 +56,40 @@ export default function PreventiveDetail() {
 		<View style={{ backgroundColor: "#F5F7FA", flex: 1 }}>
 			<Header title="Preventive Details" />
 
-			<SegmentedPager
-				comingFrom="preventive"
-				tabs={[
-					{
-						label: "Preventive Details",
-						component: () => <PreventiveDetails item={preventiveDetails} />,
-					},
-					{
-						label: "Forms",
-						component: () => <PreventiveForm item={preventiveDetails} />,
-					},
-				]}
+			<View style={styles.tabBar}>
+				{routes.map((route, i) => {
+					const isActive = i === index;
+					return (
+						<TouchableOpacity
+							key={route.key}
+							style={[styles.tabItem, isActive && styles.activeTab]}
+							onPress={() => setIndex(i)}
+						>
+							<Text style={[styles.tabText, isActive && styles.activeTabText]}>
+								{route.title}
+							</Text>
+						</TouchableOpacity>
+					);
+				})}
+			</View>
+
+			<TabView
+				navigationState={{ index, routes }}
+				renderScene={({ route }) => {
+					switch (route.key) {
+						case "details":
+							return <PreventiveDetails item={preventiveDetails} />;
+						case "tasks":
+							return <Tasks params={preventiveDetails?.work_order} />;
+						case "forms":
+							return <PreventiveForm item={preventiveDetails} />;
+						default:
+							return null;
+					}
+				}}
+				onIndexChange={setIndex}
+				initialLayout={{ width: layout.width }}
+				renderTabBar={() => null}
 			/>
 
 
@@ -176,6 +206,30 @@ export default function PreventiveDetail() {
 }
 
 const styles = StyleSheet.create({
+	tabBar: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		paddingHorizontal: 20,
+		marginTop: 12,
+		marginBottom: 10,
+	},
+	tabItem: {
+		paddingVertical: 8,
+		paddingHorizontal: 16,
+		borderRadius: 30,
+	},
+	activeTab: {
+		backgroundColor: "#742BDE",
+	},
+	tabText: {
+		fontSize: 12,
+		fontFamily: Fonts.regular,
+		color: "#000",
+	},
+	activeTabText: {
+		color: "#fff",
+		fontFamily: Fonts.semiBold,
+	},
 	header: {
 		backgroundColor: "#742BDE",
 		borderRadius: 8,

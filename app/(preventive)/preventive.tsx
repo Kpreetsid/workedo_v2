@@ -2,7 +2,7 @@ import Header from "@/components/global/Header";
 import { router, useFocusEffect } from "expo-router";
 import CreateFAB from "@/components/global/CreateFAB";
 import SearchBar from "@/components/global/SearchBar";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import Fonts from "@/constants/Typography";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -88,6 +88,26 @@ export default function PreventivePage() {
 
 	}
 
+	const filteredPreventives = useMemo(() => {
+		const query = searchQuery.trim().toLowerCase();
+		if (!query) return preventives;
+
+		return preventives.filter((item) => {
+			const title = item?.title ?? "";
+			const priority = item?.work_order?.priority ?? "";
+			const location = item?.work_order?.location?.location_name ?? "";
+			const createdByName = [item?.createdBy?.firstName, item?.createdBy?.lastName]
+				.filter(Boolean)
+				.join(" ");
+
+			const haystack = [title, priority, location, createdByName]
+				.join(" ")
+				.toLowerCase();
+
+			return haystack.includes(query);
+		});
+	}, [preventives, searchQuery]);
+
 	return (
 		<>
 			<Header title="Preventive Maintenance" />
@@ -99,7 +119,7 @@ export default function PreventivePage() {
 						<ActivityIndicator size={"large"} />
 						:
 						<FlatList
-							data={preventives}
+							data={filteredPreventives}
 							keyExtractor={(item) => item.id}
 							renderItem={({ item }) => {
 								return (

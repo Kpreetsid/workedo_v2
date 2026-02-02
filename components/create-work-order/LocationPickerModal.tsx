@@ -20,7 +20,17 @@ import { usePartFormStore } from "@/src/store/usePartFormStore";
 import { useCreateAssetStore } from "@/src/store/useCreateAsset";
 import { Location } from "@/src/types/location";
 
-export default function LocationPickerModal({ comingFrom, visible, onClose }: { comingFrom: string; visible: boolean; onClose: () => void }) {
+export default function LocationPickerModal({
+	comingFrom,
+	visible,
+	onClose,
+	onSelectLocation,
+}: {
+	comingFrom?: string;
+	visible: boolean;
+	onClose: () => void;
+	onSelectLocation?: (item: Location) => void;
+}) {
 	const [expanded, setExpanded] = useState<any>({});
 	const [selectedId, setSelectedId] = useState<string | null>(null);   // ⭐ only 1 selected at a time
 	const [locations, setLocations] = useState<Location[]>([]);
@@ -62,6 +72,10 @@ export default function LocationPickerModal({ comingFrom, visible, onClose }: { 
 
 	const handleSelect = (node: any) => {
 		setSelectedId(node.id);   // ⭐ overwrite previous selection
+		if (onSelectLocation) {
+			onSelectLocation(node);
+			return;
+		}
 		onSelect(node);         // return selected node to parent
 	};
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, TextInput, Switch, StyleSheet } from "react-native";
+import { View, Text, TextInput, Switch, StyleSheet, ToastAndroid } from "react-native";
 import FormInput from "../create-screens/FormInput";
 import ActionButton from "../create-screens/ActionButton";
 
@@ -12,6 +12,7 @@ const DynamicForm = ({ components }: any) => {
 
   const handlePress = () => {
     console.log('handle press = ', formValues)
+    ToastAndroid.show("Submission Complete.", ToastAndroid.SHORT)
   }
 
   const renderField = (field: any) => {

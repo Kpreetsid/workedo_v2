@@ -41,6 +41,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 	const router = useRouter();
 	const [showCalendar, setShowCalendar] = useState(false);
 	const params: any = useLocalSearchParams();
+	const comingFrom = params?.comingFrom;
 	const [id, setId] = useState();
 	const { setWorkForm, isLoaded, resetForm } = useWorkOrderStore();
 	const [forms, setForms] = useState<any>([]);
@@ -53,6 +54,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 	const { user } = useAuthStore();
 
 	const workOrderImageTest = useWorkOrderStore((s) => s.attachments)
+	const workOrderLocation = useWorkOrderStore((state) => state.location);
 
 	useEffect(() => {
 		if (passedData && !isLoaded) {
@@ -194,6 +196,12 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 			}
 		}
 
+		const missingTaskType = data?.tasks?.some((task: any) => !task?.type);
+		if (missingTaskType) {
+			ToastAndroid.show("Please select a task type", ToastAndroid.SHORT);
+			return;
+		}
+
 		if (data.start_date > data.end_date) {
 			ToastAndroid.show(`End date should be greater than start date`, ToastAndroid.SHORT);
 			return;
@@ -238,6 +246,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 		};
 
 		console.log("📦 Final Work Order Payload:", payload);
+		// return;
 		if (id) console.log('set id = ', id);
 		// return;
 
@@ -261,7 +270,11 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 					useWorkOrderStore.getState().resetForm();
 					if (!data.work_request_id) {
 						ToastAndroid.show("Work Order updated successfully!", ToastAndroid.SHORT);
-						router.back();
+						if (comingFrom === "overview") {
+							router.replace("/workOrders");
+						} else {
+							router.back();
+						}
 					}
 				}
 
@@ -284,7 +297,11 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 					useWorkOrderStore.getState().resetForm();
 					if (!data.work_request_id) {
 						ToastAndroid.show("Work Order created successfully!", ToastAndroid.SHORT);
-						router.back();
+						if (comingFrom === "overview") {
+							router.replace("/workOrders");
+						} else {
+							router.back();
+						}
 					}
 				}
 			}
@@ -502,10 +519,16 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 						)
 					}
 
-					<SelectParts onPress={() => router.push({
-						pathname: "/addParts",
-						params: { comingFrom: "newWorkOrder" }
-					})}
+					<SelectParts onPress={() => {
+						if (workOrderLocation) {
+							router.push({
+								pathname: "/addParts",
+								params: { comingFrom: "newWorkOrder" }
+							})
+						} else {
+							ToastAndroid.show("Please select a location", ToastAndroid.SHORT);
+						}
+					}}
 					/>
 
 

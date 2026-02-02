@@ -39,7 +39,9 @@ export default function Overview() {
 		if (option === "parts") router.push("/createPart");
 		if (option === "location") router.push("/createLocation");
 		if (option === "asset") router.push("/createAsset");
-		if (option === "work_order") router.push("/createWorkOrder");
+		if (option === "work_order") {
+			router.push({ pathname: "/createWorkOrder", params: { comingFrom: "overview" } });
+		}
 		if (option === "work_request") router.push("/newWorkRequest");
 		if (option === "gateway") router.push("/updateGateway");
 

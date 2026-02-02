@@ -29,7 +29,7 @@ export default function DoneTab() {
 
 			if (res?.status && res?.data) {
 				const allWorkOrders = res.data as WorkOrder[];
-				setWorkOrders(allWorkOrders);
+				setWorkOrders(allWorkOrders.reverse());
 				setLoading(false)
 			}
 		} catch (error: any) {

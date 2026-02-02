@@ -16,6 +16,7 @@ import Header from "@/components/global/Header";
 import { usePreventiveStore } from "@/src/store/usePreventiveStore";
 import ActionButton from "@/components/auth-screens/ActionButton";
 import { useRouter } from "expo-router";
+import { ToastAndroid } from "react-native";
 
 
 const UI_TYPES = ["Radio Button", "Text", "Number", "Check Box"];
@@ -41,7 +42,7 @@ const AddTasks = () => {
     const newTask = {
       id: Date.now(),
       title: "",
-      type: "text",             // API format
+      type: "",                 // API format (set after user selects)
       fieldValue: "",
       options: [],              // MUST be array of {key,value}
     };
@@ -192,9 +193,11 @@ const AddTasks = () => {
                 <Text style={styles.dropdownText}>
                   {
                     // Convert API type back to UI name for display
-                    Object.keys(TYPE_MAP).find(
-                      (k) => TYPE_MAP[k] === task.type
-                    ) || task.type
+                    task.type
+                      ? Object.keys(TYPE_MAP).find(
+                          (k) => TYPE_MAP[k] === task.type
+                        ) || task.type
+                      : "Select Type"
                   }
                 </Text>
                 <Ionicons name="chevron-down" size={18} color="#64748B" />
@@ -282,7 +285,17 @@ const AddTasks = () => {
       </KeyboardAwareScrollView>
 
       <View style={styles.btnContainer}>
-        <ActionButton label="Submit" onPress={() => router.back()} />
+        <ActionButton
+          label="Submit"
+          onPress={() => {
+            const hasMissingType = tasks.some((task: any) => !task?.type);
+            if (hasMissingType) {
+              ToastAndroid.show("Please select a task type", ToastAndroid.SHORT);
+              return;
+            }
+            router.back();
+          }}
+        />
       </View>
     </>
   );

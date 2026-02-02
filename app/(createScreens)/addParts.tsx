@@ -42,9 +42,10 @@ const addParts = () => {
 	const useStore = storeEntry.store();
 	const setterKey = storeEntry.setter;
 
-	console.log('use store = ', setterKey);
+	console.log('use store = ', useStore);
 
 	const selectedParts = useStore.parts;
+	const location_id = useStore.location?.id;
 
 	useEffect(() => {
 		fetchParts();
@@ -52,7 +53,7 @@ const addParts = () => {
 
 	const fetchParts = async () => {
 		try {
-			const res = await getParts();
+			const res = await getParts(location_id);
 			if (res.status && Array.isArray(res.data)) setParts(res.data);
 		} catch (err) {
 			console.error("Fetching parts failed:", err);

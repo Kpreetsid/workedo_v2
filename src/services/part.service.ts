@@ -16,12 +16,21 @@ export const updateFullPart = async (id: string, payload: any) => {
     return await sendRequest("PUT", url, payload);
 };
 
-export const getParts = async () => {
-    const url = `${endpoints.parts.getParts}`;
+export const getParts = async (location_id?: string) => {
+    let url = `${endpoints.parts.getParts}`;
+    if (location_id) {
+        url = `${endpoints.parts.getParts}?location_id=${location_id}`;
+    }
+    console.log(url)
     return await sendRequest("GET", url);
 };
 
 export const deletePart = async (id: string) => {
     const url = `${endpoints.parts.getParts}/${id}`;
     return await sendRequest("DELETE", url);
+};
+
+export const getPartById = async (id: string) => {
+    const url = `${endpoints.parts.getParts}/${id}`;
+    return await sendRequest("GET", url);
 };

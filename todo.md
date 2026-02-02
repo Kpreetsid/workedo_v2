@@ -450,3 +450,223 @@ Janak Review
 13. High pass and low pass placeholder for input on spectrum graphs. - Done
 14. tooltip on spectrum graphs needs to be changed as per admin panel. - Done
 15. PDM Dashboard, search parent and child locations, and if data is empty, show no data found. - Done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+Testers issues:
+1. 
+2. 
+3. 
+4. 
+
+## *CMMS*
+5. When selecting a location that has no data, it still shows the *previously selected location’s data* 
+6. info icon make stable ,it is moving with the endpoint name make it stable ... 
+
+
+## *PDM*
+7. The *Asset Health graph* is still unstable.
+8. In the *Alarm Summary graph, the color codes for **Alert, Danger, and Critical* should match the desktop app.
+    
+
+## *Info*
+9. The *loader is still showing* on endpoints where no data is available. This issue is not fixed yet.
+
+## *Spectrum*
+10. When clicking on the *Spectrum, it should show **only the spectrum chart of the selected axis*, not the previously selected axis.
+11. make scalling according to provided data . showing previously selected axis  scaling in current axis. so for axis having less amlitude showing small size...
+12. acceleration spectrum envelope filter not working .
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ KPI 
+1.Un-Addressed Alarms redirect issue
+When I click on Un-Addressed Alarms, the page navigates to the Location page.
+
+ KPI 
+2.Total End Points redirect issue
+When I click on Total End Points, the page navigates to the Asset page.
+
+ KPI 
+3.Alarm Summary color mismatch
+In the Alarm Summary, the alert color and danger color should be exchanged.
+
+ KPI 
+4.Addressed/Un-Addressed icons missing
+Un-Addressed and Addressed icons are missing.
+
+ KPI 
+5.Asset Health  graph
+The Asset Health status ticket is not moving.
+
+ KPI 
+6.Alarm Summary critical color issue
+In the Alarm Summary, the Critical status should be shown in round red.
+
+ KPI 
+7.CMMS graph data hidden
+In CMMS, some data points are hidden in the Planned vs Unplanned graph.
+
+ KPI 
+8.overlapping
+Parent location and child location  its search box overlapping each other
+
+ KPI 
+9.CMMS Dashboard
+“When applying a filter in the calendar, no updates are shown.”
+
+ KPI 
+10.CMMS Dashboard
+“When I apply a filter in the calendar and reopen it, the filters are deselected.”
+
+ Asset 
+11.Info
+The loader is showing on endpoints where no data available
+
+ Asset 
+12.Sensors
+“Create New Endpoint submit button is partially hidden.”
+
+Asset 
+Sensors
+12.“When I deselect all axes, the graph is still visible.”
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. Create Work Order → Task → Add Task - The Select Type dropdown should not have a default value. - Done
+
+2. Create Work Order → Task → Add Task - The screen should include Submit and Cancel buttons.
+These are not present on the admin panel as well. Submit and cancel buttons show when you open we open a work order details page > Tasks.
+
+3. Create Work Order → Page Layout 
+The left side of the Create Work Order page requires proper spacing/alignment.
+- It has alignment according to Figma design. What's the spacing you are referring to?
+
+4. Create Work Order → Forms* 
+The Submit button is not working and must be fixed.
+
+- I added two new work orders, one from mobile, and one from web, both worked. And on work order details page we have the forms tab, clicking on submit button there would submit the form, its working too. 
+
+
+
+
+5. Work Orders → Done 
+The Done section should display most recent records at the top.
+- Done
+
+6. Create Work Order → Select Parts 
+The Select Parts button should remain disabled until a location is selected.
+- Done
+
+7. Create Work Order → Select Parts
+The Select Parts button should be shifted slightly to the right.
+- Done
+
+8. Preventive Module → Location Selection 
+When a user selects a location, only the parts associated with the selected location should be displayed.
+- Done
+
+10. Preventive → Skip Dates
+The calendar should display properly and allow users to view the full calendar.
+- Done
+
+11. Preventive – Search bar is not able to search existing data.
+- Done
+
+12. Work Order Details - more info,parts
+“When I click on Expand, most of the data footer is hidden.”
+
+13. Create Work Order
+“Only parts related to the selected location should be displayed.”
+- Done
+
+14. Completed work orders should be shown *at the top (newest first)*, but currently they are shown in the opposite order.
+- Done
+
+15. While creating a work order, there is a *UI issue when selecting the form* in this section.
+- Done
+
+16. When creating a work order from the *“+” icon* in the CMMS or PDM dashboard, after creation it redirects to the same page, but it *should redirect to the Work Order page*. similar for other page 
+- Now if you create a work order from PDM Dashboard, you will be redirected to work orders page to view the newly created work order.
+
+17. The data shown in *“Assigned to Me”* and *“Created by Me”* should not be the same, as per the desktop app, but currently it is still the same.
+- There might be some issue with the API, as data is coming from that API Pawan created for this page. I think in the last meeting he mentioned that this is a TEST DATA so that's why they are repeating. 
+
+Pawan Can you check this?
+
+18. In the *Create Parts* section, it incorrectly shows the * Update button*  there should be create button
+- Done
+
+19. Change the field name from *“Select Spare Type”* to *“Part Type”*.
+- Done
+
+20. In the Parts list, add a *Location filter* along with the search icon.
+- Done
+
+21. Inside the Parts detail page, display the part details *the same way as in the desktop app*.
+- Changed the UI design, now following the desktop app, not figma.
+
+22. Add *scroll-down refresh* functionality on this page as well.
+- Done
+
+23. While creating a preventive schedule, when we create a task, the *created task is not shown immediately on the screen*.
+- Done
+
+24. While creating a preventive schedule, if *Skip Weekend* is selected, the same data should be reflected on the preventive page, *similar to the desktop app*. The same applies to *Number of Repetitions*.
+- Done
+
+25. In the *Preventive Detail page, display **Parts details* similar to how *Work Order details* are shown in the desktop app.
+- Done
+
+26. In the *Preventive Detail page, just like the **Form page* is shown, also show the *Task page* in the same way.
+- Done

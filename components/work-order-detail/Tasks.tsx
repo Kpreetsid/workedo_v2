@@ -79,6 +79,8 @@ const Tasks = ({ params }: Props) => {
 	}, [tasks]);
 
 	const updateWorkOrderFunc = async () => {
+		if(!params?.order_no) return;
+
 		let payload = {
 			"order_no": params?.order_no,
 			"priority": params?.priority,
@@ -95,7 +97,7 @@ const Tasks = ({ params }: Props) => {
 			"userIdList": params?.assignedUsers?.map((user: any) => user.user.id)
 		}
 
-		console.log(payload);
+		console.log('payload for marking tasks = ', payload);
 
 		const res = await updateWorkOrder(params.id, payload);
 		console.log("✅ Response:", res);
@@ -193,7 +195,7 @@ const Tasks = ({ params }: Props) => {
 				))}
 
 				{
-					tasks.length > 0 && <ActionButton
+					(tasks.length > 0 && params?.order_no) && <ActionButton
 						label="Submit"
 						onPress={() => updateWorkOrderFunc()}
 						style={{ width: '100%', alignSelf: 'center', marginBottom: 40 }}

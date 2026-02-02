@@ -41,10 +41,17 @@ const PreventiveDetails = ({ item }: { item: Preventive | any }) => {
             </View>
             :
             <View style={styles.row}>
-              <InfoField label="No. of Repetition" value={item?.schedule?.no_of_repetition || 0} />
+              <InfoField label="No. of Repetition" value={item?.schedule?.no_of_execution || 0} />
               <InfoField label="Last Executed On" value={item?.schedule?.last_executed_on} />
             </View>
         }
+
+        <View style={styles.row}>
+          <InfoField
+            label="Skip Weekends"
+            value={`${item?.schedule?.skipWeekends ? "Yes" : "No"} - ${item?.schedule?.skipWeekendSunday ? "Sunday" : ""}, ${item?.schedule?.skipWeekendSaturday ? "Saturday" : ""}`.trim()}
+          />
+        </View>
 
         {/* SECTION HEADER */}
         <Text style={styles.sectionTitle}>Work Order Details :</Text>
@@ -92,6 +99,37 @@ const PreventiveDetails = ({ item }: { item: Preventive | any }) => {
           <Text style={styles.label}>Description</Text>
           <View style={[styles.inputBox, { height: 90 }]}>
             <Text style={styles.inputText}>{item?.description}</Text>
+          </View>
+        </View>
+
+        {/* PARTS ATTACHED */}
+        <View style={styles.partsSection}>
+          <View style={styles.partsHeader}>
+            <Text style={styles.partsTitle}>Parts Attached</Text>
+          </View>
+
+          <View style={styles.partsCard}>
+            <View style={styles.partsRowHeader}>
+              <Text style={[styles.partsHeaderText, styles.colName]}>Part Name</Text>
+              <Text style={[styles.partsHeaderText, styles.colType]}>Part Type</Text>
+              <Text style={[styles.partsHeaderText, styles.colQty]}>Estimated Quantity</Text>
+              <Text style={[styles.partsHeaderText, styles.colUnit]}>Unit</Text>
+            </View>
+
+            {item?.work_order?.parts?.length > 0 ? (
+              item.work_order.parts.map((part: any, idx: number) => (
+                <View style={styles.partsRow} key={part?.part_id || idx}>
+                  <Text style={[styles.partsCellText, styles.colName]}>{part?.part_name || "--"}</Text>
+                  <Text style={[styles.partsCellText, styles.colType]}>{part?.part_type || "--"}</Text>
+                  <Text style={[styles.partsCellText, styles.colQty]}>{part?.estimatedQuantity ?? "--"}</Text>
+                  <Text style={[styles.partsCellText, styles.colUnit]}>{part?.unit || "--"}</Text>
+                </View>
+              ))
+            ) : (
+              <View style={styles.partsEmptyRow}>
+                <Text style={styles.partsEmptyText}>No parts attached.</Text>
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -150,6 +188,70 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semiBold,
     marginVertical: 15,
     color: "#222",
+  },
+  partsSection: {
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  partsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  partsTitle: {
+    fontSize: 13,
+    fontFamily: Fonts.semiBold,
+    color: "#742BDE",
+  },
+  partsCard: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E2E5E9",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  partsRowHeader: {
+    flexDirection: "row",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E5E9",
+  },
+  partsRow: {
+    flexDirection: "row",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E5E9",
+  },
+  partsHeaderText: {
+    fontSize: 11,
+    fontFamily: Fonts.semiBold,
+    color: "#201F23",
+  },
+  partsCellText: {
+    fontSize: 11,
+    fontFamily: Fonts.regular,
+    color: "#201F23",
+  },
+  colName: {
+    flex: 2,
+  },
+  colType: {
+    flex: 1.2,
+  },
+  colQty: {
+    flex: 1.4,
+  },
+  colUnit: {
+    flex: 1,
+  },
+  partsEmptyRow: {
+    paddingVertical: 10,
+  },
+  partsEmptyText: {
+    fontSize: 11,
+    fontFamily: Fonts.regular,
+    color: "#6B7280",
   },
 
   tagsRow: {

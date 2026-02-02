@@ -95,6 +95,7 @@ export default FormsScreen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: 25,
   },
   inputGroup: {
     marginBottom: 20,

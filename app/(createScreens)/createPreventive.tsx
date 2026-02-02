@@ -6,7 +6,6 @@ import AssignInput from "@/components/create-screens/AssignInput";
 import ActionButton from "@/components/create-screens/ActionButton";
 import AssignSchedule from "@/components/create-screens/AssignSchedule";
 import { router } from "expo-router";
-import DatePicker from "@/components/global/DatePicker";
 import { useEffect, useState } from "react";
 import { PreventiveFormData, usePreventiveStore } from "@/src/store/usePreventiveStore";
 import { useRouter } from "expo-router";
@@ -30,6 +29,13 @@ const MODE_FIELD_MAP: Record<string, string> = {
 	daily: "everyNDays",
 	weekly: "everyNWeeks",
 	monthly: "everyNMonths",
+};
+
+const TASK_TYPE_LABELS: Record<string, string> = {
+	multipleChoice: "Radio Button",
+	text: "Text",
+	number: "Number",
+	checkBox: "Check Box",
 };
 
 const weekdayNames = [
@@ -58,10 +64,10 @@ export default function CreatePreventive() {
 
 	const [nDays, setNDays] = useState("1");
 	const [id, setId] = useState();
-	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 	const [activeDateField, setActiveDateField] = useState<any>(null);
 
 	const { skip_dates, setPreventiveValue, resetForm, isLoaded } = usePreventiveStore();
+	const tasks = usePreventiveStore((s) => s.tasks);
 
 	const preventiveLocation = usePreventiveStore((s) => s.location);
 	const preventiveAssets = usePreventiveStore((s) => s.selected_asset)
@@ -382,6 +388,13 @@ export default function CreatePreventive() {
 		}
 	};
 
+	const handleRemoveTask = (id: any) => {
+		setPreventiveValue(
+			"tasks",
+			tasks.filter((t: any) => t.id !== id)
+		);
+	};
+
 	const deriveNDays = (schedule: any) => {
 		if (!schedule) return "1";
 
@@ -547,6 +560,21 @@ export default function CreatePreventive() {
 					onPress={() => router.push("/addTasks")}
 				/>
 
+				<View style={styles.tasksContainer}>
+					{tasks.length > 0 &&
+						tasks.map((task: any, index: number) => (
+							<View style={styles.taskItem} key={task.id ?? index}>
+								<Text style={styles.taskText}>{task?.title || "Untitled Task"}</Text>
+								<Text style={styles.taskTypeText}>
+									{TASK_TYPE_LABELS[task?.type] || task?.type || "No Type"}
+								</Text>
+								<Pressable onPress={() => handleRemoveTask(task.id)}>
+									<Ionicons name="close" size={16} color="#000" />
+								</Pressable>
+							</View>
+						))}
+				</View>
+
 				{/* <AssignSchedule /> */}
 
 				<AssignInput
@@ -555,7 +583,16 @@ export default function CreatePreventive() {
 					field="parts"
 					store={usePreventiveStore}
 					comingFrom="createPreventive"
-					onPress={() => router.push("/addParts")}
+					onPress={() => {
+						if (preventiveLocation) {
+							router.push({
+								pathname: "/addParts",
+								params: { comingFrom: "createPreventive" }
+							})
+						} else {
+							ToastAndroid.show("Please select a location first!", ToastAndroid.SHORT);
+						}
+					}}
 				/>
 
 				<View style={styles.partsContainer}>
@@ -645,7 +682,6 @@ export default function CreatePreventive() {
 
 					<Pressable style={styles.container1} onPress={() => {
 						setActiveDateField("start_date");
-						// setIsDatePickerVisible(true);
 						setShowCalendar(true)
 					}}>
 						<TextInput
@@ -669,14 +705,15 @@ export default function CreatePreventive() {
 						console.log('active date field = ', activeDateField)
 						if (activeDateField) {
 							usePreventiveStore.getState().setPreventiveValue(activeDateField, formatted);
-							setIsDatePickerVisible(false);
+							setShowCalendar(false);
 							setActiveDateField(null);
 							return;
 						}
 
 						if (activeIndex !== null) {
 							updateSkipDate(activeIndex, formatted);
-							// setIsDatePickerVisible(false);
+							setShowCalendar(false);
+							setActiveIndex(null);
 							return;
 						}
 					}}
@@ -690,7 +727,6 @@ export default function CreatePreventive() {
 
 					<Pressable style={styles.container1} onPress={() => {
 						setActiveDateField("end_date");
-						// setIsDatePickerVisible(true);
 						setShowCalendar(true)
 					}}>
 						<TextInput
@@ -726,7 +762,8 @@ export default function CreatePreventive() {
 						}}
 						onDateFieldPress={(i) => {
 							setActiveIndex(i);
-							setIsDatePickerVisible(true);
+							setActiveDateField(null);
+							setShowCalendar(true);
 						}}
 					/>
 				</View>
@@ -736,29 +773,6 @@ export default function CreatePreventive() {
 				</View>
 
 				<ActionButton label="Submit" onPress={handleSubmit} />
-
-				<DatePicker
-					visible={isDatePickerVisible}
-					onClose={() => setIsDatePickerVisible(false)}
-					onDateSelect={(date) => {
-						const formatted = moment(date).format("YYYY-MM-DD");
-						console.log('active date field = ', activeDateField)
-						if (activeDateField) {
-							usePreventiveStore.getState().setPreventiveValue(activeDateField, formatted);
-							setIsDatePickerVisible(false);
-							setActiveDateField(null);
-							return;
-						}
-
-						if (activeIndex !== null) {
-							updateSkipDate(activeIndex, formatted);
-							setIsDatePickerVisible(false);
-							return;
-						}
-					}}
-				/>
-
-
 
 				<View style={{ marginVertical: 10 }} />
 
@@ -791,6 +805,36 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		flexWrap: "wrap",
 		gap: 10,
+	},
+	tasksContainer: {
+		paddingHorizontal: 25,
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: 10,
+		marginBottom: 5,
+	},
+	taskItem: {
+		paddingHorizontal: 10,
+		paddingVertical: 6,
+		backgroundColor: "rgba(117, 43, 223, 0.08)",
+		borderColor: "#752BDF",
+		borderWidth: StyleSheet.hairlineWidth,
+		borderRadius: 6,
+		justifyContent: "center",
+		gap: 5,
+		display: "flex",
+		alignItems: "center",
+		flexDirection: "row",
+	},
+	taskText: {
+		fontSize: 11,
+		fontFamily: Fonts.regular,
+		color: "#000",
+	},
+	taskTypeText: {
+		fontSize: 11,
+		fontFamily: Fonts.light,
+		color: "#000",
 	},
 	partItem: {
 		paddingHorizontal: 10,

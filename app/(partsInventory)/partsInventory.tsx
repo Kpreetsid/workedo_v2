@@ -11,12 +11,16 @@ import CreateFAB from "@/components/global/CreateFAB";
 import Popover from "react-native-popover-view";
 import { FABIcon } from "@/constants/IconProvider";
 import { Part } from "@/src/types/part";
+import { Location } from "@/src/types/location";
+import LocationPickerModal from "@/components/create-work-order/LocationPickerModal";
 
 export default function PartsInventory() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [refreshing, setRefreshing] = useState(false);
 	const [parts, setParts] = useState<any[]>([]);
 	const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
+	const [locationModalVisible, setLocationModalVisible] = useState(false);
+	const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
 
 	useFocusEffect(
 		useCallback(() => {
@@ -26,13 +30,13 @@ export default function PartsInventory() {
 
 	const handleRefresh = async () => {
 		setRefreshing(true);
-		await fetchParts();
+		await fetchParts(selectedLocation?.id);
 		setRefreshing(false);
 	};
 
-	const fetchParts = async () => {
+	const fetchParts = async (locationId?: string | null) => {
 		try {
-			const resp = await getParts();
+			const resp = await getParts(locationId || undefined);
 			console.log('resp = ', resp);
 			if (resp.status) {
 				setParts(resp?.data);
@@ -63,7 +67,7 @@ export default function PartsInventory() {
 							console.log('resp = ', resp);
 							if (resp?.status) {
 								ToastAndroid.show("Part Deleted", ToastAndroid.SHORT);
-								fetchParts();
+								fetchParts(selectedLocation?.id);
 							}
 						} catch (e) {
 							// setDeleteLoading(false)
@@ -81,6 +85,26 @@ export default function PartsInventory() {
 			<Header title="Parts Inventory" />
 			<View style={styles.container}>
 				<SearchBar value={searchQuery} onChangeText={setSearchQuery} />
+				<Pressable style={styles.filterRow} onPress={() => setLocationModalVisible(true)}>
+					<View style={styles.filterLeft}>
+						<Ionicons name="location-outline" size={16} color="#201F23CC" />
+						<Text style={styles.filterText}>
+							{selectedLocation?.location_name || "All Locations"}
+						</Text>
+					</View>
+					{selectedLocation ? (
+						<TouchableOpacity
+							onPress={() => {
+								setSelectedLocation(null);
+								fetchParts();
+							}}
+						>
+							<Ionicons name="close-circle" size={18} color="#742BDE" />
+						</TouchableOpacity>
+					) : (
+						<Ionicons name="chevron-down" size={18} color="#742BDE" />
+					)}
+				</Pressable>
 
 				<FlatList
 					data={parts}
@@ -185,6 +209,17 @@ export default function PartsInventory() {
 
 			<CreateFAB label="Create Part" onPress={() => router.push("/createPart")} />
 
+			<LocationPickerModal
+				visible={locationModalVisible}
+				onClose={() => setLocationModalVisible(false)}
+				comingFrom="partsInventory"
+				onSelectLocation={(item) => {
+					setSelectedLocation(item);
+					fetchParts(item?.id || item?._id);
+					setLocationModalVisible(false);
+				}}
+			/>
+
 		</>
 	)
 }
@@ -194,6 +229,29 @@ const styles = StyleSheet.create({
 		flex: 1,
 		paddingVertical: 20,
 		backgroundColor: "#F5F7FA"
+	},
+	filterRow: {
+		marginHorizontal: 20,
+		marginBottom: 10,
+		backgroundColor: "#fff",
+		borderRadius: 8,
+		paddingVertical: 10,
+		paddingHorizontal: 12,
+		borderWidth: 0.6,
+		borderColor: "rgba(225, 232, 238, 0.60)",
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+	},
+	filterLeft: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 6,
+	},
+	filterText: {
+		fontSize: 11,
+		fontFamily: Fonts.regular,
+		color: "#201F23CC",
 	},
 	partInfoCard: {
 		backgroundColor: "rgba(255, 255, 255, 0.90)",

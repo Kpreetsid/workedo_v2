@@ -24,7 +24,7 @@ const TaskScreen = () => {
 		const newTask = {
 			id: Date.now(),
 			title: "",
-			type: "text",             // API format
+			type: "",                 // API format (set after user selects)
 			fieldValue: "",
 			options: [],              // MUST be array of {key,value}
 		};
@@ -163,9 +163,11 @@ const TaskScreen = () => {
               <Text style={styles.dropdownText}>
                 {
                   // Convert API type back to UI name for display
-                  Object.keys(TYPE_MAP).find(
-                    (k) => TYPE_MAP[k] === task.type
-                  ) || task.type
+                  task.type
+                    ? Object.keys(TYPE_MAP).find(
+                        (k) => TYPE_MAP[k] === task.type
+                      ) || task.type
+                    : "Select Type"
                 }
               </Text>
               <Ionicons name="chevron-down" size={18} color="#64748B" />

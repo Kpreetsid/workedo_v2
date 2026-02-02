@@ -54,15 +54,39 @@ export default function SegmentedPager({ tabs, comingFrom, initialPage = 0, cont
 	return (
 		<>
 			{/* Tabs */}
-			<View style={[styles.tabRow, containerStyle, comingFrom === "preventive" ? {height: 50} : {height: 40}]}>
+			<View style={[styles.tabRow, containerStyle, comingFrom === "preventive" ? { height: 50 } : { height: 40 }]}>
 				{tabs.map((tab, index) => {
 					const isActive = index === activeTab;
 					return (
-						<Pressable key={index} style={[styles.tab, comingFrom === "preventive" ? {width: '40%', height: 42} : {width: 'auto', height: 32}, tabStyle, isActive && [styles.activeTab, activeTabStyle]]} onPress={() => handleTabPress(index)}>
+						<Pressable
+							key={index}
+							style={[
+								styles.tab,
+								comingFrom === "preventive"
+									? { flex: 1, height: 42 }
+									: { width: "auto", height: 32 },
+								tabStyle,
+								isActive && [styles.activeTab, activeTabStyle],
+							]}
+							onPress={() => handleTabPress(index)}
+						>
 							{isValidElement(tab?.icon) ? cloneElement(tab.icon, { color: isActive ? "#FFFFFF" : "#000000" }) : null}
 
 
-							<Text style={[styles.tabText, textStyle, isActive && [styles.activeTabText, activeTextStyle]]}> {tab.label} </Text>
+							<Text
+								numberOfLines={1}
+								ellipsizeMode="tail"
+								adjustsFontSizeToFit={comingFrom === "preventive"}
+								minimumFontScale={0.8}
+								style={[
+									styles.tabText,
+									comingFrom === "preventive" && styles.tabTextPreventive,
+									textStyle,
+									isActive && [styles.activeTabText, activeTextStyle],
+								]}
+							>
+								{tab.label}
+							</Text>
 						</Pressable>
 					);
 				})}
@@ -127,6 +151,10 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.light,
 		color: "#000000",
 		lineHeight: 18,
+		flexShrink: 1,
+	},
+	tabTextPreventive: {
+		fontSize: 10,
 	},
 	activeTabText: {
 		color: "#fff",
