@@ -5,3 +5,4 @@ __MACOSX/.DS_Store
 app/.DS_Store
 assets/.DS_Store
 components/.DS_Store
+.gradle-local
