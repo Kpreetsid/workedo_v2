@@ -7,7 +7,8 @@
     "md": " sudo expo run:android",
     "release": "cd android && ./gradlew assembleRelease && cd ..",
     "bundle": "cd android && ./gradlew bundleRelease && cd ..",
-    "ios": "expo run:ios",
+    "md:release": "cd android && ./gradlew assembleRelease --no-daemon -g ../.gradle-local",
+    "android:clean": "cd android && ./gradlew clean --no-daemon -g ../.gradle-local",
     "web": "expo start --web",
     "android": "expo run:android"
   },

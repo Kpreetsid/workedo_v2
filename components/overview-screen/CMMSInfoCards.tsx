@@ -12,14 +12,17 @@ export default function CMMSInfoCards() {
 	// console.log('child assets in wo status = ', childAssets);
 
 	const [woInfoCards, setWOInfoCards] = useState<any>(null);
-	const { startDate, endDate } = useDateRangeStore();
+	const { startDate, endDate, rangeVersion } = useDateRangeStore();
 
 	useEffect(() => {
 		// console.log('bceause of start date - ', startDate, childAssets);
 		if (childAssets.length > 0) {
 			fetchInfoCards();
+			return;
 		}
-	}, [childAssets, startDate])
+
+		setWOInfoCards(null);
+	}, [childAssets, startDate, endDate, rangeVersion])
 
 	async function fetchInfoCards() {
 		const startTimePart = "T11:00:00.946Z";
@@ -48,12 +51,16 @@ export default function CMMSInfoCards() {
 			// console.log('final payload = ', finalPayload);
 
 			const res = await woSummary(finalPayload);
-			if (res?.status) {
+			if (res?.status && res?.data) {
 				// console.log('res WO info cards = ', res?.data);
 				setWOInfoCards(res?.data)
+				return;
 			}
+
+			setWOInfoCards(null);
 		} catch (e) {
 			// console.log('e in status = ', e);
+			setWOInfoCards(null);
 		}
 	}
 

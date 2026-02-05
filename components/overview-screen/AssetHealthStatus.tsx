@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Pressable } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
 import Fonts from "@/constants/Typography";
@@ -35,7 +35,12 @@ export default function AssetHealthStatus() {
 
 	// 🔒 Sync only when KPI becomes available
 	React.useEffect(() => {
-		if (!assetKPIHistory) return;
+		if (!assetKPIHistory) {
+			setBreakup([]);
+			setSelectedSlice(null);
+			setHidden([]);
+			return;
+		}
 
 		setBreakup(assetKPIHistory.top_level_asset.health_breakup_percentage);
 	}, [assetKPIHistory]);
@@ -54,12 +59,16 @@ export default function AssetHealthStatus() {
 		"Not Defined": "#B0B0B0",
 	};
 
-	// 🛑 If breakup not ready yet → render UI shell only
+	// 🛑 If breakup not ready yet → render empty state
 	if (!breakup.length) {
 		return (
 			<View style={styles.container}>
 				<Text style={styles.cardTitle}>Asset Health Status</Text>
-				<View style={styles.card} />
+				<View style={[styles.card, styles.emptyState]}>
+					<Text style={styles.emptyText}>
+						No Asset Health Status found for selected location.
+					</Text>
+				</View>
 			</View>
 		);
 	}
@@ -73,15 +82,6 @@ export default function AssetHealthStatus() {
 	// 2) Filter only for the chart
 	const chartDataRaw = pieDataRaw.filter(item => !hidden.includes(item.text));
 
-	// 3) If empty → show one grey slice
-	// let finalChartData = chartDataRaw.length > 0
-	// 	? chartDataRaw
-	// 	: [{
-	// 		text: "Not Defined",
-	// 		value: 1,
-	// 		color: "#B0B0B0"
-	// 	}];
-
 	const finalChartData = chartDataRaw.length > 0
 		? chartDataRaw.map(item => ({
 			...item,
@@ -91,33 +91,18 @@ export default function AssetHealthStatus() {
 				);
 			},
 		}))
-		: [{
-			text: "Not Defined",
-			value: 1,
-			color: "#B0B0B0",
-			onPress: () => {
-				setSelectedSlice(prev =>
-					prev?.text === "Not Defined"
-						? null
-						: {
-							text: "Not Defined",
-							value: 0,
-							color: "#B0B0B0",
-						}
-				);
-			},
-		}];
+		: null;
 
 
 	console.log('finalChartData = ', finalChartData);
 
 	// 🧮 Compute total for normalization
-	const total = finalChartData.reduce((sum, s) => sum + s.value, 0) || 1;
+	const total = finalChartData?.reduce((sum, s) => sum + s.value, 0) || 1;
 
 	let startAngle = -90;
 
 	// 🌀 Calculate arc offsets (same as before)
-	const pieData = finalChartData.map(slice => {
+	const pieData = finalChartData?.map(slice => {
 		const sliceAngle = (slice.value / total) * 360 - arcPadding;
 		const midAngle = startAngle + sliceAngle / 2;
 		const rad = (midAngle * Math.PI) / 180;
@@ -155,7 +140,7 @@ export default function AssetHealthStatus() {
 							position: "relative",
 						}}
 					>
-						{finalChartData.length > 0 && <PieChart
+						{finalChartData && finalChartData?.length > 0 && <PieChart
 							isAnimated
 							data={finalChartData}
 
@@ -257,6 +242,17 @@ const styles = StyleSheet.create({
 		shadowRadius: 8,
 		elevation: 3,
 		position: "relative",
+	},
+	emptyState: {
+		minHeight: radius * 2 + 40,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	emptyText: {
+		fontSize: 13,
+		fontFamily: Fonts.bold,
+		color: "#000069",
+		textAlign: "center",
 	},
 	pieRow: {
 		flexDirection: "row",

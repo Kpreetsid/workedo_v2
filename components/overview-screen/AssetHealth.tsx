@@ -56,7 +56,10 @@ export default function AssetHealth() {
 
 	/* ================= FETCH TRIGGER ================= */
 	useEffect(() => {
-		if (childAssets.length === 0) return;
+		if (childAssets.length === 0) {
+			setRawSeries(null);
+			return;
+		}
 		fetchAssetHealth();
 	}, [childAssets, groupBy]);
 
@@ -147,6 +150,12 @@ export default function AssetHealth() {
 					<View style={styles.loader}>
 						<ActivityIndicator size="large" />
 					</View>
+				) : !chartPayload ? (
+					<View style={styles.emptyState}>
+						<Text style={styles.emptyText}>
+							No Asset Health Data found for selected location.
+						</Text>
+					</View>
 				) : (
 					<WebView
 						key={groupBy} // 🔥 FORCE REMOUNT ON MONTH/WEEK CHANGE
@@ -207,6 +216,17 @@ const styles = StyleSheet.create({
 		height: 260,
 		justifyContent: "center",
 		alignItems: "center",
+	},
+	emptyState: {
+		height: 260,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	emptyText: {
+		fontSize: 13,
+		fontFamily: Fonts.bold,
+		color: "#000069",
+		textAlign: "center",
 	},
 	dropdown: {
 		position: "absolute",

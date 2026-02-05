@@ -26,14 +26,23 @@ export default function WoStatus() {
 	const [chartDataFinal, setChartDataFinal] = useState([]);
 
 	const childAssets = useCMMSStore((state) => state.childAssets);
-	const { startDate, endDate } = useDateRangeStore();
+	const startDate = useDateRangeStore((state)=>state.startDate);
+	const endDate = useDateRangeStore((state)=>state.endDate);
+	const rangeVersion = useDateRangeStore((state)=>state.rangeVersion);
 
 	useEffect(() => {
-		// console.log(' in wo status = ', childAssets, startDate)
+		console.log(' in wo status = ', childAssets, startDate)
 		if (childAssets.length > 0) {
 			fetchWoStatus();
+			return;
 		}
-	}, [childAssets, startDate])
+
+		setRawPieData([]);
+		setChartDataFinal([]);
+		setHidden([]);
+		setSelectedSlice(null);
+		setNoData(false);
+	}, [childAssets, startDate, endDate, rangeVersion])
 
 	// 🎨 Color mapping for each health type
 	const colorMap: Record<string, string> = {
@@ -45,7 +54,7 @@ export default function WoStatus() {
 
 	async function fetchWoStatus() {
 		const startTimePart = "T19:00:00.000Z";
-		const timePart = "T14:01:18.788Z";
+		const timePart = "T18:00:00.00Z";
 		try {
 			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
 
@@ -67,15 +76,15 @@ export default function WoStatus() {
 
 			finalPayload.assetIds = childAssetsFormatted
 
-			// console.log('final payload wo status = ', finalPayload);
+			console.log('final payload wo status = ', finalPayload);
 
 			const res = await woStatus(
 				finalPayload.startDate,
 				finalPayload.endDate,
 				childAssetsFormatted
 			);
-			// console.log('wo status res = ', res);
-			if (res?.status) {
+			console.log('wo status res = ', res);
+			if (res?.status && Array.isArray(res?.data) && res?.data.length > 0) {
 
 				// 🎨 Color mapping for each health type
 				const colorMap: Record<string, string> = {
@@ -102,7 +111,15 @@ export default function WoStatus() {
 				);
 				// console.log('chart data raw = ', chartDataRaw)
 				setChartDataFinal(chartDataRaw);
+				setNoData(false);
+				return;
 			}
+
+			setRawPieData([]);
+			setChartDataFinal([]);
+			setHidden([]);
+			setSelectedSlice(null);
+			setNoData(true);
 		} catch (e: any) {
 			// console.log('e in status = ', e);
 
@@ -127,6 +144,12 @@ export default function WoStatus() {
 					return;
 				}
 			}
+
+			setRawPieData([]);
+			setChartDataFinal([]);
+			setHidden([]);
+			setSelectedSlice(null);
+			setNoData(true);
 		}
 	}
 

@@ -44,7 +44,20 @@ export default function AlarmSummary() {
 	});
 
 	const fetchAlarmHistorySummary = async () => {
-		if (!childAssets.length) return;
+		if (!childAssets.length) {
+			setChartData({
+				timestamps: [],
+				critical: [],
+				alert: [],
+				danger: [],
+			});
+			setChartScale({
+				minValue: 0,
+				maxValue: 1,
+				noOfSections: 1,
+			});
+			return;
+		}
 
 		try {
 			setLoading(true);
@@ -64,6 +77,22 @@ export default function AlarmSummary() {
 			const danger = data?.series?.find((i: any) => i.name === "Danger")?.data ?? [];
 
 			const values = [...critical, ...alert, ...danger];
+			const hasData = timestamps.length > 0 && values.length > 0;
+
+			if (!hasData) {
+				setChartData({
+					timestamps: [],
+					critical: [],
+					alert: [],
+					danger: [],
+				});
+				setChartScale({
+					minValue: 0,
+					maxValue: 1,
+					noOfSections: 1,
+				});
+				return;
+			}
 
 			const rawMax = Math.max(...values, 0);
 			const rawMin = Math.min(...values, 0);
@@ -121,12 +150,18 @@ export default function AlarmSummary() {
 				<View style={styles.loader}>
 					<ActivityIndicator size="large" />
 				</View>
+			) : !chartData.timestamps.length ? (
+				<View style={styles.emptyState}>
+					<Text style={styles.emptyText}>
+						No Alarm Data found for selected location
+					</Text>
+				</View>
 			) : (
 				<View style={styles.webviewContainer}>
 					<WebView
 						ref={webRef}
 						// source={require("../../assets/charts/asset-health.html")}
-						source={{uri: chartUrl}}
+						source={{ uri: chartUrl }}
 						originWhitelist={["*"]}
 						javaScriptEnabled
 						domStorageEnabled
@@ -137,11 +172,13 @@ export default function AlarmSummary() {
 				</View>
 			)}
 
-			<View style={styles.legendContainer}>
-				<Legend label="Alert" color="#FF9800" active={showAlert} onPress={() => setShowAlert(!showAlert)} />
-				<Legend label="Critical" color="#E53935" active={showCritical} onPress={() => setShowCritical(!showCritical)} />
-				<Legend label="Danger" color="#FFEB3B" active={showDanger} onPress={() => setShowDanger(!showDanger)} />
-			</View>
+			{chartData.timestamps.length > 0 && (
+				<View style={styles.legendContainer}>
+					<Legend label="Alert" color="#FFEB3B" active={showAlert} onPress={() => setShowAlert(!showAlert)} />
+					<Legend label="Critical" color="#E53935" active={showCritical} onPress={() => setShowCritical(!showCritical)} />
+					<Legend label="Danger" color="#FF9800" active={showDanger} onPress={() => setShowDanger(!showDanger)} />
+				</View>
+			)}
 		</View>
 	);
 }
@@ -176,6 +213,19 @@ const styles = StyleSheet.create({
 		borderRadius: 12,
 		overflow: "hidden",
 		backgroundColor: "#fff",
+	},
+	emptyState: {
+		height: 320,
+		borderRadius: 12,
+		justifyContent: "center",
+		alignItems: "center",
+		backgroundColor: "#fff",
+	},
+	emptyText: {
+		fontSize: 13,
+		fontFamily: Fonts.bold,
+		color: "#000069",
+		textAlign: "center",
 	},
 	legendContainer: {
 		flexDirection: "row",

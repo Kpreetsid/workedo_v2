@@ -130,8 +130,15 @@ export default function PDMDashboardLocationSelect() {
 
 		const childAssetsRes = await childAssetsAgainstLocation(payload);
 		// console.log('childAssetsRes = ', childAssetsRes);
-		if (childAssetsRes.status) {
+		if (childAssetsRes?.status && Array.isArray(childAssetsRes.data?.assetList)) {
 			setChildAssets(childAssetsRes.data.assetList);
+			return;
+		}
+
+		// Clear stale data when API returns no data / failure
+		setChildAssets([]);
+		if (assetKPIHistory !== null) {
+			setAssetKPIHistory(null);
 		}
 	};
 
@@ -149,8 +156,21 @@ export default function PDMDashboardLocationSelect() {
 			top_level_asset: childAssets.filter(item => Boolean(item.top_level)).map(item => item.id),
 		};
 		// console.log('payload = ', payload);
-		const res = await assetHealthKPIHistory(payload);
-		setAssetKPIHistory(res.data);
+		try {
+			const res = await assetHealthKPIHistory(payload);
+			console.log('res = available = ', res)
+			if (res.data) {
+				setAssetKPIHistory(res.data);
+				return;
+			}
+		} catch (e) {
+			console.log('res = error = ', e);
+		}
+
+		// Clear stale KPI history when API returns no data / failure
+		if (assetKPIHistory !== null) {
+			setAssetKPIHistory(null);
+		}
 	};
 
 	return (

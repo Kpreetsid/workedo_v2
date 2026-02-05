@@ -104,10 +104,10 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 
 			if (endpointsRes?.data?.length > 0) {
 				setEndpoints(endpointsRes.data);
-				
-				if(composite_idFromParams) {
+
+				if (composite_idFromParams) {
 					// find endpoint with sensor_location matching sensor_location
-					const endpoint = endpointsRes.data.find((endpoint: any) => (endpoint.composite_id &&endpoint.composite_id) === composite_idFromParams);
+					const endpoint = endpointsRes.data.find((endpoint: any) => (endpoint.composite_id && endpoint.composite_id) === composite_idFromParams);
 					console.log('composite_idFromParams from behind = ', composite_idFromParams)
 					console.log('found endpoint = ', endpoint);
 					setEndpointSelected(endpoint);
@@ -157,7 +157,15 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 		if (endpointSelected && selectedAxis.length > 0 && selectedSignal && selectedValueType) {
 			setGraphLoading(true);     // 🔥 start loader
 			// fetchGraphTrendData();
+			return;
 		}
+
+		// Clear graph when filters are incomplete/deselected
+		setGraphLoading(false);
+		setGraphData([]);
+		setChartSeries([]);
+		setXLabels([]);
+		setYMaxValue(0);
 	}, [endpointSelected, selectedAxis, selectedSignal, selectedValueType]);
 
 

@@ -73,19 +73,22 @@ export default function SelectEndpoint({ endpointSelected, endpoints, asset_data
 					</Text>
 					<Text style={styles.assetDesc}>{endpointSelected?.asset_name}</Text>
 				</View>
+			</View>
+
+			<View style={{flexDirection: 'row', gap: 20}}>
 				<Pressable
 					onPress={() => setInfoModalVisible(true)}
 					style={styles.infoButton}
 					hitSlop={8}
 				>
-					<Ionicons name="information-circle-outline" size={14} color="#742BDE" />
+					<Ionicons name="information-circle-outline" size={18} color="#742BDE" />
+				</Pressable>
+
+				<Pressable ref={buttonRef} style={styles.selectBtn} onPress={openModal}>
+					<Text style={styles.selectText}>Select</Text>
+					<ArrowRight />
 				</Pressable>
 			</View>
-
-			<Pressable ref={buttonRef} style={styles.selectBtn} onPress={openModal}>
-				<Text style={styles.selectText}>Select</Text>
-				<ArrowRight />
-			</Pressable>
 
 			<Modal
 				visible={modalVisible}

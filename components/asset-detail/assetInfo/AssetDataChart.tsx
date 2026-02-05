@@ -34,10 +34,15 @@ export default function AssetDataChart({
 		)
 		: [];
 
+	const showEmpty = Array.isArray(chartSeries) && chartSeries.length === 0;
+
 	// ✅ HOOKS MUST ALWAYS RUN
 	useEffect(() => {
 		if (!webReady) return;
-		if (validSeries.length === 0) return;
+		if (validSeries.length === 0) {
+			ref.current?.postMessage(JSON.stringify([]));
+			return;
+		}
 
 		const allValues = validSeries.flatMap((s: any) =>
 			s.points.map((p: any) => p.value)
@@ -73,6 +78,8 @@ export default function AssetDataChart({
 			})),
 		};
 
+		console.log('payload for asset data chart = ', payload)
+
 		ref.current?.postMessage(JSON.stringify(payload));
 		initializedRef.current = true;
 	}, [webReady, validSeries, xLabels, yMaxValue]);
@@ -93,8 +100,8 @@ export default function AssetDataChart({
 			<WebView
 				ref={ref}
 				originWhitelist={["*"]}
-				// source={require("../../../assets/charts/chart.html")}
-				source={{ uri: chartUrl }}
+				source={require("../../../assets/charts/chart.html")}
+				// source={{ uri: chartUrl }}
 
 				javaScriptEnabled={true}
 				domStorageEnabled={true}
@@ -128,14 +135,14 @@ export default function AssetDataChart({
 			/>
 
 			{/* Loader overlay */}
-			{loading && (
+			{loading && !showEmpty && (
 				<View style={styles.overlay}>
 					<ActivityIndicator size="large" />
 				</View>
 			)}
 
 			{/* Empty state overlay */}
-			{!loading && validSeries.length === 0 && (
+			{(showEmpty || (!loading && validSeries.length === 0)) && (
 				<View style={styles.overlay}>
 					<Text style={styles.emptyText}>No data found for chart.</Text>
 				</View>

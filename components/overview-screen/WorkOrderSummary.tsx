@@ -17,13 +17,19 @@ export default function WorkOrderSummary() {
 	// console.log('child assets in wo status = ', childAssets);
 
 	const [woSummaryData, setWOSummaryData] = useState<any>(null);
-	const { startDate, endDate } = useDateRangeStore();
+	const startDate = useDateRangeStore((state)=>state.startDate);
+	const endDate = useDateRangeStore((state)=>state.endDate);
+	const rangeVersion = useDateRangeStore((state)=>state.rangeVersion);
 
 	useEffect(() => {
 		if (childAssets.length > 0) {
 			fetchSummary();
+			return;
 		}
-	}, [childAssets, startDate])
+
+		setWOSummaryData(null);
+		setSelectedBar(null);
+	}, [childAssets, startDate, endDate, rangeVersion])
 
 	const transformToBarData = (input: any) => {
 		return input.map((item: any) => ({
@@ -66,16 +72,22 @@ export default function WorkOrderSummary() {
 				finalPayload.endDate,
 				childAssetsFormatted
 			);
-			if (res?.status) {
-				// console.log('res WO SUMMARY = ', res?.data);
+			if (res?.status && Array.isArray(res?.data) && res?.data.length > 0) {
+				console.log('res WO SUMMARY = ', res?.data);
 
 				const barData = transformToBarData(res?.data);
 				// console.log('barData ', barData);
 
 				setWOSummaryData(barData)
+				return;
 			}
+
+			setWOSummaryData(null);
+			setSelectedBar(null);
 		} catch (e) {
 			// console.log('e in status = ', e);
+			setWOSummaryData(null);
+			setSelectedBar(null);
 		}
 	}
 
@@ -95,7 +107,7 @@ export default function WorkOrderSummary() {
 					<Pressable style={styles.overlay} onPress={() => setSelectedBar(null)} />
 				)}
 
-				{woSummaryData && (
+				{woSummaryData ? (
 					<BarChart
 						data={woSummaryData.map((bar: any, i: any) => ({
 							value: bar.value,
@@ -138,6 +150,12 @@ export default function WorkOrderSummary() {
 
 						width={screenWidth - 40}
 					/>
+				) : (
+					<View style={styles.emptyState}>
+						<Text style={styles.emptyText}>
+							No work orders summary found for this location.
+						</Text>
+					</View>
 				)}
 
 				{selectedBar !== null && (
@@ -206,6 +224,17 @@ const styles = StyleSheet.create({
 		elevation: 3,
 		position: "relative",
 		overflow: 'hidden'
+	},
+	emptyState: {
+		minHeight: 220,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	emptyText: {
+		color: "#000069",
+		fontSize: 15,
+		fontFamily: Fonts.semiBold,
+		textAlign: "center",
 	},
 	axisLabel: {
 		fontSize: 11,

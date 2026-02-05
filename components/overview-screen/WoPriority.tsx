@@ -25,13 +25,22 @@ export default function WoPriority() {
 	const childAssets = useCMMSStore((state) => state.childAssets);
 	// console.log('child assets in wo status = ', childAssets);
 
-	const { startDate, endDate } = useDateRangeStore();
+	const startDate = useDateRangeStore((state)=>state.startDate);
+	const endDate = useDateRangeStore((state)=>state.endDate);
+	const rangeVersion = useDateRangeStore((state)=>state.rangeVersion);
 
 	useEffect(() => {
 		if (childAssets.length > 0) {
 			fetchWoPriority();
+			return;
 		}
-	}, [childAssets, startDate])
+
+		setRawPieData([]);
+		setChartDataFinal([]);
+		setHidden([]);
+		setSelectedSlice(null);
+		setNoData(false);
+	}, [childAssets, startDate, endDate, rangeVersion])
 
 	// 🎨 Color mapping for each health type
 	const colorMap: Record<string, string> = {
@@ -76,7 +85,7 @@ export default function WoPriority() {
 				childAssetsFormatted
 			);
 			// console.log('res = ', res);
-			if (res?.status) {
+			if (res?.status && Array.isArray(res?.data) && res?.data.length > 0) {
 
 				// 🎨 Color mapping for each health type
 				const colorMap: Record<string, string> = {
@@ -103,7 +112,15 @@ export default function WoPriority() {
 				);
 				// console.log('chart data raw = ', chartDataRaw)
 				setChartDataFinal(chartDataRaw);
+				setNoData(false);
+				return;
 			}
+
+			setRawPieData([]);
+			setChartDataFinal([]);
+			setHidden([]);
+			setSelectedSlice(null);
+			setNoData(true);
 		} catch (e: any) {
 			// console.log('e in priority = ', e);
 
@@ -128,6 +145,12 @@ export default function WoPriority() {
 					return;
 				}
 			}
+
+			setRawPieData([]);
+			setChartDataFinal([]);
+			setHidden([]);
+			setSelectedSlice(null);
+			setNoData(true);
 		}
 	}
 

@@ -26,13 +26,21 @@ export default function PlannedVsUnplanned() {
 	const [maxY, setMaxY] = useState(10); // fallback default
 	const [spacingValue, setSpacingValue] = useState(40);
 
-	const { startDate, endDate } = useDateRangeStore();
+	const startDate = useDateRangeStore((state)=>state.startDate);
+	const endDate = useDateRangeStore((state)=>state.endDate);
+	const rangeVersion = useDateRangeStore((state)=>state.rangeVersion);
 
 	useEffect(() => {
 		if (childAssets.length > 0) {
 			fetchPlannedUnplanned();
+			return;
 		}
-	}, [childAssets, startDate])
+
+		setWorkOrderData([]);
+		setPreventiveData([]);
+		setChartPayload(null);
+		setNoData(false);
+	}, [childAssets, startDate, endDate, rangeVersion])
 
 	async function fetchPlannedUnplanned() {
 		const startTimePart = "T19:00:00.000Z";
@@ -59,7 +67,7 @@ export default function PlannedVsUnplanned() {
 
 			finalPayload.assetIds = childAssetsFormatted
 
-			// console.log('final payload = ', finalPayload);
+			console.log('final payload planned = ', finalPayload);
 
 			const res = await plannedUnplanned(
 				finalPayload.startDate,
@@ -67,10 +75,11 @@ export default function PlannedVsUnplanned() {
 				childAssetsFormatted
 			);
 
+			// console.log('res planned - ', res);
 
-			if (res?.status) {
+			if (res?.status && res?.data?.date?.length) {
 				const input = res.data;
-				console.log('res data = ', res?.data)
+				// console.log('res data = ', res?.data)
 
 				const work = input.date.map((date: string, index: number) => ({
 					value: input["Work Order"][index],
@@ -144,7 +153,14 @@ export default function PlannedVsUnplanned() {
 					preventiveData: preventiveValues,
 					maxVertical,
 				});
+				setNoData(false);
+				return;
 			}
+
+			setWorkOrderData([]);
+			setPreventiveData([]);
+			setChartPayload(null);
+			setNoData(true);
 		} catch (e: any) {
 			// console.log("fetch error = ", e);
 
@@ -166,6 +182,11 @@ export default function PlannedVsUnplanned() {
 					return;
 				}
 			}
+
+			setWorkOrderData([]);
+			setPreventiveData([]);
+			setChartPayload(null);
+			setNoData(true);
 		}
 	}
 

@@ -1,4 +1,3 @@
-import { deleteEndpoint } from "../services/asset.service";
 
 // src/api/endpoints.ts
 export const endpoints = {

@@ -76,7 +76,19 @@ export default function InfoCards() {
 	];
 
 	const handlePress = async (card_id: number) => {
-		// console.log("card_id", card_id);
+		if (card_id === 4 || card_id === 5) return;
+		if (card_id === 1 && (stats.Alert +
+			stats.Critical +
+			stats.Danger +
+			stats.Healthy +
+			stats.NotDefined === 0)) {
+			return;
+		}
+
+		if(card_id === 2 && stats.Danger === 0) return;
+
+		if(card_id === 3 && stats.Critical === 0) return;
+
 		router.push({
 			pathname: "/assets",
 			params: {

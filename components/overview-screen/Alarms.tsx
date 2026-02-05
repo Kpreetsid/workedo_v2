@@ -21,6 +21,7 @@ import { useOverviewStore } from "@/src/store/useOverviewStore";
 import { FlashList } from "@shopify/flash-list";
 import AlarmCard from "../alarms/AlarmCard";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 
 const TABS = ["Un-Addressed", "Addressed"] as const;
 type TabType = (typeof TABS)[number];
@@ -55,6 +56,16 @@ export default function Alarms() {
 	// FETCH ALARMS (PAGINATED)
 	// ----------------------------
 	const fetchAlarmsHistory = async (pageToLoad = 1) => {
+		if (!childAssets.length) {
+			setData([]);
+			setPage(1);
+			setTotalPages(1);
+			setHasMore(false);
+			setLoading(false);
+			setLoadingMore(false);
+			return;
+		}
+
 		setLoading(true)
 		console.log('pageToLoad = ', pageToLoad)
 		if (loadingMore) return;
@@ -113,7 +124,15 @@ export default function Alarms() {
 	// RESET ON TAB / ASSET CHANGE
 	// ----------------------------
 	useEffect(() => {
-		if (childAssets.length === 0) return;
+		if (childAssets.length === 0) {
+			setPage(1);
+			setTotalPages(1);
+			setHasMore(false);
+			setData([]);
+			setLoading(false);
+			setLoadingMore(false);
+			return;
+		}
 
 		setPage(1);
 		setTotalPages(1);
@@ -195,6 +214,23 @@ export default function Alarms() {
 							style={styles.tab}
 							activeOpacity={0.7}
 						>
+							{/* <Image source={require('../../assets/images/Addressed.png')} style={{ width: 20, height: 20 }} /> */}
+							{tab === "Un-Addressed" ? (
+								<Ionicons
+									name="alert-circle-outline"
+									size={20}
+									style={styles.tabIcon}
+									color={selectedTab === tab ? "#742BDE" : "#999"}
+								/>
+							) : (
+								<Ionicons
+									name="checkmark-circle-outline"
+									size={20}
+									style={styles.tabIcon}
+									color={selectedTab === tab ? "#742BDE" : "#999"}
+								/>
+							)}
+
 							<Text
 								style={[
 									styles.tabText,
@@ -224,7 +260,7 @@ export default function Alarms() {
 					ListEmptyComponent={() => (
 						<View style={styles.noAlarmsFound}>
 							<Text style={styles.noAlarmsFoundText}>
-								No alarms found
+								No Alarm History Data Found.
 							</Text>
 						</View>
 					)}
@@ -268,8 +304,12 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 20,
 	},
 	tab: {
+		flexDirection: "row",
 		alignItems: "center",
 		paddingVertical: 6,
+	},
+	tabIcon: {
+		marginRight: 6,
 	},
 	tabText: {
 		fontFamily: Fonts.medium,
@@ -292,7 +332,7 @@ const styles = StyleSheet.create({
 	},
 	noAlarmsFoundText: {
 		fontSize: 14,
-		fontFamily: Fonts.medium,
-		color: "#999",
+		fontFamily: Fonts.bold,
+		color: "#000069",
 	},
 });

@@ -262,6 +262,7 @@ export default function CreateNewEndPoint() {
 						:
 						selectedEndpointToEdit ? "Update Endpoint" : "Create Endpoint"
 				}
+				buttonStyle={{marginBottom: 60}}
 				onPress={selectedEndpointToEdit ? handleEdit : handleSubmit}
 			/>
 		</>

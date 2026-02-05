@@ -14,13 +14,17 @@ export default function PendingWorkOrders() {
 	// console.log('child assets in wo status = ', childAssets);
 
 	const [pendingWO, setPendingWO] = useState<any[]>([]);
-	const { startDate, endDate } = useDateRangeStore();
+	const startDate = useDateRangeStore((state)=>state.startDate);
+	const endDate = useDateRangeStore((state)=>state.endDate);
+	const rangeVersion = useDateRangeStore((state)=>state.rangeVersion);
 
 	useEffect(() => {
 		if (childAssets.length > 0) {
 			fetchPendingWO();
+			return;
 		}
-	}, [childAssets])
+		setPendingWO([]);
+	}, [childAssets, startDate, endDate, rangeVersion])
 
 	async function fetchPendingWO() {
 		const startTimePart = "T19:00:00.000Z";
@@ -54,10 +58,13 @@ export default function PendingWorkOrders() {
 				finalPayload.endDate,
 				childAssetsFormatted
 			);
-			if (res?.status) {
+			if (res?.status && Array.isArray(res?.data)) {
 				// console.log('res = ', res?.data);
 				setPendingWO(res?.data.reverse())
+				return;
 			}
+
+			setPendingWO([]);
 		} catch (e) {
 			// console.log('e in status = ', e);
 			setPendingWO([]);

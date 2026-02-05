@@ -476,95 +476,9 @@ Janak Review
 
 
 
-Testers issues:
-1. 
-2. 
-3. 
-4. 
-
-## *CMMS*
-5. When selecting a location that has no data, it still shows the *previously selected location’s data* 
-6. info icon make stable ,it is moving with the endpoint name make it stable ... 
 
 
-## *PDM*
-7. The *Asset Health graph* is still unstable.
-8. In the *Alarm Summary graph, the color codes for **Alert, Danger, and Critical* should match the desktop app.
-    
-
-## *Info*
-9. The *loader is still showing* on endpoints where no data is available. This issue is not fixed yet.
-
-## *Spectrum*
-10. When clicking on the *Spectrum, it should show **only the spectrum chart of the selected axis*, not the previously selected axis.
-11. make scalling according to provided data . showing previously selected axis  scaling in current axis. so for axis having less amlitude showing small size...
-12. acceleration spectrum envelope filter not working .
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- KPI 
-1.Un-Addressed Alarms redirect issue
-When I click on Un-Addressed Alarms, the page navigates to the Location page.
-
- KPI 
-2.Total End Points redirect issue
-When I click on Total End Points, the page navigates to the Asset page.
-
- KPI 
-3.Alarm Summary color mismatch
-In the Alarm Summary, the alert color and danger color should be exchanged.
-
- KPI 
-4.Addressed/Un-Addressed icons missing
-Un-Addressed and Addressed icons are missing.
-
- KPI 
-5.Asset Health  graph
-The Asset Health status ticket is not moving.
-
- KPI 
-6.Alarm Summary critical color issue
-In the Alarm Summary, the Critical status should be shown in round red.
-
- KPI 
-7.CMMS graph data hidden
-In CMMS, some data points are hidden in the Planned vs Unplanned graph.
-
- KPI 
-8.overlapping
-Parent location and child location  its search box overlapping each other
-
- KPI 
-9.CMMS Dashboard
-“When applying a filter in the calendar, no updates are shown.”
-
- KPI 
-10.CMMS Dashboard
-“When I apply a filter in the calendar and reopen it, the filters are deselected.”
-
- Asset 
-11.Info
-The loader is showing on endpoints where no data available
-
- Asset 
-12.Sensors
-“Create New Endpoint submit button is partially hidden.”
-
-Asset 
-Sensors
-12.“When I deselect all axes, the graph is still visible.”
+ 
 
 
 
@@ -669,4 +583,98 @@ Pawan Can you check this?
 - Done
 
 26. In the *Preventive Detail page, just like the **Form page* is shown, also show the *Task page* in the same way.
+- Done
+
+Yet to do ------------------------------------------------------
+27. When selecting a location that has no data, it still shows the *previously selected location’s data* 
+- Done
+
+28. info icon make stable ,it is moving with the endpoint name make it stable ... 
+- Done
+
+
+## *PDM*
+29. The *Asset Health graph* is still unstable.
+
+30. In the *Alarm Summary graph, the color codes for **Alert, Danger, and Critical* should match the desktop app.
+- Done
+    
+
+## *Info*
+31. The *loader is still showing* on endpoints where no data is available. This issue is not fixed yet.
+- Done
+
+## *Spectrum*
+32. When clicking on the *Spectrum, it should show **only the spectrum chart of the selected axis*, not the previously selected axis.
+- Janak can you come on a quick call for this? Let me know where the issue is.
+
+33. make scalling according to provided data . showing previously selected axis  scaling in current axis. so for axis having less amlitude showing small size...
+- Janak can you come on a quick call for this? Let me know where the issue is.
+
+34. acceleration spectrum envelope filter not working .
+- Janak can you come on a quick call for this? Let me know where the issue is.
+
+KPI 
+35. Un-Addressed Alarms redirect issue
+When I click on Un-Addressed Alarms, the page navigates to the Location page.
+- I am unable to reproduce it, when I click un addressed alarm card, it navigates to that specific asset details page.
+
+ KPI 
+36. Total End Points redirect issue
+When I click on Total End Points, the page navigates to the Asset page.
+- Done
+
+ KPI 
+37. Alarm Summary color mismatch
+In the Alarm Summary, the alert color and danger color should be exchanged.
+- Done
+
+ KPI 
+38. Addressed/Un-Addressed icons missing
+Un-Addressed and Addressed icons are missing.
+- No icons exists in Figma design, but I have added icons the same as on website.
+- Done
+
+KPI 
+39. Asset Health  graph
+The Asset Health status ticket is not moving.
+- Which ticket are you referring to?
+
+KPI 
+40. Alarm Summary critical color issue
+In the Alarm Summary, the Critical status should be shown in round red.
+- Done
+
+KPI 
+41. CMMS graph data hidden
+In CMMS, some data points are hidden in the Planned vs Unplanned graph.
+
+KPI
+42.overlapping
+Parent location and child location  its search box overlapping each other
+- I am unable to reproduce this, parent location and child locations both are separate and the text will stay in the box. Can you share a screenshot of this so I can inspect it better?
+
+KPI 
+43.CMMS Dashboard
+“When applying a filter in the calendar, no updates are shown.”
+- I am receiving same data on endpoints, that's why no changes are reflected, not sure why this is happening. I am debugging it.
+
+ KPI 
+44.CMMS Dashboard
+“When I apply a filter in the calendar and reopen it, the filters are deselected.”
+- Done
+
+ Asset 
+45.Info
+The loader is showing on endpoints where no data available
+- DOne
+
+ Asset 
+46.Sensors
+“Create New Endpoint submit button is partially hidden.”
+- Done
+
+Asset 
+47.Sensors
+“When I deselect all axes, the graph is still visible.”
 - Done

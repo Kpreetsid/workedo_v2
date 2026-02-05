@@ -1,11 +1,15 @@
 import { Calendar } from "react-native-calendars";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, ToastAndroid } from "react-native";
 import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 import Header from "../global/Header";
 import ActionButton from "../auth-screens/ActionButton";
 
-export default function DateRangeCalendar({ onClose }: any) {
+export default function DateRangeCalendar({
+  onClose,
+  initialStartDate,
+  initialEndDate,
+}: any) {
   const { setRange } = useDateRangeStore();
   const now = new Date();
   const todayString = `${now.getFullYear()}-${String(
@@ -13,8 +17,13 @@ export default function DateRangeCalendar({ onClose }: any) {
   ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
   // UI STATE (YYYY-MM-DD ONLY)
-  const [startDate, setStartDate] = useState<string | null>(null);
-  const [endDate, setEndDate] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<string | null>(initialStartDate ?? null);
+  const [endDate, setEndDate] = useState<string | null>(initialEndDate ?? null);
+
+  useEffect(() => {
+    setStartDate(initialStartDate ?? null);
+    setEndDate(initialEndDate ?? null);
+  }, [initialStartDate, initialEndDate]);
 
   // -----------------------------
   // Day selection logic

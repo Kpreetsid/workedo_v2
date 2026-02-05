@@ -29,6 +29,7 @@ export default function CMMSDashboardLocationSelect() {
 	const { user } = useAuthStore();
 	const [showCalendar, setShowCalendar] = useState(false);
 	const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
 		fetchLocations();
@@ -175,7 +176,7 @@ export default function CMMSDashboardLocationSelect() {
 				)}
 
 				<Pressable style={styles.iconView} onPress={() => {
-					// console.log('pressed')
+					console.log('pressed')
 					setShowCalendar(true)
 				}}>
 					<Ionicons color={"#777"} name="calendar" size={20} />
@@ -188,11 +189,14 @@ export default function CMMSDashboardLocationSelect() {
 				transparent
 				animationType="slide"
 			>
-				<Pressable style={styles.overlayCal} onPress={() => setShowCalendar(false)}>
-					<View style={styles.sheet}>
-						<DateRangeCalendar onClose={() => setShowCalendar(false)} />
-					</View>
-				</Pressable>
+				<Pressable style={styles.overlayCal} onPress={() => setShowCalendar(false)} />
+				<View style={styles.sheet}>
+					<DateRangeCalendar
+						onClose={() => setShowCalendar(false)}
+						initialStartDate={startDate}
+						initialEndDate={endDate}
+					/>
+				</View>
 			</Modal>
 
 		</>
