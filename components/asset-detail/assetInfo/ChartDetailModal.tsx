@@ -75,6 +75,19 @@ export default function ChartDetailModal({
 
 	const { endpointSelected } = useAssetStore();
 
+	const injectedNoZoomJS = `
+		(function () {
+			var meta = document.querySelector('meta[name="viewport"]');
+			if (!meta) {
+				meta = document.createElement('meta');
+				meta.name = 'viewport';
+				document.head.appendChild(meta);
+			}
+			meta.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+		})();
+		true;
+	`;
+
 	useEffect(() => {
 		setAxis(selectedAxis)
 	}, [selectedAxis])
@@ -326,8 +339,18 @@ export default function ChartDetailModal({
 		console.log("analyze clicked");
 		console.log(start);
 		console.log(end);
+
+		const highPass = parseInt(start, 10);
+		const lowPass = parseInt(end, 10);
+
+		// values must be integers and within range.
+		if (!Number.isInteger(highPass) || !Number.isInteger(lowPass)) {
+			ToastAndroid.show("Please enter valid integer values", ToastAndroid.SHORT);
+			return;
+		}
+
 		// start should be greater than 10 and end should be less than 10000.
-		if (Number(start) < 10 || Number(end) > 10000) {
+		if (highPass < 10 || lowPass > 10000) {
 			ToastAndroid.show("The range must be between 10 and 10000", ToastAndroid.SHORT);
 			return;
 		}
@@ -339,8 +362,8 @@ export default function ChartDetailModal({
 				"composite_id": endpointSelected?.composite_id,
 				// "timestamp": moment.utc(selectedPoint?.timestamp, "DD/MM/YYYY HH:mm:ss").unix(),
 				"timestamp": 1705037400,
-				"high_pass": Number(start),
-				"low_pass": Number(end)
+				"high_pass": highPass,
+				"low_pass": lowPass
 			};
 
 			console.log('envelope play = ', payload);
@@ -546,6 +569,11 @@ export default function ChartDetailModal({
 											source={{ uri: timewaveformchart }}
 											javaScriptEnabled
 											domStorageEnabled
+											scalesPageToFit={false}
+											setBuiltInZoomControls={false}
+											setDisplayZoomControls={false}
+											textZoom={100}
+											injectedJavaScriptBeforeContentLoaded={injectedNoZoomJS}
 											mediaPlaybackRequiresUserAction={false}
 											allowsInlineMediaPlayback={true}
 											originWhitelist={["*"]}
@@ -577,6 +605,11 @@ export default function ChartDetailModal({
 											source={{ uri: envelopechart }}
 											javaScriptEnabled
 											domStorageEnabled
+											scalesPageToFit={false}
+											setBuiltInZoomControls={false}
+											setDisplayZoomControls={false}
+											textZoom={100}
+											injectedJavaScriptBeforeContentLoaded={injectedNoZoomJS}
 											mediaPlaybackRequiresUserAction={false}
 											allowsInlineMediaPlayback={true}
 											originWhitelist={["*"]}
@@ -610,6 +643,11 @@ export default function ChartDetailModal({
 												source={{ uri: spectrumwaveform }}
 												javaScriptEnabled
 												domStorageEnabled
+												scalesPageToFit={false}
+												setBuiltInZoomControls={false}
+												setDisplayZoomControls={false}
+												textZoom={100}
+												injectedJavaScriptBeforeContentLoaded={injectedNoZoomJS}
 												mediaPlaybackRequiresUserAction={false}
 												allowsInlineMediaPlayback={true}
 												originWhitelist={["*"]}
@@ -669,6 +707,11 @@ export default function ChartDetailModal({
 												source={{ uri: spectrumenvelopechart }}
 												javaScriptEnabled
 												domStorageEnabled
+												scalesPageToFit={false}
+												setBuiltInZoomControls={false}
+												setDisplayZoomControls={false}
+												textZoom={100}
+												injectedJavaScriptBeforeContentLoaded={injectedNoZoomJS}
 												mediaPlaybackRequiresUserAction={false}
 												allowsInlineMediaPlayback={true}
 												originWhitelist={["*"]}

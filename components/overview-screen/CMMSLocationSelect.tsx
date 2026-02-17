@@ -38,7 +38,7 @@ export default function CMMSDashboardLocationSelect() {
 	// 🧩 Fetch all locations initially and select first parent
 	const fetchLocations = async () => {
 		const res = await fetchKPIFilterLocations();
-		// console.log('res kpi = ', res);
+		console.log('res kpi = ', res);
 		if (res.status) {
 			setParentLocations(res.data.levelOneLocations);
 
@@ -55,7 +55,7 @@ export default function CMMSDashboardLocationSelect() {
 		const fetchChildsForParent = async () => {
 			try {
 				const childs = await fetchParentLocationDetails1(parentSelectionId, "parent");
-				// console.log('childs = ', childs);
+				console.log('childs = ', childs);
 
 				// 🧠 CASE 1: API returns success but "status": false (no data found)
 				if (!childs?.status || !Array.isArray(childs.data) || childs.data.length === 0) {

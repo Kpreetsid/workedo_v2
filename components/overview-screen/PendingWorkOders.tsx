@@ -40,7 +40,7 @@ export default function PendingWorkOrders() {
 					.subtract(1, "day")
 					.format("YYYY-MM-DD") + startTimePart;
 			} else {
-				finalPayload.startDate = moment().subtract(2, "months").format("YYYY-MM-DD") + startTimePart;
+				finalPayload.startDate = moment().subtract(1, "week").format("YYYY-MM-DD") + startTimePart;
 			}
 
 			if (endDate) {

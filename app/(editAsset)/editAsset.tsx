@@ -19,7 +19,7 @@ import { endpoints } from '@/src/api/endpoints';
 import { Feather } from '@expo/vector-icons';
 
 interface editAssetParams {
-  asset_data: Asset;
+  asset_data: Asset | null;
   mode?: string;
 }
 
@@ -52,7 +52,13 @@ const editAsset = () => {
     }
 
     try {
-      const parsed = JSON.parse(asset_data) as Asset;
+      const parsed = JSON.parse(asset_data) as Asset | null;
+      if (!parsed || typeof parsed !== "object") {
+        console.warn("❌ editAsset: invalid asset_data payload");
+        setData(null);
+        return;
+      }
+
       setData({
         asset_data: parsed,
         mode,
@@ -108,7 +114,7 @@ const editAsset = () => {
 
 
   useEffect(() => {
-    if (!data) return; // ← only return if data isn't ready
+    if (!data?.asset_data) return; // only proceed when parsed asset exists
 
     if (timezones.length == 0) {
       fetchAllTimezones();
@@ -121,7 +127,7 @@ const editAsset = () => {
 
     if (!initialized && data) {
       console.log('in if')
-      setCreateAssetValue("title", data?.asset_data.asset_name);
+      setCreateAssetValue("title", data?.asset_data?.asset_name ?? "");
       setCreateAssetValue("asset_id", data?.asset_data?.id);
       setCreateAssetValue("asset_type", data?.asset_data?.asset_type);
       setCreateAssetValue("timezone", data?.asset_data?.asset_timezone ?? "");

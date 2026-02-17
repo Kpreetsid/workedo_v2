@@ -35,6 +35,8 @@ export default function AssetDataChart({
 		: [];
 
 	const showEmpty = Array.isArray(chartSeries) && chartSeries.length === 0;
+	const shouldShowLoader = !!loading;
+	const shouldShowEmpty = !shouldShowLoader && (showEmpty || validSeries.length === 0);
 
 	// ✅ HOOKS MUST ALWAYS RUN
 	useEffect(() => {
@@ -100,8 +102,8 @@ export default function AssetDataChart({
 			<WebView
 				ref={ref}
 				originWhitelist={["*"]}
-				source={require("../../../assets/charts/chart.html")}
-				// source={{ uri: chartUrl }}
+				// source={require("../../../assets/charts/chart.html")}
+				source={{ uri: chartUrl }}
 
 				javaScriptEnabled={true}
 				domStorageEnabled={true}
@@ -135,14 +137,14 @@ export default function AssetDataChart({
 			/>
 
 			{/* Loader overlay */}
-			{loading && !showEmpty && (
+			{shouldShowLoader && (
 				<View style={styles.overlay}>
 					<ActivityIndicator size="large" />
 				</View>
 			)}
 
 			{/* Empty state overlay */}
-			{(showEmpty || (!loading && validSeries.length === 0)) && (
+			{shouldShowEmpty && (
 				<View style={styles.overlay}>
 					<Text style={styles.emptyText}>No data found for chart.</Text>
 				</View>

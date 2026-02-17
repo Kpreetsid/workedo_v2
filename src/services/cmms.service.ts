@@ -7,7 +7,7 @@ export const woStatus = async (fromDate: string, toDate: string, assetIds: strin
     &toDate=${toDate}
     &wo_asset_id=${assetIds}`;
     // console.log('url = ', url);
-    return await sendRequest('GET', url);
+    return await sendRequest('POST', url);
 }
 
 export const woPriority = async (fromDate: string, toDate: string, assetIds: string) => {
@@ -16,7 +16,7 @@ export const woPriority = async (fromDate: string, toDate: string, assetIds: str
     &toDate=${toDate}
     &wo_asset_id=${assetIds}`;
     // console.log('url = ', url);
-    return await sendRequest('GET', url);
+    return await sendRequest('POST', url);
 }
 
 export const monthlyCount = async (fromDate: string, toDate: string, assetIds: string) => {
@@ -25,7 +25,7 @@ export const monthlyCount = async (fromDate: string, toDate: string, assetIds: s
     &toDate=${toDate}
     &wo_asset_id=${assetIds}`;
     // console.log('url = ', url);
-    return await sendRequest('GET', url);
+    return await sendRequest('POST', url);
 }
 
 export const plannedUnplanned = async (fromDate: string, toDate: string, assetIds: string) => {
@@ -34,7 +34,7 @@ export const plannedUnplanned = async (fromDate: string, toDate: string, assetId
     &toDate=${toDate}
     &wo_asset_id=${assetIds}`;
     // console.log('url = ', url);
-    return await sendRequest('GET', url);
+    return await sendRequest('POST', url);
 }
 
 export const woSummary = async (payload: any) => {
@@ -43,7 +43,7 @@ export const woSummary = async (payload: any) => {
     &toDate=${payload.endDate}
     &wo_asset_id=${payload.assetIds}`;
     // console.log('url = ', url);
-    return await sendRequest('GET', url);
+    return await sendRequest('POST', url);
 }
 
 export const woPending = async (fromDate: string, toDate: string, assetIds: string) => {
@@ -52,5 +52,5 @@ export const woPending = async (fromDate: string, toDate: string, assetIds: stri
     &toDate=${toDate}
     &wo_asset_id=${assetIds}`;
     // console.log('url = ', url);
-    return await sendRequest('GET', url);
+    return await sendRequest('POST', url);
 }

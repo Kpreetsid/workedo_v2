@@ -62,6 +62,7 @@ export const endpoints = {
     assetData: 'master/assets',
     tree: 'master/assets/tree',
     children: 'asset_master/get_children',
+    assetChild: 'master/assets/child',
     asset_endpoints: 'getAllEndPoints/',
     singleAssetHealthHistory: 'single_asset_health_history/',
     graphData: 'get_function_trend_data_v2/',

@@ -678,3 +678,104 @@ Asset
 47.Sensors
 “When I deselect all axes, the graph is still visible.”
 - Done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Janak Review - latest
+PDM
+
+1. In the Asset Health Chart, the level selection should be removed when clicking outside the chart.
+The same behavior should be implemented for the Alarm Summary Chart.
+
+
+2. In the Asset Health Status Pie Chart, data should be fetched from the
+get_asset_health_kpi_summary API  top-level data true data
+and same data should be shown in
+
+Assets Monitored
+
+Assets in Danger Zone
+
+Other assets section in pdm
+
+
+
+
+CMMS
+
+1. By default, apply a one-week filter, similar to what is used in the Dashboard application.
+- Done
+
+
+
+
+---
+
+Trend
+
+1. Show a loader until the trend data is loaded.
+Currently, it shows “No data found” before the data loads.
+- Done
+
+
+2. The trend chart zoom-in issue is still not resolved.
+
+
+3. When clicking the Edit icon of an asset, the application crashes.
+- Done (needs testing)
+
+
+
+Spectrum
+
+1. There is an issue with filters in the Acceleration Spectrum Envelope.
+In the payload, high-pass and low-pass values should be sent as integers.
+- Done (sending as integers in the payload now)
+
+
+2. Similar to the Axis selection added in the Acceleration Time Waveform,
+please add the same selection option to the other charts as well.
+
+
+3. There is a zoom-in issue across all charts on this page.
+
+
+
+
+
+
+
+
+
+ISSUES:
+1. NEW API IS INTRODUCED FOR FETCHING ASSET CHILD - https://new.presageinsights.ai/cmms_express/api/master/assets/child/69930de642182cf926ed292f
+
+

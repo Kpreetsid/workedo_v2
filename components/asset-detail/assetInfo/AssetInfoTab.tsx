@@ -1,6 +1,6 @@
 import { Dimensions, FlatList, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getAllEndpoints, getAssetData, getChildren, getGraphTrendData, getSingleAssetHealthHistory } from "@/src/services/asset.service";
+import { fetchAssetChildren, getAllEndpoints, getAssetData, getChildren, getGraphTrendData, getSingleAssetHealthHistory } from "@/src/services/asset.service";
 import { Asset } from "@/src/types/asset";
 import { AssetEndpoint } from "@/src/types/assetEndpoint";
 import { useAssetStore } from "@/src/store/useAssetStore";
@@ -24,6 +24,7 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 	console.log('composite_idFromParams on asset infotab = ', composite_idFromParams);
 	const graphBufferRef = useRef<any[]>([]);
 	const [fftEnabled, setFftEnabled] = useState(false);
+	const [childs, setChilds] = useState<any[]>([]);
 	const [temperatureValue, setTemperatureValue] = useState<number | null>(null);
 
 	const gestureLocked = useGestureLock((s) => s.locked);
@@ -72,7 +73,7 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 	);
 
 	useEffect(() => {
-		fetchEndpoints();
+		fetchiChilds();
 
 		return () => {
 			// console.log('clearing')
@@ -83,6 +84,20 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 		};
 	}, []);
 
+	const fetchiChilds = async () => {
+		try {
+			const res = await fetchAssetChildren(asset_data?.id);
+			console.log('res fetch children = ', res)
+			if (res.status) {
+				console.log('res assets children = ', res?.data);
+				setChilds(res?.data);
+				fetchEndpoints(res?.data);
+			}
+		} catch (err: any) {
+
+			console.error("Login failed:", err);
+		}
+	}
 
 	useEffect(() => {
 		if (selectedAxis) {
@@ -90,15 +105,16 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 		}
 	}, [selectedAxis])
 
-	const fetchEndpoints = async () => {
+	const fetchEndpoints = async (childs: any[]) => {
 		// console.log('fetching endpoints');
 
 		try {
 			// console.log('endpointSelected = ', endpointSelected);
 			// console.log('asset_data = ', asset_data);
 
-			let payload: string[] = [asset_data?.id];
-			// console.log('payload for endpoints = ', payload);
+			let payload: string[] = [...childs.map((child: any) => child.id)];
+			// let payload: string[] = [asset_data?.id]; // instead of only sending parent asset id, send parent and child asset id now because new api is introduced to fetch both parent and child asset ids.
+			console.log('payload for endpoints = ', payload);
 			const endpointsRes = await getAllEndpoints(payload);
 			console.log('res endpoints = ', endpointsRes);
 

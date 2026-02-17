@@ -55,6 +55,7 @@ export default function AssetDetailScreen() {
 
 	const handleEditAsset = () => {
 		// console.log('handleEditAsset');
+		if (!assetData) return;
 
 		router.push({
 			pathname: "/editAsset",
@@ -67,7 +68,7 @@ export default function AssetDetailScreen() {
 
 	return (
 		<View style={styles.container}>
-			<Header title={assetData?.asset_name || ""} editAsset={true} handleEditAsset={handleEditAsset} />
+			<Header title={assetData?.asset_name || ""} editAsset={!!assetData} handleEditAsset={handleEditAsset} />
 
 			{
 				assetData ? (

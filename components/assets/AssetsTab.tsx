@@ -298,23 +298,6 @@ export default function AssetsTab({
 		);
 	};
 
-	// const handleDeleteAsset = async (item: Asset) => {
-	// 	console.log('deleting asset = ', item);
-	// 	// setDeleteLoading(true)
-	// 	try {
-	// 		const resp = await deleteAsset(item?.id);
-	// 		console.log('resp = ', resp);
-	// 		if (resp?.status) {
-	// 			ToastAndroid.show("Asset Deleted", ToastAndroid.SHORT);
-	// 			fetchAssets();
-	// 			// setDeleteLoading(false)
-	// 		}
-	// 	} catch (e) {
-	// 		// setDeleteLoading(false)
-	// 		console.log('error deleting = ', e);
-	// 	}
-	// }
-
 	const clearFilters = async () => {
 		setCardId(null);  // 🔥 disable overview filtering
 		setFilteredAssets([]);  // 🔥 reset your filtered list

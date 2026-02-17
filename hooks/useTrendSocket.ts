@@ -7,7 +7,7 @@ interface TrendSocketParams {
 	onStatus?: (status: string) => void;
 }
 
-const WS_URL = "wss://testprocessor.presageinsights.ai/ws/trend_data/";
+const WS_URL = "wss://staging.presageinsights.ai/ws/trend_data/";
 
 export function useTrendSocket({
 	payload,
