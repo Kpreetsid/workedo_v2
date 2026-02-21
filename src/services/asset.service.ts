@@ -6,6 +6,12 @@ export const assetTree = async () => {
     return await sendRequest('GET', url, {});
 };
 
+export const assetTreeForSingleLocation = async (locationIds: string) => {
+    const url = `${endpoints.asset.tree}?location_id=${locationIds}`;
+    console.log('url = ', url);
+    return await sendRequest('GET', url, {});
+};
+
 export const getChildren = async (assetId: string) => {
     const url = `${endpoints.asset.children}?asset_id=${assetId}`;
     return await sendRequest('GET', url);

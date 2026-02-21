@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
 	Modal,
 	View,
@@ -13,19 +13,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import { locationTree } from "@/src/services/location.service";
 import Fonts from "@/constants/Typography";
-import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
-import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
-import { usePreventiveStore } from "@/src/store/usePreventiveStore";
-import { usePartFormStore } from "@/src/store/usePartFormStore";
-import { useCreateAssetStore } from "@/src/store/useCreateAsset";
 import { Location } from "@/src/types/location";
-import { usePDMStore } from "@/src/store/usePDMStore";
+import { type OverviewParentLocation, useOverviewStore } from "@/src/store/useOverviewStore";
 
-export default function LocationPickerModal({
-	comingFrom,
+export default function LocationPickerPDM({
 	visible,
 	onClose,
-	onSelectLocation,
 }: {
 	comingFrom?: string;
 	visible: boolean;
@@ -33,18 +26,18 @@ export default function LocationPickerModal({
 	onSelectLocation?: (item: Location) => void;
 }) {
 	const [expanded, setExpanded] = useState<any>({});
-	const [selectedId, setSelectedId] = useState<string | null>(null);   // ⭐ only 1 selected at a time
+	const [selectedLocationsLocal, setSelectedLocationsLocal] = useState<OverviewParentLocation[]>([]);
 	const [locations, setLocations] = useState<Location[]>([]);
 
 	const [loading, setLoading] = useState<boolean>(false);
 
-	const { setWorkForm } = useWorkOrderStore();
-	const { setWorkRequestForm } = useWorkRequestStore();
-	const { setPreventiveValue } = usePreventiveStore();
-	const { setPartFormValue } = usePartFormStore();
+	const selectedLocation = useOverviewStore((state) => state.parentLocations);
+	const setSelectedLocation = useOverviewStore((state) => state.setParentLocations);
 
-	const { setParentLocation, setAssignedUsers, setLocationObject, setLocation } = useCreateAssetStore();
-	const { setSelectedLocation } = usePDMStore();
+	useEffect(() => {
+		if (!visible) return;
+		setSelectedLocationsLocal(selectedLocation ?? []);
+	}, [visible, selectedLocation]);
 
 	useFocusEffect(
 		useCallback(() => {
@@ -73,42 +66,29 @@ export default function LocationPickerModal({
 	};
 
 	const handleSelect = (node: any) => {
-		setSelectedId(node.id);   // ⭐ overwrite previous selection
-		if (onSelectLocation) {
-			onSelectLocation(node);
-			return;
-		}
-		onSelect(node);         // return selected node to parent
+		setSelectedLocationsLocal((prev) => {
+			const isAlreadySelected = prev.some((location) => location.id === node.id);
+
+			if (isAlreadySelected) {
+				return prev.filter((location) => location.id !== node.id);
+			}
+
+			return [...prev, { id: node.id, location_name: node.location_name }];
+		});
 	};
 
-	const onSelect = (item: Location) => {
-		console.log('on item = ', item);
+	const onSave = () => {
+		setSelectedLocation(selectedLocationsLocal);
+		onClose();
+	};
 
-		if (comingFrom === "newWorkOrder") {
-			setWorkForm("location", item);
-			setWorkForm("selected_asset", null);
-			setWorkForm("assigned_users", []);
-		} else if (comingFrom === "newWorkRequest") {
-			setWorkRequestForm("location", item);
-			setWorkRequestForm("selected_asset", null);
-		} else if (comingFrom === "createPart") {
-			setPartFormValue("location", item);
-		} else if (comingFrom === "createPreventive") {
-			setPreventiveValue("location", item);
-			setPreventiveValue("selected_asset", null);
-		} else if (comingFrom === "createAsset") {
-			setParentLocation({ id: item?.id, location_name: item?.location_name });
-			setAssignedUsers([]);
-			setLocation(item?.id);
-			setLocationObject(item);
-		} else if (comingFrom === "PDMDashboard") {
-			setSelectedLocation({ id: item?.id, location_name: item?.location_name })
-		}
-		console.log("Selected:", item);
-	}
+	const onCancel = () => {
+		setSelectedLocationsLocal(selectedLocation ?? []);
+		onClose();
+	};
 
 	const renderNode = (node: any, depth = 0) => {
-		const isSelected = selectedId === node.id;  // ⭐ highlight selected
+		const isSelected = selectedLocationsLocal.some((location) => location.id === node.id);
 
 		return (
 			<View key={node.id} style={{ marginLeft: depth * 18, marginVertical: 6 }}>
@@ -126,7 +106,7 @@ export default function LocationPickerModal({
 						<View style={{ width: 18, height: 18 }} />
 					)}
 
-					{/* Checkbox → replaced with single-select tick */}
+					{/* Checkbox */}
 					<TouchableOpacity onPress={() => handleSelect(node)} style={{ flexDirection: "row", alignItems: "center" }}>
 						<View
 							style={styles.checkboxContainer}
@@ -177,10 +157,10 @@ export default function LocationPickerModal({
 
 					{/* Buttons */}
 					<View style={styles.footer}>
-						<TouchableOpacity style={styles.saveBtn} onPress={onClose}>
+						<TouchableOpacity style={styles.saveBtn} onPress={onSave}>
 							<Text style={styles.saveText}>Save</Text>
 						</TouchableOpacity>
-						<TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+						<TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
 							<Text style={styles.cancelText}>Cancel</Text>
 						</TouchableOpacity>
 					</View>

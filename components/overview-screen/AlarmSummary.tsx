@@ -18,6 +18,11 @@ type ChartScaleType = {
 	noOfSections: number;
 };
 
+type AssetNode = {
+	id?: string;
+	childs?: AssetNode[];
+};
+
 const chartUrl = "file:///android_asset/charts/asset-health.html";
 
 export default function AlarmSummary() {
@@ -29,6 +34,7 @@ export default function AlarmSummary() {
 	const [showDanger, setShowDanger] = useState(true);
 
 	const childAssets = useOverviewStore((state) => state.childAssets);
+	const selectedAssets = useOverviewStore((state) => state.selectedAssets);
 
 	const [chartData, setChartData] = useState<ChartDataType>({
 		timestamps: [],
@@ -44,7 +50,7 @@ export default function AlarmSummary() {
 	});
 
 	const fetchAlarmHistorySummary = async () => {
-		if (!childAssets.length) {
+		if (!childAssets.length || !selectedAssets.length) {
 			setChartData({
 				timestamps: [],
 				critical: [],
@@ -62,14 +68,65 @@ export default function AlarmSummary() {
 		try {
 			setLoading(true);
 
-			const payload = {
-				asset_list: childAssets.filter(a => a.top_level).map(a => a.id),
+			const collectSelectedAssetIdsWithChildren = (assets: AssetNode[], selectedIds: string[]) => {
+				const selectedSet = new Set(selectedIds);
+				const ids = new Set<string>();
+
+				const addSubtree = (nodes: AssetNode[]) => {
+					nodes.forEach((node) => {
+						if (node?.id) {
+							ids.add(node.id);
+						}
+
+						if (Array.isArray(node?.childs) && node.childs.length > 0) {
+							addSubtree(node.childs);
+						}
+					});
+				};
+
+				const traverse = (nodes: AssetNode[]) => {
+					nodes.forEach((node) => {
+						if (node?.id && selectedSet.has(node.id)) {
+							addSubtree([node]);
+							return;
+						}
+
+						if (Array.isArray(node?.childs) && node.childs.length > 0) {
+							traverse(node.childs);
+						}
+					});
+				};
+
+				traverse(assets);
+				return Array.from(ids);
 			};
 
-			const res = await alarmsSummary(payload);
-			// console.log(res)
-			const data = res?.data?.[0];
+			const payload = {
+				asset_list: collectSelectedAssetIdsWithChildren(
+					childAssets as AssetNode[],
+					selectedAssets
+				),
+			};
+			console.log('alarm payload = ', payload);
+			if (!payload.asset_list.length) {
+				setChartData({
+					timestamps: [],
+					critical: [],
+					alert: [],
+					danger: [],
+				});
+				setChartScale({
+					minValue: 0,
+					maxValue: 1,
+					noOfSections: 1,
+				});
+				return;
+			}
 
+			const res = await alarmsSummary(payload);
+			if (!res?.data?.length) return;
+
+			const data = res?.data?.[0];
 
 			const timestamps = data?.timestamp ?? [];
 			const critical = data?.series?.find((i: any) => i.name === "Critical")?.data ?? [];
@@ -140,7 +197,7 @@ export default function AlarmSummary() {
 
 	useEffect(() => {
 		fetchAlarmHistorySummary();
-	}, [childAssets]);
+	}, [childAssets, selectedAssets]);
 
 	return (
 		<View style={styles.container}>

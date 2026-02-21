@@ -32,7 +32,7 @@ export default function AssetHealth() {
 	const [loading, setLoading] = useState(false);
 	const [webReady, setWebReady] = useState(false); // ✅ IMPORTANT
 
-	const { childAssets } = useOverviewStore();
+	const selectedAssets = useOverviewStore((s)=>s.selectedAssets);
 	const [rawSeries, setRawSeries] = useState<any>(null);
 
 	/* ================= FETCH DATA ================= */
@@ -41,9 +41,11 @@ export default function AssetHealth() {
 			setLoading(true);
 
 			const payload = {
-				asset_list: childAssets.map((i) => i.id),
+				asset_list: selectedAssets,
 				group_by: groupBy,
 			};
+
+			console.log('payload for asset health = ', payload);
 
 			const res = await assetHealthStatus(payload);
 			console.log(res?.data);
@@ -56,12 +58,12 @@ export default function AssetHealth() {
 
 	/* ================= FETCH TRIGGER ================= */
 	useEffect(() => {
-		if (childAssets.length === 0) {
+		if (selectedAssets.length === 0) {
 			setRawSeries(null);
 			return;
 		}
 		fetchAssetHealth();
-	}, [childAssets, groupBy]);
+	}, [selectedAssets, groupBy]);
 
 	/* ================= BUILD PAYLOAD FOR WEBVIEW ================= */
 	const chartPayload = useMemo(() => {

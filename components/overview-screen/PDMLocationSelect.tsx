@@ -1,161 +1,86 @@
 import { useEffect, useState } from "react";
-import { TouchableOpacity, View, StyleSheet, ToastAndroid } from "react-native";
-import Dropdown from "@/components/overview-screen/DropDown";
-import { assetHealthKPIHistory, childAssetsAgainstLocation, fetchKPIFilterLocations, fetchParentLocationDetails, locationTree } from "@/src/services/location.service";
+import { View, StyleSheet, Pressable, Text } from "react-native";
+import { assetHealthKPIHistory, locationTree } from "@/src/services/location.service";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
+import Fonts from "@/constants/Typography";
+import { assetTreeForSingleLocation } from "@/src/services/asset.service";
+import LocationPickerPDM from "./LocationPickerPDM";
 import { useAuthStore } from "@/src/store/useAuthStore";
+import AssetPickerPDM from "./AssetPickerPDM";
+import { type LocationAsset } from "@/src/types/locationAsset";
+
+type AssetNode = LocationAsset & {
+	childs?: AssetNode[];
+};
+
+const collectParentAssetIds = (assets: AssetNode[]) =>
+	assets.map((asset) => asset.id).filter(Boolean);
 
 export default function PDMDashboardLocationSelect() {
 	console.log('pdm location')
-	// state (read-only)
-	const parentLocations = useOverviewStore(s => s.parentLocations);
-	const childLocations = useOverviewStore(s => s.childLocations);
+	const [open, setOpen] = useState(false);
+	const [assetOpen, setAssetOpen] = useState(false);
+	const parentLocations = useOverviewStore((state) => state.parentLocations);
+
+	const user = useAuthStore(s => s.user);
 	const childAssets = useOverviewStore(s => s.childAssets);
-	const parentSelectionId = useOverviewStore(s => s.parentSelectionId);
-	const childSelectionIds = useOverviewStore(s => s.childSelectionIds);
+	const selectedAssets = useOverviewStore((state) => state.selectedAssets);
 	const assetKPIHistory = useOverviewStore(s => s.assetKPIHistory);
-
-	// actions (stable, no re-render cost)
-	const setParentLocations = useOverviewStore(s => s.setParentLocations);
-	const setChildLocations = useOverviewStore(s => s.setChildLocations);
-	const setChildAssets = useOverviewStore(s => s.setChildAssets);
-	const setParentSelectionId = useOverviewStore(s => s.setParentSelectionId);
-	const setChildSelectionIds = useOverviewStore(s => s.setChildSelectionIds);
-	const setAssetKPIHistory = useOverviewStore(s => s.setAssetKPIHistory);
-
-	const { user } = useAuthStore();
-
-	const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+	const setParentLocations = useOverviewStore((state) => state.setParentLocations);
+	const setChildAssets = useOverviewStore((state) => state.setChildAssets);
+	const setSelectedAssets = useOverviewStore((state) => state.setSelectedAssets);
+	const setAssetKPIHistory = useOverviewStore((state) => state.setAssetKPIHistory);
 
 	useEffect(() => {
-		fetchLocations();
+		// fetchLocations();
+		fetchLocationsTree();
 	}, []);
 
-	// 🧩 Fetch all locations initially and select first parent
-	const fetchLocations = async () => {
-		const res = await fetchKPIFilterLocations();
-		console.log('res kpi = ', res);
-		if (res.status) {
-			setParentLocations(res.data.levelOneLocations);
-
-			const firstParent = res.data.levelOneLocations[0];
-			if (firstParent) {
-				setParentSelectionId(firstParent.id); // triggers below effect
-				return;
-			}
+	const fetchLocationsTree = async () => {
+		const res = await locationTree();
+		console.log('res locations PDM = ', res?.data);
+		const hasSelectedLocation = useOverviewStore.getState().parentLocations.length > 0;
+		if (res?.data.length > 0 && !hasSelectedLocation) {
+			setParentLocations([{ id: res?.data[0].id, location_name: res?.data[0].location_name }])
 		}
-	};
+	}
 
-	// 🧠 When parent changes — fetch its child locations
 	useEffect(() => {
-		// console.log('parent changes')
-		if (!parentSelectionId) return;
-
-		const fetchChildsForParent = async () => {
-			try {
-				const childs = await fetchParentLocationDetails(parentSelectionId, "parent");
-				// console.log('childs = ', childs);
-
-				// 🧠 CASE 1: API returns success but "status": false (no data found)
-				if (!childs?.status || !Array.isArray(childs.data) || childs.data.length === 0) {
-					handleNoChildData();
-					return;
-				}
-
-				// 🧠 CASE 2: We have valid data
-				setChildLocations(childs.data);
-
-				// Select ALL child IDs by default
-				const allChildIds = childs.data.map((child: any) => child.id);
-				setChildSelectionIds(allChildIds);
-
-				// Fetch assets for selected children
-				fetchChildAssets(parentSelectionId ?? undefined, allChildIds);
-
-			} catch (error: any) {
-				console.error("fetchParentLocationDetails failed:", error);
-				if (!error.status) {
-					ToastAndroid.show("No Data Found", ToastAndroid.SHORT);
-					const allChildIds: string[] = []
-					setChildSelectionIds(allChildIds);
-					setChildLocations([]);
-
-					// Fetch assets for selected children
-					fetchChildAssets(parentSelectionId ?? undefined, allChildIds);
-				}
-				// handleNoChildData();
-			}
-		};
-
-		fetchChildsForParent();
-	}, [parentSelectionId]);
-
-	const handleNoChildData = () => {
-		setChildLocations([]);
-		setChildSelectionIds([]);
-		setChildAssets([]);
-		// setAssetKPIHistory(null);
-
-		if (assetKPIHistory !== null) {
-			setAssetKPIHistory(null);
+		if (parentLocations?.length > 0) {
+			console.log('location selected for PDM = ', parentLocations)
+			fetchAssetsForLocation()
 		}
+	}, [parentLocations])
 
-		ToastAndroid.show("No Data Found", ToastAndroid.SHORT);
-	};
+	const fetchAssetsForLocation = async () => {
+		try {
+			const locationIds = parentLocations?.map((location) => location.id).join(',');
+			if (!locationIds) return;
 
-	// 🧠 When child selections change (user toggles checkboxes)
-	useEffect(() => {
-		if (!childSelectionIds.length) {
-			setChildAssets([]);
-
-			if (assetKPIHistory !== null) {
-				setAssetKPIHistory(null);
-			}
-
-			return;
+			const res = await assetTreeForSingleLocation(locationIds)
+			console.log('res assets for location = ', res?.data)
+			const fetchedAssets = (res?.data ?? []) as AssetNode[];
+			setChildAssets(fetchedAssets);
+			setSelectedAssets(collectParentAssetIds(fetchedAssets));
+		} catch (e: any) {
+			console.log('error assets for location = ', e)
 		}
-
-		fetchChildAssets(parentSelectionId ?? undefined, childSelectionIds);
-	}, [childSelectionIds]);
-
-
-	// Fetch child assets for a parent + selected children
-	const fetchChildAssets = async (parentId?: string, childIds?: string[]) => {
-		const payload = {
-			levelOneLocations: [parentId || parentLocations[0]?.id],
-			levelTwoLocations: childIds || childLocations.map((i) => i.id),
-		};
-
-		// console.log('payload child assets = ', payload);
-
-		const childAssetsRes = await childAssetsAgainstLocation(payload);
-		// console.log('childAssetsRes = ', childAssetsRes);
-		if (childAssetsRes?.status && Array.isArray(childAssetsRes.data?.assetList)) {
-			setChildAssets(childAssetsRes.data.assetList);
-			return;
-		}
-
-		// Clear stale data when API returns no data / failure
-		setChildAssets([]);
-		if (assetKPIHistory !== null) {
-			setAssetKPIHistory(null);
-		}
-	};
+	}
 
 	// When child assets are ready, fetch KPI data
 	useEffect(() => {
-		if (!childAssets.length) return;
+		if (!selectedAssets.length) return;
 		fetchAssetHealthKPIHistory();
-	}, [childAssets]);
+	}, [selectedAssets]);
 
 	const fetchAssetHealthKPIHistory = async () => {
 		const payload = {
 			org_id: user?.account_id,
 			electric_asset: [],
 			non_electric_asset: [],
-			top_level_asset: childAssets.filter(item => Boolean(item.top_level)).map(item => item.id),
+			top_level_asset: selectedAssets,
 		};
-		// console.log('payload = ', payload);
+		console.log('payload = ', payload);
 		try {
 			const res = await assetHealthKPIHistory(payload);
 			console.log('res = available = ', res)
@@ -173,33 +98,52 @@ export default function PDMDashboardLocationSelect() {
 		}
 	};
 
+
+	const selectedLocationCount = parentLocations.length;
+	const parentAssetIds = new Set(childAssets.map((asset) => asset.id));
+	const selectedAssetCount = selectedAssets.filter((id) => parentAssetIds.has(id)).length;
+
 	return (
 		<>
-			{openDropdown && (
-				<TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setOpenDropdown(null)} />
-			)}
 			<View style={styles.container}>
-				<Dropdown
-					name="parent"
-					label="Parent Location"
-					options={parentLocations}
-					openDropdown={openDropdown}
-					setOpenDropdown={setOpenDropdown}
-					value={parentSelectionId ?? undefined}
-					onValueChange={(v: any) => setParentSelectionId(v ?? null)}
-				/>
+				<View style={styles.selectorWrapper}>
+					<Pressable style={styles.field} onPress={() => setOpen((prev) => !prev)}>
+						<Text style={styles.fieldLabel}>Location</Text>
+					</Pressable>
+					<View style={styles.countBadge}>
+						<Text style={styles.countText}>{selectedLocationCount}</Text>
+					</View>
+				</View>
 
-				{childLocations.length > 0 && (
-					<Dropdown
-						name="child"
-						label="Child Location"
-						options={childLocations}
-						value={childSelectionIds}
-						onValueChange={(v: any) => setChildSelectionIds(v ?? null)}
-						openDropdown={openDropdown}
-						setOpenDropdown={setOpenDropdown}
+
+				{
+					// open && data?.mode != 'child' && <LocationSelector />
+					open &&
+					<LocationPickerPDM
+						visible={open}
+						onClose={() => setOpen(false)}
 					/>
-				)}
+				}
+
+				<View style={styles.selectorWrapper}>
+					<Pressable style={styles.field} onPress={() => setAssetOpen((prev) => !prev)}>
+						<Text style={styles.fieldLabel}>Asset</Text>
+					</Pressable>
+					<View style={styles.countBadge}>
+						<Text style={styles.countText}>{selectedAssetCount}</Text>
+					</View>
+				</View>
+
+
+				{
+					// open && data?.mode != 'child' && <LocationSelector />
+					assetOpen &&
+					<AssetPickerPDM
+						visible={assetOpen}
+						onClose={() => setAssetOpen(false)}
+					/>
+				}
+
 			</View>
 		</>
 	);
@@ -209,9 +153,9 @@ const styles = StyleSheet.create({
 	container: {
 		flexDirection: "row",
 		paddingTop: 20,
-		paddingHorizontal: 20,
+		paddingHorizontal: 12,
 		alignItems: "center",
-		gap: 25,
+		gap: 14,
 	},
 	overlay: {
 		position: "absolute",
@@ -220,5 +164,43 @@ const styles = StyleSheet.create({
 		right: 0,
 		bottom: 0,
 		zIndex: 99,
+	},
+	selectorWrapper: {
+		position: "relative",
+	},
+	field: {
+		backgroundColor: "#FFFFFF",
+		borderRadius: 8,
+		paddingHorizontal: 18,
+		borderWidth: 1,
+		borderColor: "#E1E8EE",
+		alignItems: "center",
+		justifyContent: "center",
+		height: 40,
+		minWidth: 130,
+	},
+	fieldLabel: {
+		fontSize: 14,
+		color: "#8B8B8B",
+		fontFamily: Fonts.regular,
+	},
+	countBadge: {
+		position: "absolute",
+		top: -10,
+		right: -10,
+		minWidth: 22,
+		height: 22,
+		paddingHorizontal: 6,
+		borderRadius: 11,
+		backgroundColor: "#742BDE",
+		alignItems: "center",
+		justifyContent: "center",
+		borderWidth: 2,
+		borderColor: "#fff",
+	},
+	countText: {
+		color: "#fff",
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
 	},
 });
