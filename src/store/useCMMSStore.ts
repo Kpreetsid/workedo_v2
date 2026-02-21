@@ -1,22 +1,22 @@
 import { create } from "zustand";
 import { LocationAsset } from "@/src/types/locationAsset";
-import { Location } from "@/src/types/location";
 import { AssetHealthSummary } from "../types/assetHistory";
 
+export interface CMMSParentLocation {
+  id: string;
+  location_name: string;
+}
+
 interface CMMSState {
-  parentLocations: Location[];
-  childLocations: Location[];
+  parentLocations: CMMSParentLocation[];
   childAssets: LocationAsset[];
   assetKPIHistory: AssetHealthSummary | null;
 
-  parentSelectionId: string | null;
-  childSelectionIds: string[];
+  selectedAssets: string[];
 
-  setParentLocations: (data: Location[]) => void;
-  setChildLocations: (data: Location[]) => void;
+  setParentLocations: (data: CMMSParentLocation[]) => void;
   setChildAssets: (data: LocationAsset[]) => void;
-  setParentSelectionId: (data: string | null) => void;
-  setChildSelectionIds: (data: string[]) => void;
+  setSelectedAssets: (data: string[]) => void;
   setAssetKPIHistory: (data: AssetHealthSummary | null) => void;
 
   clearCMMS: () => void;
@@ -25,7 +25,6 @@ interface CMMSState {
 export const useCMMSStore = create<CMMSState>((set) => ({
   // these are for the data inside dropdown for parent and child locations
   parentLocations: [],
-  childLocations: [],
 
   // child assets are actually assets data of all or selected child locations
   childAssets: [],
@@ -33,25 +32,20 @@ export const useCMMSStore = create<CMMSState>((set) => ({
   // assetKPIHistory is the data of assets health summary of all or selected child locations
   assetKPIHistory: null,
 
-  // selections from drop down
-  parentSelectionId: null,
-  childSelectionIds: [],
+  // selected parent assets
+  selectedAssets: [],
 
   // functions to set the data
   setParentLocations: (data) => set({ parentLocations: data }),
-  setChildLocations: (data) => set({ childLocations: data }),
   setChildAssets: (data) => set({ childAssets: data }),
-  setParentSelectionId: (data) => set({ parentSelectionId: data }),
-  setChildSelectionIds: (data) => set({ childSelectionIds: data }),
+  setSelectedAssets: (data) => set({ selectedAssets: data }),
   setAssetKPIHistory: (data) => set({ assetKPIHistory: data }),
 
   // function to clear the data
   clearCMMS: () => set({
     parentLocations: [],
-    childLocations: [],
     childAssets: [],
     assetKPIHistory: null,
-    parentSelectionId: null,
-    childSelectionIds: [],
+    selectedAssets: [],
   }),
 }));

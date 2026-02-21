@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { woStatus } from "@/src/services/cmms.service";
 import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 import moment from "moment";
+import { collectSelectedAssetIdsWithChildren, type SelectableTreeNode } from "@/src/utils/assetSelection";
 
 const chartData: pieDataItem[] = [
 	{ value: 3, color: "#00B227" }, { value: 3, color: "#DEDEDE" }, { value: 3, color: "#FFC107" }, { value: 3, color: "#5552FE" },
@@ -26,13 +27,14 @@ export default function WoStatus() {
 	const [chartDataFinal, setChartDataFinal] = useState([]);
 
 	const childAssets = useCMMSStore((state) => state.childAssets);
-	const startDate = useDateRangeStore((state)=>state.startDate);
-	const endDate = useDateRangeStore((state)=>state.endDate);
-	const rangeVersion = useDateRangeStore((state)=>state.rangeVersion);
+	const selectedAssets = useCMMSStore((state) => state.selectedAssets);
+	const startDate = useDateRangeStore((state) => state.startDate);
+	const endDate = useDateRangeStore((state) => state.endDate);
+	const rangeVersion = useDateRangeStore((state) => state.rangeVersion);
 
 	useEffect(() => {
-		console.log(' in wo status = ', childAssets, startDate)
-		if (childAssets.length > 0) {
+		console.log(' in wo status = ', selectedAssets, startDate)
+		if (selectedAssets.length > 0 && childAssets.length > 0) {
 			fetchWoStatus();
 			return;
 		}
@@ -42,7 +44,7 @@ export default function WoStatus() {
 		setHidden([]);
 		setSelectedSlice(null);
 		setNoData(false);
-	}, [childAssets, startDate, endDate, rangeVersion])
+	}, [selectedAssets, childAssets, startDate, endDate, rangeVersion])
 
 	// 🎨 Color mapping for each health type
 	const colorMap: Record<string, string> = {
@@ -56,7 +58,19 @@ export default function WoStatus() {
 		const startTimePart = "T19:00:00.000Z";
 		const timePart = "T18:00:00.00Z";
 		try {
-			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
+			const selectedAssetsWithChildren = collectSelectedAssetIdsWithChildren(
+				childAssets as SelectableTreeNode[],
+				selectedAssets
+			);
+			const selectedAssetsFormatted = selectedAssetsWithChildren.join(",")
+			if (!selectedAssetsFormatted) {
+				setRawPieData([]);
+				setChartDataFinal([]);
+				setHidden([]);
+				setSelectedSlice(null);
+				setNoData(false);
+				return;
+			}
 
 			let finalPayload: any = {};
 			// prepare for payload
@@ -74,14 +88,14 @@ export default function WoStatus() {
 				finalPayload.endDate = moment().format("YYYY-MM-DD") + timePart;
 			}
 
-			finalPayload.assetIds = childAssetsFormatted
+			finalPayload.assetIds = selectedAssetsFormatted
 
 			console.log('final payload wo status = ', finalPayload);
 
 			const res = await woStatus(
 				finalPayload.startDate,
 				finalPayload.endDate,
-				childAssetsFormatted
+				selectedAssetsFormatted
 			);
 			console.log('wo status res = ', res);
 			if (res?.status && Array.isArray(res?.data) && res?.data.length > 0) {

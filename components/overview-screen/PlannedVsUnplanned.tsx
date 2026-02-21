@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { G } from "react-native-svg";
 // import { LineChart, lineDataItem } from "react-native-gifted-charts";
 import { WebView } from "react-native-webview";
+import { collectSelectedAssetIdsWithChildren, type SelectableTreeNode } from "@/src/utils/assetSelection";
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -18,7 +19,7 @@ export default function PlannedVsUnplanned() {
 
 	const [noData, setNoData] = useState(false)
 	const childAssets = useCMMSStore((state) => state.childAssets);
-	// console.log('child assets in planned unplanned = ', childAssets);
+	const selectedAssets = useCMMSStore((state) => state.selectedAssets);
 
 	const [workOrderData, setWorkOrderData] = useState([]);
 	const [preventiveData, setPreventiveData] = useState([]);
@@ -31,7 +32,7 @@ export default function PlannedVsUnplanned() {
 	const rangeVersion = useDateRangeStore((state)=>state.rangeVersion);
 
 	useEffect(() => {
-		if (childAssets.length > 0) {
+		if (selectedAssets.length > 0 && childAssets.length > 0) {
 			fetchPlannedUnplanned();
 			return;
 		}
@@ -40,13 +41,24 @@ export default function PlannedVsUnplanned() {
 		setPreventiveData([]);
 		setChartPayload(null);
 		setNoData(false);
-	}, [childAssets, startDate, endDate, rangeVersion])
+	}, [selectedAssets, childAssets, startDate, endDate, rangeVersion])
 
 	async function fetchPlannedUnplanned() {
 		const startTimePart = "T19:00:00.000Z";
 		const timePart = "T14:01:18.788Z";
 		try {
-			const childAssetsFormatted = childAssets.map((i) => i.id).join(",");
+			const selectedAssetsWithChildren = collectSelectedAssetIdsWithChildren(
+				childAssets as SelectableTreeNode[],
+				selectedAssets
+			);
+			const selectedAssetsFormatted = selectedAssetsWithChildren.join(",");
+			if (!selectedAssetsFormatted) {
+				setWorkOrderData([]);
+				setPreventiveData([]);
+				setChartPayload(null);
+				setNoData(false);
+				return;
+			}
 
 
 			let finalPayload: any = {};
@@ -65,14 +77,14 @@ export default function PlannedVsUnplanned() {
 				finalPayload.endDate = moment().format("YYYY-MM-DD") + timePart;
 			}
 
-			finalPayload.assetIds = childAssetsFormatted
+			finalPayload.assetIds = selectedAssetsFormatted
 
 			console.log('final payload planned = ', finalPayload);
 
 			const res = await plannedUnplanned(
 				finalPayload.startDate,
 				finalPayload.endDate,
-				childAssetsFormatted
+				selectedAssetsFormatted
 			);
 
 			// console.log('res planned - ', res);

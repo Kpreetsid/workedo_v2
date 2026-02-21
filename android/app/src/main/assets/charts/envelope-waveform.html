@@ -2,8 +2,7 @@
 <html>
 
 <head>
-	<!-- 🔒 Disable WebView zoom -->
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Chart.js -->
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
@@ -21,6 +20,7 @@
 			background: #ffffff;
 			font-family: system-ui, -apple-system, BlinkMacSystemFont;
 			overflow: hidden;
+			touch-action: none;
 		}
 
 		#wrapper {
@@ -45,17 +45,36 @@
 			border-radius: 12px;
 			padding: 14px 16px;
 			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-			pointer-events: none;
+			pointer-events: auto;
 			font-family: system-ui, -apple-system, BlinkMacSystemFont;
 			color: #45515C;
 			min-width: 220px;
 			z-index: 10;
 		}
 
+		.tooltip-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 10px;
+			margin-bottom: 10px;
+		}
+
 		.tooltip-title {
 			font-size: 12px;
 			font-weight: 500;
-			margin-bottom: 10px;
+			margin-bottom: 0;
+		}
+
+		.tooltip-close {
+			border: 0;
+			background: transparent;
+			font-size: 14px;
+			font-weight: 700;
+			line-height: 1;
+			color: #45515C;
+			cursor: pointer;
+			padding: 0;
 		}
 
 		.tooltip-row {
@@ -90,6 +109,7 @@
 
 	<script>
 		let chart;
+		let tooltipVisible = false;
 
 		function createEnvelope(payload) {
 			const ctx = document.getElementById("chart").getContext("2d");
@@ -157,14 +177,21 @@
 							external(context) {
 								const { chart, tooltip } = context;
 								const tooltipEl = getOrCreateTooltip(chart);
+								tooltipVisible = true;
 
 								if (tooltip.opacity === 0) {
 									tooltipEl.style.opacity = 0;
+									tooltipVisible = false;
 									return;
 								}
 
 								const time = Number(tooltip.title[0]).toFixed(4);
-								let html = `<div class="tooltip-title">${time}</div>`;
+								let html = `
+        <div class="tooltip-header">
+          <div class="tooltip-title">${time}</div>
+          <button class="tooltip-close" id="tooltip-close" aria-label="Close tooltip">×</button>
+        </div>
+      `;
 
 								tooltip.dataPoints.forEach(dp => {
 									html += `
@@ -177,11 +204,37 @@
 								});
 
 								tooltipEl.innerHTML = html;
+								const closeBtn = tooltipEl.querySelector("#tooltip-close");
+								if (closeBtn) {
+									closeBtn.onclick = (event) => {
+										event.preventDefault();
+										event.stopPropagation();
+										hideTooltip();
+									};
+								}
 								tooltipEl.style.opacity = 1;
 							}
 						},
 						legend: {
-							display: true
+							display: true,
+							position: "top",
+							align: "center",
+
+							labels: {
+								color: "#45515C",
+								font: {
+									family: "system-ui, -apple-system, BlinkMacSystemFont",
+									size: 12,
+									weight: "500",
+								},
+
+								boxWidth: 10,
+								boxHeight: 10,
+								padding: 16,
+
+								usePointStyle: true,   // 👈 circle instead of square
+								pointStyle: "circle",
+							},
 						},
 						zoom: {
 							pan: { enabled: true, mode: "x" },
@@ -192,27 +245,6 @@
 							}
 						},
 
-						legend: {
-							display: false,
-							// position: "top",
-							// align: "center",
-
-							// labels: {
-							// 	color: "#45515C",
-							// 	font: {
-							// 		family: "system-ui, -apple-system, BlinkMacSystemFont",
-							// 		size: 12,
-							// 		weight: "500",
-							// 	},
-
-							// 	boxWidth: 10,
-							// 	boxHeight: 10,
-							// 	padding: 16,
-
-							// 	usePointStyle: true,   // 👈 circle instead of square
-							// 	pointStyle: "circle",
-							// },
-						},
 						zoom: {
 							pan: { enabled: true, mode: "x" },
 							zoom: {
@@ -239,6 +271,7 @@
 		function hideTooltip() {
 			const el = document.querySelector(".chart-tooltip");
 			if (el) el.style.opacity = 0;
+			tooltipVisible = false;
 		}
 
 		function handleMessage(event) {
@@ -267,6 +300,7 @@
 
 			// If click happened on the canvas, ignore (chart handles it)
 			if (e.target.tagName === "CANVAS") return;
+			if (tooltipEl.contains(e.target)) return;
 
 			// Otherwise hide tooltip
 			tooltipEl.style.opacity = 0;

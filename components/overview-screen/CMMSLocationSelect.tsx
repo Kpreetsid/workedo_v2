@@ -1,194 +1,104 @@
 import { useEffect, useState } from "react";
-import { TouchableOpacity, View, StyleSheet, ToastAndroid, Pressable, Modal } from "react-native";
-import Dropdown from "@/components/overview-screen/DropDown";
-import { useAuthStore } from "@/src/store/useAuthStore";
-import { assetHealthKPIHistory, childAssetsAgainstLocation, fetchKPIFilterLocations, fetchParentLocationDetails, fetchParentLocationDetails1 } from "@/src/services/location.service";
-import { useCMMSStore } from "@/src/store/useCMMSStore";
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import DateRangeCalendar from "./DateRangeCalendar";
+import Fonts from "@/constants/Typography";
+import { locationTree } from "@/src/services/location.service";
+import { assetTreeForSingleLocation } from "@/src/services/asset.service";
+import { useCMMSStore } from "@/src/store/useCMMSStore";
 import { useDateRangeStore } from "@/src/store/useDateRangeStore";
+import { type LocationAsset } from "@/src/types/locationAsset";
+import DateRangeCalendar from "./DateRangeCalendar";
+import LocationPickerCMMS from "./LocationPickerCMMS";
+import AssetPickerCMMS from "./AssetPickerCMMS";
+
+const collectParentAssetIds = (assets: LocationAsset[]) =>
+	assets.map((asset) => asset.id).filter((id): id is string => Boolean(id));
 
 export default function CMMSDashboardLocationSelect() {
-	console.log('cmms location')
-	const {
-		parentLocations,
-		childLocations,
-		childAssets,
-		parentSelectionId,
-		childSelectionIds,
-
-		setParentLocations,
-		setChildLocations,
-		setChildAssets,
-		setParentSelectionId,
-		setChildSelectionIds,
-		setAssetKPIHistory,
-	} = useCMMSStore();
-
-	const { user } = useAuthStore();
+	const [locationOpen, setLocationOpen] = useState(false);
+	const [assetOpen, setAssetOpen] = useState(false);
 	const [showCalendar, setShowCalendar] = useState(false);
-	const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+	const parentLocations = useCMMSStore((state) => state.parentLocations);
+	const childAssets = useCMMSStore((state) => state.childAssets);
+	const selectedAssets = useCMMSStore((state) => state.selectedAssets);
+	const setParentLocations = useCMMSStore((state) => state.setParentLocations);
+	const setChildAssets = useCMMSStore((state) => state.setChildAssets);
+	const setSelectedAssets = useCMMSStore((state) => state.setSelectedAssets);
+
 	const { startDate, endDate } = useDateRangeStore();
 
 	useEffect(() => {
-		fetchLocations();
+		fetchLocationsTree();
 	}, []);
 
-	// 🧩 Fetch all locations initially and select first parent
-	const fetchLocations = async () => {
-		const res = await fetchKPIFilterLocations();
-		console.log('res kpi = ', res);
-		if (res.status) {
-			setParentLocations(res.data.levelOneLocations);
-
-			const firstParent = res.data.levelOneLocations[0];
-			if (firstParent) setParentSelectionId(firstParent.id); // triggers below effect
+	const fetchLocationsTree = async () => {
+		const res = await locationTree();
+		const hasSelectedLocation = useCMMSStore.getState().parentLocations.length > 0;
+		if (res?.data?.length > 0 && !hasSelectedLocation) {
+			setParentLocations([{ id: res.data[0].id, location_name: res.data[0].location_name }]);
 		}
 	};
 
-	// 🧠 When parent changes — fetch its child locations
 	useEffect(() => {
-		// console.log('parent changes')
-		if (!parentSelectionId) return;
+		if (!parentLocations.length) return;
+		fetchAssetsForLocation();
+	}, [parentLocations]);
 
-		const fetchChildsForParent = async () => {
-			try {
-				const childs = await fetchParentLocationDetails1(parentSelectionId, "parent");
-				console.log('childs = ', childs);
+	const fetchAssetsForLocation = async () => {
+		try {
+			const locationIds = parentLocations.map((location) => location.id).join(",");
+			if (!locationIds) return;
 
-				// 🧠 CASE 1: API returns success but "status": false (no data found)
-				if (!childs?.status || !Array.isArray(childs.data) || childs.data.length === 0) {
-					handleNoChildData();
-					return;
-				}
-
-				// 🧠 CASE 2: We have valid data
-				setChildLocations(childs.data);
-
-				// Select ALL child IDs by default
-				const allChildIds = childs.data.map((child: any) => child.id);
-				setChildSelectionIds(allChildIds);
-
-				// Fetch assets for selected children
-				fetchChildAssets(parentSelectionId ?? undefined, allChildIds);
-
-			} catch (error: any) {
-				// console.error("fetchParentLocationDetails failed:", error);
-				if (!error.status) {
-					ToastAndroid.show("No Data Found", ToastAndroid.SHORT);
-					// Select ALL child IDs by default
-					const allChildIds: string[] = []
-					setChildSelectionIds(allChildIds);
-					setChildLocations([]);
-
-					// Fetch assets for selected children
-					fetchChildAssets(parentSelectionId ?? undefined, allChildIds);
-				}
-				// handleNoChildData();
+			const res = await assetTreeForSingleLocation(locationIds);
+			console.log("res assets for location = ", res);
+			if (res.status) {
+				const fetchedAssets = (res?.data ?? []) as LocationAsset[];
+				setChildAssets(fetchedAssets);
+				setSelectedAssets(collectParentAssetIds(fetchedAssets));
 			}
-		};
-
-		fetchChildsForParent();
-	}, [parentSelectionId]);
-
-	const handleNoChildData = () => {
-		setChildLocations([]);
-		setChildSelectionIds([]);
-		setChildAssets([]);
-		setAssetKPIHistory(null);
-
-		ToastAndroid.show("No Data Found", ToastAndroid.SHORT);
-	};
-
-	// 🧠 When child selections change (user toggles checkboxes)
-	useEffect(() => {
-		if (!childSelectionIds.length) {
-			setChildAssets([]);
-			setAssetKPIHistory(null);
-			return;
-		}
-
-		fetchChildAssets(parentSelectionId ?? undefined, childSelectionIds);
-	}, [childSelectionIds]);
-
-
-	// Fetch child assets for a parent + selected children
-	const fetchChildAssets = async (parentId?: string, childIds?: string[]) => {
-		// console.log('parentId ids = ', parentId)
-		// console.log('chld ids = ', childIds)
-		const payload = {
-			levelOneLocations: [parentId || parentLocations[0]?.id],
-			levelTwoLocations: childIds || childLocations.map((i) => i.id),
-		};
-
-		console.log('payload for child assets = ', payload);
-
-		const childAssetsRes = await childAssetsAgainstLocation(payload);
-		console.log('childAssetsRes = ', childAssetsRes);
-		if (childAssetsRes.status) {
-			setChildAssets(childAssetsRes.data.assetList);
+		} catch (e: any) {
+			console.log("error assets for location = ", e);
 		}
 	};
 
-	// // When child assets are ready, fetch KPI data
-	// useEffect(() => {
-	// 	if (!childAssets.length) return;
-	// 	fetchAssetHealthKPIHistory();
-	// }, [childAssets]);
-
-	// const fetchAssetHealthKPIHistory = async () => {
-	// 	const payload = {
-	// 		org_id: user?.account_id,
-	// 		asset_list: childAssets.map((item) => item.id),
-	// 	};
-	// 	// console.log('payload = ', payload);
-	// 	const res = await assetHealthKPIHistory(payload);
-	// 	setAssetKPIHistory(res.data);
-	// };
+	const selectedLocationCount = parentLocations.length;
+	const parentAssetIds = new Set(childAssets.map((asset) => asset.id));
+	const selectedAssetCount = selectedAssets.filter((id) => parentAssetIds.has(id)).length;
 
 	return (
 		<>
-			{openDropdown && (
-				<TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setOpenDropdown(null)} />
-			)}
 			<View style={styles.container}>
-				<Dropdown
-					name="parent"
-					label="Parent Location"
-					options={parentLocations}
-					openDropdown={openDropdown}
-					setOpenDropdown={setOpenDropdown}
-					value={parentSelectionId ?? undefined}
-					onValueChange={(v: any) => setParentSelectionId(v ?? null)}
-				/>
+				<View style={styles.selectorWrapper}>
+					<Pressable style={styles.field} onPress={() => setLocationOpen((prev) => !prev)}>
+						<Text style={styles.fieldLabel}>Location</Text>
+					</Pressable>
+					<View style={styles.countBadge}>
+						<Text style={styles.countText}>{selectedLocationCount}</Text>
+					</View>
+				</View>
 
-				{childLocations.length > 0 && (
-					<Dropdown
-						name="child"
-						label="Child Location"
-						options={childLocations}
-						value={childSelectionIds}
-						onValueChange={(v: any) => setChildSelectionIds(v ?? null)}
-						openDropdown={openDropdown}
-						setOpenDropdown={setOpenDropdown}
-					/>
-				)}
+				<View style={styles.selectorWrapper}>
+					<Pressable style={styles.field} onPress={() => setAssetOpen((prev) => !prev)}>
+						<Text style={styles.fieldLabel}>Asset</Text>
+					</Pressable>
+					<View style={styles.countBadge}>
+						<Text style={styles.countText}>{selectedAssetCount}</Text>
+					</View>
+				</View>
 
-				<Pressable style={styles.iconView} onPress={() => {
-					console.log('pressed')
-					setShowCalendar(true)
-				}}>
+				<Pressable style={styles.iconView} onPress={() => setShowCalendar(true)}>
 					<Ionicons color={"#777"} name="calendar" size={20} />
 				</Pressable>
-
 			</View>
 
-			<Modal
-				visible={showCalendar}
-				transparent
-				animationType="slide"
-			>
+			{locationOpen && (
+				<LocationPickerCMMS visible={locationOpen} onClose={() => setLocationOpen(false)} />
+			)}
+
+			{assetOpen && <AssetPickerCMMS visible={assetOpen} onClose={() => setAssetOpen(false)} />}
+
+			<Modal visible={showCalendar} transparent animationType="slide">
 				<Pressable style={styles.overlayCal} onPress={() => setShowCalendar(false)} />
 				<View style={styles.sheet}>
 					<DateRangeCalendar
@@ -198,7 +108,6 @@ export default function CMMSDashboardLocationSelect() {
 					/>
 				</View>
 			</Modal>
-
 		</>
 	);
 }
@@ -207,25 +116,54 @@ const styles = StyleSheet.create({
 	container: {
 		flexDirection: "row",
 		paddingTop: 20,
-		paddingHorizontal: 20,
+		paddingHorizontal: 12,
 		alignItems: "center",
-		gap: 25,
+		gap: 14,
 	},
-	overlay: {
+	selectorWrapper: {
+		position: "relative",
+	},
+	field: {
+		backgroundColor: "#FFFFFF",
+		borderRadius: 8,
+		paddingHorizontal: 18,
+		borderWidth: 1,
+		borderColor: "#E1E8EE",
+		alignItems: "center",
+		justifyContent: "center",
+		height: 40,
+		minWidth: 130,
+	},
+	fieldLabel: {
+		fontSize: 14,
+		color: "#8B8B8B",
+		fontFamily: Fonts.regular,
+	},
+	countBadge: {
 		position: "absolute",
-		top: 0,
-		left: 0,
-		right: 0,
-		bottom: 0,
-		zIndex: 99,
+		top: -10,
+		right: -10,
+		minWidth: 22,
+		height: 22,
+		paddingHorizontal: 6,
+		borderRadius: 11,
+		backgroundColor: "#742BDE",
+		alignItems: "center",
+		justifyContent: "center",
+		borderWidth: 2,
+		borderColor: "#fff",
+	},
+	countText: {
+		color: "#fff",
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
 	},
 	iconView: {
-		// backgroundColor: 'orange',
-		position: 'absolute',
+		position: "absolute",
 		right: 20,
 		top: 25,
-		alignItems: 'center',
-		justifyContent: 'center'
+		alignItems: "center",
+		justifyContent: "center",
 	},
 	overlayCal: {
 		flex: 1,
@@ -237,6 +175,5 @@ const styles = StyleSheet.create({
 		backgroundColor: "#fff",
 		borderTopLeftRadius: 16,
 		borderTopRightRadius: 16,
-		// padding: 16,
 	},
 });

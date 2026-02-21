@@ -7,6 +7,7 @@ import { useCMMSStore } from "@/src/store/useCMMSStore";
 import { woPriority } from "@/src/services/cmms.service";
 import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 import moment from "moment";
+import { collectSelectedAssetIdsWithChildren, type SelectableTreeNode } from "@/src/utils/assetSelection";
 
 export default function WoPriority() {
 	const [hidden, setHidden] = useState<string[]>([]);
@@ -23,14 +24,14 @@ export default function WoPriority() {
 
 
 	const childAssets = useCMMSStore((state) => state.childAssets);
-	// console.log('child assets in wo status = ', childAssets);
+	const selectedAssets = useCMMSStore((state) => state.selectedAssets);
 
 	const startDate = useDateRangeStore((state)=>state.startDate);
 	const endDate = useDateRangeStore((state)=>state.endDate);
 	const rangeVersion = useDateRangeStore((state)=>state.rangeVersion);
 
 	useEffect(() => {
-		if (childAssets.length > 0) {
+		if (selectedAssets.length > 0 && childAssets.length > 0) {
 			fetchWoPriority();
 			return;
 		}
@@ -40,7 +41,7 @@ export default function WoPriority() {
 		setHidden([]);
 		setSelectedSlice(null);
 		setNoData(false);
-	}, [childAssets, startDate, endDate, rangeVersion])
+	}, [selectedAssets, childAssets, startDate, endDate, rangeVersion])
 
 	// 🎨 Color mapping for each health type
 	const colorMap: Record<string, string> = {
@@ -54,8 +55,20 @@ export default function WoPriority() {
 		const startTimePart = "T19:00:00.000Z";
 		const timePart = "T14:01:18.788Z";
 		try {
-			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
-			// console.log('payload = ', childAssetsFormatted);
+			const selectedAssetsWithChildren = collectSelectedAssetIdsWithChildren(
+				childAssets as SelectableTreeNode[],
+				selectedAssets
+			);
+			const selectedAssetsFormatted = selectedAssetsWithChildren.join(",")
+			if (!selectedAssetsFormatted) {
+				setRawPieData([]);
+				setChartDataFinal([]);
+				setHidden([]);
+				setSelectedSlice(null);
+				setNoData(false);
+				return;
+			}
+			// console.log('payload = ', selectedAssetsFormatted);
 
 
 			let finalPayload: any = {};
@@ -74,7 +87,7 @@ export default function WoPriority() {
 				finalPayload.endDate = moment().format("YYYY-MM-DD") + timePart;
 			}
 
-			finalPayload.assetIds = childAssetsFormatted
+			finalPayload.assetIds = selectedAssetsFormatted
 
 			// console.log('final payload = ', finalPayload);
 
@@ -82,7 +95,7 @@ export default function WoPriority() {
 			const res = await woPriority(
 				finalPayload.startDate,
 				finalPayload.endDate,
-				childAssetsFormatted
+				selectedAssetsFormatted
 			);
 			// console.log('res = ', res);
 			if (res?.status && Array.isArray(res?.data) && res?.data.length > 0) {

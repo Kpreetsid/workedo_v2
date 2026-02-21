@@ -9,6 +9,7 @@ import {
 	TouchableOpacity,
 	TextInput,
 	ToastAndroid,
+	type GestureResponderEvent,
 } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { WebView } from "react-native-webview";
@@ -70,6 +71,10 @@ export default function ChartDetailModal({
 
 	const accWebRef = useRef<WebView>(null);
 	const envWebRef = useRef<WebView>(null);
+	const timeAccWebAreaRef = useRef<View>(null);
+	const timeEnvWebAreaRef = useRef<View>(null);
+	const spectrumAccWebAreaRef = useRef<View>(null);
+	const spectrumEnvWebAreaRef = useRef<View>(null);
 
 	const envAnalyze = useRef<WebView>(null);
 
@@ -424,6 +429,52 @@ export default function ChartDetailModal({
 		}
 	};
 
+	const hideTooltipInCharts = () => {
+		accWebRef.current?.postMessage(JSON.stringify({ type: "HIDE_TOOLTIP" }));
+		envWebRef.current?.postMessage(JSON.stringify({ type: "HIDE_TOOLTIP" }));
+	};
+
+	const isTouchInsideView = async (
+		ref: React.RefObject<View | null>,
+		pageX: number,
+		pageY: number
+	) => {
+		return await new Promise<boolean>((resolve) => {
+			if (!ref.current) {
+				resolve(false);
+				return;
+			}
+
+			ref.current.measureInWindow((x, y, width, height) => {
+				const isInside =
+					pageX >= x &&
+					pageX <= x + width &&
+					pageY >= y &&
+					pageY <= y + height;
+
+				resolve(isInside);
+			});
+		});
+	};
+
+	const handleOutsideChartPress = async (event: GestureResponderEvent) => {
+		const { pageX, pageY } = event.nativeEvent;
+
+		const activeRefs =
+			activeTab === "time"
+				? [timeAccWebAreaRef, timeEnvWebAreaRef]
+				: [spectrumAccWebAreaRef, spectrumEnvWebAreaRef];
+
+		for (const ref of activeRefs) {
+			// Tap happened inside chart WebView area, do not hide tooltip.
+			if (await isTouchInsideView(ref, pageX, pageY)) {
+				return;
+			}
+		}
+
+		hideTooltipInCharts();
+	};
+
 	// ---------------------------
 	// RENDER
 	// ---------------------------
@@ -434,18 +485,7 @@ export default function ChartDetailModal({
 			animationType="slide"
 			onRequestClose={onClose}
 		>
-			<Pressable
-				style={styles.backdrop}
-				onPress={() => {
-					accWebRef.current?.postMessage(
-						JSON.stringify({ type: "HIDE_TOOLTIP" })
-					);
-
-					envWebRef.current?.postMessage(
-						JSON.stringify({ type: "HIDE_TOOLTIP" })
-					);
-				}}
-			>
+			<Pressable style={styles.backdrop} onPress={handleOutsideChartPress}>
 				<Header
 					title={activeTab === "time" ? "Time Waveform" : "Spectrum"}
 					modal={true}
@@ -458,7 +498,12 @@ export default function ChartDetailModal({
 						paddingVertical: orientation === "landscape" ? 4 : 15
 					}}
 				/>
-				<ScrollView style={styles.container}>
+					<ScrollView
+						style={styles.container}
+						contentContainerStyle={styles.containerContent}
+						showsVerticalScrollIndicator={false}
+						nestedScrollEnabled
+					>
 					{/* Tabs */}
 
 					<View style={[styles.tabRow, orientation === "landscape" && { padding: 2 }]}>
@@ -561,26 +606,28 @@ export default function ChartDetailModal({
 										Waveform
 									</Text>
 									<View style={styles.chartBox}
-										onStartShouldSetResponder={() => true}
 									>
-										<WebView
-											ref={accWebRef}
-											// source={require("../../../assets/charts/time-waveform.html")}
-											source={{ uri: timewaveformchart }}
-											javaScriptEnabled
-											domStorageEnabled
-											scalesPageToFit={false}
-											setBuiltInZoomControls={false}
-											setDisplayZoomControls={false}
-											textZoom={100}
-											injectedJavaScriptBeforeContentLoaded={injectedNoZoomJS}
-											mediaPlaybackRequiresUserAction={false}
-											allowsInlineMediaPlayback={true}
-											originWhitelist={["*"]}
-											allowUniversalAccessFromFileURLs
-											allowFileAccess
-											style={{ flex: 1 }}
-										/>
+										<View ref={timeAccWebAreaRef} style={{ flex: 1 }}>
+											<WebView
+												ref={accWebRef}
+												// source={require("../../../assets/charts/time-waveform.html")}
+												source={{ uri: timewaveformchart }}
+												javaScriptEnabled
+												domStorageEnabled
+												scalesPageToFit={false}
+												setBuiltInZoomControls={false}
+												setDisplayZoomControls={false}
+												textZoom={100}
+												scrollEnabled={false}
+												nestedScrollEnabled={true}
+												mediaPlaybackRequiresUserAction={false}
+												allowsInlineMediaPlayback={true}
+												originWhitelist={["*"]}
+												allowUniversalAccessFromFileURLs
+												allowFileAccess
+												style={{ flex: 1 }}
+											/>
+										</View>
 									</View>
 								</View>
 
@@ -596,27 +643,28 @@ export default function ChartDetailModal({
 										{" "}
 										Envelope
 									</Text>
-									<View style={styles.chartBox}
-										onStartShouldSetResponder={() => true}
-									>
-										<WebView
-											ref={envWebRef}
-											// source={require("../../../assets/charts/envelope-waveform.html")}
-											source={{ uri: envelopechart }}
-											javaScriptEnabled
-											domStorageEnabled
-											scalesPageToFit={false}
-											setBuiltInZoomControls={false}
-											setDisplayZoomControls={false}
-											textZoom={100}
-											injectedJavaScriptBeforeContentLoaded={injectedNoZoomJS}
-											mediaPlaybackRequiresUserAction={false}
-											allowsInlineMediaPlayback={true}
-											originWhitelist={["*"]}
-											allowUniversalAccessFromFileURLs
-											allowFileAccess
-											style={{ flex: 1 }}
-										/>
+									<View style={styles.chartBox}>
+										<View ref={timeEnvWebAreaRef} style={{ flex: 1 }}>
+											<WebView
+												ref={envWebRef}
+												// source={require("../../../assets/charts/envelope-waveform.html")}
+												source={{ uri: envelopechart }}
+												javaScriptEnabled
+												domStorageEnabled
+												scalesPageToFit={false}
+												setBuiltInZoomControls={false}
+												setDisplayZoomControls={false}
+												textZoom={100}
+												scrollEnabled={false}
+												nestedScrollEnabled={true}
+												mediaPlaybackRequiresUserAction={false}
+												allowsInlineMediaPlayback={true}
+												originWhitelist={["*"]}
+												allowUniversalAccessFromFileURLs
+												allowFileAccess
+												style={{ flex: 1 }}
+											/>
+										</View>
 									</View>
 								</View>
 							</View>
@@ -635,26 +683,28 @@ export default function ChartDetailModal({
 											Spectrum
 										</Text>
 										<View style={styles.chartBox}
-											onStartShouldSetResponder={() => true}
 										>
-											<WebView
-												ref={accWebRef}
-												// source={require("../../../assets/charts/spectrum-waveform.html")}
-												source={{ uri: spectrumwaveform }}
-												javaScriptEnabled
-												domStorageEnabled
-												scalesPageToFit={false}
-												setBuiltInZoomControls={false}
-												setDisplayZoomControls={false}
-												textZoom={100}
-												injectedJavaScriptBeforeContentLoaded={injectedNoZoomJS}
-												mediaPlaybackRequiresUserAction={false}
-												allowsInlineMediaPlayback={true}
-												originWhitelist={["*"]}
-												allowUniversalAccessFromFileURLs
-												allowFileAccess
-												style={{ flex: 1 }}
-											/>
+											<View ref={spectrumAccWebAreaRef} style={{ flex: 1 }}>
+												<WebView
+													ref={accWebRef}
+													// source={require("../../../assets/charts/spectrum-waveform.html")}
+													source={{ uri: spectrumwaveform }}
+													javaScriptEnabled
+													domStorageEnabled
+													scalesPageToFit={false}
+													setBuiltInZoomControls={false}
+													setDisplayZoomControls={false}
+													textZoom={100}
+													scrollEnabled={false}
+													nestedScrollEnabled={true}
+													mediaPlaybackRequiresUserAction={false}
+													allowsInlineMediaPlayback={true}
+													originWhitelist={["*"]}
+													allowUniversalAccessFromFileURLs
+													allowFileAccess
+													style={{ flex: 1 }}
+												/>
+											</View>
 										</View>
 									</View>
 
@@ -669,7 +719,6 @@ export default function ChartDetailModal({
 											Spectrum Envelope
 										</Text>
 										<View style={styles.chartBox}
-											onStartShouldSetResponder={() => true}
 										>
 											{/* analyze button */}
 											<View style={{ flexDirection: "row", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
@@ -701,24 +750,27 @@ export default function ChartDetailModal({
 												</TouchableOpacity>
 											</View>
 
-											<WebView
-												ref={envWebRef}
-												// source={require("../../../assets/charts/spectrum-envelope-waveform.html")}
-												source={{ uri: spectrumenvelopechart }}
-												javaScriptEnabled
-												domStorageEnabled
-												scalesPageToFit={false}
-												setBuiltInZoomControls={false}
-												setDisplayZoomControls={false}
-												textZoom={100}
-												injectedJavaScriptBeforeContentLoaded={injectedNoZoomJS}
-												mediaPlaybackRequiresUserAction={false}
-												allowsInlineMediaPlayback={true}
-												originWhitelist={["*"]}
-												allowUniversalAccessFromFileURLs
-												allowFileAccess
-												style={{ flex: 1 }}
-											/>
+											<View ref={spectrumEnvWebAreaRef} style={{ flex: 1 }}>
+												<WebView
+													ref={envWebRef}
+													// source={require("../../../assets/charts/spectrum-envelope-waveform.html")}
+													source={{ uri: spectrumenvelopechart }}
+													javaScriptEnabled
+													domStorageEnabled
+													scalesPageToFit={false}
+													setBuiltInZoomControls={false}
+													setDisplayZoomControls={false}
+													textZoom={100}
+													scrollEnabled={false}
+													nestedScrollEnabled={true}
+													mediaPlaybackRequiresUserAction={false}
+													allowsInlineMediaPlayback={true}
+													originWhitelist={["*"]}
+													allowUniversalAccessFromFileURLs
+													allowFileAccess
+													style={{ flex: 1 }}
+												/>
+											</View>
 
 										</View>
 									</View>
@@ -744,10 +796,14 @@ const styles = StyleSheet.create({
 		justifyContent: "flex-end",
 	},
 	container: {
-		height: "100%",
+		flex: 1,
 		backgroundColor: "#fff",
 		borderTopLeftRadius: 16,
 		borderTopRightRadius: 16,
+	},
+	containerContent: {
+		paddingBottom: 48,
+		flexGrow: 1,
 	},
 	tabRow: {
 		flexDirection: "row",
@@ -774,7 +830,6 @@ const styles = StyleSheet.create({
 		fontWeight: "700",
 	},
 	body: {
-		flex: 1,
 		marginTop: 10,
 		padding: 16,
 	},

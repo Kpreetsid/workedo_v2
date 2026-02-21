@@ -6,29 +6,39 @@ import { useEffect, useState } from "react";
 import { woSummary } from "@/src/services/cmms.service";
 import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 import moment from "moment";
+import { collectSelectedAssetIdsWithChildren, type SelectableTreeNode } from "@/src/utils/assetSelection";
 
 export default function CMMSInfoCards() {
 	const childAssets = useCMMSStore((state) => state.childAssets);
-	// console.log('child assets in wo status = ', childAssets);
+	const selectedAssets = useCMMSStore((state) => state.selectedAssets);
+	// console.log('selected assets in wo status = ', selectedAssets);
 
 	const [woInfoCards, setWOInfoCards] = useState<any>(null);
 	const { startDate, endDate, rangeVersion } = useDateRangeStore();
 
 	useEffect(() => {
-		// console.log('bceause of start date - ', startDate, childAssets);
-		if (childAssets.length > 0) {
+		// console.log('because of start date - ', startDate, selectedAssets);
+		if (selectedAssets.length > 0 && childAssets.length > 0) {
 			fetchInfoCards();
 			return;
 		}
 
 		setWOInfoCards(null);
-	}, [childAssets, startDate, endDate, rangeVersion])
+	}, [selectedAssets, childAssets, startDate, endDate, rangeVersion])
 
 	async function fetchInfoCards() {
 		const startTimePart = "T11:00:00.946Z";
 		const timePart = "T13:39:00.946Z";
 		try {
-			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
+			const selectedAssetsWithChildren = collectSelectedAssetIdsWithChildren(
+				childAssets as SelectableTreeNode[],
+				selectedAssets
+			);
+			const selectedAssetsFormatted = selectedAssetsWithChildren.join(",");
+			if (!selectedAssetsFormatted) {
+				setWOInfoCards(null);
+				return;
+			}
 
 			let finalPayload: any = {};
 			// prepare for payload
@@ -46,13 +56,13 @@ export default function CMMSInfoCards() {
 				finalPayload.endDate = moment().format("YYYY-MM-DD") + timePart;
 			}
 
-			finalPayload.assetIds = childAssetsFormatted
+			finalPayload.assetIds = selectedAssetsFormatted
 
-			// console.log('final payload = ', finalPayload);
+			console.log('final payload info cards = ', finalPayload);
 
 			const res = await woSummary(finalPayload);
 			if (res?.status && res?.data) {
-				// console.log('res WO info cards = ', res?.data);
+				console.log('res WO info cards = ', res?.data);
 				setWOInfoCards(res?.data)
 				return;
 			}

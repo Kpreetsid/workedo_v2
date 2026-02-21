@@ -8,10 +8,11 @@ import { WorkOrder } from "@/src/types/workOrder";
 import moment from "moment";
 import { useRouter } from "expo-router";
 import { useDateRangeStore } from "@/src/store/useDateRangeStore";
+import { collectSelectedAssetIdsWithChildren, type SelectableTreeNode } from "@/src/utils/assetSelection";
 
 export default function PendingWorkOrders() {
 	const childAssets = useCMMSStore((state) => state.childAssets);
-	// console.log('child assets in wo status = ', childAssets);
+	const selectedAssets = useCMMSStore((state) => state.selectedAssets);
 
 	const [pendingWO, setPendingWO] = useState<any[]>([]);
 	const startDate = useDateRangeStore((state)=>state.startDate);
@@ -19,18 +20,26 @@ export default function PendingWorkOrders() {
 	const rangeVersion = useDateRangeStore((state)=>state.rangeVersion);
 
 	useEffect(() => {
-		if (childAssets.length > 0) {
+		if (selectedAssets.length > 0 && childAssets.length > 0) {
 			fetchPendingWO();
 			return;
 		}
 		setPendingWO([]);
-	}, [childAssets, startDate, endDate, rangeVersion])
+	}, [selectedAssets, childAssets, startDate, endDate, rangeVersion])
 
 	async function fetchPendingWO() {
 		const startTimePart = "T19:00:00.000Z";
 		const timePart = "T14:01:18.788Z";
 		try {
-			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
+			const selectedAssetsWithChildren = collectSelectedAssetIdsWithChildren(
+				childAssets as SelectableTreeNode[],
+				selectedAssets
+			);
+			const selectedAssetsFormatted = selectedAssetsWithChildren.join(",")
+			if (!selectedAssetsFormatted) {
+				setPendingWO([]);
+				return;
+			}
 
 
 			let finalPayload: any = {};
@@ -49,14 +58,14 @@ export default function PendingWorkOrders() {
 				finalPayload.endDate = moment().format("YYYY-MM-DD") + timePart;
 			}
 
-			finalPayload.assetIds = childAssetsFormatted
+			finalPayload.assetIds = selectedAssetsFormatted
 
 			// console.log('final payload pending work orders = ', finalPayload);
 
 			const res = await woPending(
 				finalPayload.startDate,
 				finalPayload.endDate,
-				childAssetsFormatted
+				selectedAssetsFormatted
 			);
 			if (res?.status && Array.isArray(res?.data)) {
 				// console.log('res = ', res?.data);

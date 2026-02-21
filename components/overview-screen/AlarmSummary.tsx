@@ -4,6 +4,7 @@ import { useOverviewStore } from "@/src/store/useOverviewStore";
 import { alarmsSummary } from "@/src/services/alarms.service";
 import WebView from "react-native-webview";
 import Fonts from "@/constants/Typography";
+import { collectSelectedAssetIdsWithChildren, type SelectableTreeNode } from "@/src/utils/assetSelection";
 
 type ChartDataType = {
 	timestamps: string[];
@@ -18,12 +19,47 @@ type ChartScaleType = {
 	noOfSections: number;
 };
 
-type AssetNode = {
-	id?: string;
-	childs?: AssetNode[];
-};
-
 const chartUrl = "file:///android_asset/charts/asset-health.html";
+const outsideChartTapScript = `
+	(function () {
+		function bindOutsideTapClear() {
+			const canvas = document.getElementById("alarmChart");
+			if (!canvas || typeof chart === "undefined" || !chart) {
+				return false;
+			}
+
+			canvas.onclick = function (evt) {
+				const points = chart.getElementsAtEventForMode(
+					evt,
+					"nearest",
+					{ intersect: true },
+					false
+				);
+
+				if (!points || points.length === 0) {
+					chart.setActiveElements([]);
+					if (chart.tooltip) {
+						chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+					}
+					chart.update();
+				}
+			};
+
+			return true;
+		}
+
+		if (!bindOutsideTapClear()) {
+			let attempts = 0;
+			const timer = setInterval(function () {
+				attempts += 1;
+				if (bindOutsideTapClear() || attempts > 20) {
+					clearInterval(timer);
+				}
+			}, 80);
+		}
+	})();
+	true;
+`;
 
 export default function AlarmSummary() {
 	const webRef = useRef<WebView>(null);
@@ -68,42 +104,9 @@ export default function AlarmSummary() {
 		try {
 			setLoading(true);
 
-			const collectSelectedAssetIdsWithChildren = (assets: AssetNode[], selectedIds: string[]) => {
-				const selectedSet = new Set(selectedIds);
-				const ids = new Set<string>();
-
-				const addSubtree = (nodes: AssetNode[]) => {
-					nodes.forEach((node) => {
-						if (node?.id) {
-							ids.add(node.id);
-						}
-
-						if (Array.isArray(node?.childs) && node.childs.length > 0) {
-							addSubtree(node.childs);
-						}
-					});
-				};
-
-				const traverse = (nodes: AssetNode[]) => {
-					nodes.forEach((node) => {
-						if (node?.id && selectedSet.has(node.id)) {
-							addSubtree([node]);
-							return;
-						}
-
-						if (Array.isArray(node?.childs) && node.childs.length > 0) {
-							traverse(node.childs);
-						}
-					});
-				};
-
-				traverse(assets);
-				return Array.from(ids);
-			};
-
 			const payload = {
 				asset_list: collectSelectedAssetIdsWithChildren(
-					childAssets as AssetNode[],
+					childAssets as SelectableTreeNode[],
 					selectedAssets
 				),
 			};
@@ -187,12 +190,17 @@ export default function AlarmSummary() {
 		showDanger,
 	});
 
+	const applyOutsideTapBehavior = () => {
+		webRef.current?.injectJavaScript(outsideChartTapScript);
+	};
+
 	useEffect(() => {
 		if (!webRef.current) return;
 		if (!chartData.timestamps.length) return;
 
 
 		webRef.current.postMessage(JSON.stringify(buildWebPayload()));
+		applyOutsideTapBehavior();
 	}, [chartData, chartScale, showCritical, showAlert, showDanger]);
 
 	useEffect(() => {
@@ -224,6 +232,7 @@ export default function AlarmSummary() {
 						domStorageEnabled
 						onLoadEnd={() => {
 							webRef.current?.postMessage(JSON.stringify(buildWebPayload()));
+							applyOutsideTapBehavior();
 						}}
 					/>
 				</View>

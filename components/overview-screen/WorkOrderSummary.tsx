@@ -7,6 +7,7 @@ import { useCMMSStore } from "@/src/store/useCMMSStore";
 import { monthlyCount } from "@/src/services/cmms.service";
 import moment from "moment";
 import { useDateRangeStore } from "@/src/store/useDateRangeStore";
+import { collectSelectedAssetIdsWithChildren, type SelectableTreeNode } from "@/src/utils/assetSelection";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -14,7 +15,7 @@ export default function WorkOrderSummary() {
 	const [selectedBar, setSelectedBar] = useState<number | null>(null);
 
 	const childAssets = useCMMSStore((state) => state.childAssets);
-	// console.log('child assets in wo status = ', childAssets);
+	const selectedAssets = useCMMSStore((state) => state.selectedAssets);
 
 	const [woSummaryData, setWOSummaryData] = useState<any>(null);
 	const startDate = useDateRangeStore((state)=>state.startDate);
@@ -22,14 +23,14 @@ export default function WorkOrderSummary() {
 	const rangeVersion = useDateRangeStore((state)=>state.rangeVersion);
 
 	useEffect(() => {
-		if (childAssets.length > 0) {
+		if (selectedAssets.length > 0 && childAssets.length > 0) {
 			fetchSummary();
 			return;
 		}
 
 		setWOSummaryData(null);
 		setSelectedBar(null);
-	}, [childAssets, startDate, endDate, rangeVersion])
+	}, [selectedAssets, childAssets, startDate, endDate, rangeVersion])
 
 	const transformToBarData = (input: any) => {
 		return input.map((item: any) => ({
@@ -42,8 +43,17 @@ export default function WorkOrderSummary() {
 		const startTimePart = "T19:00:00.000Z";
 		const timePart = "T14:01:18.788Z";
 		try {
-			const childAssetsFormatted = (childAssets.map((item) => item.id)).join(",")
-			// console.log('payload = ', childAssetsFormatted);
+			const selectedAssetsWithChildren = collectSelectedAssetIdsWithChildren(
+				childAssets as SelectableTreeNode[],
+				selectedAssets
+			);
+			const selectedAssetsFormatted = selectedAssetsWithChildren.join(",")
+			if (!selectedAssetsFormatted) {
+				setWOSummaryData(null);
+				setSelectedBar(null);
+				return;
+			}
+			// console.log('payload = ', selectedAssetsFormatted);
 
 
 			let finalPayload: any = {};
@@ -62,7 +72,7 @@ export default function WorkOrderSummary() {
 				finalPayload.endDate = moment().format("YYYY-MM-DD") + timePart;
 			}
 
-			finalPayload.assetIds = childAssetsFormatted
+			finalPayload.assetIds = selectedAssetsFormatted
 
 			// console.log('final payload = ', finalPayload);
 
@@ -70,7 +80,7 @@ export default function WorkOrderSummary() {
 			const res = await monthlyCount(
 				finalPayload.startDate,
 				finalPayload.endDate,
-				childAssetsFormatted
+				selectedAssetsFormatted
 			);
 			if (res?.status && Array.isArray(res?.data) && res?.data.length > 0) {
 				console.log('res WO SUMMARY = ', res?.data);
