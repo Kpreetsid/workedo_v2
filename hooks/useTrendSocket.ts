@@ -7,7 +7,8 @@ interface TrendSocketParams {
 	onStatus?: (status: string) => void;
 }
 
-const WS_URL = "wss://staging.presageinsights.ai/ws/trend_data/";
+// const WS_URL = "wss://staging.presageinsights.ai/ws/trend_data/"; // development
+const WS_URL = "wss://processor.presageinsights.ai/ws/trend_data/"; // production
 
 export function useTrendSocket({
 	payload,

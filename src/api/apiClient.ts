@@ -3,8 +3,8 @@ import { storage } from '../storage/mmkv';
 import { useAuthStore } from '../store/useAuthStore';
 
 const apiClient = axios.create({
-  baseURL: 'https://new.presageinsights.ai/cmms_express/api/',
-  // baseURL: 'https://app.presageinsights.ai/cmms_express/api/',
+  // baseURL: 'https://new.presageinsights.ai/cmms_express/api/', // development
+  baseURL: 'https://app.presageinsights.ai/cmms_express/api/', // production
   timeout: 15000,
 });
 

@@ -3,9 +3,8 @@ import { storage } from '../storage/mmkv';
 import { useAuthStore } from '../store/useAuthStore';
 
 const apiClientDemo = axios.create({
-    // baseURL: 'https://testprocessor.presageinsights.ai/api/',
-    baseURL: 'https://staging.presageinsights.ai/api/',
-    // baseURL: 'https://processor.presageinsights.ai/api/',
+    // baseURL: 'https://staging.presageinsights.ai/api/', // development
+    baseURL: 'https://processor.presageinsights.ai/api/', // production
     timeout: 15000,
 });
 
