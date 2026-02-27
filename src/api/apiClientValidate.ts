@@ -3,13 +3,15 @@ import { storage } from '../storage/mmkv';
 import { useAuthStore } from '../store/useAuthStore';
 
 
-const apiClientDemo = axios.create({
+const apiClientValidate = axios.create({
     baseURL: 'https://validate.presageinsights.ai/general/api/',
     timeout: 15000,
 });
 
+const getRequestUrl = (baseURL?: string, url?: string) => `${baseURL || ''}${url || ''}`;
+
 // 🔹 Instantly read token (synchronous)
-apiClientDemo.interceptors.request.use((config) => {
+apiClientValidate.interceptors.request.use((config) => {
     const token = storage.getString('token');
     const { user } = useAuthStore.getState();
 
@@ -22,16 +24,35 @@ apiClientDemo.interceptors.request.use((config) => {
         config.headers['X-Env'] = true;
     }
 
+    const method = config.method?.toUpperCase() || 'GET';
+    const requestUrl = getRequestUrl(config.baseURL, config.url);
+
+    console.log(`[apiClientValidate][Request] ${method} ${requestUrl}`, {
+        payload: config.data,
+        params: config.params,
+    });
+
     return config;
 });
 
 // 🔹 Handle errors globally
-apiClientDemo.interceptors.response.use(
-    (response) => response,
+apiClientValidate.interceptors.response.use(
+    (response) => {
+        const method = response.config?.method?.toUpperCase() || 'GET';
+        const requestUrl = getRequestUrl(response.config?.baseURL, response.config?.url);
+
+        console.log(`[apiClientValidate][Response] ${method} ${requestUrl}`, response.data);
+
+        return response;
+    },
     (error) => {
-        // console.error('API Error:', error?.response || error);
+        const method = error?.config?.method?.toUpperCase() || 'UNKNOWN';
+        const requestUrl = getRequestUrl(error?.config?.baseURL, error?.config?.url);
+        const errorPayload = error?.response?.data || error?.response || error;
+
+        console.error(`[apiClientValidate][Error] ${method} ${requestUrl}`, errorPayload);
         throw error?.response?.data || error;
     }
 );
 
-export default apiClientDemo;
+export default apiClientValidate;

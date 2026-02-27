@@ -8,6 +8,8 @@ const apiClientDemo = axios.create({
     timeout: 15000,
 });
 
+const getRequestUrl = (baseURL?: string, url?: string) => `${baseURL || ''}${url || ''}`;
+
 // 🔹 Instantly read token (synchronous)
 apiClientDemo.interceptors.request.use((config) => {
     const token = storage.getString('token');
@@ -22,14 +24,33 @@ apiClientDemo.interceptors.request.use((config) => {
         config.headers['X-Env'] = true;
     }
 
+    const method = config.method?.toUpperCase() || 'GET';
+    const requestUrl = getRequestUrl(config.baseURL, config.url);
+
+    console.log(`[apiClientDemo][Request] ${method} ${requestUrl}`, {
+        payload: config.data,
+        params: config.params,
+    });
+
     return config;
 });
 
 // 🔹 Handle errors globally
 apiClientDemo.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        const method = response.config?.method?.toUpperCase() || 'GET';
+        const requestUrl = getRequestUrl(response.config?.baseURL, response.config?.url);
+
+        console.log(`[apiClientDemo][Response] ${method} ${requestUrl}`, response.data);
+
+        return response;
+    },
     (error) => {
-        // console.error('API Error:', error?.response || error);
+        const method = error?.config?.method?.toUpperCase() || 'UNKNOWN';
+        const requestUrl = getRequestUrl(error?.config?.baseURL, error?.config?.url);
+        const errorPayload = error?.response?.data || error?.response || error;
+
+        console.error(`[apiClientDemo][Error] ${method} ${requestUrl}`, errorPayload);
         throw error?.response?.data || error;
     }
 );

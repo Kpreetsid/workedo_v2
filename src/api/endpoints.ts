@@ -1,8 +1,8 @@
 
 // src/api/endpoints.ts
 export const endpoints = {
-  baseURL: 'https://new.presageinsights.ai/cmms_express/',
-  // baseURL: 'https://app.presageinsights.ai/cmms_express/',
+  baseURL: 'https://app.presageinsights.ai/cmms_express/', // production
+  // baseURL: 'https://new.presageinsights.ai/cmms_express/', // development
   auth: {
     login: 'users/login',
     details: 'users/',
