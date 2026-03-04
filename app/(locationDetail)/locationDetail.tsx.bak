@@ -22,22 +22,9 @@ const blurhash =
 
 export default function LocationDetail() {
 	const router = useRouter();
-	const params = useLocalSearchParams<{ id?: string; data?: string }>();
-
-	const locationId = (() => {
-		if (params?.id) return params.id;
-		// fallback for older navigation that sent the complete object
-		if (typeof params?.data === "string") {
-			try {
-				const parsed = JSON.parse(params.data);
-				return parsed?.id;
-			} catch (e) {
-				console.log("invalid location params data =", e);
-			}
-		}
-		return undefined;
-	})();
-	console.log("locationId =", locationId);
+	const params: any = useLocalSearchParams();
+	const location = JSON.parse(params?.data);
+	console.log('location = ', location);
 	const { user } = useAuthStore();
 	const [visible, setVisible] = useState(false);
 	const [assets, setAssets] = useState<LocationAsset[] | null>(null);
@@ -46,16 +33,14 @@ export default function LocationDetail() {
 
 	useFocusEffect(
 		useCallback(() => {
-			if (!locationId) return;
 			fetchSingleLocation();
 			fetchTopLevelAssets()
-		}, [locationId])
+		}, [])
 	);
 
 	const fetchSingleLocation = async () => {
-		if (!locationId) return;
 		try {
-			const res = await singleLocationData(locationId);
+			const res = await singleLocationData(location?.id);
 			console.log('single location', res);
 			if (res?.status) {
 				setLocationData(res?.data[0]);
@@ -66,11 +51,10 @@ export default function LocationDetail() {
 	}
 
 	const fetchTopLevelAssets = async () => {
-		if (!locationId) return;
-		console.log('top level = ', locationId);
+		console.log('top level = ', location.id);
 		setLoading(true)
 		try {
-			const res = await topLevelAssets(locationId);
+			const res = await topLevelAssets(location.id);
 			// console.log("res top level assets = ", res);
 			if (res.status) {
 				let assets: LocationAsset[] = res?.data;

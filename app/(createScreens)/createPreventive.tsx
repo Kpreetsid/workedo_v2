@@ -54,6 +54,7 @@ export default function CreatePreventive() {
 	const [showCalendar, setShowCalendar] = useState(false);
 
 	const comingFrom = params?.comingFrom;
+	const isEditMode = Boolean(params?.data);
 
 	const router = useRouter();
 	const [visible, setVisible] = useState(false);
@@ -415,7 +416,7 @@ export default function CreatePreventive() {
 
 	return (
 		<>
-			<Header title="Create Preventive" />
+			<Header title={isEditMode ? "Edit Preventive" : "Create Preventive"} />
 			<KeyboardAwareScrollView bottomOffset={30} style={{ backgroundColor: '#F5F7FA' }}>
 				<View style={{ marginVertical: 10 }} />
 

@@ -40,7 +40,7 @@ apiClient.interceptors.response.use(
     const method = response.config?.method?.toUpperCase() || 'GET';
     const requestUrl = getRequestUrl(response.config?.baseURL, response.config?.url);
 
-    console.log(`[apiClient][Response] ${method} ${requestUrl}`, response.data);
+    // console.log(`[apiClient][Response] ${method} ${requestUrl}`, response.data);
 
     return response;
   },
@@ -49,7 +49,7 @@ apiClient.interceptors.response.use(
     const requestUrl = getRequestUrl(error?.config?.baseURL, error?.config?.url);
     const errorPayload = error?.response?.data || error?.response || error;
 
-    console.error(`[apiClient][Error] ${method} ${requestUrl}`, errorPayload);
+    // console.error(`[apiClient][Error] ${method} ${requestUrl}`, errorPayload);
     throw error?.response?.data || error;
   }
 );

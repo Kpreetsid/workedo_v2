@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
 	Modal,
 	View,
@@ -11,8 +11,6 @@ import {
 	ActivityIndicator
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "expo-router";
-import { locationTree } from "@/src/services/location.service";
 import Fonts from "@/constants/Typography";
 import { Asset } from "@/src/types/asset";
 import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
@@ -40,13 +38,32 @@ export default function AssetPickerModal
 	const { setWorkRequestForm } = useWorkRequestStore();
 	const { setPreventiveValue } = usePreventiveStore();
 	const [loading, setLoading] = useState<boolean>(false);
+	const workOrderLocation = useWorkOrderStore((state) => state.location);
+	const workRequestLocation = useWorkRequestStore((state) => state.location);
+	const preventiveLocation = usePreventiveStore((state) => state.location);
+	const workOrderSelectedAsset = useWorkOrderStore((state) => state.selected_asset);
+	const workRequestSelectedAsset = useWorkRequestStore((state) => state.selected_asset);
+	const preventiveSelectedAsset = usePreventiveStore((state) => state.selected_asset);
 
 	const [expanded, setExpanded] = useState<any>({});
 	const [selectedId, setSelectedId] = useState<string | null>(null);   // ⭐ only 1 selected at a time
 	const [assets, setAssets] = useState<Asset[]>([]);
 
-	const locationsList = comingFrom === "newWorkOrder" ?
-		useWorkOrderStore((state) => state.location) : (comingFrom === 'newWorkRequest' ? useWorkRequestStore((state) => state.location) : (comingFrom === 'createPreventive' ? usePreventiveStore((state) => state.location) : null));
+	const locationsList =
+		comingFrom === "newWorkOrder"
+			? workOrderLocation
+			: (comingFrom === "newWorkRequest"
+				? workRequestLocation
+				: (comingFrom === "createPreventive" ? preventiveLocation : null));
+
+	const selectedAssetFromStore = useMemo(() => {
+		if (comingFrom === "newWorkOrder") return workOrderSelectedAsset;
+		if (comingFrom === "newWorkRequest") return workRequestSelectedAsset;
+		if (comingFrom === "createPreventive") return preventiveSelectedAsset;
+		return null;
+	}, [comingFrom, workOrderSelectedAsset, workRequestSelectedAsset, preventiveSelectedAsset]);
+
+	const selectedAssetId = selectedAssetFromStore?.id || selectedAssetFromStore?._id || null;
 
 
 	useEffect(() => {
@@ -60,11 +77,17 @@ export default function AssetPickerModal
 		}
 	}, [visible]);
 
+	useEffect(() => {
+		if (!visible) return;
+		setSelectedId(selectedAssetId);
+	}, [visible, selectedAssetId]);
+
 	const fetchAssets = async () => {
 		setLoading(true)
 		try {
 			console.log('locationsList = ', locationsList);
 			if (!locationsList) {
+				setLoading(false);
 				return;
 			}
 			const payload = {
@@ -97,8 +120,29 @@ export default function AssetPickerModal
 		setExpanded((prev: any) => ({ ...prev, [id]: !prev[id] }));
 	};
 
+	const clearSelectedAsset = () => {
+		if (comingFrom === "newWorkOrder") {
+			setWorkForm("selected_asset", null);
+			setWorkForm("assigned_users", []);
+		} else if (comingFrom === "newWorkRequest") {
+			setWorkRequestForm("selected_asset", null);
+		} else if (comingFrom === "createPreventive") {
+			setPreventiveValue("selected_asset", null);
+			setPreventiveValue("assigned_users", []);
+		}
+	};
+
 	const handleSelect = (node: any) => {
-		setSelectedId(node.id);   // ⭐ overwrite previous selection
+		const nodeId = node?.id || node?._id;
+		if (!nodeId) return;
+
+		if (selectedId === nodeId) {
+			setSelectedId(null);
+			clearSelectedAsset();
+			return;
+		}
+
+		setSelectedId(nodeId);
 		onSelect?.(node);         // return selected node to parent
 	};
 
@@ -116,7 +160,7 @@ export default function AssetPickerModal
 	}
 
 	const renderNode = (node: Asset | any, depth = 0) => {
-		const isSelected = selectedId === node?.id;  // ⭐ highlight selected
+		const isSelected = selectedId === (node?.id || node?._id);
 
 		return (
 			<View key={node?.id} style={{ marginLeft: depth * 18, marginVertical: 6 }}>

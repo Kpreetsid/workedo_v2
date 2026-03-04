@@ -21,7 +21,9 @@ apiClientDemo.interceptors.request.use((config) => {
 
     if (user?.id) {
         config.headers['X-User-ID'] = user.id;
-        config.headers['X-Env'] = true;
+        if(!config.baseURL?.includes('processor')) {
+            config.headers['X-Env'] = true;
+        }
     }
 
     const method = config.method?.toUpperCase() || 'GET';
@@ -41,7 +43,7 @@ apiClientDemo.interceptors.response.use(
         const method = response.config?.method?.toUpperCase() || 'GET';
         const requestUrl = getRequestUrl(response.config?.baseURL, response.config?.url);
 
-        console.log(`[apiClientDemo][Response] ${method} ${requestUrl}`, response.data);
+        // console.log(`[apiClientDemo][Response] ${method} ${requestUrl}`, response.data);
 
         return response;
     },

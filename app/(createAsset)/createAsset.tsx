@@ -178,6 +178,8 @@ const createAsset = () => {
 
 		setLoading(true)
 		let payload: any = {
+			// new parameter alarmType added.
+			alarmType: ["alert", "danger", "critical"],
 			top_level: data?.mode === 'child' ? false : true,
 			top_level_asset_id: data?.mode === 'child' ? data?.asset_data?.id : "",
 			asset_name: values.title,

@@ -26,13 +26,14 @@ import { WorkRequest } from "@/src/types/workRequest";
 
 export default function NewWorkRequest() {
 	const router = useRouter();
-	const params = useLocalSearchParams();
+	const params = useLocalSearchParams<{ passedData?: string; isEdit?: string }>();
 	// 🔒 SAFE PARSE
 	const [data, setData] = useState<{ passedData: WorkRequest | null; isEdit: string | undefined }>({ passedData: null, isEdit: undefined });
 	const [initialized, setInitialized] = useState(false);
 	const { setWorkRequestForm, resetWorkRequestForm } = useWorkRequestStore();
 	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 	const [activeDateField, setActiveDateField] = useState<"start_date" | "end_date" | null>(null);
+	const isEditMode = params?.isEdit === "true" && Boolean(params?.passedData);
 
 	const [requestId, setRequestId] = useState<string>("");
 
@@ -46,10 +47,13 @@ export default function NewWorkRequest() {
 	useEffect(() => {
 		if (initialized) return;
 
-		const { passedData, isEdit } = params as { passedData?: string; isEdit?: string };
+		const { passedData, isEdit } = params;
 
 		if (!passedData) {
-			console.warn("❌ passedData: passedData param missing");
+			// Missing payload is normal in create mode; warn only for broken edit navigation.
+			if (isEdit === "true") {
+				console.warn("❌ passedData: passedData param missing");
+			}
 			setData({ passedData: null, isEdit: undefined });
 			return;
 		}
@@ -63,10 +67,10 @@ export default function NewWorkRequest() {
 			});
 			console.log("Parsed Data:", { passedData: parsed, isEdit });
 		} catch (e) {
-			console.error("❌ editAsset: failed to parse asset_data", e);
+			console.error("❌ newWorkRequest: failed to parse passedData", e);
 			setData({ passedData: null, isEdit: undefined });
 		}
-	}, [params]);
+	}, [params?.passedData, params?.isEdit, initialized]);
 
 	useEffect(() => {
 		if (!data) return; // ← only return if data isn't ready
@@ -128,7 +132,7 @@ export default function NewWorkRequest() {
 		console.log("📦 Final Work Request Payload:", payload);
 
 		try {
-			if (params) {
+			if (isEditMode) {
 				console.log('data.id = ', requestId)
 				const res = await editWorkRequest(requestId, payload);
 				console.log("✅ Response:", res);
@@ -148,14 +152,14 @@ export default function NewWorkRequest() {
 			}
 
 		} catch (error) {
-			console.error("❌ Error creating work order:", error);
-			ToastAndroid.show("Failed to create work order!", ToastAndroid.SHORT);
+			console.error("❌ Error creating work request:", error);
+			ToastAndroid.show("Failed to create work request!", ToastAndroid.SHORT);
 		}
 	};
 
 	return (
 		<View style={{ backgroundColor: "#F5F7FA", flex: 1 }}>
-			<Header title={params ? "Edit Work Request" : "New Work Request"} />
+			<Header title={isEditMode ? "Edit Work Request" : "New Work Request"} />
 
 			<KeyboardAwareScrollView bottomOffset={30} style={{ backgroundColor: "#F5F7FA" }}>
 				<ScrollView style={styles.container}>
@@ -268,7 +272,7 @@ export default function NewWorkRequest() {
 
 					<ActionButton
 						onPress={handleSubmit}
-						label={params ? "Update Work Request" : "Create Work Request"}
+						label={isEditMode ? "Update Work Request" : "Create Work Request"}
 						buttonStyle={styles.submitBtn}
 					/>
 				</ScrollView>

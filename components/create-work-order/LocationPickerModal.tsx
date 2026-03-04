@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
 	Modal,
 	View,
@@ -30,7 +30,7 @@ export default function LocationPickerModal({
 	comingFrom?: string;
 	visible: boolean;
 	onClose: () => void;
-	onSelectLocation?: (item: Location) => void;
+	onSelectLocation?: (item: Location | null) => void;
 }) {
 	const [expanded, setExpanded] = useState<any>({});
 	const [selectedId, setSelectedId] = useState<string | null>(null);   // ⭐ only 1 selected at a time
@@ -42,9 +42,44 @@ export default function LocationPickerModal({
 	const { setWorkRequestForm } = useWorkRequestStore();
 	const { setPreventiveValue } = usePreventiveStore();
 	const { setPartFormValue } = usePartFormStore();
+	const workOrderLocation = useWorkOrderStore((state) => state.location);
+	const workRequestLocation = useWorkRequestStore((state) => state.location);
+	const preventiveLocation = usePreventiveStore((state) => state.location);
 
-	const { setParentLocation, setAssignedUsers, setLocationObject, setLocation } = useCreateAssetStore();
-	const { setSelectedLocation } = usePDMStore();
+	const {
+		parent_location,
+		locationObject,
+		setParentLocation,
+		setAssignedUsers,
+		setLocationObject,
+		setLocation,
+		setCreateAssetValue
+	} = useCreateAssetStore();
+	const { selectedLocation, setSelectedLocation } = usePDMStore();
+
+	const selectedLocationFromStore = useMemo(() => {
+		if (comingFrom === "newWorkOrder") return workOrderLocation;
+		if (comingFrom === "newWorkRequest") return workRequestLocation;
+		if (comingFrom === "createPreventive") return preventiveLocation;
+		if (comingFrom === "createAsset") return locationObject || parent_location;
+		if (comingFrom === "PDMDashboard") return selectedLocation?.[0] ?? null;
+		return null;
+	}, [
+		comingFrom,
+		workOrderLocation,
+		workRequestLocation,
+		preventiveLocation,
+		locationObject,
+		parent_location,
+		selectedLocation,
+	]);
+
+	const selectedLocationId = selectedLocationFromStore?.id || selectedLocationFromStore?._id || null;
+
+	useEffect(() => {
+		if (!visible) return;
+		setSelectedId(selectedLocationId);
+	}, [visible, selectedLocationId]);
 
 	useFocusEffect(
 		useCallback(() => {
@@ -72,8 +107,45 @@ export default function LocationPickerModal({
 		setExpanded((prev: any) => ({ ...prev, [id]: !prev[id] }));
 	};
 
+	const clearSelectedLocation = () => {
+		if (comingFrom === "newWorkOrder") {
+			setWorkForm("location", null);
+			setWorkForm("selected_asset", null);
+			setWorkForm("assigned_users", []);
+		} else if (comingFrom === "newWorkRequest") {
+			setWorkRequestForm("location", null);
+			setWorkRequestForm("selected_asset", null);
+		} else if (comingFrom === "createPart") {
+			setPartFormValue("location", null);
+		} else if (comingFrom === "createPreventive") {
+			setPreventiveValue("location", null);
+			setPreventiveValue("selected_asset", null);
+			setPreventiveValue("assigned_users", []);
+		} else if (comingFrom === "createAsset") {
+			setCreateAssetValue("parent_location", undefined);
+			setAssignedUsers([]);
+			setLocation(null);
+			setLocationObject(null);
+		} else if (comingFrom === "PDMDashboard") {
+			setSelectedLocation(null);
+		}
+	};
+
 	const handleSelect = (node: any) => {
-		setSelectedId(node.id);   // ⭐ overwrite previous selection
+		const nodeId = node?.id || node?._id;
+		if (!nodeId) return;
+
+		if (selectedId === nodeId) {
+			setSelectedId(null);
+			if (onSelectLocation) {
+				onSelectLocation(null);
+				return;
+			}
+			clearSelectedLocation();
+			return;
+		}
+
+		setSelectedId(nodeId);
 		if (onSelectLocation) {
 			onSelectLocation(node);
 			return;
@@ -108,7 +180,7 @@ export default function LocationPickerModal({
 	}
 
 	const renderNode = (node: any, depth = 0) => {
-		const isSelected = selectedId === node.id;  // ⭐ highlight selected
+		const isSelected = selectedId === (node?.id || node?._id);
 
 		return (
 			<View key={node.id} style={{ marginLeft: depth * 18, marginVertical: 6 }}>

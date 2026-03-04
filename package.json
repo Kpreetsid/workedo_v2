@@ -4,13 +4,13 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "md": " sudo expo run:android",
-    "release": "cd android && ./gradlew assembleRelease && cd ..",
-    "bundle": "cd android && ./gradlew bundleRelease && cd ..",
-    "md:release": "cd android && ./gradlew assembleRelease --no-daemon -g ../.gradle-local",
-    "android:clean": "cd android && ./gradlew clean --no-daemon -g ../.gradle-local",
+    "md": "JAVA_HOME=$(/usr/libexec/java_home -v 21) expo run:android",
+    "release": "cd android && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew assembleRelease --no-daemon && cd ..",
+    "bundle": "cd android && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew bundleRelease --no-daemon && cd ..",
+    "md:release": "cd android && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew assembleRelease --no-daemon -g ../.gradle-local",
+    "android:clean": "cd android && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew clean --no-daemon -g ../.gradle-local",
     "web": "expo start --web",
-    "android": "expo run:android"
+    "android": "JAVA_HOME=$(/usr/libexec/java_home -v 21) expo run:android"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",

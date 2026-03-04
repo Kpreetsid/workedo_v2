@@ -87,8 +87,10 @@ const LocationCard = ({ item, isChild = false, level = 0, selection, comingFrom,
 					} else {
 						router.push({
 							pathname: "/locationDetail",
-							// params: { data: item.id },
-							params: { data: JSON.stringify(item) },
+							params: {
+								id: item.id,
+								// data: JSON.stringify(item), // old approach (full object in params)
+							},
 						});
 					}
 				}}

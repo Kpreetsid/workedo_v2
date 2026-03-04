@@ -1,15 +1,13 @@
 import Header from "@/components/global/Header";
 import SearchBar from "@/components/global/SearchBar";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, View, Text, Pressable, FlatList, TouchableOpacity, Alert, ToastAndroid } from "react-native";
 import { Entypo, FontAwesome, Ionicons } from "@expo/vector-icons";
 import Fonts from "@/constants/Typography";
 import { router, useFocusEffect } from "expo-router";
 import { deletePart, getParts } from "@/src/services/part.service";
-import FAB from "@/components/overview-screen/FAB";
 import CreateFAB from "@/components/global/CreateFAB";
 import Popover from "react-native-popover-view";
-import { FABIcon } from "@/constants/IconProvider";
 import { Part } from "@/src/types/part";
 import { Location } from "@/src/types/location";
 import LocationPickerModal from "@/components/create-work-order/LocationPickerModal";
@@ -17,7 +15,7 @@ import LocationPickerModal from "@/components/create-work-order/LocationPickerMo
 export default function PartsInventory() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [refreshing, setRefreshing] = useState(false);
-	const [parts, setParts] = useState<any[]>([]);
+	const [parts, setParts] = useState<Part[]>([]);
 	const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 	const [locationModalVisible, setLocationModalVisible] = useState(false);
 	const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
@@ -45,6 +43,25 @@ export default function PartsInventory() {
 			console.log('error = ', error);
 		}
 	}
+
+	const filteredParts = useMemo(() => {
+		const q = searchQuery.trim().toLowerCase();
+		if (!q) return parts;
+
+		return parts.filter((part) => {
+			const searchableValues = [
+				part.part_name,
+				part.part_number,
+				part.part_type,
+				part.location?.location_name,
+				String(part.quantity),
+			];
+
+			return searchableValues.some((value) =>
+				(value || "").toString().toLowerCase().includes(q)
+			);
+		});
+	}, [parts, searchQuery]);
 
 	const handleDeletePart = async (item: Part) => {
 		Alert.alert(
@@ -107,7 +124,7 @@ export default function PartsInventory() {
 				</Pressable>
 
 				<FlatList
-					data={parts}
+					data={filteredParts}
 					keyExtractor={(item) => item.id}
 					showsVerticalScrollIndicator={false}
 					renderItem={({ item }) => (

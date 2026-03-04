@@ -779,3 +779,44 @@ ISSUES:
 1. NEW API IS INTRODUCED FOR FETCHING ASSET CHILD - https://new.presageinsights.ai/cmms_express/api/master/assets/child/69930de642182cf926ed292f
 
 
+
+
+
+Latest 2nd March 2026
+
+Hi @Waleed,
+Please have a look at the following issues:
+
+1.Location count shows 1 and Asset count shows 13, but Asset Monitored is displaying 0 instead of 13.
+
+- The issue is that X-Env from header is removed from production URL, but still needed in development URL. Fixed the issue.
+
+
+2.Un-Addressed Alarms and Total End Points are showing 0.
+- This issue is also related to X-Env header. Fixed as well.
+
+3.Asset Health Status, Asset Health, and Alarm Summary sections are showing "No data found."
+- Same issue.
+
+4.When I click on the Asset menu and then select Location, the application closes automatically and displays the message:
+"Workedo keeps stopping."
+
+- Fixed.
+
+
+
+
+For test user
+1.Unable to create asset
+
+2.when I try to create work order message shown failed to create work order
+
+3.Parts inventory- Add search validation
+
+4.when I edit a preventive, the heading still shows "create preventive".
+
+5.when I try to Disselect all location in preventive, parts, work request unbla to do. 
+
+6.unable to create work request
+
+7.when I create work request heading shown edit work request
