@@ -36,6 +36,14 @@ interface WorkOrderProps {
 	passedData?: Record<string, any> | null;
 }
 
+const resolveEntityId = (value: any) => {
+	if (!value) return "";
+	if (typeof value === "string" || typeof value === "number") return String(value);
+
+	const resolvedId = value?.id ?? value?._id;
+	return resolvedId !== undefined && resolvedId !== null ? String(resolvedId) : "";
+};
+
 export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 	// console.log('work order props = ', passedData)
 	const router = useRouter();
@@ -70,7 +78,8 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 			setWorkForm("nature_of_work", data?.nature_of_work);
 			setWorkForm("completion_days", String(data?.estimated_time ?? ""));
 			setWorkForm("priority", data?.priority ?? null);
-			setWorkForm("attachments", data?.files ?? null);
+			setWorkForm("attachments", Array.isArray(data?.files) ? data.files : []);
+			setWorkForm("sop_form_data", data?.sop_form_data ?? {});
 			setWorkForm("start_date", data?.start_date ? moment(data?.start_date).format('YYYY-MM-DD') : '');
 			setWorkForm("end_date", data?.end_date ? moment(data?.end_date).format('YYYY-MM-DD') : '');
 
@@ -89,7 +98,13 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 
 			setWorkForm("tasks", data?.tasks ?? []);
 
-			mapUserToLocationFunc(data?.location.id)
+			const locationId = resolveEntityId(data?.location);
+			if (locationId) {
+				mapUserToLocationFunc(
+					locationId,
+					Array.isArray(data?.assignedUsers) ? data.assignedUsers : []
+				);
+			}
 
 			// finally mark as loaded ONCE
 			setWorkForm("isLoaded", true);
@@ -97,16 +112,21 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 		}
 	}, [passedData]);
 
-	const mapUserToLocationFunc = async (location_id: string) => {
+	const mapUserToLocationFunc = async (location_id: string, selectedUsers: any[] = []) => {
 		try {
 			const res = await mapUserToLocation(location_id);
 			console.log('res = ', res);
 			if (res?.status) {
 				// console.log('assigned_users = ', res?.data);
 				// TODO: make sure to remove users from res?.data whih doesn't exist in passedData?.assignedUsers
-				const assignedUsers = passedData?.assignedUsers?.map((u: any) => u.user.id);
-				console.log('here = ', res?.data.filter((u: any) => assignedUsers.includes(u.user.id)))
-				setWorkForm("assigned_users", res?.data.filter((u: any) => assignedUsers.includes(u.user.id)));
+				const assignedUsers = Array.isArray(selectedUsers)
+					? selectedUsers.map((u: any) => u?.user?.id ?? u?.id).filter(Boolean)
+					: [];
+				const mappedUsers = Array.isArray(res?.data)
+					? res.data.filter((u: any) => assignedUsers.includes(u?.user?.id))
+					: [];
+				console.log('here = ', mappedUsers)
+				setWorkForm("assigned_users", mappedUsers);
 			}
 		} catch (err) {
 			console.log('error = ', err);
@@ -228,17 +248,20 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 			priority: data.priority || "None",
 			// sop_form_id: null,
 			sop_form_id: forms?.find((f: any) => f.name === data.sop_form_id)?.id || null,
+			...(data.sop_form_data && Object.keys(data.sop_form_data).length > 0
+				? { sop_form_data: data.sop_form_data }
+				: {}),
 			start_date: data.start_date || new Date().toISOString().split("T")[0],
 			status: "Open",
 			title: data.title,
 			type: data.nature_of_work,
 			userIdList:
 				data.assigned_users
-					?.map((u: any) => u.user?.id ?? u.id)
+					?.map((u: any) => u?.user?.id ?? u?.id)
 					.filter(Boolean) || [],
 
-			wo_asset_id: data.selected_asset?.id || "",
-			wo_location_id: data.location?.id || "",
+			wo_asset_id: resolveEntityId(data.selected_asset),
+			wo_location_id: resolveEntityId(data.location),
 			// image_path: data.attchments.length > 0 ? data.attchments : "",
 
 			// ✅ Conditionally include work_request_id
@@ -297,11 +320,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 					useWorkOrderStore.getState().resetForm();
 					if (!data.work_request_id) {
 						ToastAndroid.show("Work Order created successfully!", ToastAndroid.SHORT);
-						if (comingFrom === "overview") {
-							router.replace("/workOrders");
-						} else {
-							router.back();
-						}
+						router.replace("/workOrders");
 					}
 				}
 			}
@@ -427,6 +446,9 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 						setShowCalendar={setShowCalendar}
 						activeDateField={activeDateField}
 						startDate={useWorkOrderStore.getState().start_date}
+						currentDate={activeDateField === "end_date"
+							? useWorkOrderStore.getState().end_date
+							: useWorkOrderStore.getState().start_date}
 						onSelectDate={(date) => {
 							console.log("Selected date:", date);
 							const formatted = moment(date).format("YYYY-MM-DD");

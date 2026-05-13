@@ -8,18 +8,52 @@ import LocationPickerPDM from "./LocationPickerPDM";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import AssetPickerPDM from "./AssetPickerPDM";
 import { type LocationAsset } from "@/src/types/locationAsset";
+import { type Location } from "@/src/types/location";
 
 type AssetNode = LocationAsset & {
 	childs?: AssetNode[];
 };
 
+type LocationNode = Pick<Location, "id" | "location_name"> & {
+	childs?: LocationNode[];
+};
+
 const collectParentAssetIds = (assets: AssetNode[]) =>
 	assets.map((asset) => asset.id).filter(Boolean);
+
+const countAssetNodes = (assets: AssetNode[]): number =>
+	assets.reduce((total, asset) => {
+		const childCount = asset.childs?.length ? countAssetNodes(asset.childs) : 0;
+		return total + 1 + childCount;
+	}, 0);
+
+const collectLocationIds = (node: LocationNode): string[] => {
+	const childIds = node.childs?.flatMap((child) => collectLocationIds(child)) ?? [];
+	return [node.id, ...childIds];
+};
+
+const countSelectedLocations = (selectedIds: string[], locations: LocationNode[]) => {
+	const selectedSet = new Set(selectedIds);
+	const countedIds = new Set<string>();
+
+	const visit = (node: LocationNode) => {
+		if (selectedSet.has(node.id)) {
+			collectLocationIds(node).forEach((id) => countedIds.add(id));
+			return;
+		}
+
+		node.childs?.forEach(visit);
+	};
+
+	locations.forEach(visit);
+	return countedIds.size;
+};
 
 export default function PDMDashboardLocationSelect() {
 	console.log('pdm location')
 	const [open, setOpen] = useState(false);
 	const [assetOpen, setAssetOpen] = useState(false);
+	const [locations, setLocations] = useState<LocationNode[]>([]);
 	const parentLocations = useOverviewStore((state) => state.parentLocations);
 
 	const user = useAuthStore(s => s.user);
@@ -39,8 +73,11 @@ export default function PDMDashboardLocationSelect() {
 	const fetchLocationsTree = async () => {
 		const res = await locationTree();
 		console.log('res locations PDM = ', res?.data);
+		if (res?.data?.length > 0) {
+			setLocations(res.data as LocationNode[]);
+		}
 		const hasSelectedLocation = useOverviewStore.getState().parentLocations.length > 0;
-		if (res?.data.length > 0 && !hasSelectedLocation) {
+		if (res?.data?.length > 0 && !hasSelectedLocation) {
 			setParentLocations([{ id: res?.data[0].id, location_name: res?.data[0].location_name }])
 		}
 	}
@@ -99,9 +136,10 @@ export default function PDMDashboardLocationSelect() {
 	};
 
 
-	const selectedLocationCount = parentLocations.length;
-	const parentAssetIds = new Set(childAssets.map((asset) => asset.id));
-	const selectedAssetCount = selectedAssets.filter((id) => parentAssetIds.has(id)).length;
+	const selectedLocationCount = locations.length
+		? countSelectedLocations(parentLocations.map((location) => location.id), locations)
+		: parentLocations.length;
+	const selectedAssetCount = childAssets.length ? countAssetNodes(childAssets as AssetNode[]) : selectedAssets.length;
 
 	return (
 		<>

@@ -45,9 +45,7 @@ export default function PendingWorkOrders() {
 			let finalPayload: any = {};
 			// prepare for payload
 			if (startDate) {
-				finalPayload.startDate = moment(startDate, "YYYY-MM-DD")
-					.subtract(1, "day")
-					.format("YYYY-MM-DD") + startTimePart;
+				finalPayload.startDate = moment(startDate, "YYYY-MM-DD").format("YYYY-MM-DD") + startTimePart;
 			} else {
 				finalPayload.startDate = moment().subtract(1, "week").format("YYYY-MM-DD") + startTimePart;
 			}
@@ -69,7 +67,7 @@ export default function PendingWorkOrders() {
 			);
 			if (res?.status && Array.isArray(res?.data)) {
 				// console.log('res = ', res?.data);
-				setPendingWO(res?.data.reverse())
+				setPendingWO([...res.data].reverse())
 				return;
 			}
 
@@ -87,7 +85,7 @@ export default function PendingWorkOrders() {
 				<FlatList
 					ListHeaderComponent={<Text style={styles.cardTitle}>Pending Work Orders</Text>}
 					data={pendingWO}
-					keyExtractor={({ item, index }) => index}
+					keyExtractor={(item, index) => String(item?.id ?? item?._id ?? index)}
 					contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 50 }}
 					ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
 					renderItem={({ item }) => <WorkOrderCard item={item} />}
@@ -130,7 +128,12 @@ function WorkOrderCard({ item }: { item: WorkOrder }) {
 				<FontAwesome5 name="users" size={14} color="#000" />
 				<Text style={styles.detailLabel}> Assigned: </Text>
 				<Text style={styles.detailValue}>
-					{item?.assignedUsers?.map((user) => user.user.firstName).join(", ") || "N/A"}
+					{Array.isArray(item?.assignedUsers)
+						? item.assignedUsers
+							.map((user) => user?.user?.firstName)
+							.filter(Boolean)
+							.join(", ") || "N/A"
+						: "N/A"}
 				</Text>
 
 			</View>

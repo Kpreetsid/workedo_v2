@@ -4,6 +4,7 @@ import { View, ToastAndroid } from "react-native";
 import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 import Header from "../global/Header";
 import ActionButton from "../auth-screens/ActionButton";
+import moment from "moment";
 
 export default function DateRangeCalendar({
   onClose,
@@ -15,14 +16,16 @@ export default function DateRangeCalendar({
   const todayString = `${now.getFullYear()}-${String(
     now.getMonth() + 1
   ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const defaultStartDate = moment().subtract(1, "week").format("YYYY-MM-DD");
+  const defaultEndDate = moment().format("YYYY-MM-DD");
 
   // UI STATE (YYYY-MM-DD ONLY)
-  const [startDate, setStartDate] = useState<string | null>(initialStartDate ?? null);
-  const [endDate, setEndDate] = useState<string | null>(initialEndDate ?? null);
+  const [startDate, setStartDate] = useState<string | null>(initialStartDate ?? defaultStartDate);
+  const [endDate, setEndDate] = useState<string | null>(initialEndDate ?? defaultEndDate);
 
   useEffect(() => {
-    setStartDate(initialStartDate ?? null);
-    setEndDate(initialEndDate ?? null);
+    setStartDate(initialStartDate ?? defaultStartDate);
+    setEndDate(initialEndDate ?? defaultEndDate);
   }, [initialStartDate, initialEndDate]);
 
   // -----------------------------
@@ -127,6 +130,7 @@ export default function DateRangeCalendar({
       <View style={{ padding: 16 }}>
         <Calendar
           markingType="period"
+          current={startDate ?? todayString}
           markedDates={getMarkedDates()}
           onDayPress={onDayPress}
           maxDate={todayString}

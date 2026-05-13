@@ -15,6 +15,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 export default function PlannedVsUnplanned() {
 	const webViewRef = useRef<WebView>(null);
 	const [chartPayload, setChartPayload] = useState<any>(null);
+	const [webReady, setWebReady] = useState(false);
 
 
 	const [noData, setNoData] = useState(false)
@@ -64,9 +65,7 @@ export default function PlannedVsUnplanned() {
 			let finalPayload: any = {};
 			// prepare for payload
 			if (startDate) {
-				finalPayload.startDate = moment(startDate, "YYYY-MM-DD")
-					.subtract(1, "day")
-					.format("YYYY-MM-DD") + startTimePart;
+				finalPayload.startDate = moment(startDate, "YYYY-MM-DD").format("YYYY-MM-DD") + startTimePart;
 			} else {
 				finalPayload.startDate = moment().subtract(1, "week").format("YYYY-MM-DD") + startTimePart;
 			}
@@ -203,12 +202,12 @@ export default function PlannedVsUnplanned() {
 	}
 
 	useEffect(() => {
-		if (chartPayload && webViewRef.current) {
+		if (chartPayload && webViewRef.current && webReady) {
 			webViewRef.current.postMessage(
 				JSON.stringify(chartPayload)
 			);
 		}
-	}, [chartPayload]);
+	}, [chartPayload, webReady]);
 
 	const chartUrl = "file:///android_asset/charts/PlannedUnplannedChart.html";
 
@@ -230,6 +229,11 @@ export default function PlannedVsUnplanned() {
 
 				{workOrderData.length > 0 && (
 					<WebView
+						key={
+							chartPayload
+								? `${chartPayload.labels?.join("|")}-${chartPayload.workData?.join("|")}-${chartPayload.preventiveData?.join("|")}`
+								: "planned-unplanned-empty"
+						}
 						ref={webViewRef}
 						// source={require("../../assets/charts/PlannedUnplannedChart.html")}
 						source={{ uri: chartUrl }}
@@ -238,6 +242,8 @@ export default function PlannedVsUnplanned() {
 						domStorageEnabled
 						scrollEnabled={false}
 						style={{ height: 260, width: "100%" }}
+						onLoadStart={() => setWebReady(false)}
+						onLoadEnd={() => setWebReady(true)}
 					/>
 				)}
 

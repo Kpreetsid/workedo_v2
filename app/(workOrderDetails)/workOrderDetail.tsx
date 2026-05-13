@@ -2,37 +2,83 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import Header from "@/components/global/Header";
 import Detail from "@/components/work-order-detail/Detail";
 import Comments from "@/components/work-order-detail/Comments";
-import SegmentedPager from "@/components/global/SegmentPager";
 import { Alert, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { WorkOrderCompleteIcon, WorkOrderInProgressIcon, WorkOrderOnHoldIcon, WorkOrderOpenIcon } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
 import { deleteWorkOrder, getWorkOrderDetails, updateWorkOrderStatus } from "@/src/services/work-order.service";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Popover from "react-native-popover-view";
 import { Ionicons } from "@expo/vector-icons";
 import { WorkOrder } from "@/src/types/workOrder";
 import Tasks from "@/components/work-order-detail/Tasks";
 import Forms from "@/components/work-order-detail/Forms";
+import SegmentedPager from "@/components/global/SegmentPager";
+
+const safeJsonParse = (value?: string) => {
+	if (!value || typeof value !== "string") return null;
+
+	try {
+		return JSON.parse(value);
+	} catch {
+		return null;
+	}
+};
 
 export default function WorkOrderDetail() {
 	const router = useRouter();
 	const params: any = useLocalSearchParams();
-	const work_order_data = JSON.parse(params?.data);
+	const work_order_data = (() => {
+		const parsed = safeJsonParse(params?.data);
+		if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+			return parsed;
+		}
+
+		if (params?.id) {
+			return {
+				id: params.id,
+				composite_id: params?.composite_id,
+			};
+		}
+
+		return {};
+	})();
 	const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 
 	const [workOrderData, setWorkOrderData] = useState<any>(work_order_data);
+	const normalizeStatus = (value?: string | null) => (value ?? "").toLowerCase().replace(/[-\s]/g, "");
+	const isDoneStatus = ["completed", "done"].includes(normalizeStatus(workOrderData?.status));
+	const hasTasks = Array.isArray(workOrderData?.tasks) && workOrderData.tasks.length > 0;
+	const hasForms = Boolean(workOrderData?.sop_form_id);
+	const detailTabs = [
+		{ label: "Details", component: <Detail params={workOrderData} /> },
+		...(hasTasks ? [{ label: "Tasks", component: <Tasks params={workOrderData} /> }] : []),
+		...(hasForms ? [{ label: "Forms", component: <Forms params={workOrderData} /> }] : []),
+		{ label: "Comments", component: <Comments params={workOrderData} /> },
+	];
+	const popoverOptions = isDoneStatus
+		? [
+			{ icon: "", text: "Select Option", type: "heading" },
+			{ icon: "", text: "Delete", type: "option" },
+		]
+		: [
+			{ icon: "", text: "Select Option", type: "heading" },
+			{ icon: "", text: "Edit", type: "option" },
+			{ icon: "", text: "Delete", type: "option" },
+		];
 
 	useFocusEffect(
 		useCallback(() => {
 			console.log('in focus order detail')
 			fetchWorkOrderDetails();
-		}, [])
+		}, [workOrderData?.id])
 	);
 
 	const fetchWorkOrderDetails = async () => {
+		if (!workOrderData?.id) return;
+
 		try {
-			console.log('work order id = ', work_order_data.id);
-			const res = await getWorkOrderDetails(work_order_data.id);
+			console.log('work order id = ', workOrderData.id);
+			const res = await getWorkOrderDetails(workOrderData.id);
 			console.log('work order details = ', res);
 			if (res?.status) {
 				setWorkOrderData(res?.data[0]);
@@ -103,51 +149,39 @@ export default function WorkOrderDetail() {
 								</TouchableOpacity>
 							)}>
 							<View style={styles.popoverContent}>
-								{
-									[
-										{ icon: '', text: 'Select Option', type: 'heading' },
-										{ icon: '', text: 'Edit', type: 'option' },
-										{ icon: '', text: 'Delete', type: 'option' }
-									].map((option, index) => {
-										return (
-											<Pressable
-												style={styles.popoverItem}
-												key={index}
-												onPress={async () => {
-													if (index === 1) {
-														router.push({
-															pathname: "/editWorkOrder",
-															params: {
-																data: JSON.stringify(workOrderData),
-															},
-														});
-													} else if (index === 2) {
-														console.log('in it delete = ', workOrderData);
-														handleDeleteWo?.(workOrderData);
-													}
-													setOpenPopoverId(null)
-												}}
+								{popoverOptions.map((option, optionIndex) => (
+									<Pressable
+										style={styles.popoverItem}
+										key={optionIndex}
+										onPress={async () => {
+											if (option.text === "Edit") {
+												router.push({
+													pathname: "/editWorkOrder",
+													params: {
+														data: JSON.stringify(workOrderData),
+													},
+												});
+											} else if (option.text === "Delete") {
+												console.log("in it delete = ", workOrderData);
+												handleDeleteWo?.(workOrderData);
+											}
+											setOpenPopoverId(null);
+										}}
+									>
+										<View style={{ flexDirection: "row", gap: 10, alignItems: "center", justifyContent: "flex-start" }}>
+											{option.icon !== "" && <Ionicons name={option.icon as any} size={16} color="#71717A" />}
+
+											<Text
+												style={[
+													{ color: "#71717A", fontFamily: Fonts.regular },
+													option.type === "heading" ? { color: "#742BDE", fontFamily: Fonts.semiBold } : {},
+												]}
 											>
-												<View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'flex-start' }}>
-													{option.icon != '' && <Ionicons name={option.icon as any} size={16} color="#71717A" />}
-
-													<Text style={
-														[
-															{ color: "#71717A", fontFamily: Fonts.regular },
-															option.type == 'heading' ? { color: "#742BDE", fontFamily: Fonts.semiBold } : {}
-														]
-													}>
-														{option.text}
-													</Text>
-
-													{/* {
-														(deleteLoading && index === 3) && <ActivityIndicator size={"small"} color={"#71717A"} />
-													} */}
-												</View>
-											</Pressable>
-										);
-									})
-								}
+												{option.text}
+											</Text>
+										</View>
+									</Pressable>
+								))}
 							</View>
 						</Popover>
 					</View>
@@ -212,12 +246,7 @@ export default function WorkOrderDetail() {
 
 			</View>
 
-			<SegmentedPager tabs={[
-				{ label: "Details", component: <Detail params={workOrderData} /> },
-				{ label: "Tasks", component: <Tasks params={workOrderData} /> },
-				{ label: "Forms", component: <Forms params={workOrderData} /> },
-				{ label: "Comments", component: <Comments params={workOrderData} /> }
-			]} />
+			<SegmentedPager tabs={detailTabs} />
 		</View>
 	);
 }

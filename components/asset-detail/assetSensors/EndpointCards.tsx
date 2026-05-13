@@ -95,10 +95,8 @@ export default function EndpointCards({ asset_data }: Props) {
 
 	async function handleAttachSensor(ep: AssetEndpoint) {
 		console.log('attach sensor');
-		// setSensorForm("mac_id", )
-		let finalEp = await fetchSensorData(ep)
-		console.log('final epi', finalEp);
-		setShowAttachSensor({ state: true, data: finalEp, action: "open" });
+		setSelectedSensor(ep);
+		setShowAttachSensor({ state: true, data: { ...ep }, action: "open" });
 	}
 
 	const fetchSensorData = async (ep: any) => {
@@ -116,6 +114,11 @@ export default function EndpointCards({ asset_data }: Props) {
 		console.log('mapped data = ', mapped);
 		ep.deviceInfo = mapped;
 		setDeviceInfo(mapped)
+		setShowAttachSensor((prev) => (
+			prev.state
+				? { ...prev, data: { ...ep, deviceInfo: mapped } }
+				: prev
+		));
 		return ep;
 	}
 

@@ -34,3 +34,8 @@ export const getPartById = async (id: string) => {
     const url = `${endpoints.parts.getParts}/${id}`;
     return await sendRequest("GET", url);
 };
+
+export const getPartTypes = async () => {
+    const url = `${endpoints.parts.getPartTypes}`;
+    return await sendRequest("GET", url);
+};

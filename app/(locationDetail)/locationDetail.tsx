@@ -146,11 +146,11 @@ export default function LocationDetail() {
 							<TextInput style={styles.input} value={locationData?.location_type} editable={false} />
 
 							{
-								locationData?.parent_id &&
+								typeof locationData?.parent_id === "object" && locationData.parent_id !== null &&
 								(
 									<>
 										<Text style={[styles.label, { paddingVertical: 10 }]}>Parent Location</Text>
-										<TextInput style={styles.input} value={locationData?.parent_id?.location_name} editable={false} />
+										<TextInput style={styles.input} value={locationData.parent_id.location_name} editable={false} />
 									</>
 								)
 							}
@@ -235,6 +235,8 @@ function statusWrapper(status: LocationAsset["status"]) {
 			return { backgroundColor: "#00b22710", borderColor: "#00b227", borderWidth: 0.3 };
 		case "Alert":
 			return { backgroundColor: "#ffc10710", borderColor: "#ffc107", borderWidth: 0.3 };
+		case "Danger":
+			return { backgroundColor: "#ff980010", borderColor: "#ff9800", borderWidth: 0.3 };
 		default:
 			return null;
 	}
@@ -245,7 +247,7 @@ const styles = StyleSheet.create({
 		flexGrow: 1,
 		paddingHorizontal: 18,
 		paddingTop: 12,
-		paddingBottom: 30,
+		paddingBottom: 90,
 		backgroundColor: '#F5F7FA'
 	},
 	headerCard: {

@@ -48,6 +48,7 @@ export default function WoPriority() {
 		"High": "#24b7d8",
 		"Medium": "#264de0",
 		"Low": "#46e4c9",
+		"Urgent": "#FF4D4F",
 		"None": "#adeaff",
 	};
 
@@ -74,9 +75,7 @@ export default function WoPriority() {
 			let finalPayload: any = {};
 			// prepare for payload
 			if (startDate) {
-				finalPayload.startDate = moment(startDate, "YYYY-MM-DD")
-					.subtract(1, "day")
-					.format("YYYY-MM-DD") + startTimePart;
+				finalPayload.startDate = moment(startDate, "YYYY-MM-DD").format("YYYY-MM-DD") + startTimePart;
 			} else {
 				finalPayload.startDate = moment().subtract(1, "week").format("YYYY-MM-DD") + startTimePart;
 			}
@@ -105,6 +104,7 @@ export default function WoPriority() {
 					"High": "#24b7d8",
 					"Medium": "#264de0",
 					"Low": "#46e4c9",
+					"Urgent": "#FF4D4F",
 					"None": "#adeaff",
 				};
 

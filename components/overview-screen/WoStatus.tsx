@@ -75,9 +75,7 @@ export default function WoStatus() {
 			let finalPayload: any = {};
 			// prepare for payload
 			if (startDate) {
-				finalPayload.startDate = moment(startDate, "YYYY-MM-DD")
-					.subtract(1, "day")
-					.format("YYYY-MM-DD") + startTimePart;
+				finalPayload.startDate = moment(startDate, "YYYY-MM-DD").format("YYYY-MM-DD") + startTimePart;
 			} else {
 				finalPayload.startDate = moment().subtract(1, "week").format("YYYY-MM-DD") + startTimePart;
 			}

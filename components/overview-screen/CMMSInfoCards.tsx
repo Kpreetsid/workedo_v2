@@ -43,9 +43,7 @@ export default function CMMSInfoCards() {
 			let finalPayload: any = {};
 			// prepare for payload
 			if (startDate) {
-				finalPayload.startDate = moment(startDate, "YYYY-MM-DD")
-					.subtract(1, "day")
-					.format("YYYY-MM-DD") + startTimePart;
+				finalPayload.startDate = moment(startDate, "YYYY-MM-DD").format("YYYY-MM-DD") + startTimePart;
 			} else {
 				finalPayload.startDate = moment().subtract(1, "week").format("YYYY-MM-DD") + startTimePart;
 			}
@@ -99,7 +97,7 @@ export default function CMMSInfoCards() {
 const InfoCardsData = [
 	{ id: 1, title: `On Time\nCompletion Rate`, value: 0, color: "#3b82f6" },
 	{ id: 2, title: `Work Order\nOverdue`, value: 0, color: "#FFC107" },
-	{ id: 3, title: `Pending\Work Requests`, value: 1, color: "#DC3545" },
+	{ id: 3, title: `Pending\nWork Requests`, value: 1, color: "#DC3545" },
 	{ id: 4, title: `Planned vs\nUnplanned`, value: 1, color: "#16CCF1" },
 ];
 

@@ -28,7 +28,7 @@ const width = Dimensions.get("window").width;
 export default function SelectLocation({ showHeader = true, selection = true }: LocationInterface) {
 	console.log('rendering select location');
 
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 
 	const params: any = useLocalSearchParams();
 	const comingFrom = params?.comingFrom;
@@ -71,18 +71,28 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 	);
 
 	const fetchLocations = async () => {
-		setLoading(true)
+		setLoading(true);
 		try {
 			const res = await locationTree();
+			const incoming = Array.isArray(res?.data) ? (res.data as Location[]) : [];
 
-			if (res.status) {
-				console.log('res locations = ', res?.data);
-				setLocations(res.data as Location[]);
-				setLoading(false)
+			if (res?.message === "No data found" || !res?.status || incoming.length === 0) {
+				setLocations([]);
+				return;
 			}
+
+			console.log('res locations = ', res?.data);
+			setLocations(incoming);
 		} catch (err: any) {
-			setLoading(false)
+			if (err?.message === "No data found") {
+				setLocations([]);
+				return;
+			}
+
 			console.error("Login failed:", err);
+			setLocations([]);
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -171,39 +181,48 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 				}
 
 				{
-					loading ?
-						<ActivityIndicator size="large" />
-						:
-						<FlatList
-							ListHeaderComponent={() => {
-								return (
-									<>
-										{/* {
-											!selection && (
-												<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createLocation")}>
-													<Text style={styles.buttonText}>Create Location</Text>
-												</TouchableOpacity>
-											)
-										} */}
+					<FlatList
+						ListHeaderComponent={() => {
+							return (
+								<>
+									{/* {
+										!selection && (
+											<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createLocation")}>
+												<Text style={styles.buttonText}>Create Location</Text>
+											</TouchableOpacity>
+										)
+									} */}
 
-									</>
-								);
-							}}
-							data={searchText ? filteredLocations : locations}
-							keyExtractor={(_, index) => index.toString()}
-							renderItem={
-								({ item }: { item: Location }) => <LocationCard
-									item={item}
-									selection={selection}
-									comingFrom={comingFrom}
-									handleDeleteLocation={handleDeleteLocation}
-									handleCopyLocation={handleCopyLocation}
-								/>
-							}
-							contentContainerStyle={styles.container}
-							refreshing={refreshing}
-							onRefresh={handleRefresh}
-						/>
+								</>
+							);
+						}}
+						data={searchText ? filteredLocations : locations}
+						keyExtractor={(_, index) => index.toString()}
+						renderItem={
+							({ item }: { item: Location }) => <LocationCard
+								item={item}
+								selection={selection}
+								comingFrom={comingFrom}
+								handleDeleteLocation={handleDeleteLocation}
+								handleCopyLocation={handleCopyLocation}
+							/>
+						}
+						contentContainerStyle={[
+							styles.container,
+							(searchText ? filteredLocations : locations).length === 0 && styles.emptyListContainer,
+						]}
+						refreshing={refreshing}
+						onRefresh={handleRefresh}
+						ListEmptyComponent={
+							<View style={styles.emptyState}>
+								{loading || refreshing ? (
+									<ActivityIndicator size="large" />
+								) : (
+									<Text style={styles.emptyText}>No Locations found!</Text>
+								)}
+							</View>
+						}
+					/>
 				}
 
 				{selection && <ActionButton onPress={() => router.back()} label="Confirm Location" buttonStyle={styles.actionButton} />}
@@ -236,6 +255,21 @@ const styles = StyleSheet.create({
 		// paddingTop: 15,
 		paddingBottom: '30%',
 		gap: 10
+	},
+	emptyListContainer: {
+		flexGrow: 1,
+	},
+	emptyState: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+		paddingHorizontal: 20,
+	},
+	emptyText: {
+		fontSize: 14,
+		color: "#000000",
+		textAlign: "center",
+		fontFamily: Fonts.regular,
 	},
 	/* Add Task Button */
 	buttonContainer: {

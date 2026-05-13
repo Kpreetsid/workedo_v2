@@ -18,6 +18,18 @@ export default function Detail({ params }: Props) {
 	const [userModalVisible, setUserModalVisible] = useState(false);
 	const [partsModalVisible, setPartsModalVisible] = useState(false);
 	const [moreInfoModalVisible, setMoreInfoModalVisible] = useState(false);
+	const assignedUsers = Array.isArray(params?.assignedUsers) ? params.assignedUsers : [];
+	const assignedUserNames = assignedUsers
+		.map((user) => user?.user?.firstName)
+		.filter(Boolean)
+		.join(", ") || "N/A";
+	const requestedBy = assignedUsers?.[0]?.user
+		? [assignedUsers[0].user.firstName, assignedUsers[0].user.lastName]
+			.filter(Boolean)
+			.join(" ")
+		: "--";
+	const createdOn = params?.createdAt ? moment(params.createdAt).format("DD/MM/YYYY hh:mm A") : "--";
+	const estimatedTime = params?.estimated_time?.toString() || "--";
 	return (
 		<ScrollView style={styles.container}>
 
@@ -32,7 +44,7 @@ export default function Detail({ params }: Props) {
 							contentContainerStyle={{ alignItems: "center" }}
 							style={{ maxWidth: 150 }}   // optional if you want it capped
 						>
-							{params?.assignedUsers?.map((user, i) => {
+							{assignedUsers.map((user, i) => {
 								const profileImg = user?.user?.user_profile_img;
 								const first = user?.user?.firstName?.[0] || "";
 								const last = user?.user?.lastName?.[0] || "";
@@ -65,9 +77,7 @@ export default function Detail({ params }: Props) {
 					</Pressable>
 				</View>
 				<View style={styles.rowBetween}>
-					<Text style={styles.cardSubtitle}>
-						{params?.assignedUsers?.map((user) => user.user.firstName).join(", ") || "N/A"}
-					</Text>
+					<Text style={styles.cardSubtitle}>{assignedUserNames}</Text>
 				</View>
 			</View>
 
@@ -121,7 +131,7 @@ export default function Detail({ params }: Props) {
 			<PartsInfoModal visible={partsModalVisible} onClose={() => setPartsModalVisible(false)} parts={params?.parts} />
 
 			<MoreInfoModal visible={moreInfoModalVisible} onClose={() => setMoreInfoModalVisible(false)}
-				estimatedTime={params?.estimated_time?.toString()} requestedBy={params?.assignedUsers[0]?.user?.firstName} createdOn={moment(params?.createdAt).format('DD/MM/YYYY')} />
+				estimatedTime={estimatedTime} requestedBy={requestedBy} createdOn={createdOn} />
 
 		</ScrollView>
 	)

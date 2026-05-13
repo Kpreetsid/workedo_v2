@@ -13,6 +13,11 @@ const screenWidth = Dimensions.get("window").width;
 
 export default function WorkOrderSummary() {
 	const [selectedBar, setSelectedBar] = useState<number | null>(null);
+	const barWidth = 34;
+	const spacing = 16;
+	const initialSpacing = 12;
+	const endSpacing = 12;
+	const tooltipWidth = 150;
 
 	const childAssets = useCMMSStore((state) => state.childAssets);
 	const selectedAssets = useCMMSStore((state) => state.selectedAssets);
@@ -59,9 +64,7 @@ export default function WorkOrderSummary() {
 			let finalPayload: any = {};
 			// prepare for payload
 			if (startDate) {
-				finalPayload.startDate = moment(startDate, "YYYY-MM-DD")
-					.subtract(1, "day")
-					.format("YYYY-MM-DD") + startTimePart;
+				finalPayload.startDate = moment(startDate, "YYYY-MM-DD").format("YYYY-MM-DD") + startTimePart;
 			} else {
 				finalPayload.startDate = moment().subtract(1, "week").format("YYYY-MM-DD") + startTimePart;
 			}
@@ -121,18 +124,18 @@ export default function WorkOrderSummary() {
 					<BarChart
 						data={woSummaryData.map((bar: any, i: any) => ({
 							value: bar.value,
-							label: bar.id, // "2025-11"
+							label: bar.date,
 							frontColor: "#be3aff",
 							onPress: () => setSelectedBar(i),
 						}))}
 
 						// GRAPH LOOK
-						barWidth={30}
+						barWidth={barWidth}
 						barBorderRadius={6}
 						isAnimated
-						spacing={20}
-						initialSpacing={10}
-						endSpacing={10}
+						spacing={spacing}
+						initialSpacing={initialSpacing}
+						endSpacing={endSpacing}
 
 						// AXES
 						yAxisThickness={1}
@@ -172,7 +175,16 @@ export default function WorkOrderSummary() {
 					<View
 						style={[
 							styles.tooltip,
-							{ left: 20 + selectedBar * (35 + 30) - 10 }
+							{
+								left: Math.max(
+									12,
+									Math.min(
+										screenWidth - tooltipWidth - 12,
+										initialSpacing + selectedBar * (barWidth + spacing) - tooltipWidth / 2
+									)
+								),
+								width: tooltipWidth,
+							}
 						]}
 					>
 						<Text style={styles.tooltipDate}>
@@ -262,11 +274,11 @@ const styles = StyleSheet.create({
 	},
 	tooltip: {
 		position: "absolute",
-		bottom: 140,
+		bottom: 150,
 		backgroundColor: "#EFF2FC",
 		borderRadius: 8,
 		paddingVertical: 12,
-		paddingHorizontal: 20,
+		paddingHorizontal: 14,
 		shadowColor: "#000",
 		shadowOpacity: 0.15,
 		shadowRadius: 8,

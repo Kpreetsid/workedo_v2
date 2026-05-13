@@ -118,7 +118,7 @@ export default function ChartDetailModal({
 
 		// ✅ ONLY signal spectrum needs trendFunc
 		if (isSpectrum && !forEnvelope) {
-			payload.trendFunc = selectedValueType.toLowerCase();
+			payload.trendFunc = selectedValueType?.toLowerCase?.() || "";
 		}
 
 		return payload;
@@ -185,10 +185,11 @@ export default function ChartDetailModal({
 	const fetchWaveFormsData = async (payload: any, cancelled: boolean) => {
 		try {
 			const Res = await fetchData(payload);
-			console.log('all data = ', Res?.data[0])
+			const firstData = Res?.data?.[0];
+			console.log('all data = ', firstData)
 			if (cancelled) return;
 
-			const axesData = Res?.data[0].axes_data ?? [];
+			const axesData = firstData?.axes_data ?? [];
 
 			const normalizedAxes = normalizeAxesData(axesData || []);
 			console.log('normalizedAxes = ', normalizedAxes)
@@ -207,13 +208,19 @@ export default function ChartDetailModal({
 			}));
 
 			if (activeTab === 'spectrum') {
-				datasets['x_axis_spectrum_data'] = Res?.data[0].x_axis_spectrum_data;
+				datasets['x_axis_spectrum_data'] = firstData?.x_axis_spectrum_data;
 			}
 
 			console.log('data set = ', datasets)
 
 			if (!Array.isArray(normalizedAxes[0]?.values)) {
 				console.warn("Invalid data time waveform ", Res);
+				accWebRef.current?.postMessage(
+					JSON.stringify({
+						type: "error",
+						message: "Unable to load chart data.",
+					})
+				);
 				return;
 			}
 
@@ -241,7 +248,7 @@ export default function ChartDetailModal({
 						JSON.stringify({
 							type: "spectrum",
 							datasets, // same datasets
-							xAxis: Res?.data[0].x_axis_spectrum_data,
+							xAxis: firstData?.x_axis_spectrum_data,
 							yLabel: signalType === "acceleration"
 								? "Amplitude (g)"
 								: signalType === "velocity"
@@ -258,7 +265,7 @@ export default function ChartDetailModal({
 			accWebRef.current?.postMessage(
 				JSON.stringify({
 					type: "error",
-					message: "No data found for any of the requested axes/timestamps.",
+					message: "Unable to load chart data.",
 				})
 			);
 		}
@@ -268,7 +275,8 @@ export default function ChartDetailModal({
 			console.log(env)
 			if (cancelled) return;
 
-			const axesData = env?.data[0].axes_data ?? [];
+			const envFirstData = env?.data?.[0];
+			const axesData = envFirstData?.axes_data ?? [];
 
 			const normalizedAxes = normalizeAxesData(axesData || []);
 			console.log('normalizedAxes = ', normalizedAxes)
@@ -287,28 +295,35 @@ export default function ChartDetailModal({
 			}));
 
 			if (activeTab === 'spectrum') {
-				datasets['x_axis_spectrum_data'] = env?.data[0].x_axis_spectrum_data;
+				datasets['x_axis_spectrum_data'] = envFirstData?.x_axis_spectrum_data;
 			}
 
 			console.log('data set = ', datasets)
 
 			if (!Array.isArray(normalizedAxes[0]?.values)) {
 				console.warn("Invalid data envelope ", env);
+				setDetailLoading(false);
+				envWebRef.current?.postMessage(
+					JSON.stringify({
+						type: "error",
+						message: "Unable to load chart data.",
+					})
+				);
 				return;
 			}
 
 			setTimeout(() => {
-				envWebRef.current?.postMessage(
-					JSON.stringify({
-						type: activeTab,
-						data: datasets,   // array of axes datasets
-						xAxis:
-							activeTab === "spectrum"
-								? env?.data[0].x_axis_spectrum_data
-								: undefined,
-						yLabel: "g"
-					})
-				);
+					envWebRef.current?.postMessage(
+						JSON.stringify({
+							type: activeTab,
+							data: datasets,   // array of axes datasets
+							xAxis:
+								activeTab === "spectrum"
+									? envFirstData?.x_axis_spectrum_data
+									: undefined,
+							yLabel: "g"
+						})
+					);
 			}, 300);
 		} catch (er) {
 			console.log(er)
@@ -316,7 +331,7 @@ export default function ChartDetailModal({
 			envWebRef.current?.postMessage(
 				JSON.stringify({
 					type: "error",
-					message: "No data found for any of the requested axes/timestamps.",
+					message: "Unable to load chart data.",
 				})
 			);
 		}
@@ -344,6 +359,11 @@ export default function ChartDetailModal({
 		console.log("analyze clicked");
 		console.log(start);
 		console.log(end);
+
+		if (!start.trim() || !end.trim()) {
+			ToastAndroid.show("High Pass and Low Pass are required", ToastAndroid.SHORT);
+			return;
+		}
 
 		const highPass = parseInt(start, 10);
 		const lowPass = parseInt(end, 10);
@@ -376,7 +396,8 @@ export default function ChartDetailModal({
 			console.log('envelope play res = ', res);
 
 
-			const axesData = res?.data[0].axes_data ?? [];
+			const resFirstData = res?.data?.[0];
+			const axesData = resFirstData?.axes_data ?? [];
 
 			const normalizedAxes = normalizeAxesData(axesData || []);
 			console.log('normalizedAxes = ', normalizedAxes)
@@ -395,39 +416,41 @@ export default function ChartDetailModal({
 			}));
 
 			if (activeTab === 'spectrum') {
-				datasets['x_axis_spectrum_data'] = res?.data[0].x_axis_spectrum_data;
+				datasets['x_axis_spectrum_data'] = resFirstData?.x_axis_spectrum_data;
 			}
 
 			console.log('data set = ', datasets)
 
 			if (!Array.isArray(normalizedAxes[0]?.values)) {
 				console.warn("Invalid data envelope ", res);
+				setAnalyzeLoading(false);
+				ToastAndroid.show("Unable to load chart data.", ToastAndroid.SHORT);
 				return;
 			}
 
 			setTimeout(() => {
 				setAnalyzeLoading(false)
-				envWebRef.current?.postMessage(
-					JSON.stringify({
-						type: activeTab,
-						data: datasets,   // array of axes datasets
-						xAxis:
-							activeTab === "spectrum"
-								? res?.data[0].x_axis_spectrum_data
-								: undefined,
-						yLabel: "g"
-					})
-				);
+					envWebRef.current?.postMessage(
+						JSON.stringify({
+							type: activeTab,
+							data: datasets,   // array of axes datasets
+							xAxis:
+								activeTab === "spectrum"
+									? resFirstData?.x_axis_spectrum_data
+									: undefined,
+							yLabel: "g"
+						})
+					);
 			}, 300);
 
 		} catch (error: any) {
 			console.log(error);
 			setAnalyzeLoading(false)
-			if (error.message === "No data found for any of the requested axes/timestamps.") {
-				ToastAndroid.show("No data found for any of the requested axes/timestamps.", ToastAndroid.SHORT);
-			}
+			ToastAndroid.show("Unable to load chart data.", ToastAndroid.SHORT);
 		}
 	};
+
+	const canAnalyze = start.trim().length > 0 && end.trim().length > 0;
 
 	const hideTooltipInCharts = () => {
 		accWebRef.current?.postMessage(JSON.stringify({ type: "HIDE_TOOLTIP" }));
@@ -729,6 +752,7 @@ export default function ChartDetailModal({
 													placeholderTextColor="#888"
 													value={start}
 													onChangeText={setStart}
+													keyboardType="numeric"
 												/>
 
 												<TextInput
@@ -737,10 +761,20 @@ export default function ChartDetailModal({
 													placeholderTextColor="#888"
 													value={end}
 													onChangeText={setEnd}
+													keyboardType="numeric"
 												/>
 
 
-												<TouchableOpacity onPress={handleAnalyze} style={{ backgroundColor: "#742BDE", padding: 10, borderRadius: 5 }}>
+												<TouchableOpacity
+													onPress={handleAnalyze}
+													disabled={!canAnalyze || analyzeLoading}
+													style={{
+														backgroundColor: "#742BDE",
+														padding: 10,
+														borderRadius: 5,
+														opacity: canAnalyze && !analyzeLoading ? 1 : 0.5,
+													}}
+												>
 													{
 														analyzeLoading ?
 															<ActivityIndicator size="small" color="white" />

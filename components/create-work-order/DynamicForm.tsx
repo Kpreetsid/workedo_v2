@@ -2,6 +2,7 @@ import { useState } from "react";
 import { View, Text, TextInput, Switch, StyleSheet, ToastAndroid } from "react-native";
 import FormInput from "../create-screens/FormInput";
 import ActionButton from "../create-screens/ActionButton";
+import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 
 const DynamicForm = ({ components }: any) => {
   const [formValues, setFormValues] = useState<any>({});
@@ -12,6 +13,7 @@ const DynamicForm = ({ components }: any) => {
 
   const handlePress = () => {
     console.log('handle press = ', formValues)
+    useWorkOrderStore.getState().setWorkForm("sop_form_data", formValues);
     ToastAndroid.show("Submission Complete.", ToastAndroid.SHORT)
   }
 
@@ -58,7 +60,7 @@ const DynamicForm = ({ components }: any) => {
     }
   };
 
-  return <View style={styles.container}>{components.map(renderField)}</View>;
+  return <View style={styles.container}>{Array.isArray(components) ? components.map(renderField) : null}</View>;
 };
 
 export default DynamicForm;

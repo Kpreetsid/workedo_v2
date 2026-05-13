@@ -12,6 +12,8 @@ import PDMDashboard from "@/components/overview-screen/PDMDashboard";
 
 import { getProfileService } from "@/src/services/auth.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
+import { useOverviewStore } from "@/src/store/useOverviewStore";
+import { useCMMSStore } from "@/src/store/useCMMSStore";
 
 export default function Overview() {
 	const [activeTab, setActiveTab] = useState<"pdm" | "cmms">("pdm");
@@ -33,6 +35,17 @@ export default function Overview() {
 		if (latestUser?.status) {
 			setUser(latestUser.data[0]);
 		}
+	};
+
+	const handleTabChange = (nextTab: "pdm" | "cmms") => {
+		if (nextTab === activeTab) return;
+
+		// Reset both dashboard stores so switching tabs does not preserve the
+		// previously selected locations/assets.
+		useOverviewStore.getState().clearOverview();
+		useCMMSStore.getState().clearCMMS();
+
+		setActiveTab(nextTab);
 	};
 
 	const onSelect = (option: string) => {
@@ -65,14 +78,14 @@ export default function Overview() {
 					active={activeTab === "pdm"}
 					label="PDM Dashboard"
 					icon="view-dashboard-edit"
-					onPress={() => setActiveTab("pdm")}
+					onPress={() => handleTabChange("pdm")}
 				/>
 
 				<TabButton
 					active={activeTab === "cmms"}
 					label="CMMS Dashboard"
 					icon="inbox-outline"
-					onPress={() => setActiveTab("cmms")}
+					onPress={() => handleTabChange("cmms")}
 				/>
 			</View>
 

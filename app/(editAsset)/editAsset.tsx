@@ -80,7 +80,10 @@ const editAsset = () => {
   useEffect(() => {
     if (locationObject) {
       console.log('location object in effect = ', locationObject);
-      mapUserToLocationFunc(locationObject.id);
+      const locationId = locationObject?.id ?? locationObject?._id;
+      if (locationId) {
+        mapUserToLocationFunc(locationId);
+      }
     }
   }, [locationObject])
 
@@ -196,6 +199,15 @@ const editAsset = () => {
   const handleEditAsset = async () => {
     const values = useCreateAssetStore.getState();
     console.log('values = ', values);
+    const assignedUsers = Array.isArray(values.assigned_users) ? values.assigned_users : [];
+    const attachments = Array.isArray(values.attachments) ? values.attachments : [];
+    const rawLocationId = values.locationObject?.id ?? values.locationObject?._id;
+    const locationId =
+      typeof values.locationObject === "string" || typeof values.locationObject === "number"
+        ? String(values.locationObject)
+        : rawLocationId
+          ? String(rawLocationId)
+          : "";
 
     if (values.title === "") {
       ToastAndroid.show("Please enter asset name", ToastAndroid.SHORT);
@@ -207,13 +219,13 @@ const editAsset = () => {
       return;
     }
 
-    if (!values.locationObject) {
+    if (!locationId) {
       ToastAndroid.show("Please select parent location", ToastAndroid.SHORT);
       return;
     }
 
 
-    if (values.assigned_users.length === 0) {
+    if (assignedUsers.length === 0) {
       ToastAndroid.show("Please assign users", ToastAndroid.SHORT);
       return;
     }
@@ -238,12 +250,14 @@ const editAsset = () => {
       year: values.year,
       asset_id: values.asset_id,
       asset_build_type: "Not Defined",
-      locationId: values.locationObject?.id,
-      image_path: values.attachments.length > 0 ? values.attachments[0].image_path : "",
+      locationId,
+      image_path: attachments.length > 0
+        ? (attachments[0].image_path ?? attachments[0].fileName ?? "")
+        : "",
 
       // because of backend user object has changed, applying this logic to look for user object, it can be inside nested user object sometimes.
 
-      userIdList: values.assigned_users.map((u: any) => getUserId(u)).filter(Boolean)
+      userIdList: assignedUsers.map((u: any) => getUserId(u)).filter(Boolean)
       // userIdList: values.assigned_users.map((u: any) => u.id),
 
     };

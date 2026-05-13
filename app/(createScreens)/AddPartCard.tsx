@@ -9,18 +9,19 @@ const AddPartCard = ({ item, onAdd }: any) => {
 	return (
 		<View style={styles.card}>
 			{/* LEFT INFO */}
-			<View style={{ width: '50%' }}>
-				<Text style={styles.title}>{item.part_name}</Text>
+			<View style={styles.leftContainer}>
+				<Text style={styles.title} numberOfLines={2}>{item.part_name}</Text>
 
 				<View style={styles.row}>
 					<Text style={styles.code}>{item.part_number}</Text>
-					<View style={styles.dot} />
-					<Text style={styles.spare}>{item.part_type}</Text>
+					{/* <View style={styles.dot} /> */}
 				</View>
+
+				<Text style={styles.spare}>{item.part_type}</Text>
 
 				<View style={styles.row}>
 					<Text style={styles.available}>Available Qty.</Text>
-					<Text style={styles.qty}> {item.quantity}</Text>
+					<Text style={styles.qty}>{item.quantity}</Text>
 				</View>
 
 			</View>
@@ -56,12 +57,20 @@ const styles = StyleSheet.create({
 	card: {
 		marginHorizontal: 20,
 		flexDirection: "row",
+		alignItems: "flex-start",
+		justifyContent: "space-between",
 		borderWidth: StyleSheet.hairlineWidth,
 		borderColor: "#752BDF",
 		borderRadius: 14,
 		padding: 14,
 		marginVertical: 8,
 		backgroundColor: "#fff",
+	},
+	leftContainer: {
+		flex: 1,
+		paddingRight: 12,
+		minWidth: 0,
+		overflow: 'hidden'
 	},
 	title: {
 		fontSize: 12,
@@ -111,7 +120,8 @@ const styles = StyleSheet.create({
 	},
 
 	rightContainer: {
-		width: '50%',
+		width: 128,
+		flexShrink: 0,
 		justifyContent: 'flex-end',
 		alignItems: 'center',
 	},

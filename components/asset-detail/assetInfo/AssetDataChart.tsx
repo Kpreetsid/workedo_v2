@@ -25,7 +25,7 @@ export default function AssetDataChart({
 	const unlock = useGestureLock((s) => s.unlock);
 
 	// console.log('chart series in assets data chart =  = ', chartSeries)
-	console.log('chart series = ', chartSeries.map((s: any) => ({ axis: s.axis, unit: s.unit })));
+	console.log('chart series = ', Array.isArray(chartSeries) ? chartSeries.map((s: any) => ({ axis: s?.axis, unit: s?.unit })) : []);
 
 	// ✅ SAFELY sanitize once (no hooks involved)
 	const validSeries = Array.isArray(chartSeries)
@@ -102,8 +102,8 @@ export default function AssetDataChart({
 			<WebView
 				ref={ref}
 				originWhitelist={["*"]}
-				// source={require("../../../assets/charts/chart.html")}
-				source={{ uri: chartUrl }}
+				source={require("../../../assets/charts/chart.html")}
+				// source={{ uri: chartUrl }}
 
 				javaScriptEnabled={true}
 				domStorageEnabled={true}
@@ -146,7 +146,7 @@ export default function AssetDataChart({
 			{/* Empty state overlay */}
 			{shouldShowEmpty && (
 				<View style={styles.overlay}>
-					<Text style={styles.emptyText}>No data found for chart.</Text>
+					<Text style={styles.emptyText}>Unable to load chart data.</Text>
 				</View>
 			)}
 

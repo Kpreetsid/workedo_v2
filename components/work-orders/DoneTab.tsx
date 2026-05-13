@@ -1,44 +1,53 @@
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, Text, View, ToastAndroid } from "react-native";
+import Fonts from "@/constants/Typography";
 import WorkOrderCard from "@/components/work-orders/WorkOrderCard";
-import { useCallback, useEffect, useState } from "react";
-import { FlashList } from "@shopify/flash-list";
+import { useCallback, useState } from "react";
 import { getWorkOrders } from "@/src/services/work-order.service";
 import { WorkOrder } from "@/src/types/workOrder";
-import { ToastAndroid } from "react-native";
 import { useFocusEffect } from "expo-router";
 
 export default function DoneTab() {
 	const [selectedId, setSelectedId] = useState<string | null>(null);
 	const [workorders, setWorkOrders] = useState<WorkOrder[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
-
-	const [loading, setLoading] = useState(false)
+	const [loading, setLoading] = useState(false);
 
 	useFocusEffect(
 		useCallback(() => {
-			setLoading(true)
+			setLoading(true);
 			fetchWorkOrders();
 		}, [])
 	);
 
 	const fetchWorkOrders = async () => {
-		console.log("fetch work orders");
+		setLoading(true);
 
 		try {
 			const res = await getWorkOrders('done');
+			const incoming = Array.isArray(res?.data) ? (res.data as WorkOrder[]) : [];
 
-			if (res?.status && res?.data) {
-				const allWorkOrders = res.data as WorkOrder[];
-				setWorkOrders(allWorkOrders.reverse());
-				setLoading(false)
+			if (res?.message === "No data found" || (!res?.status && incoming.length === 0) || incoming.length === 0) {
+				setWorkOrders([]);
+				return;
 			}
+
+			if (res?.status && incoming.length > 0) {
+				setWorkOrders([...incoming].reverse());
+				return;
+			}
+
+			setWorkOrders([]);
+			ToastAndroid.show(res?.message || "Something went wrong", ToastAndroid.SHORT);
 		} catch (error: any) {
-			console.log("error =", error);
-			setLoading(false)
-			ToastAndroid.show(error?.message || "Something went wrong", ToastAndroid.SHORT);
 			if (error?.message === "No data found") {
-				setWorkOrders([])
+				setWorkOrders([]);
+				return;
 			}
+
+			setWorkOrders([]);
+			ToastAndroid.show(error?.message || "Something went wrong", ToastAndroid.SHORT);
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -48,46 +57,60 @@ export default function DoneTab() {
 		setRefreshing(false);
 	};
 
-	if (loading) {
-		<View style={{ marginTop: 20 }}>
-			<ActivityIndicator size={28} />
-		</View>
-	}
-
 	return (
-		<FlatList
-			data={workorders || []}
-			removeClippedSubviews={false}
-			keyExtractor={(item) => item.id}
-			contentContainerStyle={[
-				styles.listContainer,
-				{ flexGrow: 1 }, // ensure empty component shows
-			]}
-			renderItem={({ item }) => (
-				<WorkOrderCard item={item} isSelected={selectedId === item.id} />
-			)}
-			refreshing={refreshing}
-			onRefresh={handleRefresh}
-			ListEmptyComponent={
-				<View style={{ flex: 1, alignItems: "center", justifyContent: "center", marginTop: 40 }}>
-					<Text style={styles.footerText}>No work orders found</Text>
-				</View>
-			}
-		// selection for the work orders
-		// onPress={() => setSelectedId(item.id)}
-		/>
+		<View style={styles.container}>
+			<FlatList
+				style={styles.list}
+				data={workorders || []}
+				removeClippedSubviews={false}
+				keyExtractor={(item) => item.id}
+				contentContainerStyle={[
+					styles.listContainer,
+					workorders.length === 0 && styles.emptyListContainer,
+				]}
+				renderItem={({ item }) => (
+					<WorkOrderCard item={item} isSelected={selectedId === item.id} />
+				)}
+				refreshing={refreshing}
+				onRefresh={handleRefresh}
+				ListEmptyComponent={
+					<View style={styles.emptyState}>
+						{loading || refreshing ? (
+							<ActivityIndicator size={28} />
+						) : (
+							<Text style={styles.footerText}>No Work Orders found!</Text>
+						)}
+					</View>
+				}
+			/>
+		</View>
 	)
 }
 
 const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+	},
+	list: {
+		flex: 1,
+	},
 	listContainer: {
 		paddingHorizontal: 20,
 		paddingVertical: 12
 	},
+	emptyListContainer: {
+		flexGrow: 1,
+	},
+	emptyState: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+		paddingHorizontal: 20,
+	},
 	footerText: {
-		fontSize: 12,
+		fontSize: 14,
 		color: "#000000",
 		textAlign: "center",
-		marginVertical: 12
+		fontFamily: Fonts.regular,
 	}
 })

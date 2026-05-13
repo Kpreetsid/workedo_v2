@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Fonts from "@/constants/Typography";
 import { CloseIcon } from "@/constants/IconProvider";
 
@@ -14,7 +14,8 @@ interface MoreInfoModalProps {
 const MoreInfoModal: FC<MoreInfoModalProps> = ({ visible, onClose, estimatedTime, requestedBy, createdOn }) => {
 	return (
 		<Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-			<Pressable style={styles.modalOverlay} onPress={onClose}>
+			<View style={styles.modalOverlay}>
+				<Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
 				<View style={styles.bottomSheet}>
 					{/* Header */}
 					<View style={styles.headerRow}>
@@ -24,23 +25,24 @@ const MoreInfoModal: FC<MoreInfoModalProps> = ({ visible, onClose, estimatedTime
 						</Pressable>
 					</View>
 
-					{/* Info Row */}
-					<View style={styles.infoRow}>
-						<View style={styles.infoCol}>
-							<Text style={styles.label}>Estimated Time</Text>
-							<Text style={styles.value}>{estimatedTime}</Text>
+					<ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sheetContent}>
+						<View style={styles.infoRow}>
+							<View style={styles.infoCol}>
+								<Text style={styles.label}>Estimated Time</Text>
+								<Text style={styles.value}>{estimatedTime}</Text>
+							</View>
+							<View style={styles.infoCol}>
+								<Text style={styles.label}>Requested By</Text>
+								<Text style={styles.value}>{requestedBy}</Text>
+							</View>
+							<View style={styles.infoCol}>
+								<Text style={styles.label}>Created On</Text>
+								<Text style={styles.value}>{createdOn}</Text>
+							</View>
 						</View>
-						<View style={styles.infoCol}>
-							<Text style={styles.label}>Requested By</Text>
-							<Text style={styles.value}>{requestedBy}</Text>
-						</View>
-						<View style={styles.infoCol}>
-							<Text style={styles.label}>Created On</Text>
-							<Text style={styles.value}>{createdOn}</Text>
-						</View>
-					</View>
+					</ScrollView>
 				</View>
-			</Pressable>
+			</View>
 		</Modal>
 	);
 };
@@ -58,6 +60,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 20,
 		paddingVertical: 16,
 		marginBottom: 20,
+		maxHeight: "70%",
 	},
 	headerRow: {
 		flexDirection: "row",
@@ -71,28 +74,33 @@ const styles = StyleSheet.create({
 		color: "#742BDE",
 	},
 	infoRow: {
-		flexDirection: "row",
-		justifyContent: "space-between",
+		flexDirection: "column",
 		borderTopWidth: 0.5,
 		borderColor: "#E1E8EE",
 		paddingTop: 12,
+		gap: 12,
 	},
 	infoCol: {
-		flex: 1,
-		alignItems: "center",
+		width: "100%",
+		alignItems: "flex-start",
 	},
 	label: {
 		fontFamily: Fonts.regular,
 		fontSize: 11,
 		color: "#555",
 		marginBottom: 4,
-		textAlign: "center",
+		textAlign: "left",
 	},
 	value: {
 		fontFamily: Fonts.semiBold,
 		fontSize: 12,
 		color: "#000",
-		textAlign: "center",
+		textAlign: "left",
+		flexWrap: "wrap",
+		width: "100%",
+	},
+	sheetContent: {
+		paddingBottom: 6,
 	},
 });
 

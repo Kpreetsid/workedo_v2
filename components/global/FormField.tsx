@@ -134,6 +134,7 @@ export const FormField = React.memo(
 					onSelect={(val) => setValue(field, val)}
 					containerStyle={styles}
 					required={required}
+					comingFrom={comingFrom}
 				/>
 			);
 		}

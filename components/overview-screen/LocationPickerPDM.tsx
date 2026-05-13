@@ -87,8 +87,8 @@ export default function LocationPickerPDM({
 		onClose();
 	};
 
-	const renderNode = (node: any, depth = 0) => {
-		const isSelected = selectedLocationsLocal.some((location) => location.id === node.id);
+	const renderNode = (node: any, depth = 0, ancestorSelected = false) => {
+		const isSelected = ancestorSelected || selectedLocationsLocal.some((location) => location.id === node.id);
 
 		return (
 			<View key={node.id} style={{ marginLeft: depth * 18, marginVertical: 6 }}>
@@ -129,11 +129,11 @@ export default function LocationPickerPDM({
 				</View>
 
 				{/* Children */}
-				{expanded[node.id] &&
-					node.childs.map((child: any) => renderNode(child, depth + 1))}
-			</View>
-		);
-	};
+					{expanded[node.id] &&
+						node.childs?.map((child: any) => renderNode(child, depth + 1, isSelected))}
+				</View>
+			);
+		};
 
 	return (
 		<Modal visible={visible} transparent animationType="fade">

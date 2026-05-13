@@ -13,6 +13,7 @@ interface WorkOrderStore {
 	nature_of_work: string;
 	sop_form_id: string;
 	sop_form_name: string;
+	sop_form_data: Record<string, any>;
 	priority: string;
 	completion_days: string;
 	parts: any[];
@@ -35,6 +36,7 @@ export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
 	nature_of_work: "Preventive",
 	sop_form_id: "",
 	sop_form_name: "",
+	sop_form_data: {},
 	priority: "",
 	completion_days: "",
 	parts: [],
@@ -57,6 +59,7 @@ export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
 			nature_of_work: "",
 			sop_form_id: "",
 			sop_form_name: "",
+			sop_form_data: {},
 			priority: "",
 			completion_days: "",
 			parts: [],

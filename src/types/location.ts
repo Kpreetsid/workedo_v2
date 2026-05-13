@@ -11,7 +11,7 @@ export interface Location {
     // optional image and hierarchy fields
     top_level_location_image?: string;
     image_path?: string;
-    parent_id?: string;
+    parent_id?: string | { id?: string; location_name: string };
   
     // meta fields
     visible: boolean;

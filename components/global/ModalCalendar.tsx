@@ -1,5 +1,5 @@
 import { Modal, Pressable, StyleSheet, View } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Calendar } from "react-native-calendars";
 import Header from "./Header";
 import moment from "moment";
@@ -11,6 +11,7 @@ interface ModalCalendarProps {
 	onSelectDate: (date: string) => void;
 	activeDateField: "start_date" | "end_date";
 	startDate?: string | null;
+	currentDate?: string | null;
 }
 
 const ModalCalendar = ({
@@ -18,18 +19,32 @@ const ModalCalendar = ({
 	setShowCalendar,
 	onSelectDate,
 	activeDateField,
-	startDate
+	startDate,
+	currentDate,
 }: ModalCalendarProps) => {
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+	const normalizedCurrentDate =
+		currentDate && moment(currentDate, "YYYY-MM-DD", true).isValid()
+			? moment(currentDate, "YYYY-MM-DD").format("YYYY-MM-DD")
+			: null;
+	const fallbackCurrentDate = moment().format("YYYY-MM-DD");
+
+	useEffect(() => {
+		if (!showCalendar) return;
+
+		setSelectedDate(normalizedCurrentDate);
+	}, [showCalendar, normalizedCurrentDate, activeDateField]);
 
 	const onDayPress = (day: any) => {
 		setSelectedDate(day.dateString);
 	};
 
 	const onDone = () => {
-		if (!selectedDate) return;
+		const dateToUse = selectedDate || normalizedCurrentDate;
+		if (!dateToUse) return;
 
-		onSelectDate(selectedDate);
+		onSelectDate(dateToUse);
 		setShowCalendar(false);
 	};
 
@@ -57,6 +72,7 @@ const ModalCalendar = ({
 
 				<View style={{ padding: 16 }}>
 					<Calendar
+						current={selectedDate || normalizedCurrentDate || fallbackCurrentDate}
 						onDayPress={onDayPress}
 						minDate={minDate}
 						markedDates={

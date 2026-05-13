@@ -45,7 +45,10 @@ const addParts = () => {
 	console.log('use store = ', useStore);
 
 	const selectedParts = useStore.parts;
-	const location_id = useStore.location?.id;
+	const location_id =
+		typeof useStore.location === "string" || typeof useStore.location === "number"
+			? String(useStore.location)
+			: useStore.location?.id ?? useStore.location?._id ?? "";
 
 	useEffect(() => {
 		fetchParts();
@@ -53,6 +56,7 @@ const addParts = () => {
 
 	const fetchParts = async () => {
 		try {
+			if (!location_id) return;
 			const res = await getParts(location_id);
 			if (res.status && Array.isArray(res.data)) setParts(res.data);
 		} catch (err) {
@@ -70,7 +74,7 @@ const addParts = () => {
 			part_number: item.part_number,
 			part_type: item.part_type,
 			unit: item.unit,
-			estimatedQuantity: Number(qty),
+			estimatedQuantity: Number(qty)
 		};
 
 		console.log('part obj = ', partObj);
@@ -152,6 +156,8 @@ const styles = StyleSheet.create({
 		flexWrap: "wrap",
 		marginHorizontal: 20,
 		marginTop: 10,
+		marginBottom: 8,
+		paddingVertical: 4,
 	},
 	chip: {
 		flexDirection: "row",

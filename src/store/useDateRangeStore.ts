@@ -1,4 +1,8 @@
+import moment from "moment";
 import { create } from "zustand";
+
+const defaultStartDate = moment().subtract(1, "week").format("YYYY-MM-DD");
+const defaultEndDate = moment().format("YYYY-MM-DD");
 
 interface DateRangeState {
   startDate: string | null;
@@ -9,8 +13,8 @@ interface DateRangeState {
 }
 
 export const useDateRangeStore = create<DateRangeState>((set) => ({
-  startDate: null,
-  endDate: null,
+  startDate: defaultStartDate,
+  endDate: defaultEndDate,
   rangeVersion: 0,
   setRange: (start, end) =>
     set((state) => ({
@@ -20,8 +24,8 @@ export const useDateRangeStore = create<DateRangeState>((set) => ({
     })),
   clear: () =>
     set((state) => ({
-      startDate: null,
-      endDate: null,
+      startDate: defaultStartDate,
+      endDate: defaultEndDate,
       rangeVersion: state.rangeVersion + 1,
     })),
 }));

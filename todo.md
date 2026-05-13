@@ -820,3 +820,41 @@ For test user
 6.unable to create work request
 
 7.when I create work request heading shown edit work request
+
+
+
+
+
+
+
+
+
+
+
+
+April
+PDM Dashboard : When I select locations (e.g., 2, 3) in the PDM dashboard and move to the CMMS dashboard, then switch back again, the previously selected locations are still selected.
+
+ Report Testing : In the location dropdown, the count is showing 1, but the child location count should also be included.
+
+ Alarm Summary Chart: When I hover over the lowest point of the chart, the tooltip overlaps with the data section.
+
+ CMMS Dashboard : In WO Priority, please add a color icon for the “Urgent” priority.
+
+ Location : When navigating to the location page, please add the danger color as well. Currently, three colors are shown, but the danger color is missing.
+
+Location: When I click on the location option, the last asset in the list is not visible properly. Please adjust the padding or spacing.
+
+Work Order: When creating a work order, the task and form should be visible on the page only if they are created; otherwise, they should not be displayed.
+
+work order-work order details when click on more info then not able to see full data.
+
+work order-for done status not required edit option should be only delete
+
+Work Order – When I create a work order, fill the Task and Form options, and click Submit, a “Successfully created” popup appears, but the page remains open instead of closing or redirecting.
+
+Preventive – On the View page, the “Parts Attached” section is not displayed properly. The padding should be reduced to improve visibility.
+
+Preventive – On the View page, the “Created On” and “Updated On” fields are not showing any data.
+
+Asset-spectrum required to set highpass and lowpass value

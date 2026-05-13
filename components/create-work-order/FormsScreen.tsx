@@ -81,7 +81,7 @@ const FormsScreen = () => {
             />
 
             {
-              selectedForm && <DynamicForm components={selectedForm?.json_temp?.components} />
+              selectedForm && <DynamicForm key={selectedForm?.id || selectedForm?.name} components={selectedForm?.json_temp?.components} />
             }
           </View>
         }

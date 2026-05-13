@@ -30,26 +30,34 @@ export default function ToDoTab() {
 	// FETCH WORK ORDERS
 	// -------------------------
 	const fetchWorkOrders = async (pageToLoad: number, isRefresh = false) => {
+		if (pageToLoad === 1) {
+			setLoading(true);
+		} else {
+			setLoadingMore(true);
+		}
+
 		try {
-
-			// if (pageToLoad === 1 || isRefresh) {
-			// 	setLoading(true);
-			// } else {
-			// 	setLoadingMore(true);
-			// }
-
 			const res = await workOrdersPaginated(
 				TABS[selectedButton],
 				pageToLoad,
 				10
 			);
 
-			console.log('res work order = ', res);
+			const incoming = Array.isArray(res?.data) ? (res.data as WorkOrder[]) : [];
+			const isNoDataResponse =
+				res?.message === "No data found" ||
+				(!res?.status && incoming.length === 0) ||
+				incoming.length === 0;
 
-			if (res?.status && res?.data) {
-				console.log('res work order if = ', res);
-				const incoming = res.data as WorkOrder[];
+			if (isNoDataResponse) {
+				if (pageToLoad === 1 || isRefresh) {
+					setWorkOrders([]);
+				}
+				setHasMore(false);
+				return;
+			}
 
+			if (res?.status && incoming.length > 0) {
 				setHasMore(res?.pagination?.hasNextPage ?? false);
 
 				if (pageToLoad === 1 || isRefresh) {
@@ -59,20 +67,29 @@ export default function ToDoTab() {
 				}
 
 				setPage(prev => prev + 1);
-			} else {
-				console.log('res work order else = ', res);
+			} else if (pageToLoad === 1 || isRefresh) {
+				setWorkOrders([]);
 			}
 		} catch (error: any) {
-			console.log('res work order catch')
-			setWorkOrders([])
+			if (error?.message === "No data found") {
+				if (pageToLoad === 1 || isRefresh) {
+					setWorkOrders([]);
+				}
+				setHasMore(false);
+				return;
+			}
+
+			if (pageToLoad === 1 || isRefresh) {
+				setWorkOrders([]);
+			}
+
 			ToastAndroid.show(
 				error?.message || "Something went wrong",
 				ToastAndroid.SHORT
 			);
-			// setLoading(false);
 		} finally {
-			// setLoading(false);
-			// setLoadingMore(false);
+			setLoading(false);
+			setLoadingMore(false);
 		}
 	};
 
@@ -143,6 +160,15 @@ export default function ToDoTab() {
 								]}
 								onPress={() => {
 									setPage(1);
+									setHasMore(true);
+
+									if (selectedButton === index) {
+										fetchWorkOrders(1, true);
+										return;
+									}
+
+									setWorkOrders([]);
+									setLoading(true);
 									setSelectedButton(index);
 								}}
 							>
@@ -165,24 +191,30 @@ export default function ToDoTab() {
 				)}
 			</View>
 
-			{/* INITIAL LOADER */}
-			{loading && page === 1 && (
-				<View style={{ marginTop: 20 }}>
-					<ActivityIndicator size={28} />
-				</View>
-			)}
-
 			{/* LIST */}
 			<FlatList
+				style={styles.list}
 				data={workOrders}
 				keyExtractor={(item, index) => `${item.id}-${index}`}
 				renderItem={renderWorkOrderItem}
 				removeClippedSubviews={false}
 				refreshing={refreshing}
 				onRefresh={handleRefresh}
-				contentContainerStyle={styles.listContainer}
+				contentContainerStyle={[
+					styles.listContainer,
+					workOrders.length === 0 && styles.emptyListContainer,
+				]}
 				onEndReached={handleEndReached}
 				onEndReachedThreshold={0.1}
+				ListEmptyComponent={
+					<View style={styles.emptyState}>
+						{loading || refreshing ? (
+							<ActivityIndicator size={28} />
+						) : (
+							<Text style={styles.emptyText}>No Work Orders found!</Text>
+						)}
+					</View>
+				}
 				ListFooterComponent={
 					loadingMore ? <ActivityIndicator size={28} /> : null
 				}
@@ -209,8 +241,26 @@ const styles = StyleSheet.create({
 	buttonText: {
 		fontSize: 10,
 	},
+	list: {
+		flex: 1,
+	},
 	listContainer: {
 		paddingHorizontal: 20,
 		paddingVertical: 12,
+	},
+	emptyListContainer: {
+		flexGrow: 1,
+	},
+	emptyState: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+		paddingHorizontal: 20,
+	},
+	emptyText: {
+		fontSize: 14,
+		color: "#000000",
+		textAlign: "center",
+		fontFamily: Fonts.regular,
 	},
 });

@@ -49,24 +49,24 @@ export default function InfoCards() {
 				stats.NotDefined,
 			color: "#3b82f6",
 		},
-		{
-			id: 2,
-			title: `Assets in\nDanger Zone`,
-			value: stats.Danger,
-			color: "#FFC107",
-		},
+			{
+				id: 2,
+				title: `Assets in\nDanger Zone`,
+				value: stats.Danger,
+				color: "#F97316",
+			},
 		{
 			id: 3,
 			title: `Assets in\nCritical Zone`,
 			value: stats.Critical,
 			color: "#DC3545",
 		},
-		{
-			id: 4,
-			title: `Un-Addressed\nAlarms`,
-			value: stats.openAlarms,
-			color: "#16CCF1",
-		},
+			{
+				id: 4,
+				title: `Un-Addressed\nAlarms`,
+				value: stats.openAlarms,
+				color: "#FFC107",
+			},
 		{
 			id: 5,
 			title: `Total End\nPoints`,

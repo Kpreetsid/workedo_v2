@@ -485,26 +485,6 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 				asset_data={asset_data}
 			/>
 
-
-			{/* ----------------------------- */}
-			{/*            LEGEND             */}
-			{/* ----------------------------- */}
-			{/* <View style={styles.legendRow}>
-				{orderedSeries.filter(Boolean).map((s: any) => (
-					<View key={s.axis} style={styles.legendItem}>
-						<View
-							style={[
-								styles.legendDot,
-								{ backgroundColor: axisColors[s.axis] },
-							]}
-						/>
-						<Text style={styles.legendText}>
-							{selectedValueType}-{s.axis}
-						</Text>
-					</View>
-				))}
-			</View> */}
-
 		</ScrollView >
 	)
 }

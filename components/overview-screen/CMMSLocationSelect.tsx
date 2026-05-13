@@ -7,17 +7,51 @@ import { assetTreeForSingleLocation } from "@/src/services/asset.service";
 import { useCMMSStore } from "@/src/store/useCMMSStore";
 import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 import { type LocationAsset } from "@/src/types/locationAsset";
+import { type Location } from "@/src/types/location";
 import DateRangeCalendar from "./DateRangeCalendar";
 import LocationPickerCMMS from "./LocationPickerCMMS";
 import AssetPickerCMMS from "./AssetPickerCMMS";
 
+type LocationNode = Pick<Location, "id" | "location_name"> & {
+	childs?: LocationNode[];
+};
+
 const collectParentAssetIds = (assets: LocationAsset[]) =>
 	assets.map((asset) => asset.id).filter((id): id is string => Boolean(id));
+
+const countAssetNodes = (assets: LocationAsset[]): number =>
+	assets.reduce((total, asset) => {
+		const childCount = asset.childs?.length ? countAssetNodes(asset.childs as LocationAsset[]) : 0;
+		return total + 1 + childCount;
+	}, 0);
+
+const collectLocationIds = (node: LocationNode): string[] => {
+	const childIds = node.childs?.flatMap((child) => collectLocationIds(child)) ?? [];
+	return [node.id, ...childIds];
+};
+
+const countSelectedLocations = (selectedIds: string[], locations: LocationNode[]) => {
+	const selectedSet = new Set(selectedIds);
+	const countedIds = new Set<string>();
+
+	const visit = (node: LocationNode) => {
+		if (selectedSet.has(node.id)) {
+			collectLocationIds(node).forEach((id) => countedIds.add(id));
+			return;
+		}
+
+		node.childs?.forEach(visit);
+	};
+
+	locations.forEach(visit);
+	return countedIds.size;
+};
 
 export default function CMMSDashboardLocationSelect() {
 	const [locationOpen, setLocationOpen] = useState(false);
 	const [assetOpen, setAssetOpen] = useState(false);
 	const [showCalendar, setShowCalendar] = useState(false);
+	const [locations, setLocations] = useState<LocationNode[]>([]);
 
 	const parentLocations = useCMMSStore((state) => state.parentLocations);
 	const childAssets = useCMMSStore((state) => state.childAssets);
@@ -34,6 +68,9 @@ export default function CMMSDashboardLocationSelect() {
 
 	const fetchLocationsTree = async () => {
 		const res = await locationTree();
+		if (res?.data?.length > 0) {
+			setLocations(res.data as LocationNode[]);
+		}
 		const hasSelectedLocation = useCMMSStore.getState().parentLocations.length > 0;
 		if (res?.data?.length > 0 && !hasSelectedLocation) {
 			setParentLocations([{ id: res.data[0].id, location_name: res.data[0].location_name }]);
@@ -62,9 +99,10 @@ export default function CMMSDashboardLocationSelect() {
 		}
 	};
 
-	const selectedLocationCount = parentLocations.length;
-	const parentAssetIds = new Set(childAssets.map((asset) => asset.id));
-	const selectedAssetCount = selectedAssets.filter((id) => parentAssetIds.has(id)).length;
+	const selectedLocationCount = locations.length
+		? countSelectedLocations(parentLocations.map((location) => location.id), locations)
+		: parentLocations.length;
+	const selectedAssetCount = childAssets.length ? countAssetNodes(childAssets as LocationAsset[]) : selectedAssets.length;
 
 	return (
 		<>

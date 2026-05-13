@@ -9,7 +9,7 @@ import DropDownInput from "@/components/create-screens/DropDownInput";
 import React, { useEffect, useRef, useState } from "react";
 import { useLocationStore } from "@/src/store/useLocationStore";
 import { usePartFormStore } from "@/src/store/usePartFormStore";
-import { createPart, updateFullPart, updatePart } from "@/src/services/part.service";
+import { createPart, getPartTypes, updateFullPart, updatePart } from "@/src/services/part.service";
 import { FormField } from "@/components/global/FormField";
 import LocationPickerModal from "@/components/create-work-order/LocationPickerModal";
 
@@ -25,12 +25,27 @@ export default function CreatePart() {
 	const [partId, setPartId] = useState("");
 	const { setPartFormValue, resetPartForm, isLoaded } = usePartFormStore();
 
+	const [partTypes, setPartTypes] = useState([]);
+	const [selectedPartTypeId, setSelectedPartTypeId] = useState("");
+
 	useEffect(() => {
+		fetchPartTypes();
 		return () => {
 			resetPartForm();
 		}
 	}, [])
 
+	const fetchPartTypes = async () => {
+		try {
+			const res = await getPartTypes();
+			console.log('res = ', res);
+			if(res.status) {
+				setPartTypes(res?.data || []);
+			}
+		} catch (error) {
+			console.error('Error fetching part types:', error);
+		}
+	}
 
 	useEffect(() => {
 		if (params?.data && !isLoaded) {
@@ -59,6 +74,13 @@ export default function CreatePart() {
 		console.log('in handle submit');
 		const data: any = usePartFormStore.getState();
 		console.log("📦 Data:", data);
+		const rawLocationId = data.location?.id ?? data.location?._id;
+		const locationId =
+			typeof data.location === "string" || typeof data.location === "number"
+				? String(data.location)
+				: rawLocationId
+					? String(rawLocationId)
+					: "";
 
 		// ✅ Basic validation
 		const required = ["part_name", "description", "location", "part_number", "available_quantity", "min_stock_quantity", "unit_cost"];
@@ -70,7 +92,7 @@ export default function CreatePart() {
 			}
 		}
 
-		if (!data.location?.id) {
+		if (!locationId) {
 			ToastAndroid.show("Location is required", ToastAndroid.SHORT);
 			return;
 		}
@@ -79,13 +101,14 @@ export default function CreatePart() {
 		const payload = {
 			part_name: data.part_name.trim(),
 			part_number: data.part_number.trim(),
-			part_type: data.selected_part || "Spare 1",
+			part_type: partTypes.find((part: any) => part.name === data.selected_part)?.id || "",
 			description: data.description.trim(),
 			quantity: Number(data.available_quantity) || 0,
 			min_quantity: Number(data.min_stock_quantity) || 0,
 			unit: data.uom,
 			cost: Number(data.unit_cost) || 0,
-			location_id: data.location?.id || "",
+			location_id: locationId,
+			currency: "INR"
 		};
 
 		console.log("📦 Final Payload:", payload);
@@ -98,13 +121,18 @@ export default function CreatePart() {
 					ToastAndroid.show("Part updated successfully!", ToastAndroid.SHORT);
 					usePartFormStore.getState().resetPartForm();
 					router.back();
+				} else {
+					ToastAndroid.show("Failed to update part!", ToastAndroid.SHORT);
 				}
 			} else {
 				const res = await createPart(payload);
 				console.log("✅ Response:", res);
-
-				ToastAndroid.show("Part created successfully!", ToastAndroid.SHORT);
-				router.back();
+				if (res?.status) {
+					ToastAndroid.show("Part created successfully!", ToastAndroid.SHORT);
+					router.back();
+				} else {
+					ToastAndroid.show("Failed to create part!", ToastAndroid.SHORT);
+				}
 			}
 		} catch (error) {
 			console.error("❌ Error creating part:", error);
@@ -165,7 +193,7 @@ export default function CreatePart() {
 					label="Part Type"
 					type="dropdown"
 					field="selected_part"
-					options={["Spare 1", "Spare 2", "Spare 3"]}
+					options={partTypes.map((part: any) => part.name)}
 					router={router}
 					comingFrom="createPart"
 					store={usePartFormStore}

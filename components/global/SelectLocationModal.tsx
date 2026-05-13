@@ -56,7 +56,15 @@ const SelectLocationModal: React.FC<SelectLocationModalProps> = ({
 								</View>
 								<MapIcon />
 							</Pressable>)}
-						contentContainerStyle={styles.container}
+						contentContainerStyle={[
+							styles.container,
+							locations.length === 0 && styles.emptyListContainer,
+						]}
+						ListEmptyComponent={
+							<View style={styles.emptyState}>
+								<Text style={styles.emptyText}>No Locations found!</Text>
+							</View>
+						}
 					/>
 				</View>
 			</>
@@ -88,6 +96,21 @@ const styles = StyleSheet.create({
 		paddingTop: 15,
 		paddingBottom: 105,
 		gap: 10
+	},
+	emptyListContainer: {
+		flexGrow: 1,
+	},
+	emptyState: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+		paddingHorizontal: 20,
+	},
+	emptyText: {
+		fontSize: 14,
+		fontFamily: Fonts.regular,
+		color: "#000",
+		textAlign: "center",
 	},
 	locationButton: {
 		borderWidth: 0.6,

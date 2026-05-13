@@ -24,7 +24,7 @@ interface AssetsTabInterface {
 export default function AssetsTab({
 	selection = true,
 }: AssetsTabInterface) {
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 	let { comingFrom, card_id } = useLocalSearchParams();
 	console.log('rendering assets = ', comingFrom, card_id);
 
@@ -96,7 +96,10 @@ export default function AssetsTab({
 	}, [card_id])
 
 	useEffect(() => {
-		if (!assets.length) return;
+		if (!assets.length) {
+			setFilteredAssets([]);
+			return;
+		}
 
 		// If coming from overview and filter is NOT ignored → run sorting
 		if (cardId) {
@@ -112,21 +115,31 @@ export default function AssetsTab({
 			setFilteredAssets([]); // ensures FlashList uses full assets array
 			fetchAssetsHealthLocation(assets)
 		}
-	}, [assets]);
+	}, [assets, childAssets, cardId]);
 
 	const fetchAssets = async () => {
-		setLoading(true)
+		setLoading(true);
 		try {
 			const res = await assetTree();
+			const incoming = Array.isArray(res?.data) ? (res.data as Asset[]) : [];
 
-			if (res.status) {
-				console.log('res assets = ', res?.data);
-				setAssets(res.data as Asset[]);
-				setLoading(false)
+			if (res?.message === "No data found" || !res?.status || incoming.length === 0) {
+				setAssets([]);
+				return;
 			}
+
+			console.log('res assets = ', res?.data);
+			setAssets(incoming);
 		} catch (err: any) {
-			setLoading(false)
+			if (err?.message === "No data found") {
+				setAssets([]);
+				return;
+			}
+
 			console.error("Login failed:", err);
+			setAssets([]);
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -142,6 +155,8 @@ export default function AssetsTab({
 			console.log('filteredAssets1 = ', filteredAssets1)
 			// now filter based on asset status
 			fetchAssetsHealthLocation(filteredAssets1);
+		} else {
+			setFilteredAssets([]);
 		}
 	}
 
@@ -154,13 +169,14 @@ export default function AssetsTab({
 		console.log("obj = ", obj);
 		// return;
 		const resp = await assetsHealthLocation(obj);
+		const healthData = Array.isArray(resp?.data) ? resp.data : [];
 		console.log("resp health location = ", resp, card_id);
 		if (cardId) {
 			if (card_id === "1") {
 				console.log("inside if card_id 1");
 
 				const enriched = filtered.map((asset: Asset) => {
-					const statusObj = resp.data.find(
+					const statusObj = healthData.find(
 						(item: any) => item.asset_id === asset.id
 					);
 
@@ -173,7 +189,7 @@ export default function AssetsTab({
 				setFilteredAssets(enriched);
 			} else if (card_id === '2') {
 				console.log('inside if card_id 2')
-				let dangerAssets = resp?.data.filter((asset: any) => asset?.asset_status === "Danger")
+				let dangerAssets = healthData.filter((asset: any) => asset?.asset_status === "Danger")
 				if (dangerAssets.length > 0) {
 					let found = filtered.find((a: Asset) => a.id === dangerAssets[0].asset_id);
 
@@ -192,7 +208,7 @@ export default function AssetsTab({
 			} else if (card_id === '3') {
 				console.log('inside if card_id 3');
 
-				const match = resp?.data.find(
+				const match = healthData.find(
 					(item: any) => item.asset_status === "Critical"
 				);
 
@@ -219,7 +235,7 @@ export default function AssetsTab({
 		} else {
 			console.log("inside else");
 			const enriched = filtered.map((asset: Asset) => {
-				const statusObj = resp.data.find(
+				const statusObj = healthData.find(
 					(item: any) => item.asset_id === asset.id
 				);
 
@@ -313,64 +329,75 @@ export default function AssetsTab({
 	}, [searchedFilteredAssets])
 
 	return (
-		<>
+		<View style={styles.container}>
 			{
 				!selection && <SearchBar placeholder="Search Asset..." value={searchText} onChangeText={setSearchText} />
 			}
 
-			{
-				loading ?
-					<ActivityIndicator size={"large"} />
-					:
-					<FlashList
-						ListHeaderComponent={() => {
-							return (
-								<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-									{
+			<FlashList
+				style={styles.list}
+				ListHeaderComponent={() => {
+					return (
+						<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+							{
 
-										// !selection && (
-										// 	<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createAsset")}>
-										// 		<Text style={styles.buttonText}>Create Asset</Text>
-										// 	</TouchableOpacity>
-										// )
-									}
+								// !selection && (
+								// 	<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push("/createAsset")}>
+								// 		<Text style={styles.buttonText}>Create Asset</Text>
+								// 	</TouchableOpacity>
+								// )
+							}
 
-									{
-										cardId && (
-											<TouchableOpacity style={styles.clearFilters} onPress={clearFilters}>
-												<Text style={styles.clearFiltersText}>Clear Filters</Text>
-											</TouchableOpacity>
-										)
-									}
+							{
+								cardId && (
+									<TouchableOpacity style={styles.clearFilters} onPress={clearFilters}>
+										<Text style={styles.clearFiltersText}>Clear Filters</Text>
+									</TouchableOpacity>
+								)
+							}
 
-								</View>
-							);
-						}}
-						data={searchText ? searchedFilteredAssets : filteredAssets}
-						keyExtractor={(item) => item.id}
-						renderItem={
-							({ item }: { item: Asset }) => <AssetsCard
-								asset={item}
-								handleDeleteAsset={handleDeleteAsset}
-								handleCopyAsset={handleCopyAsset}
-							/>}
-						contentContainerStyle={styles.listContainer}
-						refreshing={refreshing}
-						onRefresh={handleRefresh}
-					/>
-			}
+						</View>
+					);
+				}}
+				data={searchText ? searchedFilteredAssets : filteredAssets}
+				keyExtractor={(item) => item.id}
+				renderItem={
+					({ item }: { item: Asset }) => <AssetsCard
+						asset={item}
+						handleDeleteAsset={handleDeleteAsset}
+						handleCopyAsset={handleCopyAsset}
+					/>}
+				contentContainerStyle={[
+					styles.listContainer,
+					(searchText ? searchedFilteredAssets : filteredAssets).length === 0 && styles.emptyListContainer,
+				]}
+				refreshing={refreshing}
+				onRefresh={handleRefresh}
+				ListEmptyComponent={
+					<View style={styles.emptyState}>
+						{loading || refreshing ? (
+							<ActivityIndicator size={"large"} />
+						) : (
+							<Text style={styles.emptyText}>No Assets found!</Text>
+						)}
+					</View>
+				}
+			/>
 
 
 			{selection && <ActionButton onPress={() => console.info("Confirm Pressed")} label="Confirm Location" buttonStyle={styles.actionButton} />}
 
 
 			<CreateFAB label="Create Asset" onPress={() => router.push("/createAsset")} />
-		</>
+		</View>
 	);
 }
 
 const styles = StyleSheet.create({
 	container: {
+		flex: 1,
+	},
+	list: {
 		flex: 1,
 	},
 	listContainer: {
@@ -379,6 +406,21 @@ const styles = StyleSheet.create({
 		paddingBottom: 50,
 		gap: 10,
 		// marginTop: 5
+	},
+	emptyListContainer: {
+		flexGrow: 1,
+	},
+	emptyState: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+		paddingHorizontal: 20,
+	},
+	emptyText: {
+		fontSize: 14,
+		color: "#000000",
+		textAlign: "center",
+		fontFamily: Fonts.regular,
 	},
 	assetButton: {
 		// borderWidth: 0.6,

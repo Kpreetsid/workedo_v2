@@ -4,6 +4,7 @@ import Fonts from '@/constants/Typography';
 import { Preventive } from '@/src/types/preventive';
 import ActionButton from '@/components/auth-screens/ActionButton';
 import { useRouter } from 'expo-router';
+import moment from 'moment';
 
 
 const InfoField = ({ label, value }: { label: string; value: string }) => (
@@ -17,6 +18,8 @@ const InfoField = ({ label, value }: { label: string; value: string }) => (
 
 const PreventiveDetails = ({ item }: { item: Preventive | any }) => {
   const router = useRouter();
+  const createdOn = item?.createdAt ?? item?.work_order?.createdAt;
+  const updatedOn = item?.updatedAt ?? item?.work_order?.updatedAt;
 
   return (
     <>
@@ -78,8 +81,8 @@ const PreventiveDetails = ({ item }: { item: Preventive | any }) => {
         </View>
 
         <View style={styles.row}>
-          <InfoField label="Updated On" value={item?.work_order?.updatedAt} />
-          <InfoField label="Created On" value={item?.work_order?.createdAt} />
+          <InfoField label="Updated On" value={updatedOn ? moment(updatedOn).format("DD-MM-YYYY hh:mm A") : "--"} />
+          <InfoField label="Created On" value={createdOn ? moment(createdOn).format("DD-MM-YYYY hh:mm A") : "--"} />
         </View>
 
         {/* ASSIGN TO */}
@@ -208,18 +211,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#E2E5E9",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   partsRowHeader: {
     flexDirection: "row",
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: "#E2E5E9",
   },
   partsRow: {
     flexDirection: "row",
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: "#E2E5E9",
   },
