@@ -21,6 +21,18 @@ export interface WorkRequest {
     }[];
 
     status: string;
+    review_due_at?: string | null;
+    order_due_at?: string | null;
+    remarks?: string | null;
+    converted_work_order_id?: {
+        id: string;
+        order_no: string;
+        title: string;
+        status: string;
+        priority?: string;
+        start_date?: string;
+        end_date?: string;
+    } | null;
 
     location_id: {
         location_name: string;
@@ -38,6 +50,21 @@ export interface WorkRequest {
     visible: boolean;
 
     createdBy: {
+        firstName: string;
+        lastName: string;
+        id: string;
+    };
+    approvedBy?: {
+        firstName: string;
+        lastName: string;
+        id: string;
+    };
+    rejectedBy?: {
+        firstName: string;
+        lastName: string;
+        id: string;
+    };
+    convertedBy?: {
         firstName: string;
         lastName: string;
         id: string;

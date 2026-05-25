@@ -1,5 +1,6 @@
 import moment from "moment";
 import { create } from "zustand";
+import { ProcedureTemplate } from "../types/procedure";
 
 interface WorkOrderStore {
 	isLoaded: boolean;
@@ -19,6 +20,9 @@ interface WorkOrderStore {
 	parts: any[];
 	attachments: any[];
 	tasks: any[];
+	procedure_ids: string[];
+	selected_procedures: ProcedureTemplate[];
+	parent_id?: string;
 	work_request_id?: string;
 	setWorkForm: (key: keyof Omit<WorkOrderStore, "setWorkForm" | "resetForm">, value: any) => void;
 	resetForm: () => void;
@@ -42,6 +46,9 @@ export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
 	parts: [],
 	attachments: [],
 	tasks: [],
+	procedure_ids: [],
+	selected_procedures: [],
+	parent_id: "",
 	work_request_id: "",
 
 	setWorkForm: (key, value) => set({ [key]: value } as any),
@@ -65,6 +72,9 @@ export const useWorkOrderStore = create<WorkOrderStore>((set) => ({
 			parts: [],
 			attachments: [],
 			tasks: [],
+			procedure_ids: [],
+			selected_procedures: [],
+			parent_id: "",
 			work_request_id: "",
 		}),
 }));

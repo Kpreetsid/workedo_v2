@@ -36,7 +36,7 @@ const EditWorkOrder = () => {
 	const [routes] = useState([
 		{ key: "general", title: "General Info" },
 		{ key: "task", title: "Task" },
-		{ key: "forms", title: "Forms" },
+		{ key: "forms", title: "Procedures" },
 	]);
 
 	// 🔥 Scene renderer INSIDE component so it sees parsedData

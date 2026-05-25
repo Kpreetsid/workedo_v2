@@ -13,6 +13,7 @@ import { WorkOrder } from "@/src/types/workOrder";
 import Tasks from "@/components/work-order-detail/Tasks";
 import Forms from "@/components/work-order-detail/Forms";
 import SegmentedPager from "@/components/global/SegmentPager";
+import History from "@/components/work-order-detail/History";
 
 const safeJsonParse = (value?: string) => {
 	if (!value || typeof value !== "string") return null;
@@ -42,51 +43,51 @@ export default function WorkOrderDetail() {
 
 		return {};
 	})();
-	const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 
+	const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 	const [workOrderData, setWorkOrderData] = useState<any>(work_order_data);
+
 	const normalizeStatus = (value?: string | null) => (value ?? "").toLowerCase().replace(/[-\s]/g, "");
 	const isDoneStatus = ["completed", "done"].includes(normalizeStatus(workOrderData?.status));
 	const hasTasks = Array.isArray(workOrderData?.tasks) && workOrderData.tasks.length > 0;
 	const hasForms = Boolean(workOrderData?.sop_form_id);
+	const isExecutionOwnedByChildren = Boolean(workOrderData?.hierarchy?.executionOwnedByChildren);
+	const childSummary = workOrderData?.hierarchy?.childStatusSummary;
+
 	const detailTabs = [
 		{ label: "Details", component: <Detail params={workOrderData} /> },
 		...(hasTasks ? [{ label: "Tasks", component: <Tasks params={workOrderData} /> }] : []),
 		...(hasForms ? [{ label: "Forms", component: <Forms params={workOrderData} /> }] : []),
+		{ label: "History", component: <History params={workOrderData} /> },
 		{ label: "Comments", component: <Comments params={workOrderData} /> },
 	];
-	const popoverOptions = isDoneStatus
-		? [
-			{ icon: "", text: "Select Option", type: "heading" },
-			{ icon: "", text: "Delete", type: "option" },
-		]
-		: [
-			{ icon: "", text: "Select Option", type: "heading" },
-			{ icon: "", text: "Edit", type: "option" },
-			{ icon: "", text: "Delete", type: "option" },
-		];
 
-	useFocusEffect(
-		useCallback(() => {
-			console.log('in focus order detail')
-			fetchWorkOrderDetails();
-		}, [workOrderData?.id])
-	);
+	const popoverOptions = [
+		{ icon: "", text: "Select Option", type: "heading" },
+		...(!isDoneStatus ? [{ icon: "", text: "Edit", type: "option" }] : []),
+		{ icon: "", text: "Create Follow-Up", type: "option" },
+		{ icon: "", text: "Delete", type: "option" },
+	];
 
 	const fetchWorkOrderDetails = async () => {
 		if (!workOrderData?.id) return;
 
 		try {
-			console.log('work order id = ', workOrderData.id);
 			const res = await getWorkOrderDetails(workOrderData.id);
-			console.log('work order details = ', res);
-			if (res?.status) {
-				setWorkOrderData(res?.data[0]);
+			const resolvedData = Array.isArray(res?.data) ? res.data[0] : res?.data;
+			if (res?.status && resolvedData) {
+				setWorkOrderData(resolvedData);
 			}
 		} catch (e) {
-			console.log('e = ', e);
+			console.log("fetch work order detail error =", e);
 		}
-	}
+	};
+
+	useFocusEffect(
+		useCallback(() => {
+			fetchWorkOrderDetails();
+		}, [workOrderData?.id])
+	);
 
 	const handleDeleteWo = async (item: WorkOrder) => {
 		Alert.alert(
@@ -101,26 +102,21 @@ export default function WorkOrderDetail() {
 					text: "Delete",
 					style: "destructive",
 					onPress: async () => {
-						console.log('deleting WO = ', item);
-						// setDeleteLoading(true)
 						try {
 							const resp = await deleteWorkOrder(item?.id);
-							console.log('resp = ', resp);
 							if (resp?.status) {
 								ToastAndroid.show("Work Order Deleted", ToastAndroid.SHORT);
 								router.back();
-								// setDeleteLoading(false)
 							}
 						} catch (e) {
-							// setDeleteLoading(false)
-							console.log('error deleting = ', e);
+							console.log("error deleting =", e);
 						}
 					},
 				},
 			],
 			{ cancelable: true }
 		);
-	}
+	};
 
 	return (
 		<View style={styles.container}>
@@ -129,9 +125,7 @@ export default function WorkOrderDetail() {
 				<View style={styles.header}>
 					<View>
 						<Text style={styles.woId}># {workOrderData?.order_no}</Text>
-						{
-							workOrderData?.type && <Text style={styles.woType}>{workOrderData?.type}</Text>
-						}
+						{workOrderData?.type ? <Text style={styles.woType}>{workOrderData?.type}</Text> : null}
 						<Text style={styles.woTitle}>{workOrderData?.title}</Text>
 					</View>
 
@@ -141,13 +135,14 @@ export default function WorkOrderDetail() {
 							isVisible={openPopoverId === workOrderData.id}
 							onRequestClose={() => setOpenPopoverId(null)}
 							from={(
-								<TouchableOpacity style={{ padding: 6 }} onPress={() => {
-									console.log('in it = ', workOrderData);
-									setOpenPopoverId(workOrderData.id)
-								}}>
+								<TouchableOpacity
+									style={{ padding: 6 }}
+									onPress={() => setOpenPopoverId(workOrderData.id)}
+								>
 									<Ionicons name="ellipsis-vertical" size={20} color="#fff" />
 								</TouchableOpacity>
-							)}>
+							)}
+						>
 							<View style={styles.popoverContent}>
 								{popoverOptions.map((option, optionIndex) => (
 									<Pressable
@@ -161,15 +156,25 @@ export default function WorkOrderDetail() {
 														data: JSON.stringify(workOrderData),
 													},
 												});
+											} else if (option.text === "Create Follow-Up") {
+												router.push({
+													pathname: "/createWorkOrder",
+													params: {
+														data: JSON.stringify({
+															...workOrderData,
+															isFollowUp: true,
+														}),
+														mode: "follow-up",
+													},
+												});
 											} else if (option.text === "Delete") {
-												console.log("in it delete = ", workOrderData);
 												handleDeleteWo?.(workOrderData);
 											}
 											setOpenPopoverId(null);
 										}}
 									>
 										<View style={{ flexDirection: "row", gap: 10, alignItems: "center", justifyContent: "flex-start" }}>
-											{option.icon !== "" && <Ionicons name={option.icon as any} size={16} color="#71717A" />}
+											{option.icon !== "" ? <Ionicons name={option.icon as any} size={16} color="#71717A" /> : null}
 
 											<Text
 												style={[
@@ -187,33 +192,43 @@ export default function WorkOrderDetail() {
 					</View>
 				</View>
 
-
 				<View style={styles.statusTabs}>
 					{["Open", "On Hold", "In Progress", "Completed"].map((status, index) => {
 						const normalize = (str: string) => str?.toLowerCase().replace(/[-\s]/g, "");
 						const isActive = normalize(workOrderData?.status) === normalize(status);
 
 						const handleStatusChange = async () => {
-							if (isActive) return;
+							if (isActive || !workOrderData?.id) return;
+
+							if (status === "In Progress" && isExecutionOwnedByChildren) {
+								ToastAndroid.show("This parent work order uses child execution. Start progress on the child work orders instead.", ToastAndroid.LONG);
+								return;
+							}
+
+							if (
+								status === "Completed" &&
+								isExecutionOwnedByChildren &&
+								childSummary &&
+								Number(childSummary.completed || 0) < Number(childSummary.total || 0)
+							) {
+								ToastAndroid.show("Complete all child work orders before completing the parent work order.", ToastAndroid.LONG);
+								return;
+							}
 
 							try {
-								const payload = { status: status === "Done" ? "Completed" : status.replace(/\s/g, "-") }; // e.g. "On Hold" → "On-Hold"
-								console.log("Updating status:", payload);
-
+								const payload = { status: status === "Done" ? "Completed" : status.replace(/\s/g, "-") };
 								const res = await updateWorkOrderStatus(workOrderData.id, payload);
 
 								if (res?.status) {
 									ToastAndroid.show("Status updated successfully!", ToastAndroid.SHORT);
-									// optional: refresh locally
 									setWorkOrderData((prev: any) => ({ ...prev, status: payload.status }));
+									fetchWorkOrderDetails();
 								} else {
 									ToastAndroid.show("Failed to update status.", ToastAndroid.SHORT);
 								}
 							} catch (err: any) {
 								console.error("Error updating status:", err);
-								if (!err.status) {
-									ToastAndroid.show(err.message, ToastAndroid.SHORT);
-								}
+								ToastAndroid.show(err?.message || "Failed to update status", ToastAndroid.SHORT);
 							}
 						};
 
@@ -242,8 +257,6 @@ export default function WorkOrderDetail() {
 						);
 					})}
 				</View>
-
-
 			</View>
 
 			<SegmentedPager tabs={detailTabs} />
@@ -254,17 +267,16 @@ export default function WorkOrderDetail() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: "#F5F7FA"
+		backgroundColor: "#F5F7FA",
 	},
 	headerContainer: {
 		paddingTop: 12,
 		paddingHorizontal: 15,
-		// backgroundColor: "#fff"
 	},
 	header: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'center',
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
 		backgroundColor: "#742BDE",
 		borderRadius: 8,
 		padding: 16,
@@ -275,7 +287,7 @@ const styles = StyleSheet.create({
 		color: "#742BDE",
 		backgroundColor: "#fff",
 		alignSelf: "flex-start",
-		paddingHorizontal: 5
+		paddingHorizontal: 5,
 	},
 	woType: {
 		fontSize: 11,
@@ -288,6 +300,7 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.semiBold,
 		color: "#fff",
 		marginTop: 4,
+		maxWidth: 260,
 	},
 	statusTabs: {
 		flexDirection: "row",
@@ -307,22 +320,22 @@ const styles = StyleSheet.create({
 		borderColor: "#00000033",
 		borderWidth: 0.6,
 	},
-
 	tabIcon: {
 		height: 25,
 		width: 25,
 		alignItems: "center",
-		justifyContent: "center"
+		justifyContent: "center",
 	},
 	tabActive: {
 		backgroundColor: "#EFE4FF",
-		borderWidth: 0
+		borderWidth: 0,
 	},
 	tabText: {
 		fontSize: 10,
 		fontFamily: Fonts.regular,
 		color: "#742BDE",
 		marginTop: 2,
+		textAlign: "center",
 	},
 	tabTextActive: {
 		color: "#742BDE",
@@ -334,7 +347,7 @@ const styles = StyleSheet.create({
 		padding: 10,
 	},
 	popoverItem: {
-		width: 150,
+		width: 160,
 		padding: 10,
 	},
-})
+});

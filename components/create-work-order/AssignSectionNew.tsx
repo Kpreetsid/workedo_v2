@@ -8,7 +8,7 @@ import moment from 'moment';
 import LocationPickerModal from './LocationPickerModal';
 import AssetPickerModal from './AssetPickerModal';
 
-const AssignSectionNew = ({ type }: { type: "workOrders" | "requests" }) => {
+const AssignSectionNew = ({ type, lockLocation = false }: { type: "workOrders" | "requests"; lockLocation?: boolean }) => {
 	const router = useRouter();
 	const { setWorkForm } = useWorkOrderStore();
 
@@ -34,8 +34,9 @@ const AssignSectionNew = ({ type }: { type: "workOrders" | "requests" }) => {
 				store={useWorkOrderStore}
 				setterName="setWorkForm"
 				openPicker={() => {
-					console.log('opening')
-					setVisible(true)
+					if (!lockLocation) {
+						setVisible(true)
+					}
 				}}
 			/>
 

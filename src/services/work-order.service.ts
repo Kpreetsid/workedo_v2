@@ -3,6 +3,10 @@ import { sendRequest } from "../api/api.service";
 import { endpoints } from "../api/endpoints";
 import { storage } from "../storage/mmkv";
 
+export const createWorkOrder = async (payload: any) => {
+    return await sendRequest('POST', `${endpoints.workOrders.createWorkOrder}`, payload);
+};
+
 export const workOrdersPaginated = async (pageType: string, page: number, limit: number = 20) => {
     let url = '';
     url = `${endpoints.workOrders.workOrders}/get-work-order?page=${page}&limit=${limit}&pageType=${pageType}&status=Open&status=In-Progress&status=On-Hold`;
@@ -29,6 +33,11 @@ export const updateWorkOrder = async (id: any, data: any) => {
     return await sendRequest("PUT", url, data);
 };
 
+export const patchWorkOrder = async (id: string, data: any) => {
+    const url = `${endpoints.workOrders.workOrders}/${id}`;
+    return await sendRequest("PATCH", url, data);
+};
+
 export const getFormData = async (id: string) => {
     console.log('init 123123 = ', id)
     const url = `${endpoints.preventive.getSOPs}/${id}`;
@@ -49,6 +58,14 @@ export const postComments = async (id: string, payload: any) => {
 
 export const getWorkOrderComments = async (id: string) => {
     return await sendRequest('GET', `${endpoints.workOrders.workOrders}/${id}/${endpoints.workOrders.postComments}`);
+};
+
+export const getWorkOrderActivity = async (id: string) => {
+    return await sendRequest('GET', `${endpoints.workOrders.activity}/${id}`);
+};
+
+export const getWorkOrderHistory = async (id: string) => {
+    return await sendRequest('GET', `${endpoints.workOrders.history}/${id}`);
 };
 
 export const deleteWorkOrderComment = async (workOrderID: string, commentID: string) => {

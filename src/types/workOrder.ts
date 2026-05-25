@@ -1,3 +1,5 @@
+import { ProcedureStep } from "./procedure";
+
 export interface WorkOrder {
     _id: string;
     account_id: string;
@@ -30,13 +32,54 @@ export interface WorkOrder {
     comments: WorkOrderComment[];
     nature_of_work?: string;
     sop_form_data?: { [key: string]: string };
+    block_reason?: string | null;
+    actual_start_date?: string | null;
+    actual_end_date?: string | null;
+    actual_time?: number | null;
+    parentId?: string | null;
+    procedure_ids?: string[];
+    procedures?: WorkOrderProcedure[];
+    procedure_entries?: WorkOrderProcedure[];
+    labor_entries?: WorkOrderLaborEntry[];
+    childOrders?: WorkOrderChild[];
+    parentOrder?: WorkOrderParentReference | null;
+    hierarchy?: WorkOrderHierarchy;
+    completed_at?: string | null;
+    completed_by?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+    } | null;
+    inventoryWarnings?: Array<{
+        part_id?: string;
+        part_name?: string;
+        message?: string;
+        quantity?: number;
+        min_quantity?: number;
+    }>;
 }
 
 export interface WorkOrderTask {
     title: string;
-    type: string;
-    fieldValue: string;
-    options: string[];
+    type?: string;
+    fieldValue?: string | number;
+    options: Array<{ key: string; value: string | number | boolean }>;
+    priority?: string;
+    assigned_user_id?: string;
+    status?: string;
+    completed?: boolean;
+    completedBy?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+    } | null;
+    completedAt?: string | null;
+    updatedBy?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+    } | null;
+    updatedAt?: string | null;
 }
 
 export interface AssignedUser {
@@ -60,6 +103,8 @@ export interface WorkOrderAsset {
     asset_name: string;
     asset_type: string;
     id: string;
+    top_level?: boolean;
+    parent_id?: string | null;
 }
 
 export interface WorkOrderLocation {
@@ -67,6 +112,95 @@ export interface WorkOrderLocation {
     location_name: string;
     location_type: string;
     id: string;
+}
+
+export interface WorkOrderProcedure {
+    procedure_id?: string;
+    id: string;
+    name: string;
+    category?: string;
+    tags?: string[];
+    description?: string;
+    steps?: ProcedureStep[];
+    responses?: Record<string, any>;
+    submitted?: boolean;
+    submitted_by?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+    } | null;
+    submitted_at?: string | null;
+    score_summary?: {
+        earned: number;
+        possible: number;
+        percentage?: number | null;
+    };
+    triggered_actions?: any[];
+}
+
+export interface WorkOrderLaborEntry {
+    user_id?: string;
+    vendor_name?: string;
+    work_date?: string | null;
+    hours: number;
+    notes?: string;
+    user?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+    };
+}
+
+export interface WorkOrderChild {
+    _id: string;
+    id: string;
+    order_no: string;
+    title: string;
+    status: string;
+    priority?: string;
+    start_date?: string;
+    end_date?: string;
+    estimated_time?: number;
+    actual_time?: number;
+    assignedUsers?: AssignedUser[];
+    parts?: any[];
+    labor_entries?: WorkOrderLaborEntry[];
+    procedure_ids?: string[];
+    procedure_entries?: WorkOrderProcedure[];
+}
+
+export interface WorkOrderParentReference {
+    _id: string;
+    id: string;
+    order_no: string;
+    title: string;
+    status: string;
+}
+
+export interface WorkOrderHierarchy {
+    isParentWorkOrder: boolean;
+    isChildWorkOrder: boolean;
+    executionOwnedByChildren: boolean;
+    childStatusSummary?: {
+        total: number;
+        completed: number;
+        open: number;
+        in_progress: number;
+        blocked: number;
+        on_hold: number;
+    };
+    childLaborRollup?: {
+        totalHours: number;
+        internalEntries: number;
+        externalEntries: number;
+    };
+    childPartsRollup?: {
+        totalLines: number;
+        plannedQuantity: number;
+        actualQuantity: number;
+    };
+    childProgressLabel?: string;
+    parentReference?: WorkOrderParentReference | null;
 }
 
 export interface WorkOrderComment {

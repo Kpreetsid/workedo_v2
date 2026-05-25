@@ -1,8 +1,8 @@
 
 // src/api/endpoints.ts
 export const endpoints = {
-  baseURL: 'https://new.presageinsights.ai/cmms_express/', // development
-  // baseURL: 'https://app.presageinsights.ai/cmms_express/', // production
+  // baseURL: 'https://new.presageinsights.ai/cmms_express/', // development
+  baseURL: 'https://app.presageinsights.ai/cmms_express/', // production
   auth: {
     login: 'users/login',
     details: 'users/',
@@ -38,6 +38,9 @@ export const endpoints = {
     createPart: 'master/parts',
     getParts: 'master/parts',
     getPartTypes: 'master/parts-types'
+  },
+  procedures: {
+    list: 'work/procedures',
   },
   preventive: {
     users: 'master/users',
@@ -87,6 +90,8 @@ export const endpoints = {
     workOrders: 'work/orders',
     updateWorkOrder: 'work/orders/status',
     createWorkOrder: 'work/orders',
+    activity: 'work/orders/activity',
+    history: 'work/orders/history',
     requests: 'work/requests',
     approveRequest: 'work/requests/approve',
     rejectRequest: 'work/requests/reject',

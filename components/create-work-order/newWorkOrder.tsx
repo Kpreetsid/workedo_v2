@@ -1,146 +1,168 @@
 import Header from "@/components/global/Header";
-import FormInput from "@/components/create-screens/FormInput";
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from "react-native";
-import AssignInput from "@/components/create-screens/AssignInput";
-import Fonts from "@/constants/Typography";
-import { DropDownIcon } from "@/constants/IconProvider";
-import ActionButton from "@/components/create-screens/ActionButton";
-import AssignInputContainer from "@/components/create-work-order/AssignInputContainer";
-import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
-import DropDownInput from "@/components/create-screens/DropDownInput";
+import { Alert, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { approveWorkRequest, createWorkOrder } from "@/src/services/work-request.service";
-import { useEffect, useRef, useState } from "react";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import DatePicker from "@/components/global/DatePicker";
-import moment from "moment";
-import { AssignSection } from "@/components/create-work-order/AssignSection";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
-import { FormField } from "@/components/global/FormField";
-import AssignSectionNew from "@/components/create-work-order/AssignSectionNew";
-import { getSOPs } from "@/src/services/preventive.service";
-import { useImageUpload } from "@/hooks/useImageUpload";
-import { launchCamera, launchImageLibrary } from "react-native-image-picker";
-import { updateWorkOrder, workOrderImageUpload } from "@/src/services/work-order.service";
-import { useAuthStore } from "@/src/store/useAuthStore";
 import { Image } from "expo-image";
+import moment from "moment";
+import { useEffect, useMemo, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { launchCamera, launchImageLibrary } from "react-native-image-picker";
+
+import Fonts from "@/constants/Typography";
 import { endpoints } from "@/src/api/endpoints";
-import { WorkOrder } from "@/src/types/workOrder";
-import AttachmentUpload from "./AttachmentUpload";
-import SelectParts from "./SelectParts";
-import ModalCalendar from "../global/ModalCalendar";
+import { useAuthStore } from "@/src/store/useAuthStore";
+import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
+import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 import { mapUserToLocation } from "@/src/services/location.service";
+import { getSOPs } from "@/src/services/preventive.service";
+import { createWorkOrder, updateWorkOrder, workOrderImageUpload } from "@/src/services/work-order.service";
+import { getParts } from "@/src/services/part.service";
+import { WorkOrder } from "@/src/types/workOrder";
+import { ProcedureTemplate } from "@/src/types/procedure";
+import { PartShortage, buildResolvedWorkOrderParts, findPartShortages } from "@/src/utils/workOrderParts";
+
+import ActionButton from "@/components/create-screens/ActionButton";
+import AttachmentUpload from "./AttachmentUpload";
+import AssignSectionNew from "@/components/create-work-order/AssignSectionNew";
+import ModalCalendar from "../global/ModalCalendar";
+import SelectParts from "./SelectParts";
+import { FormField } from "@/components/global/FormField";
 
 interface WorkOrderProps {
 	passedData?: Record<string, any> | null;
 }
 
-const resolveEntityId = (value: any) => {
+const resolveEntityId = (value: any): string => {
 	if (!value) return "";
 	if (typeof value === "string" || typeof value === "number") return String(value);
-
-	const resolvedId = value?.id ?? value?._id;
+	const resolvedId = value?.id ?? value?._id ?? value?.location_id ?? value?.asset_id;
 	return resolvedId !== undefined && resolvedId !== null ? String(resolvedId) : "";
 };
 
+const mapEditableParts = (parts: any[] = []) =>
+	(parts || []).map((part: any) => ({
+		part_id: resolveEntityId(part?.part_id || part),
+		part_name: part?.part_name || "",
+		part_number: part?.part_number || "",
+		part_type: part?.part_type || "",
+		unit: part?.unit || "",
+		cost: Number(part?.cost || 0),
+		currency: part?.currency || "INR",
+		estimatedQuantity: Number(part?.estimatedQuantity ?? part?.plannedQuantity ?? 0),
+		actualQuantity: part?.actualQuantity ?? null,
+		procedureLinked: Boolean(part?.procedureLinked),
+		procedureNames: Array.isArray(part?.procedureNames) ? part.procedureNames : [],
+	}));
+
 export default function NewWorkOrder({ passedData }: WorkOrderProps) {
-	// console.log('work order props = ', passedData)
 	const router = useRouter();
-	const [showCalendar, setShowCalendar] = useState(false);
 	const params: any = useLocalSearchParams();
 	const comingFrom = params?.comingFrom;
-	const [id, setId] = useState();
-	const { setWorkForm, isLoaded, resetForm } = useWorkOrderStore();
-	const [forms, setForms] = useState<any>([]);
-	const [imageError, setImageError] = useState(false);
-
-	const parts = useWorkOrderStore((state) => state.parts);
-	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-	const [activeDateField, setActiveDateField] = useState<any>(null);
+	const isFollowUpMode = params?.mode === "follow-up" || passedData?.isFollowUp;
 
 	const { user } = useAuthStore();
+	const { setWorkForm, isLoaded, resetForm } = useWorkOrderStore();
 
-	const workOrderImageTest = useWorkOrderStore((s) => s.attachments)
+	const [id, setId] = useState<string>("");
+	const [forms, setForms] = useState<any[]>([]);
+	const [imageError, setImageError] = useState(false);
+	const [showCalendar, setShowCalendar] = useState(false);
+	const [activeDateField, setActiveDateField] = useState<"start_date" | "end_date" | null>(null);
+	const [partStockValidationIssues, setPartStockValidationIssues] = useState<PartShortage[]>([]);
+
+	const attachments = useWorkOrderStore((state) => state.attachments);
+	const manualParts = useWorkOrderStore((state) => state.parts);
+	const selectedProcedures = useWorkOrderStore((state) => state.selected_procedures);
+	const procedureIds = useWorkOrderStore((state) => state.procedure_ids);
 	const workOrderLocation = useWorkOrderStore((state) => state.location);
+	const selectedAsset = useWorkOrderStore((state) => state.selected_asset);
+
+	const locationId = resolveEntityId(workOrderLocation);
+	const resolvedParts = useMemo(
+		() => buildResolvedWorkOrderParts(manualParts, selectedProcedures),
+		[manualParts, selectedProcedures]
+	);
 
 	useEffect(() => {
 		if (passedData && !isLoaded) {
-			console.log("Prefill data in NewWorkOrder =", passedData);
-			const data = passedData;
+			const data = passedData as WorkOrder & { procedures?: ProcedureTemplate[] };
+			const preselectedProcedures = Array.isArray(data?.procedures)
+				? data.procedures
+				: Array.isArray(data?.procedure_entries)
+					? data.procedure_entries
+					: [];
+			const preselectedProcedureIds = Array.isArray(data?.procedure_ids) && data.procedure_ids.length
+				? data.procedure_ids
+				: preselectedProcedures.map((procedure: any) => resolveEntityId(procedure?.procedure_id || procedure?.id || procedure)).filter(Boolean);
 
-			setId(data?.id);
-			setWorkForm("title", data?.title);
-			setWorkForm("message", data?.description);
-			setWorkForm("location", data?.location);
-			// setWorkForm("assigned_users", data?.assignedUsers);
-			setWorkForm("selected_asset", data?.asset);
-			setWorkForm("nature_of_work", data?.nature_of_work);
+			setId(resolveEntityId(data?.id || data?._id));
+			setWorkForm("title", data?.title || "");
+			setWorkForm("message", data?.description || "");
+			setWorkForm("location", data?.location || data?.wo_location_id || null);
+			setWorkForm("selected_asset", data?.asset || data?.wo_asset_id || null);
+			setWorkForm("nature_of_work", data?.nature_of_work || data?.type || "Preventive");
 			setWorkForm("completion_days", String(data?.estimated_time ?? ""));
-			setWorkForm("priority", data?.priority ?? null);
+			setWorkForm("priority", data?.priority || "None");
 			setWorkForm("attachments", Array.isArray(data?.files) ? data.files : []);
 			setWorkForm("sop_form_data", data?.sop_form_data ?? {});
-			setWorkForm("start_date", data?.start_date ? moment(data?.start_date).format('YYYY-MM-DD') : '');
-			setWorkForm("end_date", data?.end_date ? moment(data?.end_date).format('YYYY-MM-DD') : '');
-
-			const form = forms?.find(
-				(f: any) => f.id === data?.sop_form_id
+			setWorkForm("start_date", data?.start_date ? moment(data.start_date).format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"));
+			setWorkForm("end_date", data?.end_date ? moment(data.end_date).format("YYYY-MM-DD") : moment().add(2, "days").format("YYYY-MM-DD"));
+			setWorkForm("parts", mapEditableParts(data?.parts || []));
+			setWorkForm("tasks", data?.tasks ?? []);
+			setWorkForm("procedure_ids", preselectedProcedureIds);
+			setWorkForm("selected_procedures", preselectedProcedures as ProcedureTemplate[]);
+			setWorkForm(
+				"parent_id",
+				isFollowUpMode
+					? resolveEntityId(data?.id || data?._id || data?.parentId)
+					: resolveEntityId(data?.parentId)
 			);
 
-			setWorkForm("sop_form_id", form ? form.name : null);
-
-			setWorkForm("parts", data?.parts?.map((p: any) => ({
-				part_id: p.part_id,
-				part_name: p.part_name,
-				part_type: p.part_type,
-				estimatedQuantity: p.estimatedQuantity,
-			})) || []);
-
-			setWorkForm("tasks", data?.tasks ?? []);
-
-			const locationId = resolveEntityId(data?.location);
-			if (locationId) {
-				mapUserToLocationFunc(
-					locationId,
-					Array.isArray(data?.assignedUsers) ? data.assignedUsers : []
-				);
+			if (data?.sop_form_id) {
+				setWorkForm("sop_form_id", resolveEntityId(data?.sop_form_id));
 			}
 
-			// finally mark as loaded ONCE
+			const locationValue = data?.location || data?.wo_location_id;
+			const assignedUsers = Array.isArray(data?.assignedUsers) ? data.assignedUsers : [];
+			const mappedLocationId = resolveEntityId(locationValue);
+			if (mappedLocationId) {
+				mapUserToLocationFunc(mappedLocationId, assignedUsers);
+			}
+
 			setWorkForm("isLoaded", true);
-
 		}
-	}, [passedData]);
+	}, [isLoaded, isFollowUpMode, passedData, setWorkForm]);
 
-	const mapUserToLocationFunc = async (location_id: string, selectedUsers: any[] = []) => {
+	const mapUserToLocationFunc = async (targetLocationId: string, selectedUsers: any[] = []) => {
 		try {
-			const res = await mapUserToLocation(location_id);
-			console.log('res = ', res);
+			const res = await mapUserToLocation(targetLocationId);
 			if (res?.status) {
-				// console.log('assigned_users = ', res?.data);
-				// TODO: make sure to remove users from res?.data whih doesn't exist in passedData?.assignedUsers
-				const assignedUsers = Array.isArray(selectedUsers)
-					? selectedUsers.map((u: any) => u?.user?.id ?? u?.id).filter(Boolean)
+				const assignedUserIds = Array.isArray(selectedUsers)
+					? selectedUsers.map((entry: any) => entry?.user?.id ?? entry?.id).filter(Boolean)
 					: [];
 				const mappedUsers = Array.isArray(res?.data)
-					? res.data.filter((u: any) => assignedUsers.includes(u?.user?.id))
+					? res.data.filter((entry: any) => assignedUserIds.includes(entry?.user?.id ?? entry?.id))
 					: [];
-				console.log('here = ', mappedUsers)
 				setWorkForm("assigned_users", mappedUsers);
 			}
-		} catch (err) {
-			console.log('error = ', err);
+		} catch (error) {
+			console.log("mapUserToLocation error =", error);
 			setWorkForm("assigned_users", []);
 		}
-	}
+	};
 
 	useEffect(() => {
 		const fetchForms = async () => {
 			try {
 				const res = await getSOPs();
 				if (res?.status) {
-					console.log('res?.data - ', res.data);
-					setForms(res?.data);
+					setForms(Array.isArray(res?.data) ? res.data : []);
+					if (passedData?.sop_form_id) {
+						const selectedForm = res.data?.find((form: any) => resolveEntityId(form?.id || form?._id) === resolveEntityId(passedData?.sop_form_id));
+						if (selectedForm) {
+							setWorkForm("sop_form_id", selectedForm.name);
+						}
+					}
 				}
 			} catch (error) {
 				console.error("Error fetching forms:", error);
@@ -148,72 +170,112 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 		};
 
 		fetchForms();
-
 		return () => {
 			resetForm();
-		}
-	}, []);
+		};
+	}, [passedData?.sop_form_id, resetForm, setWorkForm]);
 
-	const handleRemovePart = (partId: string) => {
-		const updatedParts = parts.filter(
-			(p: any) => p.id !== partId && p._id !== partId
-		);
+	useEffect(() => {
+		let ignore = false;
+
+		const refreshShortages = async () => {
+			if (!locationId || resolvedParts.length === 0) {
+				if (!ignore) {
+					setPartStockValidationIssues([]);
+				}
+				return;
+			}
+
+			try {
+				const res = await getParts(locationId);
+				if (!ignore) {
+					const shortages = findPartShortages(resolvedParts, Array.isArray(res?.data) ? res.data : []);
+					setPartStockValidationIssues(shortages);
+				}
+			} catch (error) {
+				if (!ignore) {
+					setPartStockValidationIssues([]);
+				}
+			}
+		};
+
+		refreshShortages();
+
+		return () => {
+			ignore = true;
+		};
+	}, [locationId, resolvedParts]);
+
+	const handleRemoveManualPart = (partId: string) => {
+		const updatedParts = manualParts.filter((part: any) => resolveEntityId(part?.part_id || part) !== partId);
 		setWorkForm("parts", updatedParts);
 	};
 
-	useEffect(() => {
-		console.log('parts changed in work order', useWorkOrderStore.getState().parts);
-	}, [useWorkOrderStore.getState().parts])
+	const validateResolvedPartsStock = async () => {
+		if (!resolvedParts.length) {
+			setPartStockValidationIssues([]);
+			return true;
+		}
+
+		if (!locationId) {
+			ToastAndroid.show("Please select a location before saving the work order", ToastAndroid.SHORT);
+			return false;
+		}
+
+		try {
+			const res = await getParts(locationId);
+			const shortages = findPartShortages(resolvedParts, Array.isArray(res?.data) ? res.data : []);
+			setPartStockValidationIssues(shortages);
+
+			if (shortages.length > 0) {
+				const primaryIssue = shortages[0];
+				ToastAndroid.show(
+					shortages.length === 1
+						? `Insufficient stock for ${primaryIssue.part_name}. Required ${primaryIssue.requiredQuantity}, available ${primaryIssue.availableQuantity}.`
+						: `${shortages.length} parts do not have enough stock for this work order.`,
+					ToastAndroid.LONG
+				);
+				return false;
+			}
+
+			return true;
+		} catch (error) {
+			ToastAndroid.show("Unable to validate parts availability right now. Please try again.", ToastAndroid.LONG);
+			return false;
+		}
+	};
 
 	const handleSubmit = async () => {
 		const data: any = useWorkOrderStore.getState();
-		console.log("Work Order Form =", data);
 
-		// ✅ Basic validation
-		const required: (keyof typeof data)[] = [
-			"title",
-			"location",
-			"selected_asset",
-			"assigned_users",
-			"start_date",
-			"end_date",
+		const requiredFields: Array<{ key: keyof typeof data; label: string }> = [
+			{ key: "title", label: "Title" },
+			{ key: "location", label: "Location" },
+			{ key: "selected_asset", label: "Asset" },
+			{ key: "assigned_users", label: "Assigned Users" },
+			{ key: "start_date", label: "Start Date" },
+			{ key: "end_date", label: "End Date" },
 		];
 
-		// Fields that must not be empty arrays
-		const requireNonEmptyArrays: (keyof typeof data)[] = [
-			"assigned_users",
-		];
-
-		for (const field of required) {
-			const value = data[field];
-
-			// Handle array fields (must NOT be empty)
-			if (requireNonEmptyArrays.includes(field)) {
-				if (!Array.isArray(value) || value.length === 0) {
-					const label = (field as string)
-						.replace(/_/g, " ")
-						.replace(/\b\w/g, (c) => c.toUpperCase());
-
-					ToastAndroid.show(`${label} is required`, ToastAndroid.SHORT);
+		for (const field of requiredFields) {
+			const value = data[field.key];
+			if (Array.isArray(value)) {
+				if (!value.length) {
+					ToastAndroid.show(`${field.label} is required`, ToastAndroid.SHORT);
 					return;
 				}
 				continue;
 			}
 
-			// Handle normal fields
 			if (!value) {
-				if (field === "completion_days") {
-					ToastAndroid.show(`Estimation Duration is required`, ToastAndroid.SHORT);
-					return;
-				}
-
-				const label = (field as string)
-					.replace(/_/g, " ")
-					.replace(/\b\w/g, (c) => c.toUpperCase());
-
-				ToastAndroid.show(`${label} is required`, ToastAndroid.SHORT);
+				ToastAndroid.show(`${field.label} is required`, ToastAndroid.SHORT);
 				return;
 			}
+		}
+
+		if (data.start_date > data.end_date) {
+			ToastAndroid.show("End date should be greater than start date", ToastAndroid.SHORT);
+			return;
 		}
 
 		const missingTaskType = data?.tasks?.some((task: any) => !task?.type);
@@ -222,376 +284,330 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 			return;
 		}
 
-		if (data.start_date > data.end_date) {
-			ToastAndroid.show(`End date should be greater than start date`, ToastAndroid.SHORT);
+		const stockValidationPassed = await validateResolvedPartsStock();
+		if (!stockValidationPassed) {
 			return;
 		}
 
-		// ✅ Build final payload matching your structure
-		let payload = {
-			createdFrom: data.work_request_id ? "Work Request" : "Work Order",
-			description: data.message,
-			end_date: data.end_date || new Date().toISOString().split("T")[0],
-			estimated_time: data.completion_days, // using completion_days for hours/days input
-			files: data.attachments || [],
-			oldParts: null,
-			parts: data.parts?.map((p: any) => ({
-				actualQuantity: null,
-				part_id: p.part_id,
-				part_name: p.part_name,
-				part_type: p.part_type,
-				part_number: p.part_number,
-				estimatedQuantity: p.estimatedQuantity,
-				unit: p.unit,
-			})) || [],
-			tasks: data.tasks || [],
-			priority: data.priority || "None",
-			// sop_form_id: null,
-			sop_form_id: forms?.find((f: any) => f.name === data.sop_form_id)?.id || null,
-			...(data.sop_form_data && Object.keys(data.sop_form_data).length > 0
-				? { sop_form_data: data.sop_form_data }
-				: {}),
-			start_date: data.start_date || new Date().toISOString().split("T")[0],
-			status: "Open",
+		const payload: any = {
 			title: data.title,
+			description: data.message,
+			end_date: data.end_date,
+			estimated_time: data.completion_days ? Number(data.completion_days) : undefined,
+			files: data.attachments || [],
+			priority: data.priority || "None",
+			sop_form_id: forms.find((form: any) => form.name === data.sop_form_id)?.id || resolveEntityId(data.sop_form_id) || null,
+			start_date: data.start_date,
 			type: data.nature_of_work,
-			userIdList:
-				data.assigned_users
-					?.map((u: any) => u?.user?.id ?? u?.id)
-					.filter(Boolean) || [],
-
+			nature_of_work: data.nature_of_work,
+			userIdList: (data.assigned_users || []).map((entry: any) => entry?.user?.id ?? entry?.id).filter(Boolean),
 			wo_asset_id: resolveEntityId(data.selected_asset),
 			wo_location_id: resolveEntityId(data.location),
-			// image_path: data.attchments.length > 0 ? data.attchments : "",
-
-			// ✅ Conditionally include work_request_id
-			...(data.work_request_id && { work_request_id: data.work_request_id }),
+			tasks: data.tasks || [],
 		};
 
-		console.log("📦 Final Work Order Payload:", payload);
-		// return;
-		if (id) console.log('set id = ', id);
-		// return;
+		if (!id) {
+			payload.status = "Open";
+			payload.createdFrom = data.work_request_id ? "Work Request" : "Work Order";
+		}
+
+		if (data.work_request_id) {
+			payload.work_request_id = data.work_request_id;
+		}
+
+		if (data.parent_id) {
+			payload.parentId = data.parent_id;
+		}
+
+		if (data.sop_form_data && Object.keys(data.sop_form_data).length > 0) {
+			payload.sop_form_data = data.sop_form_data;
+		}
+
+		if (!(passedData?.hierarchy?.executionOwnedByChildren && id)) {
+			payload.parts = resolvedParts.map((part: any) => ({
+				part_id: part.part_id,
+				part_name: part.part_name,
+				part_type: part.part_type || "Procedure",
+				part_number: part.part_number,
+				estimatedQuantity: Number(part.estimatedQuantity || 0),
+				actualQuantity: part.actualQuantity ?? null,
+				unit: part.unit || "",
+				cost: Number(part.cost || 0),
+				currency: part.currency || "INR",
+			}));
+			payload.oldParts = Array.isArray(passedData?.parts) ? passedData.parts : [];
+			payload.procedure_ids = data.procedure_ids || procedureIds || [];
+		}
 
 		try {
-			if (passedData) {
-				// edit scenario
-				const res = await updateWorkOrder(id, payload);
-				console.log("✅ Response:", res);
-				if (res?.status) {
+			const response = id
+				? await updateWorkOrder(id, payload)
+				: await createWorkOrder(payload);
 
-					if (data.work_request_id) {
-						const approveRes = await approveWorkRequest(data.work_request_id);
-						console.log("✅ Approve Response:", approveRes);
-						if (approveRes.status) {
-							ToastAndroid.show("Work Order updated successfully and Work Request approved!", ToastAndroid.SHORT);
-							useWorkRequestStore.getState().resetWorkRequestForm();
-							router.replace("/requests")
-						}
-					}
-
-					useWorkOrderStore.getState().resetForm();
-					if (!data.work_request_id) {
-						ToastAndroid.show("Work Order updated successfully!", ToastAndroid.SHORT);
-						if (comingFrom === "overview") {
-							router.replace("/workOrders");
-						} else {
-							router.back();
-						}
-					}
-				}
-
-
-			} else {
-				const res = await createWorkOrder(payload);
-				console.log("✅ Response:", res);
-				if (res?.status) {
-
-					if (data.work_request_id) {
-						const approveRes = await approveWorkRequest(data.work_request_id);
-						console.log("✅ Approve Response:", approveRes);
-						if (approveRes.status) {
-							ToastAndroid.show("Work Order created successfully and Work Request approved!", ToastAndroid.SHORT);
-							useWorkRequestStore.getState().resetWorkRequestForm();
-							router.replace("/requests")
-						}
-					}
-
-					useWorkOrderStore.getState().resetForm();
-					if (!data.work_request_id) {
-						ToastAndroid.show("Work Order created successfully!", ToastAndroid.SHORT);
-						router.replace("/workOrders");
-					}
+			if (response?.status) {
+				useWorkOrderStore.getState().resetForm();
+				useWorkRequestStore.getState().resetWorkRequestForm();
+				ToastAndroid.show(id ? "Work order updated successfully!" : "Work order created successfully!", ToastAndroid.SHORT);
+				if (comingFrom === "overview") {
+					router.replace("/workOrders");
+				} else if (data.work_request_id) {
+					router.replace("/requests");
+				} else {
+					router.replace("/workOrders");
 				}
 			}
-
-
-		} catch (error) {
-			console.error("❌ Error creating work order:", error);
-			ToastAndroid.show("Failed to create work order!", ToastAndroid.SHORT);
+		} catch (error: any) {
+			console.error("Work order save error =", error);
+			ToastAndroid.show(error?.message || "Failed to save work order", ToastAndroid.LONG);
 		}
 	};
 
 	const pickImage = (fromCamera = false) => {
 		const options: any = {
-			mediaType: 'photo' as const,
+			mediaType: "photo" as const,
 			quality: 0.8,
 		};
 
 		if (fromCamera) {
 			launchCamera(options, handleImageResponse);
-		} else {
-			launchImageLibrary(options, handleImageResponse);
+			return;
 		}
+
+		launchImageLibrary(options, handleImageResponse);
 	};
 
 	const handleImageResponse = async (response: any) => {
 		if (response.didCancel) return;
 		if (response.errorCode) {
-			Alert.alert('Error', response.errorMessage || 'Image selection failed');
+			Alert.alert("Error", response.errorMessage || "Image selection failed");
 			return;
 		}
 
 		const asset = response.assets?.[0];
 		if (!asset) return;
 
-		console.log('Selected image: ', asset.uri);
-
-		const updatedWorkOrderImage = await workOrderImageUpload(asset, user);
-		console.log('Updated work order image: ', [updatedWorkOrderImage]);
-
-		setWorkForm("attachments", [updatedWorkOrderImage]);
+		try {
+			const uploaded = await workOrderImageUpload(asset, user);
+			if (uploaded) {
+				setWorkForm("attachments", [uploaded]);
+			}
+		} catch (error) {
+			console.log("work order image upload error =", error);
+		}
 	};
 
 	return (
-		<>
-			<KeyboardAwareScrollView bottomOffset={30}>
-				{/* <Header title="Create Work Order" /> */}
-				<ScrollView style={styles.container}>
-					<View style={styles.subContainer}>
+		<KeyboardAwareScrollView bottomOffset={30}>
+			<ScrollView style={styles.container}>
+				<View style={styles.subContainer}>
+					<FormField
+						label="Title"
+						placeholder="Enter Title"
+						field="title"
+						store={useWorkOrderStore}
+						setterName="setWorkForm"
+						styles={{ paddingHorizontal: 25 }}
+					/>
 
-						<FormField
-							label="Title"
-							placeholder="Enter Title"
-							field="title"
-							store={useWorkOrderStore}
-							setterName="setWorkForm"
-							styles={{ paddingHorizontal: 25 }}
-						/>
+					<FormField
+						label="Description"
+						placeholder="Enter a description"
+						field="message"
+						store={useWorkOrderStore}
+						setterName="setWorkForm"
+						required={false}
+						styles={{ paddingHorizontal: 25 }}
+					/>
+				</View>
 
-						<FormField
-							label="Description"
-							placeholder="Enter a description"
-							field="message"
-							store={useWorkOrderStore}
-							setterName="setWorkForm"
-							required={false}
-							styles={{ paddingHorizontal: 25 }}
-						/>
+				<AssignSectionNew type="workOrders" lockLocation={Boolean(isFollowUpMode)} />
 
+				{isFollowUpMode ? (
+					<View style={styles.lockedNote}>
+						<Text style={styles.lockedNoteText}>
+							Follow-up work orders inherit the parent location. You can still change the asset and assignees within that location.
+						</Text>
+					</View>
+				) : null}
+
+				<FormField
+					label="Nature of Work"
+					type="dropdown"
+					field="nature_of_work"
+					options={["Preventive", "Electrical", "Break Down", "Inspection", "Corrective", "Safety", "Upgrade", "Meter Reading", "Mechanical", "Other"]}
+					store={useWorkOrderStore}
+					setterName="setWorkForm"
+					styles={{ paddingHorizontal: 25 }}
+					required={false}
+				/>
+
+				<FormField
+					label="Priority"
+					type="dropdown"
+					field="priority"
+					options={["None", "Low", "Medium", "High", "Urgent"]}
+					store={useWorkOrderStore}
+					setterName="setWorkForm"
+					styles={{ paddingHorizontal: 25 }}
+					required={false}
+				/>
+
+				<View style={styles.labelContainer}>
+					<View style={styles.inlineLabelRow}>
+						<Text style={styles.labelText}>Start Date</Text>
+						<Text style={styles.asterisk}>*</Text>
 					</View>
 
-					{/* <AssignSection type="workOrders" /> */}
-					<AssignSectionNew type="workOrders" />
-
-					{/* <AssignInputContainer /> */}
-
-					<FormField
-						label="Nature of Work"
-						type="dropdown"
-						field="nature_of_work"
-						options={["Preventive", "Electrical", "Break Down", "Inspection", "Corrective", "Safety", "Upgrade", "Meter Reading", "Mechanical", "Other"]}
-						store={useWorkOrderStore}
-						setterName="setWorkForm"
-						styles={{ paddingHorizontal: 25 }}
-						required={false}
-					/>
-
-					<FormField
-						label="Priority"
-						type="dropdown"
-						field="priority"
-						options={["None", "Low", "Medium", "High"]}
-						store={useWorkOrderStore}
-						setterName="setWorkForm"
-						styles={{ paddingHorizontal: 25 }}
-						required={false}
-					/>
-
-
-					<View style={styles.labelContainer}>
-						<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
-							<Text style={[styles.labelText]}>Start Date</Text>
-							<Text style={styles.asterisk}>*</Text>
-						</View>
-
-						<Pressable style={styles.container1} onPress={() => {
+					<Pressable
+						style={styles.dateField}
+						onPress={() => {
 							setActiveDateField("start_date");
-							// setIsDatePickerVisible(true);
-							setShowCalendar(true)
-						}}>
-							<TextInput
-								placeholder={"dd-mm-yyyy"}
-								placeholderTextColor={"#999"}
-								readOnly
-								style={[styles.input1, styles.input2]}
-								keyboardType="numeric"
-								value={useWorkOrderStore.getState().start_date || ""}
-							/>
-						</Pressable>
-					</View>
-
-					<ModalCalendar
-						showCalendar={showCalendar}
-						setShowCalendar={setShowCalendar}
-						activeDateField={activeDateField}
-						startDate={useWorkOrderStore.getState().start_date}
-						currentDate={activeDateField === "end_date"
-							? useWorkOrderStore.getState().end_date
-							: useWorkOrderStore.getState().start_date}
-						onSelectDate={(date) => {
-							console.log("Selected date:", date);
-							const formatted = moment(date).format("YYYY-MM-DD");
-							console.log('active date field = ', activeDateField)
-							if (activeDateField) {
-								useWorkOrderStore.getState().setWorkForm(activeDateField, formatted);
-								setActiveDateField(null);
-							}
+							setShowCalendar(true);
 						}}
-					/>
+					>
+						<TextInput
+							placeholder="yyyy-mm-dd"
+							placeholderTextColor="#999"
+							readOnly
+							style={styles.dateInput}
+							value={useWorkOrderStore.getState().start_date || ""}
+						/>
+					</Pressable>
+				</View>
 
-					<View style={styles.labelContainer}>
-						<View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
-							<Text style={[styles.labelText]}>End Date</Text>
-							<Text style={styles.asterisk}>*</Text>
-						</View>
-
-						<Pressable style={styles.container1} onPress={() => {
-							setActiveDateField("end_date");
-							// setIsDatePickerVisible(true);
-							setShowCalendar(true)
-						}}>
-							<TextInput
-								placeholder={"dd-mm-yyyy"}
-								placeholderTextColor={"#999"}
-								readOnly
-								style={[styles.input1, styles.input2]}
-								keyboardType="numeric"
-								value={useWorkOrderStore.getState().end_date || ""}
-							/>
-						</Pressable>
+				<View style={styles.labelContainer}>
+					<View style={styles.inlineLabelRow}>
+						<Text style={styles.labelText}>End Date</Text>
+						<Text style={styles.asterisk}>*</Text>
 					</View>
 
-					<FormField
-						label="Estimation Duration (Hours)"
-						placeholder="Enter Estimation Duration"
-						field="completion_days"
-						store={useWorkOrderStore}
-						setterName="setWorkForm"
-						styles={{ paddingHorizontal: 25 }}
-						required={false}
-					/>
+					<Pressable
+						style={styles.dateField}
+						onPress={() => {
+							setActiveDateField("end_date");
+							setShowCalendar(true);
+						}}
+					>
+						<TextInput
+							placeholder="yyyy-mm-dd"
+							placeholderTextColor="#999"
+							readOnly
+							style={styles.dateInput}
+							value={useWorkOrderStore.getState().end_date || ""}
+						/>
+					</Pressable>
+				</View>
 
+				<ModalCalendar
+					showCalendar={showCalendar}
+					setShowCalendar={setShowCalendar}
+					activeDateField={activeDateField || "start_date"}
+					startDate={useWorkOrderStore.getState().start_date}
+					currentDate={activeDateField === "end_date" ? useWorkOrderStore.getState().end_date : useWorkOrderStore.getState().start_date}
+					onSelectDate={(date) => {
+						const formatted = moment(date).format("YYYY-MM-DD");
+						if (activeDateField) {
+							useWorkOrderStore.getState().setWorkForm(activeDateField, formatted);
+							setActiveDateField(null);
+						}
+					}}
+				/>
 
-					{/* attachment */}
+				<FormField
+					label="Estimation Duration (Hours)"
+					placeholder="Enter estimation duration"
+					field="completion_days"
+					store={useWorkOrderStore}
+					setterName="setWorkForm"
+					styles={{ paddingHorizontal: 25 }}
+					required={false}
+					showKeyboardType="numeric"
+				/>
 
-					<AttachmentUpload
-						onPress={() => pickImage()}
-					/>
+				<AttachmentUpload onPress={() => pickImage()} />
 
-					{
-						useWorkOrderStore.getState().attachments.length > 0 &&
-						!imageError && (
-							<View
-								style={{
-									backgroundColor: "transparent",
-									padding: 10,
-									marginHorizontal: 20,
-									alignSelf: "flex-start",
-								}}
+				{attachments.length > 0 && !imageError ? (
+					<View style={styles.attachmentPreview}>
+						<View style={{ position: "relative" }}>
+							<Image
+								source={{ uri: `${endpoints.baseURL}work_request/${attachments[0]?.fileName}` }}
+								style={{ width: 200, height: 200, borderRadius: 8 }}
+								onError={() => setImageError(true)}
+							/>
+
+							<TouchableOpacity
+								onPress={() => setWorkForm("attachments", [])}
+								style={styles.attachmentRemove}
 							>
-								{/* Image wrapper */}
-								<View style={{ position: "relative" }}>
-									<Image
-										source={{
-											uri: `${endpoints.baseURL}work_request/${useWorkOrderStore.getState().attachments[0]?.fileName
-												}`,
-										}}
-										style={{ width: 200, height: 200, borderRadius: 8 }}
-										onError={() => setImageError(true)}
-									/>
+								<Feather name="x" size={16} color="#fff" />
+							</TouchableOpacity>
+						</View>
+					</View>
+				) : null}
 
-									<TouchableOpacity
-										onPress={() => {
-											setWorkForm("attachments", [])
-										}}
-										style={{
-											position: "absolute",
-											top: -8,
-											right: -8,
-											backgroundColor: "#000",
-											borderRadius: 12,
-											padding: 4,
-										}}
-									>
-										<Feather name="x" size={16} color="#fff" />
-									</TouchableOpacity>
-								</View>
-							</View>
-						)
-					}
-
-					<SelectParts onPress={() => {
-						if (workOrderLocation) {
+				<SelectParts
+					onPress={() => {
+						if (locationId) {
 							router.push({
 								pathname: "/addParts",
-								params: { comingFrom: "newWorkOrder" }
-							})
+								params: { comingFrom: "newWorkOrder" },
+							});
 						} else {
 							ToastAndroid.show("Please select a location", ToastAndroid.SHORT);
 						}
 					}}
-					/>
+				/>
 
-
-					<View style={styles.partsContainer}>
-						{useWorkOrderStore.getState().parts.length > 0 &&
-							useWorkOrderStore.getState().parts.map((part: any, index: number) => (
-								<View style={styles.partItem} key={index}>
-									<Text style={styles.partText}>{part?.part_name}</Text>
-									<Text style={styles.partText}>({part?.estimatedQuantity})</Text>
-									<Pressable onPress={() => handleRemovePart(part.part_id)}>
+				<View style={styles.partsContainer}>
+					{resolvedParts.map((part: any) => {
+						const partId = resolveEntityId(part?.part_id || part);
+						const hasManualSelection = manualParts.some((manualPart: any) => resolveEntityId(manualPart?.part_id || manualPart) === partId);
+						return (
+							<View style={[styles.partItem, part.procedureLinked && styles.partItemProcedure]} key={partId}>
+								<Text style={styles.partText}>
+									{part.part_name} ({part.estimatedQuantity})
+								</Text>
+								{part.procedureLinked ? (
+									<Text style={styles.partBadge}>
+										{part.manualQuantity ? "manual + procedure" : "procedure"}
+									</Text>
+								) : null}
+								{hasManualSelection ? (
+									<Pressable onPress={() => handleRemoveManualPart(partId)}>
 										<Ionicons name="close" size={16} color="#000" />
 									</Pressable>
-								</View>
-							))}
+								) : null}
+							</View>
+						);
+					})}
+				</View>
+
+				{partStockValidationIssues.length > 0 ? (
+					<View style={styles.shortageCard}>
+						<Text style={styles.shortageTitle}>Stock shortages</Text>
+						{partStockValidationIssues.map((issue) => (
+							<Text key={issue.part_id} style={styles.shortageText}>
+								{issue.part_name}: need {issue.requiredQuantity}, available {issue.availableQuantity}
+							</Text>
+						))}
 					</View>
+				) : null}
 
-					{/* <Pressable style={styles.uploadBtn} onPress={() => pickImage()}>
-						<Text style={styles.uploadBtnText}>Upload or Capture Photos</Text>
-					</Pressable> */}
+				{selectedProcedures.length > 0 ? (
+					<View style={styles.procedureSummaryCard}>
+						<Text style={styles.procedureSummaryTitle}>Linked procedures</Text>
+						{selectedProcedures.map((procedure) => (
+							<Text key={procedure.id} style={styles.procedureSummaryText}>
+								{procedure.name}
+							</Text>
+						))}
+					</View>
+				) : null}
 
-
-					<DatePicker
-						visible={isDatePickerVisible}
-						onClose={() => setIsDatePickerVisible(false)}
-						onDateSelect={(date) => {
-							const formatted = moment(date).format("YYYY-MM-DD");
-							console.log('active date field = ', activeDateField)
-							if (activeDateField) {
-								useWorkOrderStore.getState().setWorkForm(activeDateField, formatted);
-								setIsDatePickerVisible(false);
-								setActiveDateField(null);
-							}
-						}}
-					/>
-
-					<ActionButton onPress={handleSubmit} label="Submit" buttonStyle={styles.submitBtn} />
-				</ScrollView>
-			</KeyboardAwareScrollView>
-
-		</>
-	)
+				<ActionButton onPress={handleSubmit} label={id ? "Update" : "Submit"} buttonStyle={styles.submitBtn} />
+			</ScrollView>
+		</KeyboardAwareScrollView>
+	);
 }
 
 const styles = StyleSheet.create({
@@ -602,78 +618,9 @@ const styles = StyleSheet.create({
 	subContainer: {
 		backgroundColor: "#f9f9ff",
 	},
-	label: {
-		fontSize: 12,
-		fontFamily: Fonts.semiBold,
-		color: "#201f23",
-	},
-	value: {
-		fontSize: 12,
-		fontFamily: Fonts.regular,
-		color: "#201f23",
-		padding: 6
-	},
-	row: {
-		flexDirection: "row",
-	},
-	inputContainer: {
-		borderRadius: 2,
-		padding: 2
-	},
-	messageInput: {
-		height: 80,
-		textAlignVertical: "top"
-	},
-	dropdownsRow: {
-		flexDirection: "row",
-		alignItems: "center",
-		padding: 10,
-		paddingHorizontal: 20,
-		borderRadius: 8
-	},
-	dropdownContainer: {
-		gap: 3,
-		padding: 5,
-		flexShrink: 1,
-	},
-	dropdownTitle: {
-		fontSize: 12,
-		fontFamily: Fonts.semiBold,
-		color: "#201f23",
-		flex: 1
-	},
-	dropdown: {
-		flexDirection: "row",
-		backgroundColor: "#fff",
-		borderRadius: 4,
-		paddingVertical: 2,
-		paddingHorizontal: 8,
-		alignItems: "center",
-		justifyContent: "space-between",
-		width: "100%",
-	},
-	dropdownItemText: {
-		fontFamily: Fonts.regular,
-		fontSize: 12,
-	},
-	uploadBtn: {
-		backgroundColor: "#742BDE10",
-		padding: 20,
-		marginHorizontal: 25,
-		marginVertical: 10,
-		alignItems: "center",
-		borderWidth: 0.5,
-		borderColor: "#742BDE",
-		borderStyle: "dashed",
-		borderRadius: 4,
-	},
-	uploadBtnText: {
-		fontFamily: Fonts.regular,
-		fontSize: 12,
-		color: "#742BDE"
-	},
 	submitBtn: {
-		marginHorizontal: 20
+		marginHorizontal: 20,
+		marginBottom: 24,
 	},
 	partsContainer: {
 		paddingHorizontal: 25,
@@ -688,25 +635,31 @@ const styles = StyleSheet.create({
 		borderColor: "#752BDF",
 		borderWidth: StyleSheet.hairlineWidth,
 		borderRadius: 6,
-		justifyContent: "center",
-		padding: 6,
-		gap: 5,
-		display: "flex",
 		alignItems: "center",
 		flexDirection: "row",
+		gap: 5,
+	},
+	partItemProcedure: {
+		backgroundColor: "#FFF6E5",
+		borderColor: "#D48806",
 	},
 	partText: {
 		fontSize: 11,
 		fontFamily: Fonts.regular,
 		color: "#000",
 	},
+	partBadge: {
+		fontSize: 10,
+		fontFamily: Fonts.medium,
+		color: "#7A4A00",
+	},
 	labelContainer: {
-		flexDirection: "column",
-		alignItems: "flex-start",
-		justifyContent: "space-between",
-		flex: 1,
 		paddingHorizontal: 25,
-		marginVertical: 10
+		marginVertical: 10,
+	},
+	inlineLabelRow: {
+		flexDirection: "row",
+		alignItems: "center",
 	},
 	labelText: {
 		fontSize: 11,
@@ -720,40 +673,91 @@ const styles = StyleSheet.create({
 		marginTop: -2,
 		marginLeft: 2,
 	},
-	container1: {
+	dateField: {
 		width: "100%",
 		marginTop: 10,
-		flexDirection: "row",
-		alignItems: "center",
-		justifyContent: 'space-between',
 		borderRadius: 10,
 		borderWidth: 1,
-		borderColor: "#f7f9fb",
+		borderColor: "#E1E8EE",
 		backgroundColor: "#fff",
 	},
-	label1: {
-		fontSize: 12,
-		color: "#222",
-		backgroundColor: "#f7f9fb",
-		borderColor: "#e3e5e5",
-		borderWidth: 0.8,
-		padding: 12,
-		fontFamily: Fonts.regular,
-	},
-	input1: {
+	dateInput: {
 		borderRadius: 8,
 		height: 40,
-		backgroundColor: '#fff',
-		textAlign: "left",
-		justifyContent: 'center',
-		alignItems: 'center',
-		flex: 1,
+		backgroundColor: "#fff",
 		fontSize: 12,
 		paddingStart: 12,
 		fontFamily: Fonts.regular,
 	},
-	input2: {
+	attachmentPreview: {
+		padding: 10,
+		marginHorizontal: 20,
+		alignSelf: "flex-start",
+	},
+	attachmentRemove: {
+		position: "absolute",
+		top: -8,
+		right: -8,
+		backgroundColor: "#000",
+		borderRadius: 12,
+		padding: 4,
+	},
+	shortageCard: {
+		marginHorizontal: 25,
+		marginTop: 12,
+		marginBottom: 8,
+		padding: 12,
+		borderRadius: 8,
+		backgroundColor: "#FFF1F0",
 		borderWidth: 1,
-		borderColor: "#E1E8EE",
-	}
-})
+		borderColor: "#FFCCC7",
+	},
+	shortageTitle: {
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
+		color: "#A8071A",
+		marginBottom: 6,
+	},
+	shortageText: {
+		fontSize: 11,
+		fontFamily: Fonts.regular,
+		color: "#5C0011",
+		marginBottom: 4,
+	},
+	procedureSummaryCard: {
+		marginHorizontal: 25,
+		marginTop: 12,
+		marginBottom: 8,
+		padding: 12,
+		borderRadius: 8,
+		backgroundColor: "#F6FFED",
+		borderWidth: 1,
+		borderColor: "#B7EB8F",
+	},
+	procedureSummaryTitle: {
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
+		color: "#237804",
+		marginBottom: 6,
+	},
+	procedureSummaryText: {
+		fontSize: 11,
+		fontFamily: Fonts.regular,
+		color: "#135200",
+		marginBottom: 4,
+	},
+	lockedNote: {
+		marginHorizontal: 25,
+		marginTop: 4,
+		padding: 10,
+		borderRadius: 8,
+		backgroundColor: "#F0F5FF",
+		borderWidth: 1,
+		borderColor: "#ADC6FF",
+	},
+	lockedNoteText: {
+		fontSize: 11,
+		fontFamily: Fonts.regular,
+		color: "#1D39C4",
+	},
+});

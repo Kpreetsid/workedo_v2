@@ -5,47 +5,50 @@ import Header from '@/components/global/Header';
 import NewWorkOrder from '@/components/create-work-order/newWorkOrder';
 import TaskScreen from '@/components/create-work-order/TaskScreen';
 import FormsScreen from '@/components/create-work-order/FormsScreen';
+import { useLocalSearchParams } from 'expo-router';
 
-const GeneralInfo = () => (
+const GeneralInfo = ({ data }: any) => (
 	<View style={styles.scene}>
-		<NewWorkOrder />
+		<NewWorkOrder passedData={data} />
 	</View>
 );
 
-const Task = () => (
+const Task = ({ data }: any) => (
 	<View style={styles.scene}>
 		<TaskScreen />
 	</View>
 );
 
-const Forms = () => (
+const Forms = ({ data }: any) => (
 	<View style={styles.scene}>
 		<FormsScreen />
 	</View>
 );
 
-const renderScene = ({ route }: { route: { key: string } }) => {
-	switch (route.key) {
-		case "general":
-			return <GeneralInfo />;
-		case "task":
-			return <Task />;
-		case "forms":
-			return <Forms />;
-		default:
-			return null;
-	}
-};
-
 const createWorkOrder = () => {
 	const layout = Dimensions.get("window");
+	const params: any = useLocalSearchParams();
+	const parsedData = params?.data ? JSON.parse(params.data) : null;
 	const [index, setIndex] = useState(0);
 
 	const [routes] = useState([
 		{ key: "general", title: "General Info" },
 		{ key: "task", title: "Task" },
-		{ key: "forms", title: "Forms" },
+		{ key: "forms", title: "Procedures" },
 	]);
+
+	const renderScene = ({ route }: { route: { key: string } }) => {
+		switch (route.key) {
+			case "general":
+				return <GeneralInfo data={parsedData} />;
+			case "task":
+				return <Task data={parsedData} />;
+			case "forms":
+				return <Forms data={parsedData} />;
+			default:
+				return null;
+		}
+	};
 
 	const renderTabBar = () => (
 		<View style={styles.tabBar}>
