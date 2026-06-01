@@ -81,11 +81,44 @@ def enableMinifyInReleaseBuilds = (findProperty('android.enableMinifyInReleaseBu
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+def patchKeyboardControllerAutolinking = {
+    def autolinkCmake = file("$buildDir/generated/autolinking/src/main/jni/Android-autolinking.cmake")
+    if (!autolinkCmake.exists()) {
+        return
+    }
+
+    def normalizedProjectRoot = projectRoot.replace('\\', '/')
+    def originalPath = "${normalizedProjectRoot}/node_modules/react-native-keyboard-controller/android/src/main/jni/"
+    def replacementPath = "D:/rnkc/android/src/main/jni/"
+    def current = autolinkCmake.getText('UTF-8')
+    if (current.contains(originalPath)) {
+        autolinkCmake.write(current.replace(originalPath, replacementPath), 'UTF-8')
+        println("Patched keyboard-controller autolinking path for Windows path limits.")
+    }
+}
+
+afterEvaluate {
+    tasks.matching { it.name == 'generateAutolinkingNewArchitectureFiles' }.configureEach {
+        doLast {
+            patchKeyboardControllerAutolinking()
+        }
+    }
+    tasks.matching { it.name.startsWith('configureCMake') || it.name.startsWith('buildCMake') }.configureEach {
+        doFirst {
+            patchKeyboardControllerAutolinking()
+        }
+    }
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
+
+    externalNativeBuild {
+        experimentalProperties["ninja.buildStagingDirectory"] = "D:/_cxx/workedo"
+    }
 
     namespace 'com.app.workedo'
     defaultConfig {

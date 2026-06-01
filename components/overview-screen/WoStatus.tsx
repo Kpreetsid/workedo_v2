@@ -8,6 +8,7 @@ import { woStatus } from "@/src/services/cmms.service";
 import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 import moment from "moment";
 import { collectSelectedAssetIdsWithChildren, type SelectableTreeNode } from "@/src/utils/assetSelection";
+import { getWorkOrderStatusTone } from "@/src/utils/workOrderStatus";
 
 const chartData: pieDataItem[] = [
 	{ value: 3, color: "#00B227" }, { value: 3, color: "#DEDEDE" }, { value: 3, color: "#FFC107" }, { value: 3, color: "#5552FE" },
@@ -48,10 +49,16 @@ export default function WoStatus() {
 
 	// 🎨 Color mapping for each health type
 	const colorMap: Record<string, string> = {
-		"Open": "#24b7d8",
-		"On-Hold": "#264de0",
-		"In-Progress": "#46e4c9",
-		"Completed": "#adeaff",
+		"Open": getWorkOrderStatusTone("Open").border,
+		"Pending": getWorkOrderStatusTone("Pending").border,
+		"Blocked": getWorkOrderStatusTone("Blocked").border,
+		"Waiting-on-Parts": getWorkOrderStatusTone("Waiting-on-Parts").border,
+		"Waiting-on-Permit": getWorkOrderStatusTone("Waiting-on-Permit").border,
+		"On-Hold": getWorkOrderStatusTone("On-Hold").border,
+		"In-Progress": getWorkOrderStatusTone("In-Progress").border,
+		"Approved": getWorkOrderStatusTone("Approved").border,
+		"Rejected": getWorkOrderStatusTone("Rejected").border,
+		"Completed": getWorkOrderStatusTone("Completed").border,
 	};
 
 	async function fetchWoStatus() {
@@ -99,13 +106,6 @@ export default function WoStatus() {
 			if (res?.status && Array.isArray(res?.data) && res?.data.length > 0) {
 
 				// 🎨 Color mapping for each health type
-				const colorMap: Record<string, string> = {
-					"Open": "#24b7d8",
-					"On-Hold": "#264de0",
-					"In-Progress": "#46e4c9",
-					"Completed": "#adeaff",
-				};
-
 				const breakup = res?.data;
 
 				// 1) Convert breakup to pie chart format

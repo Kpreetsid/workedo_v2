@@ -22,7 +22,7 @@ export default function Comments({ params }: Props) {
 
 	useEffect(() => {
 		fetchComments();
-	}, []);
+	}, [params?.id]);
 
 	const fetchComments = async () => {
 		try {
@@ -66,7 +66,7 @@ export default function Comments({ params }: Props) {
 				ToastAndroid.show("Comment added successfully!", ToastAndroid.SHORT);
 				fetchComments();
 				setUserComment("");
-				// setParentCommentId(null);
+				setParentCommentId(null);
 			}
 		} catch (e) {
 			console.log('error adding comment = ', e);

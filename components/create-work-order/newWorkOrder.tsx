@@ -54,11 +54,30 @@ const mapEditableParts = (parts: any[] = []) =>
 		procedureNames: Array.isArray(part?.procedureNames) ? part.procedureNames : [],
 	}));
 
+const resolveWorkOrderAttachmentUri = (attachment: any): string => {
+	if (!attachment) return "";
+	if (attachment?.uri) return String(attachment.uri);
+	if (attachment?.fileUrl) return String(attachment.fileUrl);
+	if (attachment?.folderName && attachment?.fileName) {
+		return `${endpoints.baseURL}${attachment.folderName}/${attachment.fileName}`;
+	}
+	if (attachment?.image_path) {
+		return `${endpoints.baseURL}${attachment.image_path}`;
+	}
+	if (attachment?.fileName) {
+		return `${endpoints.baseURL}${attachment.fileName}`;
+	}
+	return "";
+};
+
 export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 	const router = useRouter();
 	const params: any = useLocalSearchParams();
 	const comingFrom = params?.comingFrom;
 	const isFollowUpMode = params?.mode === "follow-up" || passedData?.isFollowUp;
+	const isParentExecutionOwnedEdit = Boolean(passedData?.id && passedData?.hierarchy?.executionOwnedByChildren);
+	const followUpParentLabel = passedData?.order_no || passedData?.parentOrder?.order_no || passedData?.hierarchy?.parentReference?.order_no || "";
+	const followUpParentTitle = passedData?.title || passedData?.parentOrder?.title || passedData?.hierarchy?.parentReference?.title || "";
 
 	const { user } = useAuthStore();
 	const { setWorkForm, isLoaded, resetForm } = useWorkOrderStore();
@@ -86,6 +105,9 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 	useEffect(() => {
 		if (passedData && !isLoaded) {
 			const data = passedData as WorkOrder & { procedures?: ProcedureTemplate[] };
+			const isWorkRequestSource =
+				(data as any)?.sourceType === "work-request" ||
+				Boolean((data as any)?.request_no && (data as any)?.location_id);
 			const preselectedProcedures = Array.isArray(data?.procedures)
 				? data.procedures
 				: Array.isArray(data?.procedure_entries)
@@ -95,12 +117,21 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 				? data.procedure_ids
 				: preselectedProcedures.map((procedure: any) => resolveEntityId(procedure?.procedure_id || procedure?.id || procedure)).filter(Boolean);
 
-			setId(resolveEntityId(data?.id || data?._id));
+			setId(isWorkRequestSource ? "" : resolveEntityId(data?.id || data?._id));
 			setWorkForm("title", data?.title || "");
 			setWorkForm("message", data?.description || "");
-			setWorkForm("location", data?.location || data?.wo_location_id || null);
-			setWorkForm("selected_asset", data?.asset || data?.wo_asset_id || null);
-			setWorkForm("nature_of_work", data?.nature_of_work || data?.type || "Preventive");
+			setWorkForm(
+				"location",
+				(isWorkRequestSource ? (data as any)?.location_id : null) || data?.location || data?.wo_location_id || null
+			);
+			setWorkForm(
+				"selected_asset",
+				(isWorkRequestSource ? (data as any)?.asset_id : null) || data?.asset || data?.wo_asset_id || null
+			);
+			setWorkForm(
+				"nature_of_work",
+				(isWorkRequestSource ? (data as any)?.problemType : null) || data?.nature_of_work || data?.type || "Preventive"
+			);
 			setWorkForm("completion_days", String(data?.estimated_time ?? ""));
 			setWorkForm("priority", data?.priority || "None");
 			setWorkForm("attachments", Array.isArray(data?.files) ? data.files : []);
@@ -111,6 +142,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 			setWorkForm("tasks", data?.tasks ?? []);
 			setWorkForm("procedure_ids", preselectedProcedureIds);
 			setWorkForm("selected_procedures", preselectedProcedures as ProcedureTemplate[]);
+			setWorkForm("work_request_id", isWorkRequestSource ? resolveEntityId((data as any)?.work_request_id || data?.id) : "");
 			setWorkForm(
 				"parent_id",
 				isFollowUpMode
@@ -122,7 +154,8 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 				setWorkForm("sop_form_id", resolveEntityId(data?.sop_form_id));
 			}
 
-			const locationValue = data?.location || data?.wo_location_id;
+			const locationValue =
+				(isWorkRequestSource ? (data as any)?.location_id : null) || data?.location || data?.wo_location_id;
 			const assignedUsers = Array.isArray(data?.assignedUsers) ? data.assignedUsers : [];
 			const mappedLocationId = resolveEntityId(locationValue);
 			if (mappedLocationId) {
@@ -399,6 +432,21 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 	return (
 		<KeyboardAwareScrollView bottomOffset={30}>
 			<ScrollView style={styles.container}>
+				{isFollowUpMode ? (
+					<View style={styles.followUpBanner}>
+						<View style={styles.followUpBannerIconWrap}>
+							<Ionicons name="git-branch-outline" size={18} color="#5B21B6" />
+						</View>
+						<View style={{ flex: 1 }}>
+							<Text style={styles.followUpEyebrow}>Follow-up Work Order</Text>
+							<Text style={styles.followUpTitle}>
+								This work order will stay linked to {followUpParentLabel || "the parent work order"}.
+							</Text>
+							{followUpParentTitle ? <Text style={styles.followUpMeta}>{followUpParentTitle}</Text> : null}
+						</View>
+					</View>
+				) : null}
+
 				<View style={styles.subContainer}>
 					<FormField
 						label="Title"
@@ -426,6 +474,15 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 					<View style={styles.lockedNote}>
 						<Text style={styles.lockedNoteText}>
 							Follow-up work orders inherit the parent location. You can still change the asset and assignees within that location.
+						</Text>
+					</View>
+				) : null}
+
+				{isParentExecutionOwnedEdit ? (
+					<View style={styles.executionOwnedNote}>
+						<Text style={styles.executionOwnedNoteTitle}>Execution is tracked on child work orders</Text>
+						<Text style={styles.executionOwnedNoteText}>
+							This parent work order rolls up child progress. Parts, procedures, labor, and actual execution capture should be maintained on the child work orders instead of the parent.
 						</Text>
 					</View>
 				) : null}
@@ -530,7 +587,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 					<View style={styles.attachmentPreview}>
 						<View style={{ position: "relative" }}>
 							<Image
-								source={{ uri: `${endpoints.baseURL}work_request/${attachments[0]?.fileName}` }}
+								source={{ uri: resolveWorkOrderAttachmentUri(attachments[0]) }}
 								style={{ width: 200, height: 200, borderRadius: 8 }}
 								onError={() => setImageError(true)}
 							/>
@@ -545,63 +602,67 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 					</View>
 				) : null}
 
-				<SelectParts
-					onPress={() => {
-						if (locationId) {
-							router.push({
-								pathname: "/addParts",
-								params: { comingFrom: "newWorkOrder" },
-							});
-						} else {
-							ToastAndroid.show("Please select a location", ToastAndroid.SHORT);
-						}
-					}}
-				/>
+				{!isParentExecutionOwnedEdit ? (
+					<>
+						<SelectParts
+							onPress={() => {
+								if (locationId) {
+									router.push({
+										pathname: "/addParts",
+										params: { comingFrom: "newWorkOrder" },
+									});
+								} else {
+									ToastAndroid.show("Please select a location", ToastAndroid.SHORT);
+								}
+							}}
+						/>
 
-				<View style={styles.partsContainer}>
-					{resolvedParts.map((part: any) => {
-						const partId = resolveEntityId(part?.part_id || part);
-						const hasManualSelection = manualParts.some((manualPart: any) => resolveEntityId(manualPart?.part_id || manualPart) === partId);
-						return (
-							<View style={[styles.partItem, part.procedureLinked && styles.partItemProcedure]} key={partId}>
-								<Text style={styles.partText}>
-									{part.part_name} ({part.estimatedQuantity})
-								</Text>
-								{part.procedureLinked ? (
-									<Text style={styles.partBadge}>
-										{part.manualQuantity ? "manual + procedure" : "procedure"}
+						<View style={styles.partsContainer}>
+							{resolvedParts.map((part: any) => {
+								const partId = resolveEntityId(part?.part_id || part);
+								const hasManualSelection = manualParts.some((manualPart: any) => resolveEntityId(manualPart?.part_id || manualPart) === partId);
+								return (
+									<View style={[styles.partItem, part.procedureLinked && styles.partItemProcedure]} key={partId}>
+										<Text style={styles.partText}>
+											{part.part_name} ({part.estimatedQuantity})
+										</Text>
+										{part.procedureLinked ? (
+											<Text style={styles.partBadge}>
+												{part.manualQuantity ? "manual + procedure" : "procedure"}
+											</Text>
+										) : null}
+										{hasManualSelection ? (
+											<Pressable onPress={() => handleRemoveManualPart(partId)}>
+												<Ionicons name="close" size={16} color="#000" />
+											</Pressable>
+										) : null}
+									</View>
+								);
+							})}
+						</View>
+
+						{partStockValidationIssues.length > 0 ? (
+							<View style={styles.shortageCard}>
+								<Text style={styles.shortageTitle}>Stock shortages</Text>
+								{partStockValidationIssues.map((issue) => (
+									<Text key={issue.part_id} style={styles.shortageText}>
+										{issue.part_name}: need {issue.requiredQuantity}, available {issue.availableQuantity}
 									</Text>
-								) : null}
-								{hasManualSelection ? (
-									<Pressable onPress={() => handleRemoveManualPart(partId)}>
-										<Ionicons name="close" size={16} color="#000" />
-									</Pressable>
-								) : null}
+								))}
 							</View>
-						);
-					})}
-				</View>
+						) : null}
 
-				{partStockValidationIssues.length > 0 ? (
-					<View style={styles.shortageCard}>
-						<Text style={styles.shortageTitle}>Stock shortages</Text>
-						{partStockValidationIssues.map((issue) => (
-							<Text key={issue.part_id} style={styles.shortageText}>
-								{issue.part_name}: need {issue.requiredQuantity}, available {issue.availableQuantity}
-							</Text>
-						))}
-					</View>
-				) : null}
-
-				{selectedProcedures.length > 0 ? (
-					<View style={styles.procedureSummaryCard}>
-						<Text style={styles.procedureSummaryTitle}>Linked procedures</Text>
-						{selectedProcedures.map((procedure) => (
-							<Text key={procedure.id} style={styles.procedureSummaryText}>
-								{procedure.name}
-							</Text>
-						))}
-					</View>
+						{selectedProcedures.length > 0 ? (
+							<View style={styles.procedureSummaryCard}>
+								<Text style={styles.procedureSummaryTitle}>Linked procedures</Text>
+								{selectedProcedures.map((procedure) => (
+									<Text key={procedure.id} style={styles.procedureSummaryText}>
+										{procedure.name}
+									</Text>
+								))}
+							</View>
+						) : null}
+					</>
 				) : null}
 
 				<ActionButton onPress={handleSubmit} label={id ? "Update" : "Submit"} buttonStyle={styles.submitBtn} />
@@ -617,6 +678,46 @@ const styles = StyleSheet.create({
 	},
 	subContainer: {
 		backgroundColor: "#f9f9ff",
+	},
+	followUpBanner: {
+		marginHorizontal: 20,
+		marginTop: 16,
+		marginBottom: 8,
+		padding: 14,
+		borderRadius: 12,
+		backgroundColor: "#F4EDFF",
+		borderWidth: 0.8,
+		borderColor: "#C4B5FD",
+		flexDirection: "row",
+		gap: 12,
+		alignItems: "flex-start",
+	},
+	followUpBannerIconWrap: {
+		width: 32,
+		height: 32,
+		borderRadius: 16,
+		backgroundColor: "#E9D5FF",
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	followUpEyebrow: {
+		fontSize: 10,
+		fontFamily: Fonts.semiBold,
+		color: "#6D28D9",
+		textTransform: "uppercase",
+	},
+	followUpTitle: {
+		marginTop: 4,
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
+		color: "#201F23",
+		lineHeight: 18,
+	},
+	followUpMeta: {
+		marginTop: 4,
+		fontSize: 11,
+		fontFamily: Fonts.regular,
+		color: "#475569",
 	},
 	submitBtn: {
 		marginHorizontal: 20,
@@ -723,6 +824,28 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.regular,
 		color: "#5C0011",
 		marginBottom: 4,
+	},
+	executionOwnedNote: {
+		marginHorizontal: 20,
+		marginTop: 4,
+		marginBottom: 8,
+		padding: 12,
+		borderRadius: 10,
+		backgroundColor: "#FFF7E6",
+		borderWidth: 0.8,
+		borderColor: "#FFD591",
+	},
+	executionOwnedNoteTitle: {
+		fontSize: 11,
+		fontFamily: Fonts.semiBold,
+		color: "#7A4A00",
+		marginBottom: 4,
+	},
+	executionOwnedNoteText: {
+		fontSize: 10,
+		fontFamily: Fonts.regular,
+		color: "#7A4A00",
+		lineHeight: 15,
 	},
 	procedureSummaryCard: {
 		marginHorizontal: 25,

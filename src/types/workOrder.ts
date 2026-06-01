@@ -1,4 +1,4 @@
-import { ProcedureStep } from "./procedure";
+import { ProcedureRequiredPart, ProcedureScoreSummary, ProcedureStep, ProcedureTriggeredAction } from "./procedure";
 
 export interface WorkOrder {
     _id: string;
@@ -18,7 +18,7 @@ export interface WorkOrder {
     parts: any[];
     tasks: WorkOrderTask[];
     task_submitted: boolean;
-    files: any[];
+    files: WorkOrderAttachment[];
     visible: boolean;
     createdBy: any;
     created_by: string;
@@ -57,6 +57,18 @@ export interface WorkOrder {
         quantity?: number;
         min_quantity?: number;
     }>;
+}
+
+export interface WorkOrderAttachment {
+    originalName?: string;
+    type?: string;
+    destination?: string;
+    fileName?: string;
+    folderName?: string;
+    fileUrl?: string;
+    filePath?: string;
+    size?: number;
+    image_path?: string;
 }
 
 export interface WorkOrderTask {
@@ -122,6 +134,7 @@ export interface WorkOrderProcedure {
     tags?: string[];
     description?: string;
     steps?: ProcedureStep[];
+    required_parts?: ProcedureRequiredPart[];
     responses?: Record<string, any>;
     submitted?: boolean;
     submitted_by?: {
@@ -130,12 +143,8 @@ export interface WorkOrderProcedure {
         lastName: string;
     } | null;
     submitted_at?: string | null;
-    score_summary?: {
-        earned: number;
-        possible: number;
-        percentage?: number | null;
-    };
-    triggered_actions?: any[];
+    score_summary?: ProcedureScoreSummary | null;
+    triggered_actions?: ProcedureTriggeredAction[];
 }
 
 export interface WorkOrderLaborEntry {
@@ -239,4 +248,42 @@ export interface WorkOrderCommentReply {
     updatedAt: string;
     id: string;
     replies: WorkOrderCommentReply[];
+}
+
+export interface WorkOrderHistorySnapshot {
+    _id?: string;
+    id?: string;
+    original_id?: string;
+    order_no?: string;
+    title?: string;
+    description?: string;
+    priority?: string;
+    status?: string;
+    type?: string;
+    nature_of_work?: string;
+    estimated_time?: number | null;
+    actual_time?: number | null;
+    end_date?: string | null;
+    actual_start_date?: string | null;
+    actual_end_date?: string | null;
+    parentId?: string | null;
+    work_request_id?: string | null;
+    parts?: any[];
+    tasks?: WorkOrderTask[];
+    procedure_entries?: WorkOrderProcedure[];
+    labor_entries?: WorkOrderLaborEntry[];
+    files?: WorkOrderAttachment[];
+    updatedBy?: {
+        id?: string;
+        firstName?: string;
+        lastName?: string;
+    } | string | null;
+    history_created_by?: {
+        id?: string;
+        firstName?: string;
+        lastName?: string;
+    } | string | null;
+    history_created_at?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }

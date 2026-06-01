@@ -9,6 +9,8 @@ import { endpoints } from "@/src/api/endpoints";
 import moment from "moment";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { evaluateWorkOrderReadiness } from "@/src/utils/workOrderReadiness";
+import { formatWorkOrderStatusLabel, getWorkOrderStatusTone } from "@/src/utils/workOrderStatus";
 
 interface Props {
 	params: WorkOrder;
@@ -40,6 +42,27 @@ export default function Detail({ params }: Props) {
 	const createdOn = params?.createdAt ? moment(params.createdAt).format("DD/MM/YYYY hh:mm A") : "--";
 	const estimatedTime = params?.estimated_time?.toString() || "--";
 	const childSummary = params?.hierarchy?.childStatusSummary;
+	const remainingChildren = Math.max(Number(childSummary?.total || 0) - Number(childSummary?.completed || 0), 0);
+	const childProgressPercent = childSummary?.total ? Math.round((Number(childSummary?.completed || 0) / Number(childSummary.total || 1)) * 100) : 0;
+	const parentReference = params?.parentOrder || params?.hierarchy?.parentReference;
+	const readiness = evaluateWorkOrderReadiness(params);
+
+	const openFollowUpCreate = () => {
+		router.push({
+			pathname: "/createWorkOrder",
+			params: {
+				data: JSON.stringify({
+					...params,
+					isFollowUp: true,
+				}),
+				mode: "follow-up",
+			},
+		});
+	};
+
+	const getStatusChipStyle = (status?: string) => {
+		return getWorkOrderStatusTone(status);
+	};
 
 	return (
 		<ScrollView style={styles.container}>
@@ -52,11 +75,11 @@ export default function Detail({ params }: Props) {
 				</View>
 			) : null}
 
-			{params?.parentOrder || params?.hierarchy?.parentReference ? (
+			{parentReference ? (
 				<Pressable
 					style={styles.linkCard}
 					onPress={() => {
-						const parent = params?.parentOrder || params?.hierarchy?.parentReference;
+						const parent = parentReference;
 						router.push({
 							pathname: "/workOrderDetail",
 							params: {
@@ -76,11 +99,31 @@ export default function Detail({ params }: Props) {
 				</Pressable>
 			) : null}
 
+			{params?.hierarchy?.isChildWorkOrder ? (
+				<View style={styles.childInfoCard}>
+					<Text style={styles.childInfoTitle}>Child Work Order</Text>
+					<Text style={styles.childInfoText}>
+						Complete work, procedures, parts, and execution capture here. The parent work order rolls up this progress automatically.
+					</Text>
+					<Text style={styles.childInfoMeta}>
+						Parent: {parentReference?.order_no || "--"} {parentReference?.title ? `• ${parentReference.title}` : ""}
+					</Text>
+				</View>
+			) : null}
+
 			{params?.hierarchy?.isParentWorkOrder ? (
 				<View style={styles.card}>
 					<Text style={styles.cardTitle}>Child Work Order Progress</Text>
 					<Text style={styles.cardSubtitle}>
 						{params?.hierarchy?.childProgressLabel || `${childSummary?.completed || 0}/${childSummary?.total || 0} completed`}
+					</Text>
+					<View style={styles.progressTrack}>
+						<View style={[styles.progressFill, { width: `${childProgressPercent}%` }]} />
+					</View>
+					<Text style={styles.progressCaption}>
+						{remainingChildren > 0
+							? `${remainingChildren} child work order${remainingChildren === 1 ? "" : "s"} still needs completion before the parent can close.`
+							: "All child work orders are complete. The parent can now be closed when you are ready."}
 					</Text>
 					<View style={[styles.rowBetween, { marginTop: 8 }]}>
 						<Text style={styles.cardValue}>Open: {childSummary?.open || 0}</Text>
@@ -93,30 +136,50 @@ export default function Detail({ params }: Props) {
 				</View>
 			) : null}
 
+			<Pressable style={styles.followUpCard} onPress={openFollowUpCreate}>
+				<View style={{ flex: 1 }}>
+					<Text style={styles.followUpCardTitle}>Create Follow-Up Work Order</Text>
+					<Text style={styles.followUpCardText}>
+						Use a child work order when execution should be captured separately while keeping this work linked.
+					</Text>
+				</View>
+				<Ionicons name="add-circle-outline" size={20} color="#5B21B6" />
+			</Pressable>
+
 			{childOrders.length > 0 ? (
 				<View style={styles.card}>
 					<Text style={styles.cardTitle}>Child Work Orders</Text>
-					{childOrders.map((child) => (
-						<Pressable
-							key={child.id || child._id || child.order_no}
-							style={styles.childRow}
-							onPress={() => {
-								router.push({
-									pathname: "/workOrderDetail",
-									params: {
-										id: child.id || child._id,
-										composite_id: child.order_no,
-									},
-								});
-							}}
-						>
-							<View style={{ flex: 1 }}>
-								<Text style={styles.childTitle}>{child.order_no} - {child.title}</Text>
-								<Text style={styles.childMeta}>{child.status}</Text>
-							</View>
-							<Ionicons name="chevron-forward" size={18} color="#742BDE" />
-						</Pressable>
-					))}
+					{childOrders.map((child) => {
+						const childStatusTone = getStatusChipStyle(child.status);
+						return (
+							<Pressable
+								key={child.id || child._id || child.order_no}
+								style={styles.childRow}
+								onPress={() => {
+									router.push({
+										pathname: "/workOrderDetail",
+										params: {
+											id: child.id || child._id,
+											composite_id: child.order_no,
+										},
+									});
+								}}
+							>
+								<View style={{ flex: 1 }}>
+									<Text style={styles.childTitle}>{child.order_no} - {child.title}</Text>
+									<View style={styles.childMetaRow}>
+										<View style={[styles.statusChip, { backgroundColor: childStatusTone.bg, borderColor: childStatusTone.border }]}>
+											<Text style={[styles.statusChipText, { color: childStatusTone.text }]}>{formatWorkOrderStatusLabel(child.status)}</Text>
+										</View>
+										<Text style={styles.childMeta}>
+											{Number(child?.actual_time || 0) > 0 ? `${child.actual_time}h actual` : `${child?.estimated_time || 0}h est.`}
+										</Text>
+									</View>
+								</View>
+								<Ionicons name="chevron-forward" size={18} color="#742BDE" />
+							</Pressable>
+						);
+					})}
 				</View>
 			) : null}
 
@@ -130,6 +193,67 @@ export default function Detail({ params }: Props) {
 					))}
 				</View>
 			) : null}
+
+			<View style={styles.readinessCard}>
+				<View style={styles.rowBetween}>
+					<Text style={styles.readinessTitle}>Readiness</Text>
+					<View
+						style={[
+							styles.readinessBadge,
+							readiness.state === "ready"
+								? styles.readinessBadgeReady
+								: readiness.state === "attention"
+									? styles.readinessBadgeAttention
+									: styles.readinessBadgeBlocked,
+						]}
+					>
+						<Text
+							style={[
+								styles.readinessBadgeText,
+								readiness.state === "ready"
+									? styles.readinessBadgeTextReady
+									: readiness.state === "attention"
+										? styles.readinessBadgeTextAttention
+										: styles.readinessBadgeTextBlocked,
+							]}
+						>
+							{readiness.state === "ready" ? "Ready" : readiness.state === "attention" ? "Needs Review" : "Blocked"}
+						</Text>
+					</View>
+				</View>
+				<Text style={styles.readinessSummary}>{readiness.summary}</Text>
+				{readiness.blockers.length > 0 ? (
+					<View style={styles.readinessBlockersWrap}>
+						{readiness.blockers.map((blocker) => (
+							<View key={blocker} style={styles.readinessBlockerChip}>
+								<Text style={styles.readinessBlockerText}>{blocker}</Text>
+							</View>
+						))}
+					</View>
+				) : null}
+				<View style={styles.readinessSectionsWrap}>
+					{readiness.sections.map((section) => (
+						<View key={section.id} style={styles.readinessSectionRow}>
+							<View style={{ flex: 1 }}>
+								<Text style={styles.readinessSectionLabel}>{section.label}</Text>
+								<Text style={styles.readinessSectionSummary}>{section.summary}</Text>
+							</View>
+							<Text
+								style={[
+									styles.readinessSectionState,
+									section.state === "ready"
+										? styles.readinessSectionStateReady
+										: section.state === "attention"
+											? styles.readinessSectionStateAttention
+											: styles.readinessSectionStateBlocked,
+								]}
+							>
+								{section.state === "ready" ? "Ready" : section.state === "attention" ? "Review" : "Blocked"}
+							</Text>
+						</View>
+					))}
+				</View>
+			</View>
 
 			<View style={styles.card}>
 				<View style={[styles.makeRow, styles.sectionHeader]}>
@@ -283,6 +407,32 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		justifyContent: "space-between",
 	},
+	childInfoCard: {
+		backgroundColor: "#EEF4FF",
+		borderRadius: 8,
+		padding: 12,
+		marginBottom: 10,
+		borderWidth: 0.8,
+		borderColor: "#B4C6FC",
+	},
+	childInfoTitle: {
+		fontSize: 11,
+		fontFamily: Fonts.semiBold,
+		color: "#1E3A8A",
+		marginBottom: 4,
+	},
+	childInfoText: {
+		fontSize: 10,
+		fontFamily: Fonts.regular,
+		color: "#334155",
+		lineHeight: 15,
+	},
+	childInfoMeta: {
+		fontSize: 10,
+		fontFamily: Fonts.medium,
+		color: "#475569",
+		marginTop: 6,
+	},
 	infoBanner: {
 		backgroundColor: "#FFF7E6",
 		borderRadius: 8,
@@ -321,6 +471,104 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.regular,
 		color: "#7F1D1D",
 		marginBottom: 3,
+	},
+	readinessCard: {
+		backgroundColor: "#F8FAFC",
+		borderRadius: 8,
+		padding: 12,
+		marginBottom: 10,
+		borderWidth: 0.8,
+		borderColor: "#D7DEEA",
+	},
+	readinessTitle: {
+		fontSize: 11,
+		fontFamily: Fonts.semiBold,
+		color: "#0F172A",
+	},
+	readinessBadge: {
+		paddingHorizontal: 8,
+		paddingVertical: 4,
+		borderRadius: 999,
+	},
+	readinessBadgeReady: {
+		backgroundColor: "#ECFDF5",
+	},
+	readinessBadgeAttention: {
+		backgroundColor: "#FFF7ED",
+	},
+	readinessBadgeBlocked: {
+		backgroundColor: "#FEF2F2",
+	},
+	readinessBadgeText: {
+		fontSize: 9,
+		fontFamily: Fonts.semiBold,
+	},
+	readinessBadgeTextReady: {
+		color: "#047857",
+	},
+	readinessBadgeTextAttention: {
+		color: "#C2410C",
+	},
+	readinessBadgeTextBlocked: {
+		color: "#B91C1C",
+	},
+	readinessSummary: {
+		fontSize: 10,
+		fontFamily: Fonts.regular,
+		color: "#475569",
+		marginTop: 8,
+		lineHeight: 15,
+	},
+	readinessBlockersWrap: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: 6,
+		marginTop: 10,
+	},
+	readinessBlockerChip: {
+		paddingHorizontal: 8,
+		paddingVertical: 4,
+		borderRadius: 999,
+		backgroundColor: "#FFF1F2",
+	},
+	readinessBlockerText: {
+		fontSize: 9,
+		fontFamily: Fonts.medium,
+		color: "#BE123C",
+	},
+	readinessSectionsWrap: {
+		marginTop: 12,
+		gap: 8,
+	},
+	readinessSectionRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 10,
+	},
+	readinessSectionLabel: {
+		fontSize: 10,
+		fontFamily: Fonts.semiBold,
+		color: "#111827",
+	},
+	readinessSectionSummary: {
+		fontSize: 9,
+		fontFamily: Fonts.regular,
+		color: "#64748B",
+		marginTop: 2,
+		lineHeight: 13,
+	},
+	readinessSectionState: {
+		fontSize: 9,
+		fontFamily: Fonts.semiBold,
+	},
+	readinessSectionStateReady: {
+		color: "#047857",
+	},
+	readinessSectionStateAttention: {
+		color: "#C2410C",
+	},
+	readinessSectionStateBlocked: {
+		color: "#B91C1C",
 	},
 	cardTitle: {
 		width: "50%",
@@ -361,6 +609,25 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.light,
 		color: "#333",
 	},
+	progressTrack: {
+		height: 8,
+		backgroundColor: "#E2E8F0",
+		borderRadius: 999,
+		marginTop: 10,
+		overflow: "hidden",
+	},
+	progressFill: {
+		height: "100%",
+		backgroundColor: "#22C55E",
+		borderRadius: 999,
+	},
+	progressCaption: {
+		fontSize: 10,
+		fontFamily: Fonts.regular,
+		color: "#475569",
+		marginTop: 8,
+		lineHeight: 14,
+	},
 	rowBetween: {
 		flexDirection: "row",
 		justifyContent: "space-between",
@@ -389,6 +656,29 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.light,
 		color: "#444",
 	},
+	followUpCard: {
+		backgroundColor: "#F4EDFF",
+		borderRadius: 8,
+		padding: 14,
+		marginBottom: 10,
+		borderWidth: 0.8,
+		borderColor: "#C4B5FD",
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 12,
+	},
+	followUpCardTitle: {
+		fontSize: 11,
+		fontFamily: Fonts.semiBold,
+		color: "#5B21B6",
+	},
+	followUpCardText: {
+		fontSize: 10,
+		fontFamily: Fonts.regular,
+		color: "#4C1D95",
+		marginTop: 4,
+		lineHeight: 14,
+	},
 	childRow: {
 		paddingVertical: 8,
 		borderTopWidth: 0.5,
@@ -401,11 +691,27 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.medium,
 		color: "#111827",
 	},
+	childMetaRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		flexWrap: "wrap",
+		gap: 8,
+		marginTop: 4,
+	},
 	childMeta: {
 		fontSize: 10,
 		fontFamily: Fonts.regular,
 		color: "#64748B",
-		marginTop: 2,
+	},
+	statusChip: {
+		paddingHorizontal: 8,
+		paddingVertical: 3,
+		borderRadius: 999,
+		borderWidth: 1,
+	},
+	statusChipText: {
+		fontSize: 9,
+		fontFamily: Fonts.semiBold,
 	},
 	procedureRow: {
 		paddingTop: 8,

@@ -5,14 +5,14 @@
   "scripts": {
     "start": "expo start",
     "md": "expo run:android",
-    "release": "set NODE_ENV=production && cd android && gradlew.bat assembleRelease --no-daemon && cd ..",
-    "bundle": "set NODE_ENV=production && cd android && gradlew.bat bundleRelease --no-daemon && cd ..",
-    "md:release": "set NODE_ENV=production && cd android && gradlew.bat assembleRelease --no-daemon && cd ..",
+    "release": "set \"NODE_ENV=production\" && cd android && gradlew.bat assembleRelease --no-daemon && cd ..",
+    "bundle": "set \"NODE_ENV=production\" && cd android && gradlew.bat bundleRelease --no-daemon && cd ..",
+    "md:release": "set \"NODE_ENV=production\" && cd android && gradlew.bat assembleRelease --no-daemon && cd ..",
     "android:clean": "cd android && gradlew.bat clean --no-daemon && cd ..",
     "web": "expo start --web",
     "android": "expo run:android",
-    "release:apk": "set NODE_ENV=production && cd android && gradlew.bat assembleRelease --no-daemon && cd ..",
-    "debug:apk": "set NODE_ENV=production && cd android && gradlew.bat assembleDebug --no-daemon && cd .."
+    "release:apk": "set \"NODE_ENV=production\" && cd android && gradlew.bat assembleRelease --no-daemon && cd ..",
+    "debug:apk": "set \"NODE_ENV=production\" && cd android && gradlew.bat assembleDebug --no-daemon && cd .."
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",

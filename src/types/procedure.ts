@@ -24,6 +24,14 @@ export interface ProcedureStepCorrectiveAction {
   priority?: string;
 }
 
+export interface ProcedureTriggeredAction extends ProcedureStepCorrectiveAction {}
+
+export interface ProcedureScoreSummary {
+  earned: number;
+  possible: number;
+  percentage?: number | null;
+}
+
 export interface ProcedureStepVisibilityCondition {
   step_id?: string;
   values?: string[];

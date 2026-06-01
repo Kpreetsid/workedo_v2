@@ -1,426 +1,520 @@
 import Fonts from "@/constants/Typography";
 import { getWorkOrderActivity, getWorkOrderHistory } from "@/src/services/work-order.service";
-import { WorkOrder } from "@/src/types/workOrder";
+import { WorkOrder, WorkOrderHistorySnapshot } from "@/src/types/workOrder";
 import { WorkOrderActivityRecord } from "@/src/types/workOrderActivity";
+import {
+  getWorkOrderActivityDetails,
+  getWorkOrderActivityIcon,
+  getWorkOrderActivityLabel,
+  getWorkOrderActivityTone,
+  getWorkOrderSnapshotActor,
+  getWorkOrderSnapshotDetails,
+  getWorkOrderSnapshotSummary,
+  matchesWorkOrderActivityFilter,
+  WORK_ORDER_ACTIVITY_FILTERS,
+  WorkOrderActivityFilterId,
+} from "@/src/utils/workOrderActivity";
 import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
-import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View, Pressable } from "react-native";
 
 interface Props {
-	params: WorkOrder;
+  params: WorkOrder;
 }
 
-const activityLabels: Record<string, string> = {
-	created: "Work Order Created",
-	updated: "Details Updated",
-	"status-changed": "Status Changed",
-	"assignees-updated": "Assignees Updated",
-	"parts-updated": "Parts Updated",
-	"procedures-updated": "Procedures Updated",
-	"execution-updated": "Execution Updated",
-	"tasks-updated": "Tasks Updated",
-	"attachments-added": "Attachments Added",
-	"sop-submitted": "SOP / Checklist Updated",
-	"comment-added": "Comment Added",
-	"comment-updated": "Comment Updated",
-	"comment-deleted": "Comment Deleted",
-	"child-created": "Child Work Order Created",
-	deleted: "Work Order Deleted",
-};
-
-const activityIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
-	created: "add-circle-outline",
-	updated: "create-outline",
-	"status-changed": "sync-outline",
-	"assignees-updated": "people-outline",
-	"parts-updated": "cube-outline",
-	"procedures-updated": "checkmark-done-outline",
-	"execution-updated": "time-outline",
-	"tasks-updated": "list-outline",
-	"attachments-added": "attach-outline",
-	"sop-submitted": "document-text-outline",
-	"comment-added": "chatbubble-outline",
-	"comment-updated": "chatbox-ellipses-outline",
-	"comment-deleted": "trash-outline",
-	"child-created": "git-branch-outline",
-	deleted: "close-circle-outline",
-};
-
-const getActivityDetails = (entry: WorkOrderActivityRecord): string[] => {
-	const metadata = entry?.metadata || {};
-	const details: string[] = [];
-	const actionType = String(entry?.action_type || "").trim();
-
-	if (Array.isArray(metadata?.changed_fields) && metadata.changed_fields.length) {
-		details.push(`Changed: ${metadata.changed_fields.join(", ")}`);
-	}
-
-	if (metadata?.from_status || metadata?.to_status) {
-		details.push(`Status: ${metadata.from_status || "-"} -> ${metadata.to_status || "-"}`);
-	}
-
-	if (Array.isArray(metadata?.added_ids) && metadata.added_ids.length) {
-		details.push(`${metadata.added_ids.length} assignee(s) added`);
-	}
-
-	if (Array.isArray(metadata?.removed_ids) && metadata.removed_ids.length) {
-		details.push(`${metadata.removed_ids.length} assignee(s) removed`);
-	}
-
-	if (metadata?.before?.lineCount !== undefined || metadata?.after?.lineCount !== undefined) {
-		details.push(`Part lines: ${metadata?.before?.lineCount ?? 0} -> ${metadata?.after?.lineCount ?? 0}`);
-	}
-
-	if (metadata?.before?.plannedQuantity !== undefined || metadata?.after?.plannedQuantity !== undefined) {
-		details.push(`Planned qty: ${metadata?.before?.plannedQuantity ?? 0} -> ${metadata?.after?.plannedQuantity ?? 0}`);
-	}
-
-	if (metadata?.before?.submitted !== undefined || metadata?.after?.submitted !== undefined) {
-		details.push(`Procedures submitted: ${metadata?.after?.submitted ?? 0}/${metadata?.after?.total ?? 0}`);
-	}
-
-	if (metadata?.before?.laborCount !== undefined || metadata?.after?.laborCount !== undefined) {
-		details.push(`Labor entries: ${metadata?.before?.laborCount ?? 0} -> ${metadata?.after?.laborCount ?? 0}`);
-	}
-
-	if (metadata?.before?.actualTime !== undefined || metadata?.after?.actualTime !== undefined) {
-		details.push(`Actual time: ${metadata?.before?.actualTime ?? 0}h -> ${metadata?.after?.actualTime ?? 0}h`);
-	}
-
-	if (metadata?.before?.completed !== undefined || metadata?.after?.completed !== undefined) {
-		details.push(`Tasks completed: ${metadata?.after?.completed ?? 0}/${metadata?.after?.total ?? 0}`);
-	}
-
-	if (metadata?.count) {
-		details.push(`Count: ${metadata.count}`);
-	}
-
-	if (Array.isArray(metadata?.file_names) && metadata.file_names.length) {
-		details.push(`Files: ${metadata.file_names.join(", ")}`);
-	}
-
-	if (metadata?.preview && ["comment-added", "comment-updated", "comment-deleted"].includes(actionType)) {
-		details.push(`Comment: ${metadata.preview}`);
-	}
-
-	if (metadata?.child_order_no) {
-		details.push(`Child WO: ${metadata.child_order_no}`);
-	}
-
-	return details.filter(Boolean);
-};
-
-const getHistorySnapshotDetails = (entry: Record<string, any>) => {
-	const details: string[] = [];
-	const interestingFields: Array<[string, string]> = [
-		["status", "Status"],
-		["priority", "Priority"],
-		["type", "Type"],
-		["nature_of_work", "Nature"],
-		["estimated_time", "Est. hours"],
-		["end_date", "Due date"],
-	];
-
-	interestingFields.forEach(([field, label]) => {
-		const value = entry?.[field];
-		if (value === undefined || value === null || value === "") {
-			return;
-		}
-
-		if (field === "end_date") {
-			details.push(`${label}: ${moment(value).isValid() ? moment(value).format("DD MMM YYYY") : value}`);
-			return;
-		}
-
-		details.push(`${label}: ${value}`);
-	});
-
-	return details;
-};
-
-const getTone = (actionType?: string) => {
-	switch (actionType) {
-		case "created":
-		case "child-created":
-			return { bg: "#F6FFED", border: "#B7EB8F", text: "#135200", icon: "#389E0D" };
-		case "status-changed":
-		case "execution-updated":
-		case "sop-submitted":
-			return { bg: "#E6F4FF", border: "#91CAFF", text: "#003A8C", icon: "#1677FF" };
-		case "parts-updated":
-			return { bg: "#FFF7E6", border: "#FFD591", text: "#873800", icon: "#FA8C16" };
-		case "comment-deleted":
-		case "deleted":
-			return { bg: "#FFF1F0", border: "#FFA39E", text: "#A8071A", icon: "#F5222D" };
-		default:
-			return { bg: "#F5F7FA", border: "#D9E2EC", text: "#3D4A5C", icon: "#64748B" };
-	}
-};
-
 export default function History({ params }: Props) {
-	const [loading, setLoading] = useState(true);
-	const [refreshing, setRefreshing] = useState(false);
-	const [activity, setActivity] = useState<WorkOrderActivityRecord[]>([]);
-	const [history, setHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [activity, setActivity] = useState<WorkOrderActivityRecord[]>([]);
+  const [history, setHistory] = useState<WorkOrderHistorySnapshot[]>([]);
+  const [activityFilter, setActivityFilter] = useState<WorkOrderActivityFilterId>("all");
 
-	const fetchAuditData = useCallback(async (showLoader = true) => {
-		if (!params?.id) {
-			setLoading(false);
-			setRefreshing(false);
-			return;
-		}
+  const fetchAuditData = useCallback(async (showLoader = true) => {
+    if (!params?.id) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
 
-		if (showLoader) {
-			setLoading(true);
-		}
+    if (showLoader) {
+      setLoading(true);
+    }
 
-		try {
-			const [activityRes, historyRes] = await Promise.allSettled([
-				getWorkOrderActivity(params.id),
-				getWorkOrderHistory(params.id),
-			]);
+    try {
+      const [activityRes, historyRes] = await Promise.allSettled([
+        getWorkOrderActivity(params.id),
+        getWorkOrderHistory(params.id),
+      ]);
 
-			if (activityRes.status === "fulfilled" && activityRes.value?.status) {
-				setActivity(Array.isArray(activityRes.value.data) ? activityRes.value.data : []);
-			} else {
-				setActivity([]);
-			}
+      if (activityRes.status === "fulfilled" && activityRes.value?.status) {
+        setActivity(Array.isArray(activityRes.value.data) ? activityRes.value.data : []);
+      } else {
+        setActivity([]);
+      }
 
-			if (historyRes.status === "fulfilled" && historyRes.value?.status) {
-				setHistory(Array.isArray(historyRes.value.data) ? historyRes.value.data : []);
-			} else {
-				setHistory([]);
-			}
-		} catch (error) {
-			setActivity([]);
-			setHistory([]);
-		} finally {
-			setLoading(false);
-			setRefreshing(false);
-		}
-	}, [params?.id]);
+      if (historyRes.status === "fulfilled" && historyRes.value?.status) {
+        setHistory(Array.isArray(historyRes.value.data) ? historyRes.value.data : []);
+      } else {
+        setHistory([]);
+      }
+    } catch (error) {
+      setActivity([]);
+      setHistory([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [params?.id]);
 
-	useEffect(() => {
-		fetchAuditData();
-	}, [fetchAuditData]);
+  useEffect(() => {
+    fetchAuditData();
+  }, [fetchAuditData]);
 
-	if (loading) {
-		return (
-			<View style={styles.loaderWrap}>
-				<ActivityIndicator size="small" color="#742BDE" />
-				<Text style={styles.loaderText}>Loading activity...</Text>
-			</View>
-		);
-	}
+  const activityCounts = useMemo(() => {
+    return WORK_ORDER_ACTIVITY_FILTERS.reduce<Record<WorkOrderActivityFilterId, number>>((acc, filter) => {
+      acc[filter.id] = activity.filter((entry) => matchesWorkOrderActivityFilter(entry, filter.id)).length;
+      return acc;
+    }, {
+      all: activity.length,
+      general: 0,
+      status: 0,
+      assignees: 0,
+      parts: 0,
+      procedures: 0,
+      execution: 0,
+      tasks: 0,
+      files: 0,
+      comments: 0,
+      children: 0,
+    });
+  }, [activity]);
 
-	return (
-		<ScrollView
-			style={styles.container}
-			contentContainerStyle={styles.content}
-			refreshControl={
-				<RefreshControl
-					refreshing={refreshing}
-					onRefresh={() => {
-						setRefreshing(true);
-						fetchAuditData(false);
-					}}
-				/>
-			}
-		>
-			<View style={styles.section}>
-				<Text style={styles.sectionTitle}>Activity Trail</Text>
-				<Text style={styles.sectionSubtitle}>Tracked work order actions from the current workflow.</Text>
+  const filteredActivity = useMemo(() => {
+    return activity.filter((entry) => matchesWorkOrderActivityFilter(entry, activityFilter));
+  }, [activity, activityFilter]);
 
-				{activity.length === 0 ? (
-					<View style={styles.emptyCard}>
-						<Text style={styles.emptyText}>No work order activity recorded yet.</Text>
-					</View>
-				) : (
-					activity.map((entry, index) => {
-						const tone = getTone(entry.action_type);
-						const details = getActivityDetails(entry);
-						return (
-							<View key={entry.id || entry._id || `${entry.action_type}-${index}`} style={[styles.timelineCard, { backgroundColor: tone.bg, borderColor: tone.border }]}>
-								<View style={styles.timelineHeader}>
-									<View style={styles.iconWrap}>
-										<Ionicons name={activityIcons[entry.action_type] || "time-outline"} size={16} color={tone.icon} />
-									</View>
-									<View style={styles.timelineHeaderText}>
-										<Text style={[styles.timelineTitle, { color: tone.text }]}>{activityLabels[entry.action_type] || "Activity"}</Text>
-										<Text style={styles.timelineMeta}>
-											{entry.actor_name || "System"} - {moment(entry.createdAt).format("DD MMM YYYY, hh:mm A")}
-										</Text>
-									</View>
-								</View>
+  if (loading) {
+    return (
+      <View style={styles.loaderWrap}>
+        <ActivityIndicator size="small" color="#742BDE" />
+        <Text style={styles.loaderText}>Loading activity...</Text>
+      </View>
+    );
+  }
 
-								<Text style={styles.timelineNote}>{entry.note || "No note provided."}</Text>
-								{details.map((detail) => (
-									<Text key={detail} style={styles.timelineDetail}>- {detail}</Text>
-								))}
-							</View>
-						);
-					})
-				)}
-			</View>
+  return (
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            fetchAuditData(false);
+          }}
+        />
+      }
+    >
+      <View style={styles.heroCard}>
+        <Text style={styles.heroEyebrow}>Work Order Audit Trail</Text>
+        <Text style={styles.heroTitle}>{params?.order_no || "Activity history"}</Text>
+        <Text style={styles.heroSubtitle}>{params?.title || "All recorded actions and saved snapshots for this work order."}</Text>
 
-			<View style={styles.section}>
-				<Text style={styles.sectionTitle}>Version History</Text>
-				<Text style={styles.sectionSubtitle}>Saved snapshots of work order record changes.</Text>
+        <View style={styles.heroStatsRow}>
+          <View style={styles.heroStatCard}>
+            <Text style={styles.heroStatLabel}>Activity</Text>
+            <Text style={styles.heroStatValue}>{activity.length}</Text>
+          </View>
+          <View style={styles.heroStatCard}>
+            <Text style={styles.heroStatLabel}>Snapshots</Text>
+            <Text style={styles.heroStatValue}>{history.length}</Text>
+          </View>
+        </View>
+      </View>
 
-				{history.length === 0 ? (
-					<View style={styles.emptyCard}>
-						<Text style={styles.emptyText}>No saved history snapshots found for this work order.</Text>
-					</View>
-				) : (
-					history.map((entry, index) => {
-						const details = getHistorySnapshotDetails(entry);
-						const actorName = entry?.updatedBy
-							? `${entry.updatedBy?.firstName || ""} ${entry.updatedBy?.lastName || ""}`.trim()
-							: entry?.history_created_by
-								? `${entry.history_created_by?.firstName || ""} ${entry.history_created_by?.lastName || ""}`.trim()
-								: "System";
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Activity Trail</Text>
+        <Text style={styles.sectionSubtitle}>Tracked actions from the current work order workflow.</Text>
 
-						return (
-							<View key={entry.id || entry._id || `snapshot-${index}`} style={styles.snapshotCard}>
-								<Text style={styles.snapshotTitle}>
-									{moment(entry?.history_created_at || entry?.updatedAt || entry?.createdAt).format("DD MMM YYYY, hh:mm A")}
-								</Text>
-								<Text style={styles.snapshotMeta}>{actorName || "System"}</Text>
-								{details.length > 0 ? (
-									details.map((detail) => (
-										<Text key={detail} style={styles.snapshotDetail}>- {detail}</Text>
-									))
-								) : (
-									<Text style={styles.snapshotDetail}>- Snapshot captured for this update.</Text>
-								)}
-							</View>
-						);
-					})
-				)}
-			</View>
-		</ScrollView>
-	);
+        <View style={styles.filterChipRow}>
+          {WORK_ORDER_ACTIVITY_FILTERS.map((filter) => {
+            const isActive = activityFilter === filter.id;
+            return (
+              <Pressable
+                key={filter.id}
+                style={[styles.filterChip, isActive && styles.filterChipActive]}
+                onPress={() => setActivityFilter(filter.id)}
+              >
+                <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
+                  {filter.label} ({activityCounts[filter.id] || 0})
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {filteredActivity.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>No work order activity recorded for this filter yet.</Text>
+          </View>
+        ) : (
+          filteredActivity.map((entry, index) => {
+            const tone = getWorkOrderActivityTone(entry.action_type);
+            const details = getWorkOrderActivityDetails(entry);
+            return (
+              <View key={entry.id || entry._id || `${entry.action_type}-${index}`} style={[styles.timelineCard, { backgroundColor: tone.bg, borderColor: tone.border }]}>
+                <View style={styles.timelineHeader}>
+                  <View style={styles.iconWrap}>
+                    <Ionicons name={getWorkOrderActivityIcon(entry.action_type)} size={16} color={tone.icon} />
+                  </View>
+                  <View style={styles.timelineHeaderText}>
+                    <View style={styles.timelineTitleRow}>
+                      <Text style={[styles.timelineTitle, { color: tone.text }]}>{getWorkOrderActivityLabel(entry.action_type)}</Text>
+                      {entry.order_no ? <Text style={styles.timelineOrderBadge}>#{entry.order_no}</Text> : null}
+                    </View>
+                    <Text style={styles.timelineMeta}>
+                      {entry.actor_name || "System"} • {moment(entry.createdAt).format("DD MMM YYYY, hh:mm A")}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={styles.timelineNote}>{entry.note || "No note provided."}</Text>
+                {details.map((detail) => (
+                  <Text key={`${entry.id || entry._id}-${detail}`} style={styles.timelineDetail}>• {detail}</Text>
+                ))}
+              </View>
+            );
+          })
+        )}
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Version History</Text>
+        <Text style={styles.sectionSubtitle}>Saved snapshots of work order record changes.</Text>
+
+        {history.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>No saved history snapshots found for this work order.</Text>
+          </View>
+        ) : (
+          history.map((entry, index) => {
+            const details = getWorkOrderSnapshotDetails(entry);
+            const summary = getWorkOrderSnapshotSummary(entry);
+            const actorName = getWorkOrderSnapshotActor(entry);
+
+            return (
+              <View key={entry.id || entry._id || `snapshot-${index}`} style={styles.snapshotCard}>
+                <View style={styles.snapshotHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.snapshotTitle}>
+                      {moment(entry?.history_created_at || entry?.updatedAt || entry?.createdAt).format("DD MMM YYYY, hh:mm A")}
+                    </Text>
+                    <Text style={styles.snapshotMeta}>{actorName}</Text>
+                  </View>
+                  {entry?.status ? <Text style={styles.snapshotStatus}>{entry.status}</Text> : null}
+                </View>
+
+                <View style={styles.snapshotMetricRow}>
+                  <View style={styles.snapshotMetricChip}>
+                    <Text style={styles.snapshotMetricLabel}>Parts</Text>
+                    <Text style={styles.snapshotMetricValue}>{summary.partLines}</Text>
+                  </View>
+                  <View style={styles.snapshotMetricChip}>
+                    <Text style={styles.snapshotMetricLabel}>Tasks</Text>
+                    <Text style={styles.snapshotMetricValue}>{summary.completedTasks}/{summary.taskCount}</Text>
+                  </View>
+                  <View style={styles.snapshotMetricChip}>
+                    <Text style={styles.snapshotMetricLabel}>Procedures</Text>
+                    <Text style={styles.snapshotMetricValue}>{summary.submittedProcedures}/{summary.procedureCount}</Text>
+                  </View>
+                  <View style={styles.snapshotMetricChip}>
+                    <Text style={styles.snapshotMetricLabel}>Labor</Text>
+                    <Text style={styles.snapshotMetricValue}>{summary.laborHours}h</Text>
+                  </View>
+                </View>
+
+                {summary.partLines > 0 ? (
+                  <Text style={styles.snapshotHighlight}>
+                    Planned qty {summary.plannedQuantity} • Actual qty {summary.actualQuantity}
+                  </Text>
+                ) : null}
+
+                {details.length > 0 ? (
+                  details.map((detail) => (
+                    <Text key={`${entry.id || entry._id}-${detail}`} style={styles.snapshotDetail}>• {detail}</Text>
+                  ))
+                ) : (
+                  <Text style={styles.snapshotDetail}>• Snapshot captured for this update.</Text>
+                )}
+              </View>
+            );
+          })
+        )}
+      </View>
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		backgroundColor: "#F5F7FA",
-	},
-	content: {
-		paddingHorizontal: 18,
-		paddingVertical: 14,
-		paddingBottom: 32,
-	},
-	loaderWrap: {
-		flex: 1,
-		alignItems: "center",
-		justifyContent: "center",
-		padding: 24,
-	},
-	loaderText: {
-		marginTop: 8,
-		fontSize: 12,
-		fontFamily: Fonts.regular,
-		color: "#475569",
-	},
-	section: {
-		marginBottom: 18,
-	},
-	sectionTitle: {
-		fontSize: 13,
-		fontFamily: Fonts.semiBold,
-		color: "#111827",
-	},
-	sectionSubtitle: {
-		fontSize: 11,
-		fontFamily: Fonts.regular,
-		color: "#64748B",
-		marginTop: 2,
-		marginBottom: 10,
-	},
-	emptyCard: {
-		padding: 14,
-		borderRadius: 10,
-		backgroundColor: "#FFFFFF",
-		borderWidth: 1,
-		borderColor: "#E2E8F0",
-	},
-	emptyText: {
-		fontSize: 11,
-		fontFamily: Fonts.regular,
-		color: "#64748B",
-	},
-	timelineCard: {
-		borderRadius: 12,
-		borderWidth: 1,
-		padding: 12,
-		marginBottom: 10,
-	},
-	timelineHeader: {
-		flexDirection: "row",
-		alignItems: "center",
-		marginBottom: 8,
-	},
-	iconWrap: {
-		width: 32,
-		height: 32,
-		borderRadius: 16,
-		backgroundColor: "#FFFFFF",
-		alignItems: "center",
-		justifyContent: "center",
-		marginRight: 10,
-	},
-	timelineHeaderText: {
-		flex: 1,
-	},
-	timelineTitle: {
-		fontSize: 12,
-		fontFamily: Fonts.semiBold,
-	},
-	timelineMeta: {
-		fontSize: 10,
-		fontFamily: Fonts.regular,
-		color: "#475569",
-		marginTop: 2,
-	},
-	timelineNote: {
-		fontSize: 11,
-		fontFamily: Fonts.medium,
-		color: "#1E293B",
-		marginBottom: 6,
-	},
-	timelineDetail: {
-		fontSize: 10,
-		fontFamily: Fonts.regular,
-		color: "#334155",
-		marginBottom: 3,
-	},
-	snapshotCard: {
-		borderRadius: 12,
-		backgroundColor: "#FFFFFF",
-		borderWidth: 1,
-		borderColor: "#E2E8F0",
-		padding: 12,
-		marginBottom: 10,
-	},
-	snapshotTitle: {
-		fontSize: 12,
-		fontFamily: Fonts.semiBold,
-		color: "#111827",
-	},
-	snapshotMeta: {
-		fontSize: 10,
-		fontFamily: Fonts.regular,
-		color: "#64748B",
-		marginTop: 2,
-		marginBottom: 6,
-	},
-	snapshotDetail: {
-		fontSize: 10,
-		fontFamily: Fonts.regular,
-		color: "#334155",
-		marginBottom: 3,
-	},
+  container: {
+    flex: 1,
+    backgroundColor: "#F5F7FA",
+  },
+  content: {
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    paddingBottom: 32,
+  },
+  loaderWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  loaderText: {
+    marginTop: 8,
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    color: "#475569",
+  },
+  heroCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 14,
+    marginBottom: 16,
+  },
+  heroEyebrow: {
+    fontSize: 10,
+    fontFamily: Fonts.medium,
+    color: "#742BDE",
+    textTransform: "uppercase",
+  },
+  heroTitle: {
+    marginTop: 4,
+    fontSize: 14,
+    fontFamily: Fonts.semiBold,
+    color: "#111827",
+  },
+  heroSubtitle: {
+    marginTop: 4,
+    fontSize: 11,
+    fontFamily: Fonts.regular,
+    color: "#64748B",
+  },
+  heroStatsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 12,
+  },
+  heroStatCard: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  heroStatLabel: {
+    fontSize: 10,
+    fontFamily: Fonts.regular,
+    color: "#64748B",
+  },
+  heroStatValue: {
+    marginTop: 4,
+    fontSize: 15,
+    fontFamily: Fonts.semiBold,
+    color: "#0F172A",
+  },
+  section: {
+    marginBottom: 18,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontFamily: Fonts.semiBold,
+    color: "#111827",
+  },
+  sectionSubtitle: {
+    fontSize: 11,
+    fontFamily: Fonts.regular,
+    color: "#64748B",
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  filterChipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 10,
+  },
+  filterChip: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  filterChipActive: {
+    backgroundColor: "#F3E8FF",
+    borderColor: "#C084FC",
+  },
+  filterChipText: {
+    fontSize: 10,
+    fontFamily: Fonts.regular,
+    color: "#475569",
+  },
+  filterChipTextActive: {
+    color: "#6D28D9",
+    fontFamily: Fonts.medium,
+  },
+  emptyCard: {
+    padding: 14,
+    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  emptyText: {
+    fontSize: 11,
+    fontFamily: Fonts.regular,
+    color: "#64748B",
+  },
+  timelineCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 10,
+  },
+  timelineHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  iconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  timelineHeaderText: {
+    flex: 1,
+  },
+  timelineTitleRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+  },
+  timelineTitle: {
+    fontSize: 12,
+    fontFamily: Fonts.semiBold,
+  },
+  timelineOrderBadge: {
+    fontSize: 9,
+    fontFamily: Fonts.medium,
+    color: "#475569",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  timelineMeta: {
+    fontSize: 10,
+    fontFamily: Fonts.regular,
+    color: "#475569",
+    marginTop: 2,
+  },
+  timelineNote: {
+    fontSize: 11,
+    fontFamily: Fonts.medium,
+    color: "#1E293B",
+    marginBottom: 6,
+  },
+  timelineDetail: {
+    fontSize: 10,
+    fontFamily: Fonts.regular,
+    color: "#334155",
+    marginBottom: 3,
+  },
+  snapshotCard: {
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 12,
+    marginBottom: 10,
+  },
+  snapshotHeader: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "flex-start",
+  },
+  snapshotTitle: {
+    fontSize: 12,
+    fontFamily: Fonts.semiBold,
+    color: "#111827",
+  },
+  snapshotMeta: {
+    fontSize: 10,
+    fontFamily: Fonts.regular,
+    color: "#64748B",
+    marginTop: 2,
+  },
+  snapshotStatus: {
+    fontSize: 9,
+    fontFamily: Fonts.medium,
+    color: "#5B21B6",
+    backgroundColor: "#F3E8FF",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  snapshotMetricRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  snapshotMetricChip: {
+    flex: 1,
+    minWidth: "22%",
+    backgroundColor: "#F8FAFC",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  snapshotMetricLabel: {
+    fontSize: 9,
+    fontFamily: Fonts.regular,
+    color: "#64748B",
+  },
+  snapshotMetricValue: {
+    marginTop: 3,
+    fontSize: 11,
+    fontFamily: Fonts.semiBold,
+    color: "#0F172A",
+  },
+  snapshotHighlight: {
+    fontSize: 10,
+    fontFamily: Fonts.medium,
+    color: "#334155",
+    marginBottom: 6,
+  },
+  snapshotDetail: {
+    fontSize: 10,
+    fontFamily: Fonts.regular,
+    color: "#334155",
+    marginBottom: 3,
+  },
 });

@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { TabView } from 'react-native-tab-view';
 import Header from '@/components/global/Header';
 import NewWorkOrder from '@/components/create-work-order/newWorkOrder';
-import TaskScreen from '@/components/create-work-order/TaskScreen';
 import FormsScreen from '@/components/create-work-order/FormsScreen';
 import { useLocalSearchParams } from 'expo-router';
 
@@ -13,15 +12,9 @@ const GeneralInfo = ({ data }: any) => (
 	</View>
 );
 
-const Task = ({ data }: any) => (
-	<View style={styles.scene}>
-		<TaskScreen />
-	</View>
-);
-
 const Forms = ({ data }: any) => (
 	<View style={styles.scene}>
-		<FormsScreen />
+		<FormsScreen sourceOrder={data} />
 	</View>
 );
 
@@ -35,7 +28,6 @@ const EditWorkOrder = () => {
 
 	const [routes] = useState([
 		{ key: "general", title: "General Info" },
-		{ key: "task", title: "Task" },
 		{ key: "forms", title: "Procedures" },
 	]);
 
@@ -44,8 +36,6 @@ const EditWorkOrder = () => {
 		switch (route.key) {
 			case "general":
 				return <GeneralInfo data={parsedData} />;
-			case "task":
-				return <Task data={parsedData} />;
 			case "forms":
 				return <Forms data={parsedData} />;
 			default:

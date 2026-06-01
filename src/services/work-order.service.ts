@@ -2,6 +2,9 @@ import { ToastAndroid } from "react-native";
 import { sendRequest } from "../api/api.service";
 import { endpoints } from "../api/endpoints";
 import { storage } from "../storage/mmkv";
+import { ACTIVE_WORK_ORDER_STATUSES, CLOSED_WORK_ORDER_STATUSES } from "../utils/workOrderStatus";
+
+const toStatusQuery = (statuses: readonly string[]) => statuses.map((status) => `status=${encodeURIComponent(status)}`).join("&");
 
 export const createWorkOrder = async (payload: any) => {
     return await sendRequest('POST', `${endpoints.workOrders.createWorkOrder}`, payload);
@@ -9,7 +12,7 @@ export const createWorkOrder = async (payload: any) => {
 
 export const workOrdersPaginated = async (pageType: string, page: number, limit: number = 20) => {
     let url = '';
-    url = `${endpoints.workOrders.workOrders}/get-work-order?page=${page}&limit=${limit}&pageType=${pageType}&status=Open&status=In-Progress&status=On-Hold`;
+    url = `${endpoints.workOrders.workOrders}/get-work-order?page=${page}&limit=${limit}&pageType=${pageType}&${toStatusQuery(ACTIVE_WORK_ORDER_STATUSES)}`;
     console.log('url for request = ', url);
     return await sendRequest('GET', url);
 }
@@ -17,9 +20,9 @@ export const workOrdersPaginated = async (pageType: string, page: number, limit:
 export const getWorkOrders = async (type: string) => {
     let url = '';
     if (type === 'todo') {
-        url = `${endpoints.workOrders.workOrders}?status=Open&status=In-Progress&status=On-Hold`;
+        url = `${endpoints.workOrders.workOrders}?${toStatusQuery(ACTIVE_WORK_ORDER_STATUSES)}`;
     } else if (type === 'done') {
-        url = `${endpoints.workOrders.workOrders}?status=Completed`;
+        url = `${endpoints.workOrders.workOrders}?${toStatusQuery(CLOSED_WORK_ORDER_STATUSES)}`;
     }
     return await sendRequest('GET', url);
 };

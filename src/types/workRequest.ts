@@ -2,7 +2,9 @@ export interface WorkRequest {
     account_id: {
         account_name: string;
         id: string;
-    };
+    } | null;
+
+    request_no?: string;
 
     title: string;
     description: string;
@@ -21,9 +23,14 @@ export interface WorkRequest {
     }[];
 
     status: string;
+    activeStatus?: string | null;
     review_due_at?: string | null;
     order_due_at?: string | null;
     remarks?: string | null;
+    approvedAt?: string | null;
+    rejectedAt?: string | null;
+    convertedAt?: string | null;
+    converted_order_no?: string | null;
     converted_work_order_id?: {
         id: string;
         order_no: string;
@@ -38,13 +45,13 @@ export interface WorkRequest {
         location_name: string;
         location_type: string;
         id: string;
-    };
+    } | null;
 
     asset_id: {
         asset_name: string;
         asset_type: string | null;
         id: string;
-    };
+    } | null;
 
     tags: string[];
     visible: boolean;
@@ -69,6 +76,11 @@ export interface WorkRequest {
         lastName: string;
         id: string;
     };
+    updatedBy?: {
+        firstName: string;
+        lastName: string;
+        id: string;
+    } | null;
 
     createdAt: string; // ISO timestamp
     updatedAt: string; // ISO timestamp

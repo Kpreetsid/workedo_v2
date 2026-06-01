@@ -10,9 +10,10 @@ import { patchWorkOrder } from "@/src/services/work-order.service";
 
 interface Props {
 	params: WorkOrder;
+	onSaved?: () => void;
 }
 
-const Tasks = ({ params }: Props) => {
+const Tasks = ({ params, onSaved }: Props) => {
 	const [tasks, setTasks] = useState<any[]>([]);
 
 	useEffect(() => {
@@ -69,6 +70,7 @@ const Tasks = ({ params }: Props) => {
 
 			if (res?.status) {
 				ToastAndroid.show("Tasks updated successfully", ToastAndroid.SHORT);
+				onSaved?.();
 				return;
 			}
 

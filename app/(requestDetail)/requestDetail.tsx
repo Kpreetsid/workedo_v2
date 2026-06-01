@@ -1,75 +1,113 @@
-import Header from "@/components/global/Header";
-import { Alert, Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
-import { FABIcon, WorkOrderCardLogo } from "@/constants/IconProvider";
-import Fonts from "@/constants/Typography";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { useCallback, useRef, useState } from "react";
-import RejectModal from "@/components/request-detail/RejectModal.tsx";
-import moment from "moment";
-import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
-import { deleteWorkRequest, getWorkRequestDetails, rejectWorkRequest } from "@/src/services/work-request.service";
 import Popover from "react-native-popover-view";
+
+import Header from "@/components/global/Header";
+import RejectModal from "@/components/request-detail/RejectModal.tsx";
+import Fonts from "@/constants/Typography";
+import { useAuthStore } from "@/src/store/useAuthStore";
+import {
+	approveWorkRequest,
+	deleteWorkRequest,
+	getWorkRequestDetails,
+	rejectWorkRequest,
+} from "@/src/services/work-request.service";
 import { WorkRequest } from "@/src/types/workRequest";
+import {
+	canApproveRequest,
+	canCreateWorkOrderFromRequest,
+	canDeleteRequest,
+	canEditRequest,
+	canRejectRequest,
+	formatRequestDateTime,
+	formatRequestUserLabel,
+	getWorkRequestGovernanceLabel,
+	getWorkRequestGovernanceState,
+	getWorkRequestStage,
+} from "@/src/utils/workRequestLifecycle";
+
+const safeJsonParse = (value?: string) => {
+	if (!value || typeof value !== "string") return {};
+
+	try {
+		return JSON.parse(value);
+	} catch {
+		return {};
+	}
+};
 
 export default function WorkRequestDetail() {
 	const params: any = useLocalSearchParams();
-	const item = JSON.parse(params?.data);
-	console.log('item rqe = ', item);
-
-	const { setWorkForm } = useWorkOrderStore();
-	const [rejectVisible, setRejectVisible] = useState(false);
-
-	const [openPopover, setOpenPopover] = useState(false);
-	const ellipsesRef = useRef<View>(null);
-	const [workRequestData, setWorkRequestData] = useState<any>(item);
-
+	const initialRequest = safeJsonParse(params?.data) as WorkRequest;
 	const router = useRouter();
+	const { user } = useAuthStore();
+
+	const [rejectVisible, setRejectVisible] = useState(false);
+	const [openPopover, setOpenPopover] = useState(false);
+	const ellipsesRef = useRef<any>(null);
+	const [workRequestData, setWorkRequestData] = useState<WorkRequest>(initialRequest);
+
+	const stage = getWorkRequestStage(workRequestData);
+	const governanceState = getWorkRequestGovernanceState(workRequestData);
+	const linkedWorkOrder = workRequestData?.converted_work_order_id;
+	const canApprove = canApproveRequest(workRequestData, user?.user_role);
+	const canReject = canRejectRequest(workRequestData, user?.user_role);
+	const canConvert = canCreateWorkOrderFromRequest(workRequestData, user?.user_role);
+	const canEdit = canEditRequest(workRequestData);
+	const canDelete = canDeleteRequest(workRequestData);
+
+	const governanceTone = useMemo(() => {
+		switch (governanceState) {
+			case "breached":
+				return { bg: "#FFF7ED", border: "#FDBA74", text: "#C2410C" };
+			case "due-soon":
+				return { bg: "#FEF3C7", border: "#FCD34D", text: "#92400E" };
+			case "rejected":
+				return { bg: "#FEE2E2", border: "#FCA5A5", text: "#B91C1C" };
+			case "converted":
+				return { bg: "#DCFCE7", border: "#86EFAC", text: "#166534" };
+			default:
+				return { bg: "#EEF2FF", border: "#C7D2FE", text: "#4338CA" };
+		}
+	}, [governanceState]);
+
+	const stageTone = useMemo(() => {
+		switch (stage) {
+			case "approved":
+				return { bg: "#EDE9FE", text: "#6D28D9" };
+			case "rejected":
+				return { bg: "#FEE2E2", text: "#B91C1C" };
+			case "converted":
+				return { bg: "#DCFCE7", text: "#166534" };
+			default:
+				return { bg: "#DBEAFE", text: "#1D4ED8" };
+		}
+	}, [stage]);
+
+	const fetchWorkRequestDetails = async () => {
+		if (!workRequestData?.id) return;
+
+		try {
+			const res = await getWorkRequestDetails(workRequestData.id);
+			if (res?.status && res?.data) {
+				setWorkRequestData(res.data);
+			}
+		} catch (e) {
+			console.log("request detail error =", e);
+		}
+	};
 
 	useFocusEffect(
 		useCallback(() => {
-			console.log('in focus request detail')
 			fetchWorkRequestDetails();
-		}, [])
+		}, [workRequestData?.id])
 	);
-
-	const fetchWorkRequestDetails = async () => {
-		try {
-			console.log('work req id = ', workRequestData.id);
-			const res = await getWorkRequestDetails(workRequestData.id);
-			console.log('work request details = ', res);
-			if (res?.status) {
-				setWorkRequestData(res?.data);
-			}
-		} catch (e) {
-			console.log('e = ', e);
-		}
-	}
-
-	const acceptRequest = async () => {
-		console.log('accept request', workRequestData);
-
-		setWorkForm("title", workRequestData?.title);
-		setWorkForm("message", workRequestData?.description);
-		setWorkForm("location", workRequestData?.location_id);
-		setWorkForm("selected_asset", workRequestData?.asset_id);
-		setWorkForm("nature_of_work", workRequestData?.problemType);
-		setWorkForm("priority", workRequestData?.priority);
-		setWorkForm("work_request_id", workRequestData?.id);
-		setWorkForm("attachments", workRequestData?.files ?? null);
-
-		// router.push("/newWorkOrder");
-		router.push("/createWorkOrder");
-	}
-
-	const handleOpenEllipses = () => {
-		console.log('open ellipses');
-		setOpenPopover(true)
-	}
 
 	const handleDeleteRequest = async (item: WorkRequest) => {
 		Alert.alert(
-			"Delete Work Order",
+			"Delete Work Request",
 			`Are you sure you want to delete ${item.title}?`,
 			[
 				{
@@ -80,259 +118,444 @@ export default function WorkRequestDetail() {
 					text: "Delete",
 					style: "destructive",
 					onPress: async () => {
-						console.log('deleting WO = ', item);
-						// setDeleteLoading(true)
 						try {
 							const resp = await deleteWorkRequest(item?.id);
-							console.log('resp = ', resp);
 							if (resp?.status) {
-								ToastAndroid.show("Work Order Deleted", ToastAndroid.SHORT);
+								ToastAndroid.show("Work request deleted", ToastAndroid.SHORT);
 								router.back();
-								// setDeleteLoading(false)
 							}
 						} catch (e) {
-							// setDeleteLoading(false)
-							console.log('error deleting = ', e);
+							console.log("error deleting request =", e);
 						}
 					},
 				},
 			],
 			{ cancelable: true }
 		);
-	}
+	};
+
+	const handleApproveRequest = async () => {
+		Alert.alert(
+			"Approve Request",
+			"Approve this request and move it to the work-order conversion stage?",
+			[
+				{ text: "Cancel", style: "cancel" },
+				{
+					text: "Approve",
+					onPress: async () => {
+						try {
+							const response = await approveWorkRequest(workRequestData?.id);
+							if (response?.status) {
+								ToastAndroid.show(response?.message || "Request approved successfully", ToastAndroid.SHORT);
+								fetchWorkRequestDetails();
+							}
+						} catch (error: any) {
+							ToastAndroid.show(error?.message || "Unable to approve request", ToastAndroid.LONG);
+						}
+					},
+				},
+			]
+		);
+	};
+
+	const handleCreateWorkOrder = () => {
+		const payload = {
+			...workRequestData,
+			sourceType: "work-request",
+			work_request_id: workRequestData?.id,
+			createdFrom: "Work Request",
+		};
+
+		router.push({
+			pathname: "/createWorkOrder",
+			params: { data: JSON.stringify(payload) },
+		});
+	};
+
+	const handleOpenLinkedWorkOrder = () => {
+		if (!linkedWorkOrder?.id) return;
+		router.push({
+			pathname: "/workOrderDetail",
+			params: {
+				data: JSON.stringify({
+					id: linkedWorkOrder.id,
+					composite_id: linkedWorkOrder.order_no,
+				}),
+			},
+		});
+	};
+
+	const menuOptions = [
+		...(canEdit
+			? [
+					{
+						text: "Edit Request",
+						action: () =>
+							router.push({
+								pathname: "/newWorkRequest",
+								params: { passedData: JSON.stringify(workRequestData), isEdit: "true" },
+							}),
+					},
+				]
+			: []),
+		...(canDelete
+			? [
+					{
+						text: "Delete Request",
+						action: () => handleDeleteRequest(workRequestData),
+					},
+				]
+			: []),
+	];
 
 	return (
 		<>
-			<Header title="Work Request Detail" showEllipses={true} openEllipses={handleOpenEllipses} ellipsesRef={ellipsesRef} />
+			<Header
+				title="Work Request"
+				showEllipses={menuOptions.length > 0}
+				openEllipses={() => setOpenPopover(true)}
+				ellipsesRef={ellipsesRef}
+			/>
 
 			<Popover
 				isVisible={openPopover}
 				onRequestClose={() => setOpenPopover(false)}
-				popoverStyle={{ borderRadius: 15 }}
+				popoverStyle={{ borderRadius: 16 }}
 				from={ellipsesRef}
 			>
 				<View style={styles.popoverContent}>
-					{
-						[
-							{ icon: '', text: 'Select Option', type: 'heading' },
-							{ icon: '', text: 'Edit', type: 'option' },
-							{ icon: '', text: 'Delete', type: 'option' }
-						].map((option, index) => {
-							return (
-								<Pressable
-									style={styles.popoverItem}
-									key={index}
-									onPress={async () => {
-										if (index === 0) {
-
-										} else if (index === 1) {
-											console.log(item)
-											router.push({
-												pathname: "/newWorkRequest",
-												params: {
-													passedData: JSON.stringify(item),
-													isEdit: 'true'
-												},
-											});
-										} else if (index === 2) {
-											handleDeleteRequest?.(item)
-										}
-										setOpenPopover(false)
-									}}
-								>
-									<View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'flex-start' }}>
-										{option.icon != '' && <Ionicons name={option.icon as any} size={16} color="#71717A" />}
-
-										<Text style={
-											[
-												{ color: "#71717A", fontFamily: Fonts.regular },
-												option.type == 'heading' ? { color: "#742BDE", fontFamily: Fonts.semiBold } : {}
-											]
-										}>
-											{option.text}
-										</Text>
-
-										{/* {
-														(deleteLoading && index === 3) && <ActivityIndicator size={"small"} color={"#71717A"} />
-													} */}
-									</View>
-								</Pressable>
-							);
-						})
-					}
+					<Pressable style={styles.popoverItem}>
+						<Text style={styles.popoverHeading}>Actions</Text>
+					</Pressable>
+					{menuOptions.map((option) => (
+						<Pressable
+							style={styles.popoverItem}
+							key={option.text}
+							onPress={() => {
+								option.action();
+								setOpenPopover(false);
+							}}
+						>
+							<Text style={styles.popoverOption}>{option.text}</Text>
+						</Pressable>
+					))}
 				</View>
 			</Popover>
 
+			<ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+				<View style={styles.heroCard}>
+					<View style={styles.heroHeader}>
+						<View style={styles.heroTextWrap}>
+							<Text style={styles.kicker}>{workRequestData?.request_no || "Work Request"}</Text>
+							<Text style={styles.heroTitle}>{workRequestData?.title || "Untitled Request"}</Text>
+						</View>
 
-			<View style={styles.container}>
-				<View style={styles.card}>
-					<View style={styles.textContainer}>
-						<Text style={styles.title}>{workRequestData?.title}</Text>
-						<Text style={styles.subText}>Requested By : {workRequestData?.createdBy?.firstName + " " + workRequestData?.createdBy?.lastName}</Text>
-						<Text style={styles.subText}>Created On : {moment(workRequestData?.createdAt).format("MMM D, YYYY")}</Text>
-					</View>
-
-					<View style={styles.rightContainer}>
-						<WorkOrderCardLogo />
-						<View style={styles.tagButton}>
-							<Text style={styles.tagText}>{workRequestData?.status}</Text>
+						<View style={[styles.statusChip, { backgroundColor: stageTone.bg }]}>
+							<Text style={[styles.statusChipText, { color: stageTone.text }]}>
+								{stage === "converted" ? "Converted" : workRequestData?.status || "Open"}
+							</Text>
 						</View>
 					</View>
-				</View>
 
-				<View style={styles.card}>
-					<Text style={styles.title}>Status</Text>
-					<Text style={styles.subText}>{workRequestData?.status}</Text>
-				</View>
+					<Text style={styles.heroMeta}>
+						Requested by {formatRequestUserLabel(workRequestData?.createdBy)} • {formatRequestDateTime(workRequestData?.createdAt)}
+					</Text>
 
-				<View style={styles.card}>
-					<Text style={styles.title}>Location</Text>
-					<Text style={styles.subText}>{workRequestData?.location_id?.location_name}</Text>
-				</View>
-
-				<View style={styles.card}>
-					<Text style={styles.title}>Assets</Text>
-					<Text style={styles.subText}>{workRequestData?.asset_id?.asset_name}</Text>
-				</View>
-
-				<View style={styles.descBox}>
-					<Text style={styles.desText}>Description</Text>
-					<Text style={styles.desText}>{workRequestData?.description}</Text>
-				</View>
-
-				{
-					workRequestData?.status === "Open" && <View style={styles.actionButtons}>
-						<Pressable style={[styles.actionBtn, { backgroundColor: "#FF0400" }]} onPress={() => setRejectVisible(true)}>
-							<MaterialIcons name="cancel" size={15} color="#fff" />
-							<Text style={styles.actionBtnTxt}>Reject</Text>
-						</Pressable>
-
-						<Pressable style={[styles.actionBtn, { backgroundColor: "#742bde" }]} onPress={acceptRequest}>
-							<Ionicons name="checkmark-circle" size={15} color="#fff" />
-							<Text style={styles.actionBtnTxt}>Accept</Text>
-						</Pressable>
+					<View style={[styles.governanceCard, { backgroundColor: governanceTone.bg, borderColor: governanceTone.border }]}>
+						<Text style={[styles.governanceTitle, { color: governanceTone.text }]}>Lifecycle</Text>
+						<Text style={[styles.governanceText, { color: governanceTone.text }]}>
+							{getWorkRequestGovernanceLabel(workRequestData)}
+						</Text>
 					</View>
-				}
-			</View>
+				</View>
 
-			<RejectModal visible={rejectVisible} item={workRequestData} onCancel={() => setRejectVisible(false)}
+				<View style={styles.sectionCard}>
+					<Text style={styles.sectionTitle}>Request Details</Text>
+					<InfoRow label="Priority" value={workRequestData?.priority || "N/A"} />
+					<InfoRow label="Problem Type" value={workRequestData?.problemType || "N/A"} />
+					<InfoRow label="Location" value={workRequestData?.location_id?.location_name || "N/A"} />
+					<InfoRow label="Asset" value={workRequestData?.asset_id?.asset_name || "N/A"} />
+					<InfoRow label="Review Due" value={formatRequestDateTime(workRequestData?.review_due_at)} />
+					<InfoRow label="Order Due" value={formatRequestDateTime(workRequestData?.order_due_at)} />
+					<InfoRow label="Attachments" value={`${workRequestData?.files?.length || 0}`} />
+				</View>
+
+				<View style={styles.sectionCard}>
+					<Text style={styles.sectionTitle}>Governance</Text>
+					<InfoRow label="Approved By" value={formatRequestUserLabel(workRequestData?.approvedBy)} />
+					<InfoRow label="Approved On" value={formatRequestDateTime(workRequestData?.approvedAt)} />
+					<InfoRow label="Rejected By" value={formatRequestUserLabel(workRequestData?.rejectedBy)} />
+					<InfoRow label="Rejected On" value={formatRequestDateTime(workRequestData?.rejectedAt)} />
+					<InfoRow label="Converted By" value={formatRequestUserLabel(workRequestData?.convertedBy)} />
+					<InfoRow label="Converted On" value={formatRequestDateTime(workRequestData?.convertedAt)} />
+					<InfoRow
+						label="Linked WO"
+						value={workRequestData?.converted_order_no || workRequestData?.converted_work_order_id?.order_no || "N/A"}
+					/>
+					{workRequestData?.remarks ? <InfoRow label="Remarks" value={workRequestData.remarks} multiline /> : null}
+				</View>
+
+				<View style={styles.sectionCard}>
+					<Text style={styles.sectionTitle}>Description</Text>
+					<Text style={styles.descriptionText}>{workRequestData?.description || "No description available."}</Text>
+				</View>
+
+				{linkedWorkOrder?.id ? (
+					<Pressable style={styles.linkedButton} onPress={handleOpenLinkedWorkOrder}>
+						<Ionicons name="open-outline" size={16} color="#166534" />
+						<Text style={styles.linkedButtonText}>
+							Open linked work order {linkedWorkOrder.order_no ? `(${linkedWorkOrder.order_no})` : ""}
+						</Text>
+					</Pressable>
+				) : null}
+
+				{canApprove || canReject || canConvert ? (
+					<View style={styles.actionButtons}>
+						{canReject ? (
+							<Pressable style={[styles.actionBtn, styles.rejectBtn]} onPress={() => setRejectVisible(true)}>
+								<MaterialIcons name="cancel" size={16} color="#fff" />
+								<Text style={styles.actionBtnTxt}>Reject</Text>
+							</Pressable>
+						) : null}
+
+						{canApprove ? (
+							<Pressable style={[styles.actionBtn, styles.approveBtn]} onPress={handleApproveRequest}>
+								<Ionicons name="checkmark-circle" size={16} color="#fff" />
+								<Text style={styles.actionBtnTxt}>Approve</Text>
+							</Pressable>
+						) : null}
+
+						{canConvert ? (
+							<Pressable style={[styles.actionBtn, styles.convertBtn]} onPress={handleCreateWorkOrder}>
+								<Ionicons name="construct-outline" size={16} color="#fff" />
+								<Text style={styles.actionBtnTxt}>Create WO</Text>
+							</Pressable>
+						) : null}
+					</View>
+				) : null}
+			</ScrollView>
+
+			<RejectModal
+				visible={rejectVisible}
+				item={workRequestData}
+				onCancel={() => setRejectVisible(false)}
 				onSubmit={async (reason) => {
 					setRejectVisible(false);
 					try {
 						const response = await rejectWorkRequest(workRequestData?.id, reason);
 						if (response?.status) {
-							ToastAndroid.show("Request Rejected Successfully", ToastAndroid.SHORT);
-							router.back();
+							ToastAndroid.show("Request rejected successfully", ToastAndroid.SHORT);
+							fetchWorkRequestDetails();
 						}
 					} catch (error: any) {
-						console.error("Error rejecting work request:", error);
-						if (!error?.status) {
-							ToastAndroid.show(error?.message, ToastAndroid.SHORT);
-						}
+						ToastAndroid.show(error?.message || "Unable to reject request", ToastAndroid.SHORT);
 					}
-				}} />
+				}}
+			/>
 		</>
-	)
+	);
+}
+
+function InfoRow({ label, value, multiline = false }: { label: string; value: string; multiline?: boolean }) {
+	return (
+		<View style={[styles.infoRow, multiline && styles.infoRowMultiline]}>
+			<Text style={styles.infoLabel}>{label}</Text>
+			<Text style={[styles.infoValue, multiline && styles.infoValueMultiline]}>{value || "N/A"}</Text>
+		</View>
+	);
 }
 
 const styles = StyleSheet.create({
 	container: {
-		flex: 1,
 		backgroundColor: "#F5F7FA",
-		padding: 20
+		padding: 20,
+		paddingBottom: 120,
 	},
-	card: {
+	heroCard: {
+		backgroundColor: "#FFFFFF",
+		padding: 18,
+		borderRadius: 22,
+		marginVertical: 6,
+		borderWidth: 1,
+		borderColor: "#E2E8F0",
+		shadowColor: "#0F172A",
+		shadowOpacity: 0.06,
+		shadowOffset: { width: 0, height: 4 },
+		shadowRadius: 12,
+		elevation: 2,
+	},
+	heroHeader: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "flex-start",
+		gap: 10,
+	},
+	heroTextWrap: {
+		flex: 1,
+	},
+	kicker: {
+		fontSize: 11,
+		fontFamily: Fonts.medium,
+		color: "#7C3AED",
+		marginBottom: 6,
+	},
+	heroTitle: {
+		fontSize: 18,
+		fontFamily: Fonts.semiBold,
+		color: "#111827",
+		lineHeight: 24,
+	},
+	heroMeta: {
+		fontSize: 12,
+		fontFamily: Fonts.regular,
+		color: "#64748B",
+		marginTop: 10,
+		lineHeight: 18,
+	},
+	statusChip: {
+		borderRadius: 999,
+		paddingHorizontal: 10,
+		paddingVertical: 6,
+	},
+	statusChipText: {
+		fontSize: 11,
+		fontFamily: Fonts.semiBold,
+	},
+	governanceCard: {
+		marginTop: 14,
+		borderWidth: 1,
+		borderRadius: 16,
+		padding: 14,
+	},
+	governanceTitle: {
+		fontFamily: Fonts.semiBold,
+		fontSize: 12,
+		marginBottom: 6,
+	},
+	governanceText: {
+		fontFamily: Fonts.medium,
+		fontSize: 13,
+		lineHeight: 18,
+	},
+	sectionCard: {
+		backgroundColor: "#FFFFFF",
+		borderRadius: 20,
+		padding: 16,
+		marginVertical: 6,
+		borderWidth: 1,
+		borderColor: "#E2E8F0",
+		shadowColor: "#0F172A",
+		shadowOpacity: 0.06,
+		shadowOffset: { width: 0, height: 4 },
+		shadowRadius: 12,
+		elevation: 2,
+	},
+	sectionTitle: {
+		fontFamily: Fonts.semiBold,
+		fontSize: 14,
+		color: "#111827",
+		marginBottom: 10,
+	},
+	infoRow: {
 		flexDirection: "row",
 		justifyContent: "space-between",
 		alignItems: "center",
-		backgroundColor: "#f9f9ff",
-		padding: 12,
-		borderRadius: 5,
-		marginVertical: 6,
-		shadowColor: "#000",
-		shadowOpacity: 0.06,
-		shadowOffset: { width: 0, height: 2 },
-		shadowRadius: 3,
-		elevation: 2,
+		paddingVertical: 8,
+		gap: 12,
+		borderBottomWidth: 1,
+		borderBottomColor: "#F1F5F9",
 	},
-	textContainer: {
-		flex: 1,
+	infoRowMultiline: {
+		alignItems: "flex-start",
 	},
-	title: {
-		fontSize: 11,
-		fontFamily: Fonts.semiBold,
-		color: "#201F23",
-		marginBottom: 2,
+	infoLabel: {
+		fontFamily: Fonts.medium,
+		fontSize: 12,
+		color: "#64748B",
+		flex: 0.8,
 	},
-	subText: {
-		fontSize: 9,
+	infoValue: {
 		fontFamily: Fonts.regular,
-		color: "#000000A0",
-		marginVertical: 1,
+		fontSize: 12,
+		color: "#0F172A",
+		flex: 1.2,
+		textAlign: "right",
 	},
-	rightContainer: {
+	infoValueMultiline: {
+		textAlign: "left",
+	},
+	descriptionText: {
+		fontFamily: Fonts.regular,
+		fontSize: 13,
+		color: "#334155",
+		lineHeight: 20,
+	},
+	linkedButton: {
+		marginTop: 8,
+		backgroundColor: "#ECFDF5",
+		borderRadius: 18,
+		borderWidth: 1,
+		borderColor: "#A7F3D0",
+		paddingHorizontal: 16,
+		paddingVertical: 14,
+		flexDirection: "row",
 		alignItems: "center",
-		justifyContent: "center",
-		gap: 10
+		gap: 8,
 	},
-	tagButton: {
-		backgroundColor: "#742BDE",
-		paddingVertical: 5,
-		paddingHorizontal: 10,
-		borderRadius: 6,
-	},
-	tagText: {
-		color: "#fff",
-		fontSize: 9,
-		fontFamily: Fonts.regular,
-	},
-	descBox: {
-		backgroundColor: "#f9f9ff",
-		paddingHorizontal: 10,
-		paddingBottom: 50,
-		paddingTop: 5,
-		borderRadius: 5,
-		marginVertical: 6,
-		shadowColor: "#000",
-		shadowOpacity: 0.06,
-		shadowOffset: { width: 0, height: 2 },
-		shadowRadius: 3,
-		elevation: 2,
-	},
-	desText: {
-		fontSize: 11,
-		fontFamily: Fonts.light,
-		color: "#000",
+	linkedButtonText: {
+		fontFamily: Fonts.semiBold,
+		fontSize: 12,
+		color: "#166534",
 	},
 	actionButtons: {
 		flexDirection: "row",
-		alignItems: "center",
-		justifyContent: "space-between",
-		marginTop: 30
+		justifyContent: "center",
+		flexWrap: "wrap",
+		gap: 10,
+		marginTop: 18,
 	},
 	actionBtn: {
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "center",
-		gap: 5,
-		paddingHorizontal: 20,
-		paddingVertical: 10,
-		width: "47%",
-		borderRadius: 5
+		gap: 6,
+		paddingHorizontal: 18,
+		paddingVertical: 12,
+		borderRadius: 14,
+		minWidth: 140,
+	},
+	rejectBtn: {
+		backgroundColor: "#DC2626",
+	},
+	approveBtn: {
+		backgroundColor: "#7C3AED",
+	},
+	convertBtn: {
+		backgroundColor: "#2563EB",
 	},
 	actionBtnTxt: {
-		fontFamily: Fonts.regular,
-		fontSize: 10,
+		fontFamily: Fonts.semiBold,
+		fontSize: 12,
 		color: "#fff",
-		lineHeight: 16
+		lineHeight: 16,
 	},
 	popoverContent: {
-		borderRadius: 20,
 		backgroundColor: "#fff",
-		padding: 10,
+		paddingVertical: 10,
 	},
 	popoverItem: {
-		width: 150,
-		padding: 10,
+		width: 170,
+		paddingHorizontal: 14,
+		paddingVertical: 10,
 	},
-})
+	popoverHeading: {
+		color: "#7C3AED",
+		fontFamily: Fonts.semiBold,
+		fontSize: 12,
+	},
+	popoverOption: {
+		color: "#334155",
+		fontFamily: Fonts.regular,
+		fontSize: 12,
+	},
+});

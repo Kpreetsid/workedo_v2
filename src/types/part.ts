@@ -54,6 +54,18 @@ export interface Part {
         reorder_point?: number;
         available_for_transfer?: number;
     }>;
+    network_location_count?: number;
+    network_on_hand?: number;
+    preferred_stock_source?: {
+        id: string;
+        location_id: string;
+        location_name: string;
+        location_type?: string;
+        quantity: number;
+        min_quantity: number;
+        reorder_point?: number;
+        available_for_transfer?: number;
+    } | null;
     recent_history?: PartHistoryRecord[];
 }
 

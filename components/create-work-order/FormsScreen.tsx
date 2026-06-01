@@ -12,6 +12,7 @@ import { getSOPs } from '@/src/services/preventive.service'
 import { getProcedures } from '@/src/services/procedure.service'
 import { useWorkOrderStore } from '@/src/store/useWorkOrderStore'
 import { ProcedureTemplate } from '@/src/types/procedure'
+import { WorkOrder } from '@/src/types/workOrder'
 
 const resolveEntityId = (value: any): string => {
   if (!value) return ""
@@ -19,7 +20,7 @@ const resolveEntityId = (value: any): string => {
   return String(value?.id ?? value?._id ?? "")
 }
 
-const FormsScreen = () => {
+const FormsScreen = ({ sourceOrder }: { sourceOrder?: WorkOrder | null }) => {
   const [forms, setForms] = useState<any[]>([])
   const [selectedForm, setSelectedForm] = useState<any>(null)
   const [procedures, setProcedures] = useState<ProcedureTemplate[]>([])
@@ -34,6 +35,7 @@ const FormsScreen = () => {
 
   const locationId = resolveEntityId(location)
   const assetId = resolveEntityId(asset)
+  const procedureSelectionLocked = Boolean(sourceOrder?.id && sourceOrder?.hierarchy?.executionOwnedByChildren)
 
   useEffect(() => {
     const fetchForms = async () => {
@@ -118,14 +120,30 @@ const FormsScreen = () => {
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Procedures</Text>
-            <Pressable style={styles.selectButton} onPress={() => setProcedureModalVisible(true)}>
-              <Text style={styles.selectButtonText}>Select</Text>
+            <Pressable
+              style={[styles.selectButton, procedureSelectionLocked && styles.selectButtonDisabled]}
+              onPress={() => {
+                if (!procedureSelectionLocked) {
+                  setProcedureModalVisible(true)
+                }
+              }}
+            >
+              <Text style={styles.selectButtonText}>{procedureSelectionLocked ? "Child-Owned" : "Select"}</Text>
             </Pressable>
           </View>
 
           <Text style={styles.sectionCaption}>
             Procedure templates are the preferred inspection and execution workflow for work orders.
           </Text>
+
+          {procedureSelectionLocked ? (
+            <View style={styles.readOnlyNote}>
+              <Text style={styles.readOnlyNoteTitle}>Execution is tracked on child work orders</Text>
+              <Text style={styles.readOnlyNoteText}>
+                This parent work order rolls up child progress. Linked procedures should be managed on the child work orders instead of the parent.
+              </Text>
+            </View>
+          ) : null}
 
           {selectedProcedures.length > 0 ? (
             <View style={styles.selectedWrap}>
@@ -134,9 +152,11 @@ const FormsScreen = () => {
                 return (
                   <View key={procedureId} style={styles.procedureChip}>
                     <Text style={styles.procedureChipText}>{procedure.name}</Text>
-                    <Pressable onPress={() => removeProcedure(procedureId)}>
-                      <Ionicons name="close" size={16} color="#4A2C7B" />
-                    </Pressable>
+                    {!procedureSelectionLocked ? (
+                      <Pressable onPress={() => removeProcedure(procedureId)}>
+                        <Ionicons name="close" size={16} color="#4A2C7B" />
+                      </Pressable>
+                    ) : null}
                   </View>
                 )
               })}
@@ -279,10 +299,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
+  selectButtonDisabled: {
+    backgroundColor: "#94A3B8",
+  },
   selectButtonText: {
     fontSize: 11,
     fontFamily: Fonts.medium,
     color: "#fff",
+  },
+  readOnlyNote: {
+    backgroundColor: "#FFF7E6",
+    borderRadius: 8,
+    borderWidth: 0.8,
+    borderColor: "#FFD591",
+    padding: 10,
+    marginBottom: 10,
+  },
+  readOnlyNoteTitle: {
+    fontSize: 11,
+    fontFamily: Fonts.semiBold,
+    color: "#7A4A00",
+  },
+  readOnlyNoteText: {
+    fontSize: 10,
+    fontFamily: Fonts.regular,
+    color: "#7A4A00",
+    lineHeight: 14,
+    marginTop: 4,
   },
   selectedWrap: {
     flexDirection: "row",

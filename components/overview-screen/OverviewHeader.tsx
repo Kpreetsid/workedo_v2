@@ -1,10 +1,12 @@
 import { Image, TouchableOpacity, View, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Drawer, PrevisionLogo } from "@/constants/IconProvider";
+import { Drawer } from "@/constants/IconProvider";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { endpoints } from "@/src/api/endpoints";
 import { useState } from "react";
+
+const PRESAGE_LOGO = require("@/assets/images/presage.png");
 
 export default function OverviewHeader() {
 	const router = useRouter();
@@ -26,7 +28,11 @@ export default function OverviewHeader() {
 					<Drawer />
 				</TouchableOpacity>
 
-				<PrevisionLogo />
+				<Image
+					source={PRESAGE_LOGO}
+					style={styles.logo}
+					resizeMode="contain"
+				/>
 
 				<TouchableOpacity
 					style={styles.iconButton}
@@ -93,5 +99,9 @@ const styles = StyleSheet.create({
 		color: "#fff",
 		fontWeight: "600",
 		fontSize: 12,
+	},
+	logo: {
+		width: 122,
+		height: 32,
 	},
 });

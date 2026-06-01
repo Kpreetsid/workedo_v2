@@ -2,8 +2,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import Header from "@/components/global/Header";
 import Detail from "@/components/work-order-detail/Detail";
 import Comments from "@/components/work-order-detail/Comments";
-import { Alert, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
-import { WorkOrderCompleteIcon, WorkOrderInProgressIcon, WorkOrderOnHoldIcon, WorkOrderOpenIcon } from "@/constants/IconProvider";
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from "react-native";
 import Fonts from "@/constants/Typography";
 import { deleteWorkOrder, getWorkOrderDetails, updateWorkOrderStatus } from "@/src/services/work-order.service";
 import { useCallback, useState } from "react";
@@ -14,6 +13,8 @@ import Tasks from "@/components/work-order-detail/Tasks";
 import Forms from "@/components/work-order-detail/Forms";
 import SegmentedPager from "@/components/global/SegmentPager";
 import History from "@/components/work-order-detail/History";
+import ProceduresTab from "@/components/work-order-detail/ProceduresTab";
+import { ALL_WORK_ORDER_STATUSES, formatWorkOrderStatusLabel, getWorkOrderStatusTone, isClosedWorkOrderStatus, normalizeWorkOrderStatus, requiresWorkOrderBlockReason } from "@/src/utils/workOrderStatus";
 
 const safeJsonParse = (value?: string) => {
 	if (!value || typeof value !== "string") return null;
@@ -46,21 +47,32 @@ export default function WorkOrderDetail() {
 
 	const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 	const [workOrderData, setWorkOrderData] = useState<any>(work_order_data);
+	const [reasonModalVisible, setReasonModalVisible] = useState(false);
+	const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+	const [blockReasonDraft, setBlockReasonDraft] = useState("");
 
-	const normalizeStatus = (value?: string | null) => (value ?? "").toLowerCase().replace(/[-\s]/g, "");
-	const isDoneStatus = ["completed", "done"].includes(normalizeStatus(workOrderData?.status));
+	const isDoneStatus = isClosedWorkOrderStatus(workOrderData?.status);
 	const hasTasks = Array.isArray(workOrderData?.tasks) && workOrderData.tasks.length > 0;
 	const hasForms = Boolean(workOrderData?.sop_form_id);
+	const hasProcedures =
+		(Array.isArray(workOrderData?.procedure_entries) && workOrderData.procedure_entries.length > 0) ||
+		(Array.isArray(workOrderData?.procedures) && workOrderData.procedures.length > 0) ||
+		(Array.isArray(workOrderData?.procedure_ids) && workOrderData.procedure_ids.length > 0);
 	const isExecutionOwnedByChildren = Boolean(workOrderData?.hierarchy?.executionOwnedByChildren);
 	const childSummary = workOrderData?.hierarchy?.childStatusSummary;
 
-	const detailTabs = [
-		{ label: "Details", component: <Detail params={workOrderData} /> },
-		...(hasTasks ? [{ label: "Tasks", component: <Tasks params={workOrderData} /> }] : []),
-		...(hasForms ? [{ label: "Forms", component: <Forms params={workOrderData} /> }] : []),
-		{ label: "History", component: <History params={workOrderData} /> },
-		{ label: "Comments", component: <Comments params={workOrderData} /> },
-	];
+	const openFollowUpCreate = () => {
+		router.push({
+			pathname: "/createWorkOrder",
+			params: {
+				data: JSON.stringify({
+					...workOrderData,
+					isFollowUp: true,
+				}),
+				mode: "follow-up",
+			},
+		});
+	};
 
 	const popoverOptions = [
 		{ icon: "", text: "Select Option", type: "heading" },
@@ -88,6 +100,15 @@ export default function WorkOrderDetail() {
 			fetchWorkOrderDetails();
 		}, [workOrderData?.id])
 	);
+
+	const detailTabs = [
+		{ label: "Details", component: <Detail params={workOrderData} /> },
+		...(hasTasks ? [{ label: "Tasks", component: <Tasks params={workOrderData} onSaved={fetchWorkOrderDetails} /> }] : []),
+		...(hasProcedures ? [{ label: "Procedures", component: <ProceduresTab params={workOrderData} onSaved={fetchWorkOrderDetails} /> }] : []),
+		...(hasForms ? [{ label: "Forms", component: <Forms params={workOrderData} /> }] : []),
+		{ label: "History", component: <History params={workOrderData} /> },
+		{ label: "Comments", component: <Comments params={workOrderData} /> },
+	];
 
 	const handleDeleteWo = async (item: WorkOrder) => {
 		Alert.alert(
@@ -117,6 +138,129 @@ export default function WorkOrderDetail() {
 			{ cancelable: true }
 		);
 	};
+
+	const getRemainingChildCount = () => {
+		const total = Number(childSummary?.total || 0);
+		const completed = Number(childSummary?.completed || 0);
+		return Math.max(total - completed, 0);
+	};
+
+	const closeReasonModal = () => {
+		setReasonModalVisible(false);
+		setPendingStatus(null);
+		setBlockReasonDraft("");
+	};
+
+	const handleStatusUpdate = async (targetStatus: string, blockReason?: string) => {
+		if (!workOrderData?.id) return;
+		if (normalizeWorkOrderStatus(workOrderData?.status) === normalizeWorkOrderStatus(targetStatus)) return;
+
+		if (targetStatus === "In-Progress" && isExecutionOwnedByChildren) {
+			Alert.alert(
+				"Start Child Work Orders",
+				"This parent work order rolls up child execution. Start work on a child work order instead, or create a follow-up if you still need to split execution.",
+				[
+					{ text: "Cancel", style: "cancel" },
+					{ text: "Create Follow-Up", onPress: openFollowUpCreate },
+				]
+			);
+			return;
+		}
+
+		if (
+			targetStatus === "Completed" &&
+			isExecutionOwnedByChildren &&
+			childSummary &&
+			Number(childSummary.completed || 0) < Number(childSummary.total || 0)
+		) {
+			const remainingChildren = getRemainingChildCount();
+			Alert.alert(
+				"Parent Not Ready To Close",
+				`${remainingChildren} child work order${remainingChildren === 1 ? "" : "s"} still needs completion before this parent can be marked Completed.`,
+				[{ text: "OK", style: "default" }]
+			);
+			return;
+		}
+
+		try {
+			const payload: Record<string, string> = { status: targetStatus };
+			if (typeof blockReason === "string" && blockReason.trim()) {
+				payload.block_reason = blockReason.trim();
+			}
+
+			const res = await updateWorkOrderStatus(workOrderData.id, payload);
+
+			if (res?.status) {
+				const isChildCompletion = targetStatus === "Completed" && Boolean(workOrderData?.hierarchy?.isChildWorkOrder);
+				ToastAndroid.show(
+					isChildCompletion
+						? "Child work order completed. Parent progress will roll up automatically."
+						: "Status updated successfully!",
+					ToastAndroid.SHORT
+				);
+				setWorkOrderData((prev: any) => ({
+					...prev,
+					status: targetStatus,
+					block_reason:
+						targetStatus === "Blocked" || targetStatus === "Waiting-on-Parts" || targetStatus === "Waiting-on-Permit"
+							? payload.block_reason || null
+							: targetStatus === "On-Hold"
+								? prev?.block_reason || null
+								: null,
+				}));
+				fetchWorkOrderDetails();
+			} else {
+				ToastAndroid.show("Failed to update status.", ToastAndroid.SHORT);
+			}
+		} catch (err: any) {
+			console.error("Error updating status:", err);
+			ToastAndroid.show(err?.message || "Failed to update status", ToastAndroid.SHORT);
+		}
+	};
+
+	const openReasonModalForStatus = (status: string) => {
+		setPendingStatus(status);
+		setBlockReasonDraft(workOrderData?.block_reason || "");
+		setReasonModalVisible(true);
+	};
+
+	const submitBlockedReason = async () => {
+		if (!pendingStatus) return;
+		const trimmedReason = blockReasonDraft.trim();
+		if (!trimmedReason) {
+			ToastAndroid.show("A reason is required for this status.", ToastAndroid.SHORT);
+			return;
+		}
+
+		const targetStatus = pendingStatus;
+		closeReasonModal();
+		await handleStatusUpdate(targetStatus, trimmedReason);
+	};
+
+	const getReasonModalCopy = (status?: string | null) => {
+		switch (status) {
+			case "Waiting-on-Parts":
+				return {
+					title: "Waiting on Parts Reason",
+					label: "What parts are missing or delayed?",
+					placeholder: "Example: Bearing kit not available in store, vendor ETA tomorrow.",
+				};
+			case "Waiting-on-Permit":
+				return {
+					title: "Waiting on Permit Reason",
+					label: "What permit or approval is pending?",
+					placeholder: "Example: Shutdown permit pending approval from EHS team.",
+				};
+			default:
+				return {
+					title: "Blocked Reason",
+					label: "What is blocking this work order?",
+					placeholder: "Example: Asset access blocked, work area not released, safety issue found.",
+				};
+		}
+	};
+
+	const reasonModalCopy = getReasonModalCopy(pendingStatus);
 
 	return (
 		<View style={styles.container}>
@@ -157,16 +301,7 @@ export default function WorkOrderDetail() {
 													},
 												});
 											} else if (option.text === "Create Follow-Up") {
-												router.push({
-													pathname: "/createWorkOrder",
-													params: {
-														data: JSON.stringify({
-															...workOrderData,
-															isFollowUp: true,
-														}),
-														mode: "follow-up",
-													},
-												});
+												openFollowUpCreate();
 											} else if (option.text === "Delete") {
 												handleDeleteWo?.(workOrderData);
 											}
@@ -192,74 +327,70 @@ export default function WorkOrderDetail() {
 					</View>
 				</View>
 
-				<View style={styles.statusTabs}>
-					{["Open", "On Hold", "In Progress", "Completed"].map((status, index) => {
-						const normalize = (str: string) => str?.toLowerCase().replace(/[-\s]/g, "");
-						const isActive = normalize(workOrderData?.status) === normalize(status);
-
-						const handleStatusChange = async () => {
-							if (isActive || !workOrderData?.id) return;
-
-							if (status === "In Progress" && isExecutionOwnedByChildren) {
-								ToastAndroid.show("This parent work order uses child execution. Start progress on the child work orders instead.", ToastAndroid.LONG);
-								return;
-							}
-
-							if (
-								status === "Completed" &&
-								isExecutionOwnedByChildren &&
-								childSummary &&
-								Number(childSummary.completed || 0) < Number(childSummary.total || 0)
-							) {
-								ToastAndroid.show("Complete all child work orders before completing the parent work order.", ToastAndroid.LONG);
-								return;
-							}
-
-							try {
-								const payload = { status: status === "Done" ? "Completed" : status.replace(/\s/g, "-") };
-								const res = await updateWorkOrderStatus(workOrderData.id, payload);
-
-								if (res?.status) {
-									ToastAndroid.show("Status updated successfully!", ToastAndroid.SHORT);
-									setWorkOrderData((prev: any) => ({ ...prev, status: payload.status }));
-									fetchWorkOrderDetails();
-								} else {
-									ToastAndroid.show("Failed to update status.", ToastAndroid.SHORT);
-								}
-							} catch (err: any) {
-								console.error("Error updating status:", err);
-								ToastAndroid.show(err?.message || "Failed to update status", ToastAndroid.SHORT);
-							}
-						};
+				<Text style={styles.statusSectionLabel}>Status</Text>
+				<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statusTabs}>
+					{ALL_WORK_ORDER_STATUSES.map((status) => {
+						const isActive = normalizeWorkOrderStatus(workOrderData?.status) === normalizeWorkOrderStatus(status);
+						const tone = getWorkOrderStatusTone(status);
 
 						return (
 							<Pressable
-								key={index}
-								style={[styles.tab, isActive && styles.tabActive]}
-								onPress={handleStatusChange}
+								key={status}
+								style={[
+									styles.statusChip,
+									{ backgroundColor: tone.bg, borderColor: tone.border },
+									isActive && styles.statusChipActive,
+								]}
+								onPress={() => {
+									if (isActive) return;
+									if (requiresWorkOrderBlockReason(status)) {
+										openReasonModalForStatus(status);
+										return;
+									}
+									handleStatusUpdate(status);
+								}}
 							>
-								<View style={styles.tabIcon}>
-									{status === "Open" ? (
-										<WorkOrderOpenIcon />
-									) : status === "On Hold" ? (
-										<WorkOrderOnHoldIcon />
-									) : status === "In Progress" ? (
-										<WorkOrderInProgressIcon />
-									) : (
-										<WorkOrderCompleteIcon />
-									)}
-								</View>
-
-								<Text style={[styles.tabText, isActive && styles.tabTextActive]}>
-									{status}
+								<Text style={[styles.statusChipText, { color: tone.text }, isActive && styles.statusChipTextActive]}>
+									{formatWorkOrderStatusLabel(status)}
 								</Text>
 							</Pressable>
 						);
 					})}
-				</View>
+				</ScrollView>
+				{workOrderData?.block_reason ? (
+					<View style={styles.blockReasonCard}>
+						<Text style={styles.blockReasonLabel}>Current status note</Text>
+						<Text style={styles.blockReasonText}>{workOrderData.block_reason}</Text>
+					</View>
+				) : null}
 			</View>
 
 			<SegmentedPager tabs={detailTabs} />
+			<Modal visible={reasonModalVisible} transparent animationType="fade" onRequestClose={closeReasonModal}>
+				<View style={styles.modalOverlay}>
+					<View style={styles.modalCard}>
+						<Text style={styles.modalTitle}>{reasonModalCopy.title}</Text>
+						<Text style={styles.modalLabel}>{reasonModalCopy.label}</Text>
+						<TextInput
+							value={blockReasonDraft}
+							onChangeText={setBlockReasonDraft}
+							placeholder={reasonModalCopy.placeholder}
+							placeholderTextColor="#94A3B8"
+							multiline
+							textAlignVertical="top"
+							style={styles.modalInput}
+						/>
+						<View style={styles.modalActions}>
+							<Pressable style={styles.modalSecondaryButton} onPress={closeReasonModal}>
+								<Text style={styles.modalSecondaryButtonText}>Cancel</Text>
+							</Pressable>
+							<Pressable style={styles.modalPrimaryButton} onPress={submitBlockedReason}>
+								<Text style={styles.modalPrimaryButtonText}>Save Reason</Text>
+							</Pressable>
+						</View>
+					</View>
+				</View>
+			</Modal>
 		</View>
 	);
 }
@@ -302,44 +433,122 @@ const styles = StyleSheet.create({
 		marginTop: 4,
 		maxWidth: 260,
 	},
+	statusSectionLabel: {
+		fontSize: 11,
+		fontFamily: Fonts.semiBold,
+		color: "#475569",
+		marginTop: 12,
+		marginBottom: 6,
+	},
 	statusTabs: {
 		flexDirection: "row",
-		justifyContent: "space-between",
 		alignItems: "center",
-		width: "100%",
-		marginTop: 8,
+		gap: 8,
+		paddingRight: 16,
 	},
-	tab: {
-		flex: 1,
-		alignItems: "center",
-		justifyContent: "center",
-		height: 60,
-		borderRadius: 8,
-		backgroundColor: "#F9FAF9",
-		marginHorizontal: 4,
-		borderColor: "#00000033",
-		borderWidth: 0.6,
+	statusChip: {
+		paddingVertical: 10,
+		paddingHorizontal: 14,
+		borderRadius: 999,
+		borderWidth: 1,
 	},
-	tabIcon: {
-		height: 25,
-		width: 25,
-		alignItems: "center",
-		justifyContent: "center",
+	statusChipActive: {
+		borderColor: "#742BDE",
+		shadowColor: "#742BDE",
+		shadowOpacity: 0.14,
+		shadowRadius: 6,
+		elevation: 2,
 	},
-	tabActive: {
-		backgroundColor: "#EFE4FF",
-		borderWidth: 0,
-	},
-	tabText: {
-		fontSize: 10,
-		fontFamily: Fonts.regular,
-		color: "#742BDE",
-		marginTop: 2,
-		textAlign: "center",
-	},
-	tabTextActive: {
-		color: "#742BDE",
+	statusChipText: {
+		fontSize: 11,
 		fontFamily: Fonts.medium,
+	},
+	statusChipTextActive: {
+		fontFamily: Fonts.semiBold,
+	},
+	blockReasonCard: {
+		marginTop: 10,
+		backgroundColor: "#FFF7ED",
+		borderColor: "#FDBA74",
+		borderWidth: 1,
+		borderRadius: 10,
+		padding: 10,
+	},
+	blockReasonLabel: {
+		fontSize: 10,
+		fontFamily: Fonts.semiBold,
+		color: "#9A3412",
+		marginBottom: 4,
+	},
+	blockReasonText: {
+		fontSize: 11,
+		fontFamily: Fonts.regular,
+		color: "#7C2D12",
+		lineHeight: 17,
+	},
+	modalOverlay: {
+		flex: 1,
+		backgroundColor: "#00000066",
+		alignItems: "center",
+		justifyContent: "center",
+		paddingHorizontal: 20,
+	},
+	modalCard: {
+		width: "100%",
+		backgroundColor: "#FFFFFF",
+		borderRadius: 16,
+		padding: 18,
+	},
+	modalTitle: {
+		fontSize: 16,
+		fontFamily: Fonts.semiBold,
+		color: "#0F172A",
+	},
+	modalLabel: {
+		fontSize: 12,
+		fontFamily: Fonts.regular,
+		color: "#475569",
+		marginTop: 8,
+		marginBottom: 10,
+	},
+	modalInput: {
+		minHeight: 120,
+		borderWidth: 1,
+		borderColor: "#CBD5E1",
+		borderRadius: 12,
+		padding: 12,
+		fontSize: 12,
+		fontFamily: Fonts.regular,
+		color: "#0F172A",
+		backgroundColor: "#F8FAFC",
+	},
+	modalActions: {
+		flexDirection: "row",
+		justifyContent: "flex-end",
+		gap: 10,
+		marginTop: 14,
+	},
+	modalSecondaryButton: {
+		paddingVertical: 10,
+		paddingHorizontal: 14,
+		borderRadius: 10,
+		backgroundColor: "#F1F5F9",
+	},
+	modalSecondaryButtonText: {
+		fontSize: 12,
+		fontFamily: Fonts.medium,
+		color: "#334155",
+	},
+	modalPrimaryButton: {
+		paddingVertical: 10,
+		paddingHorizontal: 14,
+		borderRadius: 10,
+		backgroundColor: "#742BDE",
+	},
+	modalPrimaryButtonText: {
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
+		color: "#FFFFFF",
 	},
 	popoverContent: {
 		borderRadius: 20,

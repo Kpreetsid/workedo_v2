@@ -5,6 +5,9 @@ import { WorkOrder } from "@/src/types/workOrder";
 import moment from "moment";
 import { router } from "expo-router";
 import { Image } from "expo-image";
+import { WorkOrderReadinessModel } from "@/src/utils/workOrderReadiness";
+import { evaluateWorkOrderReadiness } from "@/src/utils/workOrderReadiness";
+import { formatWorkOrderStatusLabel, getWorkOrderStatusTone } from "@/src/utils/workOrderStatus";
 
 const getPriorityColor = (priority: WorkOrder["priority"]) => {
 	switch (priority) {
@@ -19,14 +22,46 @@ const getPriorityColor = (priority: WorkOrder["priority"]) => {
 	}
 };
 
+const getReadinessTone = (state: WorkOrderReadinessModel["state"]) => {
+	switch (state) {
+		case "ready":
+			return { bg: "#ECFDF5", text: "#047857", border: "#A7F3D0" };
+		case "attention":
+			return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" };
+		default:
+			return { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" };
+	}
+};
+
 const WorkOrderCard = ({
 	item,
 	isSelected,
+	variant = "default",
+	readiness,
+	plannerMeta,
 	// onPress
-}: { item: WorkOrder; isSelected?: boolean; }) => {
+}: {
+	item: WorkOrder;
+	isSelected?: boolean;
+	variant?: "default" | "planner";
+	readiness?: WorkOrderReadinessModel;
+	plannerMeta?: {
+		bucketLabel?: string;
+		blockers?: string[];
+		overdueDays?: number;
+		taskSummary?: string;
+		assigneeCount?: number;
+		hierarchyBadge?: { label: string; tone: "parent" | "child" } | null;
+		hierarchySummary?: string;
+	};
+}) => {
 	// onPress: () => void;
 
 	const priorityStyle = getPriorityColor(item.priority);
+	const readinessModel = readiness || evaluateWorkOrderReadiness(item);
+	const readinessTone = getReadinessTone(readinessModel.state);
+	const blockerPreview = (plannerMeta?.blockers || readinessModel.blockers || []).slice(0, 2);
+	const statusTone = getWorkOrderStatusTone(item?.status);
 
 	const onCardPress = () => {
 		// onPress();
@@ -48,15 +83,53 @@ const WorkOrderCard = ({
 				<Text style={styles.id}>#{item?.order_no}</Text>
 				<Text style={styles.title} numberOfLines={2}>{item?.title}</Text>
 				<Text style={styles.subText}>Created On : {moment(item?.createdAt).format("DD MMM, YYYY")}</Text>
+				<View style={styles.metaRow}>
+					<View style={[styles.readinessPill, { backgroundColor: readinessTone.bg, borderColor: readinessTone.border }]}>
+						<Text style={[styles.readinessText, { color: readinessTone.text }]}>
+							{readinessModel.state === "ready" ? "Ready" : readinessModel.state === "attention" ? "Needs Review" : "Blocked"}
+						</Text>
+					</View>
+					{plannerMeta?.bucketLabel ? (
+						<View style={styles.metaChip}>
+							<Text style={styles.metaChipText}>{plannerMeta.bucketLabel}</Text>
+						</View>
+					) : null}
+					{plannerMeta?.hierarchyBadge ? (
+						<View style={[styles.metaChip, plannerMeta.hierarchyBadge.tone === "parent" ? styles.metaChipParent : styles.metaChipChild]}>
+							<Text style={[styles.metaChipText, plannerMeta.hierarchyBadge.tone === "parent" ? styles.metaChipParentText : styles.metaChipChildText]}>
+								{plannerMeta.hierarchyBadge.label}
+							</Text>
+						</View>
+					) : null}
+				</View>
+				<Text style={styles.readinessSummary} numberOfLines={2}>{readinessModel.summary}</Text>
+				{variant === "planner" && plannerMeta?.hierarchySummary ? (
+					<Text style={styles.plannerMetaText}>{plannerMeta.hierarchySummary}</Text>
+				) : null}
+				{variant === "planner" ? (
+					<Text style={styles.plannerMetaText}>
+						{plannerMeta?.assigneeCount || 0} assignee{(plannerMeta?.assigneeCount || 0) === 1 ? "" : "s"} • {plannerMeta?.taskSummary || "No checklist"}
+						{plannerMeta?.overdueDays ? ` • ${plannerMeta.overdueDays}d overdue` : ""}
+					</Text>
+				) : null}
+				{blockerPreview.length > 0 ? (
+					<View style={styles.blockerWrap}>
+						{blockerPreview.map((blocker) => (
+							<View key={blocker} style={styles.blockerChip}>
+								<Text style={styles.blockerChipText} numberOfLines={1}>{blocker}</Text>
+							</View>
+						))}
+					</View>
+				) : null}
 			</View>
 
 			<View style={styles.rightSection}>
 				{/* <WorkOrderCardLogo /> */}
-				<Image source={require("../../assets/images/work_order.svg")} style={{ width: 40, height: 40 }} />
+					<Image source={require("../../assets/images/work_order.svg")} style={{ width: 40, height: 40 }} />
 
-				<View style={styles.badgesRow}>
-					<View style={[styles.statusBadge, { backgroundColor: item?.status === "Completed" ? "#00B227" : "#FFFFFF" }]}>
-						<Text style={[styles.statusText, { color: item?.status === "Completed" ? "#fff" : "#343C6A" }]}>{item?.status}</Text>
+					<View style={styles.badgesRow}>
+					<View style={[styles.statusBadge, { backgroundColor: statusTone.bg, borderColor: statusTone.border }]}>
+						<Text style={[styles.statusText, { color: statusTone.text }]}>{formatWorkOrderStatusLabel(item?.status)}</Text>
 					</View>
 
 					<View style={[styles.priorityBadge, { backgroundColor: priorityStyle.bg }]}>
@@ -113,6 +186,76 @@ const styles = StyleSheet.create({
 		color: "#555",
 		marginBottom: 2,
 		fontFamily: Fonts.light
+	},
+	metaRow: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: 6,
+		marginTop: 4,
+	},
+	readinessPill: {
+		paddingVertical: 3,
+		paddingHorizontal: 8,
+		borderRadius: 999,
+		borderWidth: 0.8,
+	},
+	readinessText: {
+		fontSize: 9,
+		fontFamily: Fonts.semiBold,
+	},
+	metaChip: {
+		paddingVertical: 3,
+		paddingHorizontal: 8,
+		borderRadius: 999,
+		backgroundColor: "#F1F5F9",
+	},
+	metaChipText: {
+		fontSize: 9,
+		fontFamily: Fonts.medium,
+		color: "#475569",
+	},
+	metaChipParent: {
+		backgroundColor: "#EEF2FF",
+	},
+	metaChipChild: {
+		backgroundColor: "#FFF7ED",
+	},
+	metaChipParentText: {
+		color: "#4338CA",
+	},
+	metaChipChildText: {
+		color: "#C2410C",
+	},
+	readinessSummary: {
+		fontSize: 9,
+		color: "#475569",
+		marginTop: 5,
+		fontFamily: Fonts.regular,
+		lineHeight: 13,
+	},
+	plannerMetaText: {
+		fontSize: 9,
+		color: "#64748B",
+		marginTop: 4,
+		fontFamily: Fonts.medium,
+	},
+	blockerWrap: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: 6,
+		marginTop: 6,
+	},
+	blockerChip: {
+		maxWidth: "100%",
+		paddingVertical: 3,
+		paddingHorizontal: 8,
+		borderRadius: 999,
+		backgroundColor: "#FFF1F2",
+	},
+	blockerChipText: {
+		fontSize: 9,
+		fontFamily: Fonts.medium,
+		color: "#BE123C",
 	},
 	leftSection: {
 		flex: 6
