@@ -3,7 +3,7 @@ const { getDefaultConfig } = require("expo/metro-config");
 
 const projectRoot = __dirname;
 const projectNodeModules = path.resolve(projectRoot, "node_modules");
-const keyboardControllerRoot = "D:/rnkc";
+const keyboardControllerRoot = path.dirname(require.resolve("react-native-keyboard-controller/package.json")).replace(/\\/g, '/');
 
 const config = getDefaultConfig(projectRoot);
 config.watchFolders = Array.from(new Set([...(config.watchFolders || []), keyboardControllerRoot]));

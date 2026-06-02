@@ -89,11 +89,29 @@ def patchKeyboardControllerAutolinking = {
 
     def normalizedProjectRoot = projectRoot.replace('\\', '/')
     def originalPath = "${normalizedProjectRoot}/node_modules/react-native-keyboard-controller/android/src/main/jni/"
-    def replacementPath = "D:/rnkc/android/src/main/jni/"
-    def current = autolinkCmake.getText('UTF-8')
-    if (current.contains(originalPath)) {
-        autolinkCmake.write(current.replace(originalPath, replacementPath), 'UTF-8')
-        println("Patched keyboard-controller autolinking path for Windows path limits.")
+    
+    if (org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_WINDOWS)) {
+        def driveLetter = rootDir.getAbsolutePath().substring(0, 3).replace('\\', '/')
+        def shortPathName = "${driveLetter}rnkc_tmp"
+        
+        if (!file(shortPathName).exists()) {
+            try {
+                def sourcePath = "${normalizedProjectRoot}/node_modules/react-native-keyboard-controller".replace('/', '\\')
+                def targetPath = shortPathName.replace('/', '\\')
+                exec {
+                    commandLine 'cmd', '/c', "mklink /J \"${targetPath}\" \"${sourcePath}\""
+                }
+            } catch (Exception e) {
+                println "Warning: Could not create junction for keyboard-controller: ${e.message}"
+            }
+        }
+        
+        def replacementPath = "${shortPathName}/android/src/main/jni/"
+        def current = autolinkCmake.getText('UTF-8')
+        if (current.contains(originalPath)) {
+            autolinkCmake.write(current.replace(originalPath, replacementPath), 'UTF-8')
+            println("Patched keyboard-controller autolinking path dynamically for Windows path limits.")
+        }
     }
 }
 
@@ -117,7 +135,10 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     externalNativeBuild {
-        experimentalProperties["ninja.buildStagingDirectory"] = "D:/_cxx/workedo"
+        if (org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_WINDOWS)) {
+            def driveLetter = rootDir.getAbsolutePath().substring(0, 3).replace('\\', '/')
+            experimentalProperties["ninja.buildStagingDirectory"] = "${driveLetter}_cxx/workedo".toString()
+        }
     }
 
     namespace 'com.app.workedo'
