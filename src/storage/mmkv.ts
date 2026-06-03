@@ -1,3 +1,7 @@
-import { MMKV } from 'react-native-mmkv';
+import { createMMKV } from 'react-native-mmkv';
 
-export const storage = new MMKV();
+const mmkv = createMMKV();
+
+export const storage = Object.assign(mmkv, {
+	delete: (key: string) => mmkv.remove(key),
+});
