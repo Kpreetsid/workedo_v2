@@ -62,9 +62,7 @@ export default function OTPVerification() {
 			let obj = {
 				"email": payload?.email
 			}
-			console.log(obj);
 			const userRes = await sendPasswordResetEmail(obj);
-			console.log('userRes in forgot password = ', userRes);
 			if (userRes.status) {
 				ToastAndroid.show(userRes?.message, ToastAndroid.SHORT);
 
@@ -74,7 +72,6 @@ export default function OTPVerification() {
 			}
 			setLoading(false)
 		} catch (e: any) {
-			console.log('e in forgot password = ', e);
 			ToastAndroid.show(e?.message, ToastAndroid.SHORT);
 			setLoading(false)
 		}

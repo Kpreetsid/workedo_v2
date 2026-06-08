@@ -1,7 +1,7 @@
 import { ToastAndroid } from 'react-native';
 import { sendRequest } from '../api/api.service';
 import { endpoints } from '../api/endpoints';
-import { storage } from '../storage/mmkv';
+import { deleteAuthToken, getAuthToken, setAuthToken } from '../storage/secureAuth';
 
 const BASE_URL = 'https://new.presageinsights.ai/cmms_express/api/upload/user_profile_img';
 
@@ -13,21 +13,21 @@ export const loginService = async (username: string, password: string) => {
 	});
 
 	if (response?.token) {
-		storage.set('token', response.token);
+		await setAuthToken(response.token);
 	}
 
 	return response;
 };
 
-export const userDetails = async (userId: string, token: string) => {
-	const url = `${endpoints.auth.details}/${userId}?access_token=${token}`;
+export const userDetails = async (userId: string, _token?: string) => {
+	const url = `${endpoints.auth.details}/${userId}`;
 	const response = await sendRequest('GET', url);
 	return response;
 }
 
 export const logoutService = async () => {
 	await sendRequest('POST', '/logout');
-	storage.delete('token');
+	await deleteAuthToken();
 };
 
 export const registerService = async (payload: Record<string, any>) => {
@@ -59,23 +59,17 @@ export const uploadProfileImage = async (payload: Record<string, any>) => {
 };
 
 export const updateUser = async (user_profile_img: string, id: string) => {
-	console.log('fiaonf = ', `${endpoints.user.updateUser}/${id}`, { user_profile_img });
 	return await sendRequest('PUT', `${endpoints.user.updateUser}/${id}`, { user_profile_img: user_profile_img });
 };
 
 export const updateUserInfo = async (payload: any, id: string) => {
-	console.log('payload to update = ', payload);
 	return await sendRequest('PUT', `${endpoints.user.updateUser}/${id}`, payload);
 }
 
 export const uploadImage = async (asset: any, user: any) => {
-	console.log('Uploading image...', asset);
 	try {
 		// Step 1: Show loader
-		console.log('Uploading image...');
-		const token = storage.getString('token');
-		console.log('Token: ', token);
-		console.log('user: ', user);
+		const token = await getAuthToken();
 
 		// Step 2: Generate random name
 		const randomName = Math.floor(Math.random() * 1000000);
@@ -89,9 +83,6 @@ export const uploadImage = async (asset: any, user: any) => {
 			type: 'image/jpeg',
 		} as any);
 
-		console.log('Form data: ', formData);
-		console.log('BASEURL data: ', BASE_URL);
-
 		// Step 4: Upload with axios or fetch
 		const response = await fetch(BASE_URL, {
 			method: 'POST',
@@ -104,7 +95,6 @@ export const uploadImage = async (asset: any, user: any) => {
 		});
 
 		const result = await response.json();
-		console.log('Upload success:', result);
 		if (result?.status) {
 			ToastAndroid.show('Image uploaded successfully!', ToastAndroid.SHORT);
 			return {

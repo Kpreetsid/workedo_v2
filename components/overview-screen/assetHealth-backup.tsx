@@ -6,6 +6,7 @@ import { Calender, DropDownIcon } from "@/constants/IconProvider";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
 import { assetHealthStatus } from "@/src/services/asset.service";
 import WebView from "react-native-webview";
+import { LOCAL_CHART_WEBVIEW_PROPS } from "@/src/utils/localChartWebView";
 
 // Define series colors
 const COLORS: any = {
@@ -303,7 +304,7 @@ export default function AssetHealth() {
 						<WebView
 							ref={webViewRef}
 							source={require("../../assets/charts/AssetHealthBar.html")}
-							originWhitelist={["*"]}
+							{...LOCAL_CHART_WEBVIEW_PROPS}
 							javaScriptEnabled
 							domStorageEnabled
 							scrollEnabled={false}

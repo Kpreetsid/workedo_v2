@@ -11,12 +11,13 @@ import { usePreventiveStore } from "@/src/store/usePreventiveStore";
 import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
 import { useCreateAssetStore } from "@/src/store/useCreateAsset";
 import { useCreateLocationStore } from "@/src/store/useCreateLocationStore";
+import { getRouteParamString, parseJsonRouteParam } from "@/src/utils/routeParams";
 
 const width = Dimensions.get("window").width;
 export default function SelectUser() {
 	const params: any = useLocalSearchParams();
-	const comingFrom = params?.comingFrom;
-	const usersData = params?.usersData && JSON.parse(params?.usersData);
+	const comingFrom = getRouteParamString(params?.comingFrom);
+	const usersData = parseJsonRouteParam<any[]>(params?.usersData, []);
 
 	console.log('users data = ', usersData);
 

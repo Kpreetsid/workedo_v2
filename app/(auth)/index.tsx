@@ -11,6 +11,7 @@ import Field from "@/components/auth-screens/InputField";
 import { loginService, userDetails } from "@/src/services/auth.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { storage } from "@/src/storage/mmkv";
+import { migrateLegacyAuthToken, setAuthToken } from "@/src/storage/secureAuth";
 import { useEffect } from "react";
 import { useRouter } from "expo-router";
 
@@ -38,19 +39,17 @@ export default function Login() {
 	const setUser = useAuthStore((state) => state.setUser);
 
 	useEffect(() => {
+		migrateLegacyAuthToken();
 		const user = storage.getString('user');
 		if (user) {
-			console.log('user in login = ', JSON.parse(user));
 			setUser(JSON.parse(user));
 			router.replace("/overview");
 		}
 	}, []);
 
 	const onSubmit = async (values: LoginFormValues) => {
-		console.log('login values = ', values);
 		try {
 			const res = await loginService(values.username, values.password);
-			console.log('res in login = ', res);
 
 			if (res?.error || res?.error?.message === "Invalid credentials") {
 				const errorMsg =
@@ -61,7 +60,7 @@ export default function Login() {
 			}
 
 			if (res?.status) {
-				storage.set('token', res?.data?.token);
+				await setAuthToken(res?.data?.token);
 				storage.set('user', JSON.stringify(res?.data?.userDetails));
 				setUser(res?.data?.userDetails);
 				ToastAndroid.show("Login successful!", ToastAndroid.SHORT);

@@ -1,12 +1,15 @@
+import "@/src/utils/productionConsole";
 import { SplashScreen, Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import { useEffect } from "react";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useAuthGuard } from "@/src/hooks/useAuthGuard";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+	const authReady = useAuthGuard();
 	const [loaded, error] = useFonts({
 		'Sora-Bold': require('../assets/fonts/Sora-Bold.ttf'),
 		'Sora-ExtraBold': require('../assets/fonts/Sora-ExtraBold.ttf'),
@@ -19,10 +22,10 @@ export default function RootLayout() {
 	})
 
 	useEffect(() => {
-		if (loaded || error) SplashScreen.hideAsync();
-	}, [loaded, error]);
+		if ((loaded || error) && authReady) SplashScreen.hideAsync();
+	}, [loaded, error, authReady]);
 
-	if (!loaded && !error) return null;
+	if ((!loaded && !error) || !authReady) return null;
 
 	return (
 		<GestureHandlerRootView style={{ flex: 1 }}>

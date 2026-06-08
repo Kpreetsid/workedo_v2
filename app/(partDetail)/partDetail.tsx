@@ -19,6 +19,7 @@ import {
   PART_HISTORY_FILTERS,
   PartHistoryFilterId,
 } from "@/src/utils/partInventory";
+import { parseJsonRouteParam } from "@/src/utils/routeParams";
 
 const STOCK_STATE_TONES = {
   out: { backgroundColor: "#FFF1F2", borderColor: "#FDA4AF", textColor: "#BE123C" },
@@ -29,7 +30,7 @@ const STOCK_STATE_TONES = {
 export default function partDetail() {
   const router = useRouter();
   const params: any = useLocalSearchParams();
-  const data: Part = JSON.parse(params?.data || "{}");
+  const data: Part = parseJsonRouteParam<Part>(params?.data, {} as Part) as Part;
 
   const [part, setPart] = useState<Part>(data);
   const [history, setHistory] = useState<PartHistoryRecord[]>([]);

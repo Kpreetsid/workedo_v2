@@ -13,6 +13,7 @@ import { Image } from 'expo-image'
 import { endpoints } from '@/src/api/endpoints'
 import { useCreateAssetStore } from '@/src/store/useCreateAsset'
 import { Feather } from '@expo/vector-icons'
+import { getRouteParamString, parseJsonRouteParam } from '@/src/utils/routeParams'
 
 interface createLocationParams {
 	location_data: Location;
@@ -26,9 +27,9 @@ const createLocation = () => {
 
 	// typed, parsed object
 	const data: createLocationParams = {
-		location_data: location_data ? JSON.parse(location_data as string) : null,
-		isEdit: isEdit,
-		mode: mode as string | undefined
+		location_data: parseJsonRouteParam<Location>(location_data),
+		isEdit: getRouteParamString(isEdit),
+		mode: getRouteParamString(mode)
 	};
 
 	console.log("Parsed Data:", data);

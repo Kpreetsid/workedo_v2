@@ -23,6 +23,7 @@ import AssignSectionNew from "@/components/create-work-order/AssignSectionNew";
 import { Image } from "expo-image";
 import { endpoints } from "@/src/api/endpoints";
 import { WorkRequest } from "@/src/types/workRequest";
+import { getRouteParamString, parseJsonRouteParam } from "@/src/utils/routeParams";
 
 export default function NewWorkRequest() {
 	const router = useRouter();
@@ -57,19 +58,16 @@ export default function NewWorkRequest() {
 			setData({ passedData: null, isEdit: undefined });
 			return;
 		}
-
-		try {
-			const parsed = JSON.parse(passedData) as WorkRequest;
-			console.log('parsed now = ', parsed)
-			setData({
-				passedData: parsed,
-				isEdit,
-			});
-			console.log("Parsed Data:", { passedData: parsed, isEdit });
-		} catch (e) {
-			console.error("❌ newWorkRequest: failed to parse passedData", e);
+		const parsed = parseJsonRouteParam<WorkRequest>(passedData);
+		if (!parsed) {
 			setData({ passedData: null, isEdit: undefined });
+			return;
 		}
+
+		setData({
+			passedData: parsed,
+			isEdit: getRouteParamString(isEdit),
+		});
 	}, [params?.passedData, params?.isEdit, initialized]);
 
 	useEffect(() => {

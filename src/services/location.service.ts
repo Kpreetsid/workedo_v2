@@ -1,7 +1,7 @@
 import { ToastAndroid } from 'react-native';
 import { sendRequest, sendRequestDemo } from '../api/api.service';
 import { endpoints } from '../api/endpoints';
-import { storage } from '../storage/mmkv';
+import { getAuthToken } from '../storage/secureAuth';
 
 export const locationTree = async () => {
 	const url = `${endpoints.location.tree}`;
@@ -93,12 +93,9 @@ export const deleteLocation = async (locationId: string) => {
 }
 
 export const imageUploadFunc = async (image: any, user: any, comingFrom: string) => {
-	// console.log('Uploading image...', image);
 	try {
 		// Step 1: Show loader
-		const token = storage.getString('token');
-		// console.log('Token: ', token);
-		// console.log('user: ', user);
+		const token = await getAuthToken();
 
 		// Step 2: Generate random name
 		const randomName = Math.floor(Math.random() * 1000000);
@@ -112,10 +109,6 @@ export const imageUploadFunc = async (image: any, user: any, comingFrom: string)
 			type: 'image/jpeg',
 		} as any);
 
-		// console.log('Form data: ', formData);
-		// console.log('BASEURL data: ', endpoints.baseURL + 'api/' + endpoints.location.uploadImage);
-
-		console.log('coming from is = ', comingFrom)
 		let url = '';
 		if (comingFrom === 'createLocation') {
 			url = endpoints.location.uploadImage;
@@ -137,7 +130,6 @@ export const imageUploadFunc = async (image: any, user: any, comingFrom: string)
 		});
 
 		const result = await response.json();
-		console.log('Upload success:', result);
 		if (result?.status) {
 			ToastAndroid.show('Image uploaded successfully!', ToastAndroid.SHORT);
 			if (comingFrom === "newWorkRequest") {

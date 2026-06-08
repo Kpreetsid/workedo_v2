@@ -17,6 +17,7 @@ import { mapUserToLocation } from '@/src/services/location.service';
 import { Image } from 'expo-image';
 import { endpoints } from '@/src/api/endpoints';
 import { Feather } from '@expo/vector-icons';
+import { getRouteParamString, parseJsonRouteParam } from '@/src/utils/routeParams';
 
 interface editAssetParams {
   asset_data: Asset | null;
@@ -50,24 +51,16 @@ const editAsset = () => {
       setData(null);
       return;
     }
-
-    try {
-      const parsed = JSON.parse(asset_data) as Asset | null;
-      if (!parsed || typeof parsed !== "object") {
-        console.warn("❌ editAsset: invalid asset_data payload");
-        setData(null);
-        return;
-      }
-
-      setData({
-        asset_data: parsed,
-        mode,
-      });
-      console.log("Parsed Data:", { asset_data: parsed, mode });
-    } catch (e) {
-      console.error("❌ editAsset: failed to parse asset_data", e);
+    const parsed = parseJsonRouteParam<Asset>(asset_data);
+    if (!parsed || typeof parsed !== "object") {
       setData(null);
+      return;
     }
+
+    setData({
+      asset_data: parsed,
+      mode: getRouteParamString(mode),
+    });
   }, [params]);
 
   const { resetForm, setCreateAssetValue } = useCreateAssetStore();

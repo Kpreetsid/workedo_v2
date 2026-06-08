@@ -4,6 +4,10 @@ apply plugin: "com.facebook.react"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
+def getReleaseSigningValue = { name ->
+    return findProperty(name) ?: System.getenv(name)
+}
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -11,7 +15,7 @@ def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 react {
     entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", projectRoot, "android", "absolute"].execute(null, rootDir).text.trim())
     reactNativeDir = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
-    hermesCommand = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/sdks/hermesc/%OS-BIN%/hermesc"
+    hermesCommand = new File(["node", "--print", "require.resolve('hermes-compiler/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/hermesc/%OS-BIN%/hermesc"
     codegenDir = new File(["node", "--print", "require.resolve('@react-native/codegen/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
 
     enableBundleCompression = (findProperty('android.enableBundleCompression') ?: false).toBoolean()
@@ -115,15 +119,96 @@ def patchKeyboardControllerAutolinking = {
     }
 }
 
+def patchCxxSharedRuntimeLinks = {
+    def patchFile = { path, replacements ->
+        def cmakeFile = file(path)
+        if (!cmakeFile.exists()) {
+            return
+        }
+
+        def current = cmakeFile.getText('UTF-8')
+        def updated = current
+        replacements.each { replacement ->
+            updated = updated.replace(replacement[0], replacement[1])
+        }
+
+        if (updated != current) {
+            cmakeFile.write(updated, 'UTF-8')
+            println("Patched C++ shared runtime link in ${cmakeFile}")
+        }
+    }
+
+    def nodeModules = "${projectRoot}/node_modules"
+    def keyboardControllerCopy = org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_WINDOWS)
+        ? "${rootDir.getAbsolutePath().substring(0, 3).replace('\\', '/')}rnkc_tmp"
+        : null
+
+    patchFile("${nodeModules}/react-native-worklets/android/CMakeLists.txt", [
+        ['target_link_libraries(worklets android log ReactAndroid::reactnative', 'target_link_libraries(worklets android log c++_shared ReactAndroid::reactnative']
+    ])
+    patchFile("${nodeModules}/react-native-reanimated/android/CMakeLists.txt", [
+        ['target_link_libraries(\n  reanimated\n  log\n  ReactAndroid::reactnative', 'target_link_libraries(\n  reanimated\n  log\n  c++_shared\n  ReactAndroid::reactnative']
+    ])
+    patchFile("${nodeModules}/expo-modules-core/android/cmake/common.cmake", [
+        ['target_link_libraries(\n  EXPO_COMMON\n  INTERFACE\n  ReactAndroid::jsi', 'target_link_libraries(\n  EXPO_COMMON\n  INTERFACE\n  c++_shared\n  ReactAndroid::jsi']
+    ])
+    patchFile("${nodeModules}/react-native-gesture-handler/android/src/main/jni/CMakeLists.txt", [
+        ['target_link_libraries(\n  ${PACKAGE_NAME}\n  ReactAndroid::reactnative', 'target_link_libraries(\n  ${PACKAGE_NAME}\n  c++_shared\n  ReactAndroid::reactnative']
+    ])
+    patchFile("${nodeModules}/react-native-keyboard-controller/android/src/main/jni/CMakeLists.txt", [
+        ['target_link_libraries(\n    ${LIB_TARGET_NAME}\n    ReactAndroid::reactnative\n    ReactAndroid::jsi', 'target_link_libraries(\n    ${LIB_TARGET_NAME}\n    ReactAndroid::reactnative\n    c++_shared\n    ReactAndroid::jsi']
+    ])
+    patchFile("${nodeModules}/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt", [
+        ['target_link_libraries(\n          ${LIB_TARGET_NAME}\n          fbjni', 'target_link_libraries(\n          ${LIB_TARGET_NAME}\n          c++_shared\n          fbjni']
+    ])
+    patchFile("${nodeModules}/react-native-svg/android/src/main/jni/CMakeLists.txt", [
+        ['target_link_libraries(\n    react_codegen_rnsvg\n    ReactAndroid::reactnative\n    ReactAndroid::jsi', 'target_link_libraries(\n    react_codegen_rnsvg\n    ReactAndroid::reactnative\n    c++_shared\n    ReactAndroid::jsi'],
+        ['target_link_libraries(\n  react_codegen_rnsvg\n  fbjni', 'target_link_libraries(\n  react_codegen_rnsvg\n  c++_shared\n  fbjni']
+    ])
+
+    if (keyboardControllerCopy) {
+        patchFile("${keyboardControllerCopy}/android/src/main/jni/CMakeLists.txt", [
+            ['target_link_libraries(\n    ${LIB_TARGET_NAME}\n    ReactAndroid::reactnative\n    ReactAndroid::jsi', 'target_link_libraries(\n    ${LIB_TARGET_NAME}\n    ReactAndroid::reactnative\n    c++_shared\n    ReactAndroid::jsi']
+        ])
+    }
+
+    [
+        "${nodeModules}/react-native-gesture-handler/android/build/generated/source/codegen/jni/CMakeLists.txt": 'react_codegen_rngesturehandler_codegen',
+        "${nodeModules}/react-native-image-picker/android/build/generated/source/codegen/jni/CMakeLists.txt": 'react_codegen_RNImagePickerSpec',
+        "${nodeModules}/react-native-keyboard-controller/android/build/generated/source/codegen/jni/CMakeLists.txt": 'react_codegen_RNKC',
+        "${nodeModules}/react-native-mmkv/android/build/generated/source/codegen/jni/CMakeLists.txt": 'react_codegen_ReactNativeMmkvSpec',
+        "${nodeModules}/react-native-nitro-modules/android/build/generated/source/codegen/jni/CMakeLists.txt": 'react_codegen_NitroModulesSpec',
+        "${nodeModules}/react-native-pager-view/android/build/generated/source/codegen/jni/CMakeLists.txt": 'react_codegen_pagerview',
+        "${nodeModules}/react-native-reanimated/android/build/generated/source/codegen/jni/CMakeLists.txt": 'react_codegen_rnreanimated',
+        "${nodeModules}/react-native-safe-area-context/android/build/generated/source/codegen/jni/CMakeLists.txt": 'react_codegen_safeareacontext',
+        "${nodeModules}/react-native-screens/android/build/generated/source/codegen/jni/CMakeLists.txt": 'react_codegen_rnscreens',
+        "${nodeModules}/react-native-svg/android/build/generated/source/codegen/jni/CMakeLists.txt": 'react_codegen_rnsvg',
+        "${nodeModules}/react-native-webview/android/build/generated/source/codegen/jni/CMakeLists.txt": 'react_codegen_RNCWebViewSpec',
+        "${nodeModules}/react-native-worklets/android/build/generated/source/codegen/jni/CMakeLists.txt": 'react_codegen_rnworklets'
+    ].each { path, target ->
+        patchFile(path, [
+            ["target_link_libraries(\n  ${target}\n  fbjni", "target_link_libraries(\n  ${target}\n  c++_shared\n  fbjni"]
+        ])
+    }
+
+    if (keyboardControllerCopy) {
+        patchFile("${keyboardControllerCopy}/android/build/generated/source/codegen/jni/CMakeLists.txt", [
+            ['target_link_libraries(\n  react_codegen_RNKC\n  fbjni', 'target_link_libraries(\n  react_codegen_RNKC\n  c++_shared\n  fbjni']
+        ])
+    }
+}
+
 afterEvaluate {
     tasks.matching { it.name == 'generateAutolinkingNewArchitectureFiles' }.configureEach {
         doLast {
             patchKeyboardControllerAutolinking()
+            patchCxxSharedRuntimeLinks()
         }
     }
     tasks.matching { it.name.startsWith('configureCMake') || it.name.startsWith('buildCMake') }.configureEach {
         doFirst {
             patchKeyboardControllerAutolinking()
+            patchCxxSharedRuntimeLinks()
         }
     }
 }
@@ -159,13 +244,14 @@ android {
             keyPassword 'android'
         }
         release {
-            storeFile file('naasta.keystore')
-            storePassword 'Waleed123!'
-            keyAlias 'alias_name'
-            keyPassword 'Waleed123!'
-            // storePassword 'Qwerty33#'
-            // keyAlias 'presage'
-            // keyPassword 'Qwerty33#'
+            def releaseStoreFile = getReleaseSigningValue('WORKEDO_RELEASE_STORE_FILE')
+            if (releaseStoreFile) {
+                def releaseStoreFilePath = new File(releaseStoreFile)
+                storeFile releaseStoreFilePath.isAbsolute() ? releaseStoreFilePath : new File(projectRoot, releaseStoreFile)
+            }
+            storePassword getReleaseSigningValue('WORKEDO_RELEASE_STORE_PASSWORD') ?: ''
+            keyAlias getReleaseSigningValue('WORKEDO_RELEASE_KEY_ALIAS') ?: ''
+            keyPassword getReleaseSigningValue('WORKEDO_RELEASE_KEY_PASSWORD') ?: ''
         }
     }
     buildTypes {

@@ -9,6 +9,7 @@ import { G } from "react-native-svg";
 // import { LineChart, lineDataItem } from "react-native-gifted-charts";
 import { WebView } from "react-native-webview";
 import { collectSelectedAssetIdsWithChildren, type SelectableTreeNode } from "@/src/utils/assetSelection";
+import { LOCAL_CHART_WEBVIEW_PROPS } from "@/src/utils/localChartWebView";
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -237,7 +238,7 @@ export default function PlannedVsUnplanned() {
 						ref={webViewRef}
 						// source={require("../../assets/charts/PlannedUnplannedChart.html")}
 						source={{ uri: chartUrl }}
-						originWhitelist={["*"]}
+						{...LOCAL_CHART_WEBVIEW_PROPS}
 						javaScriptEnabled
 						domStorageEnabled
 						scrollEnabled={false}

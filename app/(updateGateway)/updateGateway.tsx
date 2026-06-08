@@ -11,12 +11,13 @@ import { Location } from "@/src/types/location";
 import SelectLocationModal from "@/components/global/SelectLocationModal";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { getLocationById, saveGateway, sensorValidation } from "@/src/services/gateway.service";
+import { getRouteParamString, parseJsonRouteParam } from "@/src/utils/routeParams";
 
 export default function UpdateGateways() {
 	console.log('add gateway')
 	const router = useRouter();
 	const params: any = useLocalSearchParams();
-	const type = params?.type;
+	const type = getRouteParamString(params?.type);
 
 	const [isModalVisible, setModalVisible] = useState(false);
 	const [locations, setLocations] = useState<Location[]>([]);
@@ -34,8 +35,8 @@ export default function UpdateGateways() {
 
 	useEffect(() => {
 		if (params?.data) {
-			const data = JSON.parse(params?.data) || "";
-			console.log(data)
+			const data = parseJsonRouteParam<Record<string, any>>(params?.data);
+			if (!data) return;
 			setmacID(data?.gateway_mac_id)
 
 			fetchLocationById(data?.location_id)

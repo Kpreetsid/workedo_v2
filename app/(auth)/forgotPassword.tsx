@@ -29,23 +29,18 @@ export default function ForgotPassword() {
 	});
 
 	const onSubmit = async (data: ForgotPasswordFormValues) => {
-		console.log('on submit', data);
-
 		try {
 			let obj = {
 				// "email": "test@gmail.com"
 				"email": data.email
 			}
-			console.log(obj);
 			const userRes = await sendPasswordResetEmail(obj);
-			console.log('userRes in forgot password = ', userRes);
 			if (userRes.status) {
 				ToastAndroid.show(userRes?.message, ToastAndroid.SHORT);
 				setAuthFlow("resetPassword", obj);
 				router.push("/otpVerification");
 			}
 		} catch (e: any) {
-			console.log('e in forgot password = ', e);
 			ToastAndroid.show(e?.message, ToastAndroid.SHORT);
 		}
 	}

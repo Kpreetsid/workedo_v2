@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Location } from "@/src/types/location";
 import AssetUserInfo from "@/components/asset-detail/AssetUserInfo";
 import AssignedUsersModal from "@/components/work-order-detail/AssignUserModal";
+import { getRouteParamString, parseJsonRouteParam } from "@/src/utils/routeParams";
 
 const blurhash =
 	'|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
@@ -25,16 +26,11 @@ export default function LocationDetail() {
 	const params = useLocalSearchParams<{ id?: string; data?: string }>();
 
 	const locationId = (() => {
-		if (params?.id) return params.id;
+		const id = getRouteParamString(params?.id);
+		if (id) return id;
 		// fallback for older navigation that sent the complete object
-		if (typeof params?.data === "string") {
-			try {
-				const parsed = JSON.parse(params.data);
-				return parsed?.id;
-			} catch (e) {
-				console.log("invalid location params data =", e);
-			}
-		}
+		const parsed = parseJsonRouteParam<{ id?: string }>(params?.data);
+		if (parsed?.id) return parsed.id;
 		return undefined;
 	})();
 	console.log("locationId =", locationId);

@@ -5,6 +5,7 @@ import Header from '@/components/global/Header';
 import NewWorkOrder from '@/components/create-work-order/newWorkOrder';
 import FormsScreen from '@/components/create-work-order/FormsScreen';
 import { useLocalSearchParams } from 'expo-router';
+import { parseJsonRouteParam } from '@/src/utils/routeParams';
 
 const GeneralInfo = ({ data }: any) => (
 	<View style={styles.scene}>
@@ -21,7 +22,7 @@ const Forms = ({ data }: any) => (
 const createWorkOrder = () => {
 	const layout = Dimensions.get("window");
 	const params: any = useLocalSearchParams();
-	const parsedData = params?.data ? JSON.parse(params.data) : null;
+	const parsedData = parseJsonRouteParam(params?.data);
 	const [index, setIndex] = useState(0);
 
 	const [routes] = useState([

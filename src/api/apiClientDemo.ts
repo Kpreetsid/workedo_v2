@@ -1,18 +1,18 @@
 import axios from 'axios';
-import { storage } from '../storage/mmkv';
+import { appConfig } from '@/config/app.config';
+import { getAuthToken } from '../storage/secureAuth';
 import { useAuthStore } from '../store/useAuthStore';
 
 const apiClientDemo = axios.create({
-    // baseURL: 'https://staging.presageinsights.ai/api/', // development
-    baseURL: 'https://processor.presageinsights.ai/api/', // production
+    baseURL: appConfig.urls.processorApi,
     timeout: 15000,
 });
 
 const getRequestUrl = (baseURL?: string, url?: string) => `${baseURL || ''}${url || ''}`;
 
 // 🔹 Instantly read token (synchronous)
-apiClientDemo.interceptors.request.use((config) => {
-    const token = storage.getString('token');
+apiClientDemo.interceptors.request.use(async (config) => {
+    const token = await getAuthToken();
     const { user } = useAuthStore.getState();
 
     if (token) {

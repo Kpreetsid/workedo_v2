@@ -4,6 +4,7 @@ import { WebView } from "react-native-webview";
 import { useGestureLock } from "@/src/store/useGestureLock";
 import ChartDetailModal from "./ChartDetailModal";
 import { useFocusEffect } from "expo-router";
+import { LOCAL_CHART_WEBVIEW_PROPS } from "@/src/utils/localChartWebView";
 
 import * as ScreenOrientation from 'expo-screen-orientation';
 
@@ -101,17 +102,12 @@ export default function AssetDataChart({
 			{/* WebView ALWAYS mounted */}
 			<WebView
 				ref={ref}
-				originWhitelist={["*"]}
 				source={require("../../../assets/charts/chart.html")}
 				// source={{ uri: chartUrl }}
 
 				javaScriptEnabled={true}
 				domStorageEnabled={true}
-				allowFileAccess={true}
-				allowFileAccessFromFileURLs={true}
-				allowUniversalAccessFromFileURLs={true}
-
-				webviewDebuggingEnabled
+				{...LOCAL_CHART_WEBVIEW_PROPS}
 				onLoadEnd={() => setWebReady(true)}
 				onMessage={(e) => {
 					const data = e.nativeEvent.data;

@@ -21,6 +21,7 @@ import LocationPickerModal from '@/components/create-work-order/LocationPickerMo
 import { Image } from 'expo-image'
 import { endpoints } from '@/src/api/endpoints'
 import { Feather } from '@expo/vector-icons'
+import { getRouteParamString, parseJsonRouteParam } from '@/src/utils/routeParams'
 
 interface createAssetParams {
 	asset_data: Asset;
@@ -46,8 +47,8 @@ const createAsset = () => {
 
 	// typed, parsed object
 	const data: createAssetParams = {
-		asset_data: asset_data ? JSON.parse(asset_data as string) : null,
-		mode: mode as string | undefined
+		asset_data: parseJsonRouteParam<Asset>(asset_data),
+		mode: getRouteParamString(mode)
 	};
 
 	console.log("Parsed Data:", data);

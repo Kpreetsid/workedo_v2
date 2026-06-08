@@ -36,6 +36,7 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 	const [activeTab, setActiveTab] = useState("Horizontal");
 	const [tooltip, setTooltip] = useState<any>(null);
 	const [yMaxValue, setYMaxValue] = useState<number>(0);
+	const [graphData, setGraphData] = useState<any[]>([]);
 	const {
 		endpoints,
 		endpointSelected,
@@ -43,11 +44,9 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 		selectedAxis,
 		selectedSignal,
 		selectedValueType,
-		graphData,
 
 		setSelectedSignal,
 		setSelectedValueType,
-		setGraphData,
 		setEndpoints,
 		setEndpointSelected,
 		setAssetHealth,
@@ -289,9 +288,11 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 				message.chunk_info?.is_final_series
 			) {
 				// console.log("final graph data =", graphBufferRef.current);
+				const finalGraphData = [...graphBufferRef.current];
+				graphBufferRef.current = [];
 
 				setGraphLoading(false);
-				setGraphData([...graphBufferRef.current]);
+				setGraphData(finalGraphData);
 			}
 		},
 	});
@@ -372,41 +373,6 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 	// 	}
 	// };
 
-	// 3) whenever graphData (your store value) changes → format for chart
-	useEffect(() => {
-		// console.log('graph data to see = ', graphData)
-		if (graphData && Array.isArray(graphData)) {
-
-			if (graphData.length > 0) {
-				const formatted = formatGraphData(graphData);
-				setChartSeries(formatted);
-
-				const points = formatted[0].points;
-
-				// X-axis labels: show every 15th point
-				const thinnedLabels = points
-					.map((p: any, index: number) => (index % 15 === 0 ? p.fullDate : null))
-					.filter(Boolean);
-
-				setXLabels(thinnedLabels);
-
-				// Y-axis: get max across ALL existing axes
-				const allValues = formatted.flatMap((series: any) =>
-					series.points.map((p: any) => p.value)
-				);
-
-				const rawMax = Math.max(...allValues);
-				const yMax = Math.ceil(rawMax);
-
-				// console.log('y max = ', rawMax, yMax)
-
-				setYMaxValue(rawMax);
-			} else {
-				setChartSeries([])
-			}
-
-		}
-	}, [graphData]);
 
 	// 4) optional: inspect final points
 	useEffect(() => {

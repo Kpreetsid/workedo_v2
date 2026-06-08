@@ -12,6 +12,7 @@ import { usePartFormStore } from "@/src/store/usePartFormStore";
 import { createPart, getPartTypes, updateFullPart, updatePart } from "@/src/services/part.service";
 import { FormField } from "@/components/global/FormField";
 import LocationPickerModal from "@/components/create-work-order/LocationPickerModal";
+import { parseJsonRouteParam } from "@/src/utils/routeParams";
 
 export default function CreatePart() {
 	const params: any = useLocalSearchParams();
@@ -49,7 +50,8 @@ export default function CreatePart() {
 
 	useEffect(() => {
 		if (params?.data && !isLoaded) {
-			const data = JSON.parse(params.data);
+			const data = parseJsonRouteParam<Record<string, any>>(params.data);
+			if (!data) return;
 			console.log('data here in params = ', data);
 
 			// all setters here

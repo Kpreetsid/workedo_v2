@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface TrendSocketParams {
 	payload: any;
@@ -7,8 +7,7 @@ interface TrendSocketParams {
 	onStatus?: (status: string) => void;
 }
 
-// const WS_URL = "wss://staging.presageinsights.ai/ws/trend_data/"; // development
-const WS_URL = "wss://processor.presageinsights.ai/ws/trend_data/"; // production
+const WS_URL = "wss://processor.presageinsights.ai/ws/trend_data/";
 
 export function useTrendSocket({
 	payload,
@@ -17,12 +16,36 @@ export function useTrendSocket({
 	onStatus,
 }: TrendSocketParams) {
 	const socketRef = useRef<WebSocket | null>(null);
+	const onDataRef = useRef(onData);
+	const onStatusRef = useRef(onStatus);
 	const [connected, setConnected] = useState(false);
 
-	useEffect(() => {
-		if (!enabled || !payload) return;
+	const payloadKey = useMemo(() => {
+		if (!enabled || !payload) return "";
+		try {
+			return JSON.stringify(payload);
+		} catch {
+			return "";
+		}
+	}, [enabled, payload]);
 
-		// 🔥 Kill any existing socket first
+	useEffect(() => {
+		onDataRef.current = onData;
+		onStatusRef.current = onStatus;
+	}, [onData, onStatus]);
+
+	useEffect(() => {
+		if (!enabled || !payload || !payloadKey) {
+			if (socketRef.current) {
+				socketRef.current.close();
+				socketRef.current = null;
+			}
+			setConnected(false);
+			return;
+		}
+
+		let active = true;
+
 		if (socketRef.current) {
 			socketRef.current.close();
 			socketRef.current = null;
@@ -32,60 +55,73 @@ export function useTrendSocket({
 		socketRef.current = ws;
 
 		ws.onopen = () => {
-			setConnected(true);
-			onStatus?.("connected");
+			if (!active || socketRef.current !== ws) return;
 
-			// 🚀 Send first payload immediately
-			ws.send(JSON.stringify(payload));
+			setConnected(true);
+			onStatusRef.current?.("connected");
+
+			if (ws.readyState === WebSocket.OPEN) {
+				ws.send(payloadKey);
+			}
 		};
 
 		ws.onmessage = (event) => {
+			if (!active || socketRef.current !== ws) return;
+
 			try {
 				const message = JSON.parse(event.data);
-				// console.log("WS message =", message);
 
-				// ----------------------------
-				// STATUS / CONTROL MESSAGES
-				// ----------------------------
 				if (typeof message === "string") {
-					onStatus?.(message);
+					onStatusRef.current?.(message);
 					return;
 				}
 
 				if (message?.status) {
-					onStatus?.(message.status);
+					onStatusRef.current?.(message.status);
 					return;
 				}
 
-				// ----------------------------
-				// ACTUAL TREND DATA MESSAGE
-				// ----------------------------
 				if (message?.data && Array.isArray(message.data)) {
-					onStatus?.("data");
-					onData(message);
+					onStatusRef.current?.("data");
+					onDataRef.current(message);
 					return;
 				}
 
 				console.warn("Unknown WS message format:", message);
-			} catch (err) {
-				console.warn("Invalid WS message:", event.data);
+			} catch {
+				console.warn("Invalid WS message");
 			}
 		};
 
-
 		ws.onerror = (err) => {
+			if (!active || socketRef.current !== ws) return;
 			console.error("WebSocket error:", err);
 		};
 
 		ws.onclose = () => {
+			if (!active || socketRef.current !== ws) return;
+
 			setConnected(false);
-			onStatus?.("disconnected");
+			onStatusRef.current?.("disconnected");
 		};
 
 		return () => {
-			ws.close();
+			active = false;
+
+			if (socketRef.current === ws) {
+				socketRef.current = null;
+			}
+
+			ws.onopen = null;
+			ws.onmessage = null;
+			ws.onerror = null;
+			ws.onclose = null;
+
+			if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+				ws.close();
+			}
 		};
-	}, [enabled, JSON.stringify(payload)]); // ⚠️ intentional
+	}, [enabled, payload, payloadKey]);
 
 	return { connected };
 }

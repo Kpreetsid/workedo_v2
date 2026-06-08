@@ -1,7 +1,7 @@
 import { ToastAndroid } from "react-native";
 import { sendRequest } from "../api/api.service";
 import { endpoints } from "../api/endpoints";
-import { storage } from "../storage/mmkv";
+import { getAuthToken } from "../storage/secureAuth";
 import { ACTIVE_WORK_ORDER_STATUSES, CLOSED_WORK_ORDER_STATUSES } from "../utils/workOrderStatus";
 
 const toStatusQuery = (statuses: readonly string[]) => statuses.map((status) => `status=${encodeURIComponent(status)}`).join("&");
@@ -76,12 +76,9 @@ export const deleteWorkOrderComment = async (workOrderID: string, commentID: str
 };
 
 export const workOrderImageUpload = async (image: any, user: any) => {
-    console.log('Uploading image...', image);
     try {
         // Step 1: Show loader
-        const token = storage.getString('token');
-        console.log('Token: ', token);
-        console.log('user: ', user);
+        const token = await getAuthToken();
 
         // Step 2: Generate random name
         const randomName = Math.floor(Math.random() * 1000000);
@@ -95,9 +92,6 @@ export const workOrderImageUpload = async (image: any, user: any) => {
             type: 'image/jpeg',
         } as any);
 
-        console.log('Form data: ', formData);
-        console.log('BASEURL data: ', endpoints.baseURL + 'api/' + endpoints.workOrders.uploadImage);
-
         // Step 4: Upload with axios or fetch
         const response = await fetch(endpoints.baseURL + 'api/' + endpoints.workOrders.uploadImage, {
             method: 'POST',
@@ -110,7 +104,6 @@ export const workOrderImageUpload = async (image: any, user: any) => {
         });
 
         const result = await response.json();
-        console.log('Upload success:', result);
         if (result?.status) {
             ToastAndroid.show('Image uploaded successfully!', ToastAndroid.SHORT);
             return result?.data?.[0]

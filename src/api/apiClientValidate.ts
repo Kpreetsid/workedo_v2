@@ -1,18 +1,19 @@
 import axios from 'axios';
-import { storage } from '../storage/mmkv';
+import { appConfig } from '@/config/app.config';
+import { getAuthToken } from '../storage/secureAuth';
 import { useAuthStore } from '../store/useAuthStore';
 
 
 const apiClientValidate = axios.create({
-    baseURL: 'https://validate.presageinsights.ai/general/api/',
+    baseURL: appConfig.urls.validateApi,
     timeout: 15000,
 });
 
 const getRequestUrl = (baseURL?: string, url?: string) => `${baseURL || ''}${url || ''}`;
 
 // 🔹 Instantly read token (synchronous)
-apiClientValidate.interceptors.request.use((config) => {
-    const token = storage.getString('token');
+apiClientValidate.interceptors.request.use(async (config) => {
+    const token = await getAuthToken();
     const { user } = useAuthStore.getState();
 
     if (token) {

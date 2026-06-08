@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { storage } from "@/src/storage/mmkv";
+import { deleteAuthToken } from "@/src/storage/secureAuth";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
@@ -163,9 +164,9 @@ export function useGlobal() {
 		];
 	}
 
-	const logout = () => {
+	const logout = async () => {
 		console.log("Logout");
-		storage.delete('token');
+		await deleteAuthToken();
 		storage.delete('user');
 		router.replace("/");
 

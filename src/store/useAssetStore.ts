@@ -13,8 +13,6 @@ export interface AssetState {
 	selectedSignal: string;        // Velocity / Acceleration / Displacement
 	selectedValueType: string;     // Rms / Peak_to_peak / Peak / Kurtosis
 
-	graphData: [] | null,
-
 	selectedSensor: AssetEndpoint | null,
 	selectedEndpointToEdit: AssetEndpoint | null;
 	deviceInfo: [] | null,
@@ -28,7 +26,6 @@ export interface AssetState {
 	setSelectedAxis: (data: string[]) => void;
 	toggleAxis: (axis: string) => void;
 
-	setGraphData: (data: string[]) => void;
 	setSelectedSensor: (data: any) => void;
 	setSelectedEndpointToEdit: (data: any) => void;
 	setDeviceInfo: (data: any) => void;
@@ -51,12 +48,10 @@ export const useAssetStore = create<AssetState>((set) => ({
 	selectedSignal: "Velocity",     // default option
 	selectedValueType: "Rms",       // default option
 
-	graphData: null,
 	selectedSensor: null,
 	selectedEndpointToEdit: null,
 	deviceInfo: [],
 	setAssetData: (data: any) => set({ asset_data: data }),
-	setGraphData: (data: any) => set({ graphData: data }),
 	setSelectedSensor: (data: any) => set({ selectedSensor: data }),
 	setSelectedEndpointToEdit: (data: any) => set({ selectedEndpointToEdit: data }),
 	setDeviceInfo: (data: any) => set({ deviceInfo: data }),
@@ -88,7 +83,6 @@ export const useAssetStore = create<AssetState>((set) => ({
 			selectedAxis: ["Horizontal", "Vertical", "Axial"],
 			selectedSignal: "Velocity",
 			selectedValueType: "Rms",
-			graphData: null,
 			selectedSensor: null,
 			selectedEndpointToEdit: null,
 			deviceInfo: [],

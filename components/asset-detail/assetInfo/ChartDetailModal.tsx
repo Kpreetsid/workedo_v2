@@ -25,6 +25,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { SegmentedCheckboxRow } from "./SimpleDropdown";
 import Fonts from "@/constants/Typography";
 import { envelopePlay } from "@/src/services/asset.service";
+import { LOCAL_CHART_WEBVIEW_PROPS } from "@/src/utils/localChartWebView";
 
 interface ChartDetailModalProps {
 	visible: boolean;
@@ -645,9 +646,7 @@ export default function ChartDetailModal({
 												nestedScrollEnabled={true}
 												mediaPlaybackRequiresUserAction={false}
 												allowsInlineMediaPlayback={true}
-												originWhitelist={["*"]}
-												allowUniversalAccessFromFileURLs
-												allowFileAccess
+												{...LOCAL_CHART_WEBVIEW_PROPS}
 												style={{ flex: 1 }}
 											/>
 										</View>
@@ -682,9 +681,7 @@ export default function ChartDetailModal({
 												nestedScrollEnabled={true}
 												mediaPlaybackRequiresUserAction={false}
 												allowsInlineMediaPlayback={true}
-												originWhitelist={["*"]}
-												allowUniversalAccessFromFileURLs
-												allowFileAccess
+												{...LOCAL_CHART_WEBVIEW_PROPS}
 												style={{ flex: 1 }}
 											/>
 										</View>
@@ -722,9 +719,7 @@ export default function ChartDetailModal({
 													nestedScrollEnabled={true}
 													mediaPlaybackRequiresUserAction={false}
 													allowsInlineMediaPlayback={true}
-													originWhitelist={["*"]}
-													allowUniversalAccessFromFileURLs
-													allowFileAccess
+													{...LOCAL_CHART_WEBVIEW_PROPS}
 													style={{ flex: 1 }}
 												/>
 											</View>
@@ -799,9 +794,7 @@ export default function ChartDetailModal({
 													nestedScrollEnabled={true}
 													mediaPlaybackRequiresUserAction={false}
 													allowsInlineMediaPlayback={true}
-													originWhitelist={["*"]}
-													allowUniversalAccessFromFileURLs
-													allowFileAccess
+													{...LOCAL_CHART_WEBVIEW_PROPS}
 													style={{ flex: 1 }}
 												/>
 											</View>

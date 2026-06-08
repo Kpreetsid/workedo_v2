@@ -12,6 +12,7 @@ import Fonts from "@/constants/Typography";
 import { Calender, DropDownIcon } from "@/constants/IconProvider";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
 import { assetHealthStatus } from "@/src/services/asset.service";
+import { LOCAL_CHART_WEBVIEW_PROPS } from "@/src/utils/localChartWebView";
 
 /* ================= COLORS ================= */
 const COLORS: any = {
@@ -164,7 +165,7 @@ export default function AssetHealth() {
 						ref={webViewRef}
 						source={{ uri: chartURL }}
 						// source={require("../../assets/charts/AssetHealthBar.html")}
-						originWhitelist={["*"]}
+						{...LOCAL_CHART_WEBVIEW_PROPS}
 						javaScriptEnabled
 						domStorageEnabled
 						scrollEnabled={false}

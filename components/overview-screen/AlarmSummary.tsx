@@ -5,6 +5,7 @@ import { alarmsSummary } from "@/src/services/alarms.service";
 import WebView from "react-native-webview";
 import Fonts from "@/constants/Typography";
 import { collectSelectedAssetIdsWithChildren, type SelectableTreeNode } from "@/src/utils/assetSelection";
+import { LOCAL_CHART_WEBVIEW_PROPS } from "@/src/utils/localChartWebView";
 
 type ChartDataType = {
 	timestamps: string[];
@@ -227,7 +228,7 @@ export default function AlarmSummary() {
 						ref={webRef}
 						// source={require("../../assets/charts/asset-health.html")}
 						source={{ uri: chartUrl }}
-						originWhitelist={["*"]}
+						{...LOCAL_CHART_WEBVIEW_PROPS}
 						javaScriptEnabled
 						domStorageEnabled
 						onLoadEnd={() => {

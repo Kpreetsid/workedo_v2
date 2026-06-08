@@ -24,6 +24,7 @@ import AssetPickerModal from "@/components/create-work-order/AssetPickerModal";
 import WeekDays from "@/components/create-preventive/weekDaysComponent";
 import MonthDays from "@/components/create-preventive/monthDaysComponent";
 import ModalCalendar from "@/components/global/ModalCalendar";
+import { getRouteParamString, parseJsonRouteParam } from "@/src/utils/routeParams";
 
 const MODE_FIELD_MAP: Record<string, string> = {
 	daily: "everyNDays",
@@ -53,7 +54,7 @@ export default function CreatePreventive() {
 	console.log('params = ', params);
 	const [showCalendar, setShowCalendar] = useState(false);
 
-	const comingFrom = params?.comingFrom;
+	const comingFrom = getRouteParamString(params?.comingFrom);
 	const isEditMode = Boolean(params?.data);
 
 	const router = useRouter();
@@ -97,7 +98,8 @@ export default function CreatePreventive() {
 
 	useEffect(() => {
 		if (params?.data && !isLoaded) {
-			const data = JSON.parse(params.data);
+			const data = parseJsonRouteParam<Record<string, any>>(params.data);
+			if (!data) return;
 			console.log('data here in params = ', data);
 
 			// all setters here

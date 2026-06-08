@@ -14,10 +14,11 @@ import PreventiveDetails from "./Preventive-details";
 import PreventiveForm from "./Preventive-form";
 import Tasks from "@/components/work-order-detail/Tasks";
 import { TabView } from "react-native-tab-view";
+import { parseJsonRouteParam } from "@/src/utils/routeParams";
 
 export default function PreventiveDetail() {
 	const params: any = useLocalSearchParams();
-	let item = JSON.parse(params?.data);
+	let item = parseJsonRouteParam<any>(params?.data, {});
 
 	const [preventiveDetails, setPreventiveDetails] = useState(item);
 	const [preventiveStatus, setPreventiveStatus] = useState(item?.schedule?.enabled);
