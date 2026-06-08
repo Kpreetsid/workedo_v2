@@ -25,7 +25,6 @@ export default function Requests() {
 				setAllRequests(Array.isArray(res.data) ? res.data : []);
 			}
 		} catch (e) {
-			console.log("request list error =", e);
 		} finally {
 			setLoading(false);
 			setRefreshing(false);

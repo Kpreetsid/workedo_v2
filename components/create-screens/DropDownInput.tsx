@@ -63,7 +63,6 @@ export default function DropDownInput({
 
 	// ✅ If no onSelect provided but store exists, update store directly
 	const handleSelect = (selected: string) => {
-		console.log('selecte = ', selected)
 		if (onSelect) {
 			onSelect(selected);
 		} else if (store && field) {

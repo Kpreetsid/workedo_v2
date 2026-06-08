@@ -177,7 +177,7 @@ const AssetsCardNew = ({ asset, isChild = false, level = 0, handleDeleteAsset }:
 				< View style={styles.cardRow} >
 					<View style={styles.cardRowTexts}>
 						<Text style={styles.assetHeading}>Location Name</Text>
-						<Text style={styles.assetText}>{asset?.locationData?.location_name}</Text>
+						<Text style={styles.assetText}>{Array.isArray(asset?.locationData) ? asset?.locationData[0]?.location_name : (asset?.locationData as any)?.location_name}</Text>
 					</View>
 				</View>
 

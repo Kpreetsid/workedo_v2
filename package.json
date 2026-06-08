@@ -4,19 +4,16 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "md": "expo run:android",
-    "release": "set \"NODE_ENV=production\" && cd android && gradlew.bat assembleRelease --no-daemon && cd ..",
-    "bundle": "set \"NODE_ENV=production\" && cd android && gradlew.bat bundleRelease --no-daemon && cd ..",
-    "md:release": "set \"NODE_ENV=production\" && cd android && gradlew.bat assembleRelease --no-daemon && cd ..",
-    "android:clean": "powershell -ExecutionPolicy Bypass -File scripts/android-clean.ps1",
-    "web": "expo start --web",
     "android": "expo run:android",
-    "release:apk": "powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1 -SkipTests",
-    "release:test-apk": "set \"NODE_ENV=staging\" && cd android && gradlew.bat assembleRelease --no-daemon && cd ..",
-    "release:prod-apk": "set \"NODE_ENV=production\" && cd android && gradlew.bat assembleRelease --no-daemon && cd ..",
-    "debug:apk": "set \"NODE_ENV=production\" && cd android && gradlew.bat assembleDebug --no-daemon && cd ..",
-    "release:apk:ci": "powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1",
-    "release:apk:fast": "powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1 -SkipTests -SkipClean"
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "android:clean": "powershell -ExecutionPolicy Bypass -File scripts/android-clean.ps1",
+    "release:dev": "set \"EXPO_PUBLIC_APP_ENV=development\" && set \"NODE_ENV=production\" && cd android && gradlew.bat assembleRelease --no-daemon",
+    "release:prod": "set \"EXPO_PUBLIC_APP_ENV=production\" && set \"NODE_ENV=production\" && cd android && gradlew.bat assembleRelease --no-daemon",
+    "debug:dev": "set \"EXPO_PUBLIC_APP_ENV=development\" && set \"NODE_ENV=development\" && cd android && gradlew.bat assembleDebug --no-daemon",
+    "debug:prod": "set \"EXPO_PUBLIC_APP_ENV=production\" && set \"NODE_ENV=development\" && cd android && gradlew.bat assembleDebug --no-daemon",
+    "apk:dev": "set \"EXPO_PUBLIC_APP_ENV=development\" && powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1 -SkipTests",
+    "apk:prod": "set \"EXPO_PUBLIC_APP_ENV=production\" && powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1 -SkipTests"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",

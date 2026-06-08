@@ -119,7 +119,7 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 						setDeleteLoading(true)
 						try {
 							const resp = await copyLocation(item?.id);
-							console.log('resp = ', resp);
+							
 							if (resp?.status) {
 								ToastAndroid.show("Location Copied", ToastAndroid.SHORT);
 								fetchLocations();
@@ -153,7 +153,7 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 						setDeleteLoading(true)
 						try {
 							const resp = await deleteLocation(item?.id);
-							console.log('resp = ', resp);
+							
 							if (resp?.status) {
 								ToastAndroid.show("Location Deleted", ToastAndroid.SHORT);
 								fetchLocations();

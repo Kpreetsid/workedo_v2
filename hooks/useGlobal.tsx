@@ -165,7 +165,6 @@ export function useGlobal() {
 	}
 
 	const logout = async () => {
-		console.log("Logout");
 		await deleteAuthToken();
 		storage.delete('user');
 		router.replace("/");

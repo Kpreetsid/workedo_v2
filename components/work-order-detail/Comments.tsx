@@ -61,7 +61,7 @@ export default function Comments({ params }: Props) {
 				params?.id,
 				payload
 			)
-			console.log('res = ', res);
+			
 			if (res?.status) {
 				ToastAndroid.show("Comment added successfully!", ToastAndroid.SHORT);
 				fetchComments();
@@ -85,7 +85,7 @@ export default function Comments({ params }: Props) {
 				params?.id,
 				id
 			)
-			console.log('res = ', res);
+			
 			if (res?.status) {
 				ToastAndroid.show("Comment deleted successfully!", ToastAndroid.SHORT);
 				fetchComments();

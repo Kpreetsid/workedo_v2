@@ -75,7 +75,6 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 		fetchiChilds();
 
 		return () => {
-			// console.log('clearing')
 			clearAssetState(); // cleanup when leaving page
 			setChartSeries([])
 			setXLabels([])
@@ -105,12 +104,8 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 	}, [selectedAxis])
 
 	const fetchEndpoints = async (childs: any[]) => {
-		// console.log('fetching endpoints');
 
 		try {
-			// console.log('endpointSelected = ', endpointSelected);
-			// console.log('asset_data = ', asset_data);
-
 			let payload: string[] = [...childs.map((child: any) => child.id)];
 			// let payload: string[] = [asset_data?.id]; // instead of only sending parent asset id, send parent and child asset id now because new api is introduced to fetch both parent and child asset ids.
 			console.log('payload for endpoints = ', payload);
@@ -140,8 +135,6 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 	}
 
 	useEffect(() => {
-		// console.log('endpoint selected = ', endpointSelected);
-
 		endpointSelected != null ? calculateAssetHealth() : null;
 	}, [endpointSelected])
 
@@ -190,8 +183,6 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 	const graphKey = `${selectedSignal?.toLowerCase()}-${selectedValueType?.toLowerCase()}`;
 
 	const trendPayload = useMemo(() => {
-		// console.log('endpoint selected = ', endpointSelected);
-
 		if (
 			!endpointSelected?.composite_id ||
 			!selectedAxis.length ||
@@ -234,7 +225,6 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 	// ---------------------------
 	// SOCKET CONNECTION
 	// ---------------------------
-	// console.log('trend payload = ', trendPayload)
 	useTrendSocket({
 		payload: trendPayload,
 		enabled: !!trendPayload,
@@ -271,12 +261,6 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 				setGraphData([]);
 				return;
 			}
-
-			console.log("trend socket message:", message);
-			console.log(
-				"trend socket data:",
-				JSON.stringify(message.data, null, 2)
-			);
 			// push each axis payload into buffer
 			message.data.forEach((series: any) => {
 				graphBufferRef.current.push(series);
@@ -287,7 +271,6 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 				message.chunk_info?.is_final_chunk &&
 				message.chunk_info?.is_final_series
 			) {
-				// console.log("final graph data =", graphBufferRef.current);
 				const finalGraphData = [...graphBufferRef.current];
 				graphBufferRef.current = [];
 
@@ -316,7 +299,7 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 		const formatted = formatGraphData(graphData);
 		setChartSeries(formatted);
 
-		const points = formatted[0].points;
+		const points = formatted[0]?.points || [];
 		setXLabels(
 			points
 				.map((p: any, i: number) => (i % 15 === 0 ? p.fullDate : null))
@@ -328,51 +311,6 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 		);
 		setYMaxValue(Math.max(...allValues));
 	}, [graphData]);
-
-
-	// const fetchGraphTrendData = async () => {
-	// 	try {
-	// 		if (!endpointSelected?.composite_id) return;
-
-	// 		const payload = {
-	// 			asset_id: asset_data?.id,
-	// 			fft_only: false,
-	// 			compositeList: [
-	// 				{
-	// 					asset_id: endpointSelected?.asset_id,
-	// 					composite_id: endpointSelected?.composite_id,
-	// 					axis: selectedAxis, // ✅ dynamic from store
-	// 					is_linked: true,
-	// 				},
-	// 			],
-	// 			function: {
-	// 				Vibration: [
-	// 					`${selectedSignal.toLowerCase()}-${selectedValueType.toLowerCase()}`
-	// 				],
-	// 				Temperature: ["temperature"],
-	// 				Acoustics: [],
-	// 				"Magnetic Flux": [],
-	// 				Current: [],
-	// 			},
-	// 			fromDate: "",
-	// 			toDate: "",
-	// 		};
-
-	// 		// console.log("graph data payload = ", payload);
-
-	// 		const res = await getGraphTrendData(payload);
-	// 		// console.log("graph trend data =", res);
-	// 		if (res) {
-	// 			setGraphData(res[`${selectedSignal.toLowerCase()}-${selectedValueType.toLowerCase()}`]);
-	// 		}
-	// 	} catch (err) {
-	// 		console.error("Error fetching graph trend data:", err);
-	// 		ToastAndroid.show("Failed to load graph trend data.", ToastAndroid.SHORT);
-	// 	} finally {
-	// 		setGraphLoading(false);
-	// 	}
-	// };
-
 
 	// 4) optional: inspect final points
 	useEffect(() => {
@@ -386,7 +324,6 @@ export default function AssetInfoTab({ asset_data, composite_idFromParams, refre
 	}, [chartSeries]);
 
 	useEffect(() => {
-		// console.log('xLabels = ', xLabels);
 	}, [xLabels])
 
 	return (

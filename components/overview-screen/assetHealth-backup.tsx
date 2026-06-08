@@ -53,17 +53,12 @@ export default function AssetHealth() {
 				group_by: groupBy,
 			};
 
-			console.log("payload = ", payload);
-
 			const res = await assetHealthStatus(payload);
 			const data = res?.data;
-			console.log('data = ', data)
-
 			setRawSeries(data);
 			setBarData(buildBarData(data, enabledSeries));
 			setLoading(false);
 		} catch (err) {
-			// console.log("asset health error =", err);
 			setLoading(false);
 		}
 	};

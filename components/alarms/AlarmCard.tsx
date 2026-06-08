@@ -15,7 +15,6 @@ const AlarmCard = ({ item }: { item: AlarmItem }) => {
 				pressed && { backgroundColor: "#fadb7d" },
 			]}
 			onPress={() => {
-				console.log('item clicked = ', item);
 				router.push({
 					pathname: "/assetDetail",
 					params: { id: item.asset_id, composite_id: item.composite },

@@ -15,7 +15,7 @@ const MoreInfoModal: FC<MoreInfoModalProps> = ({ visible, onClose, estimatedTime
 	return (
 		<Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
 			<View style={styles.modalOverlay}>
-				<Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
+				<Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 				<View style={styles.bottomSheet}>
 					{/* Header */}
 					<View style={styles.headerRow}>

@@ -45,11 +45,7 @@ export default function AssetHealth() {
 				asset_list: selectedAssets,
 				group_by: groupBy,
 			};
-
-			console.log('payload for asset health = ', payload);
-
 			const res = await assetHealthStatus(payload);
-			console.log(res?.data);
 			setRawSeries(res?.data ?? null);
 			setLoading(false);
 		} catch (e) {
@@ -88,8 +84,6 @@ export default function AssetHealth() {
 	useEffect(() => {
 		if (!webReady) return;
 		if (!chartPayload) return;
-
-		console.log('chartPayload = ', chartPayload)
 
 		webViewRef.current?.postMessage(JSON.stringify(chartPayload));
 	}, [chartPayload, webReady]);

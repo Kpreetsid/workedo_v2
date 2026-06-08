@@ -19,7 +19,6 @@ interface SelectAssetCardInterface {
 const width = Dimensions.get("window").width;
 
 const SelectAssetsCard = ({ item, isChild = false, level = 0, comingFrom }: SelectAssetCardInterface) => {
-	// console.log('asset card select item = ', item);
 	const router = useRouter();
 	const [selectedAsset, setSelectedAsset] = useState<Asset>();
 	const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
@@ -72,7 +71,6 @@ const SelectAssetsCard = ({ item, isChild = false, level = 0, comingFrom }: Sele
 						{hasChildren && (
 							<Pressable
 								onPress={() => {
-									console.log('expanding')
 									setExpandedAssetId(isExpanded ? null : item.id);
 								}}
 							>

@@ -47,7 +47,7 @@ const createAsset = () => {
 
 	// typed, parsed object
 	const data: createAssetParams = {
-		asset_data: parseJsonRouteParam<Asset>(asset_data),
+		asset_data: parseJsonRouteParam<Asset>(asset_data) as any,
 		mode: getRouteParamString(mode)
 	};
 

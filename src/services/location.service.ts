@@ -5,7 +5,6 @@ import { getAuthToken } from '../storage/secureAuth';
 
 export const locationTree = async () => {
 	const url = `${endpoints.location.tree}`;
-	// console.log('locations tree = ', url);
 	return await sendRequest('GET', url);
 };
 
@@ -28,12 +27,9 @@ export const fetchParentLocationDetails = async (data: any, type: string) => {
 	let url = '';
 	if (type === 'parent') {
 		url = `${endpoints.overview.locationDetails}?parent_id=${data}`;
-		// console.log('url parent = ', url);
 	} else {
 		url = `${endpoints.overview.locationDetails}?locationId=${data}`;
-		// console.log('url child = ', url);
 	}
-	// console.log('url = ', url);
 	return await sendRequest('GET', url);
 }
 
@@ -41,24 +37,19 @@ export const fetchParentLocationDetails1 = async (data: any, type: string) => {
 	let url = '';
 	if (type === 'parent') {
 		url = `${endpoints.overview.locationDetails}?parent_id=${data}`;
-		// console.log('url parent = ', url);
 	} else {
 		url = `${endpoints.overview.locationDetails}?_id=${data}`;
-		// console.log('url child = ', url);
 	}
-	// console.log('url = ', url);
 	return await sendRequest('GET', url);
 }
 
 export const childAssetsAgainstLocation = async (data: { levelOneLocations: string[], levelTwoLocations: string[] }) => {
 	const url = `${endpoints.overview.childAssets}`;
-	// console.log('url = ', url);
 	return await sendRequest('POST', url, data);
 }
 
 export const assetHealthKPIHistory = async (data: { org_id: string, top_level_asset: string[], electric_asset: string[], non_electric_asset: string[] }) => {
 	const url = `${endpoints.overview.assetHealthKPIHistory}`;
-	// console.log('url = ', url);
 	return await sendRequestDemo('POST', url, data);
 }
 

@@ -19,9 +19,6 @@ interface SkipDatesProps {
 
 export default function SkipDatesUI({ onDateFieldPress, onAdd, onRemove }: SkipDatesProps) {
 	const skip_dates = usePreventiveStore((s) => s.skip_dates);
-
-	// console.log('skip dates in skip = ', skip_dates)
-
 	return (
 		<View style={styles.wrapper}>
 			<Text style={styles.heading}>Skip Dates (optional)</Text>

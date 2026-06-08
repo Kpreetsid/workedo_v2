@@ -111,7 +111,6 @@ export default function AlarmSummary() {
 					selectedAssets
 				),
 			};
-			console.log('alarm payload = ', payload);
 			if (!payload.asset_list.length) {
 				setChartData({
 					timestamps: [],
@@ -177,7 +176,6 @@ export default function AlarmSummary() {
 				danger,
 			});
 		} catch (e) {
-			// optional: console.log(e)
 		} finally {
 			setLoading(false);
 		}

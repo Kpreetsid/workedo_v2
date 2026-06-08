@@ -83,15 +83,12 @@ const editAsset = () => {
   const mapUserToLocationFunc = async (location_id: string) => {
     try {
       const res = await mapUserToLocation(location_id);
-      console.log('res = ', res);
+      
       if (res?.status) {
         setUsersMappedToLocation(res?.data)
-        // console.log('assigned_users = ', assigned_users);
-        // setCreateAssetValue("assigned_users", res?.data);
-        // setCreateAssetValue("assigned_users", [...assigned_users, ...res?.data]);
       }
     } catch (err) {
-      console.log('error = ', err);
+      
     }
   }
 
@@ -117,8 +114,6 @@ const editAsset = () => {
     }
 
     setCreateAssetValue("timezone", "Asia/Kolkata");
-    // console.log('initialized value = ', initialized);
-    // console.log('data value = ', data);
 
 
     if (!initialized && data) {
@@ -161,37 +156,20 @@ const editAsset = () => {
 
   useEffect(() => {
     return () => {
-      console.log("unmount → reset");
       resetForm();
     };
   }, []);
 
 
   useEffect(() => {
-    console.log('iniialized ran = ', initialized)
-    console.log('store after initialized true = ', useCreateAssetStore.getState())
   }, [initialized])
 
-  // const fetchAssetData = async () => {
-  // 	try {
-  // 		const res = await singleAssetData(data?.asset_data?.id);
-  // 		console.log('single asset data = ', res);
-  // 		if (res?.status) {
-  // 			setCreateAssetValue("assigned_users", res?.data[0]?.userList);
-  // 		}
-  // 	} catch (e) {
-  // 		console.log('error asset data = ', e);
-  // 	}
-  // }
-
   const fetchAllTimezones = () => {
-    // console.log(moment.tz.names())
     setTimezones(moment.tz.names());
   }
 
   const handleEditAsset = async () => {
     const values = useCreateAssetStore.getState();
-    console.log('values = ', values);
     const assignedUsers = Array.isArray(values.assigned_users) ? values.assigned_users : [];
     const attachments = Array.isArray(values.attachments) ? values.attachments : [];
     const rawLocationId = values.locationObject?.id ?? values.locationObject?._id;
@@ -264,11 +242,11 @@ const editAsset = () => {
       // 	top_level_asset_id: data?.mode === 'child' ? data?.asset_data?.id : "",
     }
 
-    console.log('payload = ', payload);
+    
 
     try {
       const res = await updateNewAsset(payload, data?.asset_data?.id);
-      console.log('res = ', res);
+      
       if (res.status) {
         setLoading(false)
         resetForm();
@@ -279,7 +257,7 @@ const editAsset = () => {
       }
 
     } catch (err) {
-      console.log('error = ', err);
+      
       setLoading(false)
     }
   }

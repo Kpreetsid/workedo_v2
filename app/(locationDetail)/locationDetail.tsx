@@ -57,7 +57,7 @@ export default function LocationDetail() {
 				setLocationData(res?.data[0]);
 			}
 		} catch (e) {
-			console.log('error = ', e);
+			
 		}
 	}
 
@@ -67,7 +67,6 @@ export default function LocationDetail() {
 		setLoading(true)
 		try {
 			const res = await topLevelAssets(locationId);
-			// console.log("res top level assets = ", res);
 			if (res.status) {
 				let assets: LocationAsset[] = res?.data;
 

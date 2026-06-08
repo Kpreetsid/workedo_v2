@@ -38,7 +38,7 @@ export default function ToDoTab() {
 
 		try {
 			const res = await workOrdersPaginated(
-				TABS[selectedButton],
+				TABS[selectedButton]!,
 				pageToLoad,
 				10
 			);
@@ -95,8 +95,6 @@ export default function ToDoTab() {
 
 	useFocusEffect(
 		useCallback(() => {
-			console.log('running callback')
-			// When screen comes back into focus
 			setPage(1);
 			setHasMore(true);
 			fetchWorkOrders(1, true);

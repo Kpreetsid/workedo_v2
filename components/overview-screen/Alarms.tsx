@@ -253,27 +253,29 @@ export default function Alarms() {
 					</View>
 				}
 
-				<FlatList
-					data={data}
-					keyExtractor={(i) => String(i.id)}
-					renderItem={({ item }) => <AlarmCard item={item} />}
-					ListEmptyComponent={() => (
-						<View style={styles.noAlarmsFound}>
-							<Text style={styles.noAlarmsFoundText}>
-								No Alarm History Data Found.
+				<View style={{ flex: 1, paddingBottom: 20 }}>
+					{data.length > 0 ? (
+						data.map((item) => (
+							<AlarmCard key={String(item.id)} item={item} />
+						))
+					) : (
+						!loading && (
+							<View style={styles.noAlarmsFound}>
+								<Text style={styles.noAlarmsFoundText}>
+									No Alarm History Data Found.
+								</Text>
+							</View>
+						)
+					)}
+
+					{loadingMore && (
+						<View style={{ paddingVertical: 12, alignItems: "center" }}>
+							<Text style={{ color: "#999", fontSize: 12 }}>
+								Loading more…
 							</Text>
 						</View>
 					)}
-					ListFooterComponent={
-						loadingMore ? (
-							<View style={{ paddingVertical: 12, alignItems: "center" }}>
-								<Text style={{ color: "#999", fontSize: 12 }}>
-									Loading more…
-								</Text>
-							</View>
-						) : null
-					}
-				/>
+				</View>
 			</View>
 		</View>
 	);

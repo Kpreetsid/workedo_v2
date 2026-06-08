@@ -21,7 +21,6 @@ export default function DoneRequests({
 	refreshing,
 	onRefresh,
 }: Props) {
-	console.log('in done')
 	if (loading) {
 		return <ActivityIndicator size="large" />;
 	}

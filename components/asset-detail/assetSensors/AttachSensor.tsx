@@ -61,12 +61,12 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 			setSensorForm("mount_orientation", data.mount_direction);
 		}
 
-		if (data.mount_material) {
-			setSensorForm("mount_material", data.mount_material);
+		if ((data as any).mount_material) {
+			setSensorForm("mount_material", (data as any).mount_material);
 		}
 
-		if (data.mount_type) {
-			setSensorForm("mount_type", data.mount_type);
+		if ((data as any).mount_type) {
+			setSensorForm("mount_type", (data as any).mount_type);
 		}
 
 		// -----------------------
@@ -74,9 +74,9 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 		// -----------------------
 		if (data.mount_direction === "custom") {
 			// ✅ Option A: axis_mapping object
-			if (data.deviceInfo) {
-				if (data.deviceInfo[0].data[4].label === "Custom Mapping") {
-					var customMappingData = JSON.parse(data.deviceInfo[0].data[4].value);
+			if ((data as any).deviceInfo) {
+				if ((data as any).deviceInfo[0].data[4].label === "Custom Mapping") {
+					var customMappingData = JSON.parse((data as any).deviceInfo[0].data[4].value);
 					console.log(customMappingData)
 					setSensorForm("asset_x_axis", customMappingData.x || "");
 					setSensorForm("asset_y_axis", customMappingData.y || "");

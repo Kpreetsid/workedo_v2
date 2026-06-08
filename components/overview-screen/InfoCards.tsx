@@ -8,7 +8,6 @@ import { useEffect, useRef, useState } from "react";
 export default function InfoCards() {
 	const router = useRouter();
 	const assetKPIHistory = useOverviewStore((state) => state.assetKPIHistory);
-	// console.log("assetKPIHistory", assetKPIHistory);
 
 	// ✅ Local derived state (single source of truth for UI)
 	const [stats, setStats] = useState({

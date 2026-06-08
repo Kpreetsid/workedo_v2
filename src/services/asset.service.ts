@@ -8,7 +8,6 @@ export const assetTree = async () => {
 
 export const assetTreeForSingleLocation = async (locationIds: string) => {
     const url = `${endpoints.asset.tree}?location_id=${locationIds}`;
-    console.log('url = ', url);
     return await sendRequest('GET', url, {});
 };
 
@@ -34,7 +33,6 @@ export const fetchAssetChildren = async (assetId: string) => {
 
 export const getAllEndpoints = async (payload: string[]) => {
     const url = `${endpoints.asset.asset_endpoints}`;
-    // console.log('final payload = ', { asset_id: payload });
     return await sendRequestDemo('POST', url, JSON.stringify({ asset_id: payload }));
 };
 
@@ -51,7 +49,6 @@ export const getGraphTrendData = async (payload: any) => {
 
 export const getSensorConfig = async (payload: any) => {
     const url = `${endpoints.asset.sensorConfig}`;
-    console.log('request url = get_device_config/ payload = ', url, payload);
     return await sendRequestDemo("POST", url, payload);
 };
 

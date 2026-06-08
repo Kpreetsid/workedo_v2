@@ -40,11 +40,6 @@ export default function Login() {
 
 	useEffect(() => {
 		migrateLegacyAuthToken();
-		const user = storage.getString('user');
-		if (user) {
-			setUser(JSON.parse(user));
-			router.replace("/overview");
-		}
 	}, []);
 
 	const onSubmit = async (values: LoginFormValues) => {

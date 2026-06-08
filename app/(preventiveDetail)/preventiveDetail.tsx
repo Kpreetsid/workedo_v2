@@ -40,12 +40,12 @@ export default function PreventiveDetail() {
 			item.schedule.enabled = scheduleEnabled;
 			console.log('item schedule = ', item?.schedule);
 			const resp = await toggleWorkOrderStatus(item?.id, item);
-			console.log('resp = ', resp);
+			
 			if (resp?.status) {
 				setPreventiveStatus(resp?.data?.schedule?.enabled);
 			}
 		} catch (error) {
-			console.log('error = ', error);
+			
 		}
 	}
 

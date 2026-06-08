@@ -81,7 +81,7 @@ export default function DateRangeCalendar({
 
       while (current < end) {
         const date = current.toISOString().split("T")[0];
-        marked[date] = {
+        marked[date!] = {
           color: "#BEECEF",
           textColor: "#000",
         };

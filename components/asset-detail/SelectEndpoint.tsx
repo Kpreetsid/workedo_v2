@@ -44,7 +44,7 @@ export default function SelectEndpoint({ endpointSelected, endpoints, asset_data
 		},
 		{
 			label: "Asset Type",
-			value: endpointSelected?.asset_type || "",
+			value: (endpointSelected as any)?.asset_type || "",
 		},
 		{
 			label: "Composite ID",
@@ -60,7 +60,7 @@ export default function SelectEndpoint({ endpointSelected, endpoints, asset_data
 		},
 		{
 			label: "Linked Status",
-			value: endpointSelected?.is_linked == false ? "Not Linked" : "Linked",
+			value: (endpointSelected as any)?.is_linked == false ? "Not Linked" : "Linked",
 		},
 	];
 

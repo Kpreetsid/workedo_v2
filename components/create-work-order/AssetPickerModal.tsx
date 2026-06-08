@@ -32,8 +32,6 @@ export default function AssetPickerModal
 			}
 	) {
 
-	// console.log('comingFrom = ', comingFrom);
-
 	const { setWorkForm } = useWorkOrderStore();
 	const { setWorkRequestForm } = useWorkRequestStore();
 	const { setPreventiveValue } = usePreventiveStore();
@@ -75,6 +73,7 @@ export default function AssetPickerModal
 				setAssets([])
 			}
 		}
+		return undefined;
 	}, [visible]);
 
 	useEffect(() => {

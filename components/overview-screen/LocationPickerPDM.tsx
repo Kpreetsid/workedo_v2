@@ -51,7 +51,6 @@ export default function LocationPickerPDM({
 			const res = await locationTree();
 
 			if (res.status) {
-				console.log('res locations = ', res?.data);
 				setLocations(res.data as Location[]);
 				setLoading(false)
 			}

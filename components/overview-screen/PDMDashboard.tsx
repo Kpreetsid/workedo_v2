@@ -10,7 +10,6 @@ import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 
 export default function PDMDashboard() {
-	console.log('running pdm');
 	const [refreshing, setRefreshing] = useState(false);
 	const [refreshKey, setRefreshKey] = useState(0);
 

@@ -33,7 +33,8 @@ export default function RootLayout() {
 				{/* <Stack screenOptions={{ headerShown: false }} /> */}
 				<Stack initialRouteName="(auth)/index" screenOptions={{
 					headerShown: false,
-					navigationBarColor: "#742BDE", animation: "flip", animationTypeForReplace: "push"
+					navigationBarColor: "#742BDE",
+					animation: "fade",
 				}} />
 			</KeyboardProvider>
 		</GestureHandlerRootView>

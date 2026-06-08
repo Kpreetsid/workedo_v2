@@ -91,66 +91,6 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 							comingFrom={comingFrom}
 						/>
 					}
-					// renderItem={({ item }) => {
-
-					// 	const isExpanded = expandedAssetId === item.id;
-					// 	const hasChildren = item.childs && item.childs.length > 0;
-
-
-					// 	return (
-					// 		<Pressable style={[styles.locationButton, { backgroundColor: selectedAsset === item ? "#FFBF0080" : "#fff", borderColor: selectedAsset === item ? "#FFC1074D" : "#99999933" }]}
-					// 			onPress={() => {
-					// 				if (selection) {
-					// 					setSelectedAsset(item);
-					// 					// updating selected asset in zustand store while creating preventive
-					// 					if (comingFrom === "newWorkOrder") {
-					// 						setWorkForm("selected_asset", item);
-					// 						setWorkForm("assigned_users", item.userList);
-					// 					} else if (comingFrom === "newWorkRequest") {
-					// 						setWorkRequestForm("selected_asset", item);
-					// 					} else {
-					// 						setPreventiveValue("selected_asset", item);
-					// 					}
-					// 					router.back();
-					// 				}
-					// 			}}
-					// 		>
-					// 			<View style={{ flexDirection: "column", alignItems: "flex-start", justifyContent: "center" }}>
-					// 				<View style={[
-					// 					styles.textRow,
-					// 					{
-					// 						marginLeft: 20
-					// 					}
-					// 				]}>
-					// 					{hasChildren && (
-					// 						<Pressable
-					// 							onPress={() => {
-					// 								console.log('expanding')
-					// 								setExpandedAssetId(isExpanded ? null : item.id);
-					// 							}}
-					// 						>
-					// 							<Ionicons
-					// 								name={isExpanded ? "chevron-down" : "chevron-forward"}
-					// 								size={14}
-					// 								color="black"
-					// 								style={hasChildren ? { display: 'flex' } : (isChild ? { display: 'none' } : { display: 'flex' })}
-					// 							/>
-					// 						</Pressable>
-					// 					)}
-
-					// 					<Text style={styles.locationText}>{item.location_name}</Text>
-					// 				</View>
-
-					// 			</View>
-
-					// 			<View style={styles.textRow}>
-					// 				<Text style={styles.locationText}>{item.asset_name}</Text>
-					// 				{/* <ArrowRight color={"#201F23CC"} /> */}
-					// 			</View>
-					// 			{/* <MapIcon /> */}
-					// 		</Pressable>
-					// 	);
-					// }}
 					contentContainerStyle={styles.container}
 					refreshing={refreshing}
 					onRefresh={handleRefresh}

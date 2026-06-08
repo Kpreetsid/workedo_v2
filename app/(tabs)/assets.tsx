@@ -11,7 +11,6 @@ import { useState } from "react";
 export default function Assets() {
 	const { initialIndex } = useLocalSearchParams<{ initialIndex?: string }>();
 	const startIndex = initialIndex ? Number(initialIndex) : 0;
-	console.log("startIndex", startIndex);
 	const [activeTab, setActiveTab] = useState(startIndex);
 
 	const router = useRouter();

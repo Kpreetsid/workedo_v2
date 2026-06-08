@@ -68,7 +68,7 @@ export default function CustomTabBar({ state, descriptors, navigation, onMorePre
 	return (
 		<View style={[styles.tabBar, { marginBottom: insets.bottom }]}>
 			{state.routes.map((route, index) => {
-				const { options } = descriptors[route.key];
+				const { options } = descriptors[route.key]!;
 				const label = options.title || route.name;
 				const isFocused = state.index === index;
 				const color = isFocused ? "#742BDE" : "#8B8B94";
@@ -76,14 +76,14 @@ export default function CustomTabBar({ state, descriptors, navigation, onMorePre
 				const onPress = () => {
 					if (route.name === "more") onMorePress();
 					else {
-						onTabPress(); // ✅ closes modal when any other tab is pressed
+						onTabPress?.(); // ✅ closes modal when any other tab is pressed
 						navigation.navigate(route.name as never);
 					}
 				};
 
 				return (
 					<Pressable key={route.key} onPress={onPress} style={styles.tabItem}>
-						<View style={styles.iconContainer}>{icons[route.name]({ color })}</View>
+						<View style={styles.iconContainer}>{icons[route.name]?.({ color })}</View>
 						<Text style={[styles.tabLabel, { color }]} numberOfLines={1} adjustsFontSizeToFit>
 							{label}
 						</Text>

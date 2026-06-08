@@ -76,7 +76,6 @@
 		let chart;
 
 		function createChart(payload) {
-			console.log("INIT payload.yUnit =", payload.yUnit);
 			const ctx = document.getElementById("chart").getContext("2d");
 
 			const datasets = payload.series.map(series => ({

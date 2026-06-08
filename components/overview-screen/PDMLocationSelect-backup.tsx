@@ -9,7 +9,6 @@ import LocationPickerModal from "../create-work-order/LocationPickerModal";
 import { DateDropDownIcon } from "@/constants/IconProvider";
 
 export default function PDMDashboardLocationSelect() {
-	console.log('pdm location')
 	const [open, setOpen] = useState<boolean | null>(false);
 	// state (read-only)
 	const parentLocations = useOverviewStore(s => s.parentLocations);
@@ -38,7 +37,6 @@ export default function PDMDashboardLocationSelect() {
 	// 🧩 Fetch all locations initially and select first parent
 	const fetchLocations = async () => {
 		const res = await fetchKPIFilterLocations();
-		console.log('res kpi = ', res);
 		if (res.status) {
 			setParentLocations(res.data.levelOneLocations);
 
@@ -52,14 +50,11 @@ export default function PDMDashboardLocationSelect() {
 
 	// 🧠 When parent changes — fetch its child locations
 	useEffect(() => {
-		// console.log('parent changes')
 		if (!parentSelectionId) return;
 
 		const fetchChildsForParent = async () => {
 			try {
 				const childs = await fetchParentLocationDetails(parentSelectionId, "parent");
-				// console.log('childs = ', childs);
-
 				// 🧠 CASE 1: API returns success but "status": false (no data found)
 				if (!childs?.status || !Array.isArray(childs.data) || childs.data.length === 0) {
 					handleNoChildData();
@@ -130,10 +125,7 @@ export default function PDMDashboardLocationSelect() {
 			levelTwoLocations: childIds || childLocations.map((i) => i.id),
 		};
 
-		// console.log('payload child assets = ', payload);
-
 		const childAssetsRes = await childAssetsAgainstLocation(payload);
-		// console.log('childAssetsRes = ', childAssetsRes);
 		if (childAssetsRes?.status && Array.isArray(childAssetsRes.data?.assetList)) {
 			setChildAssets(childAssetsRes.data.assetList);
 			return;
@@ -159,16 +151,13 @@ export default function PDMDashboardLocationSelect() {
 			non_electric_asset: [],
 			top_level_asset: childAssets.filter(item => Boolean(item.top_level)).map(item => item.id),
 		};
-		// console.log('payload = ', payload);
 		try {
 			const res = await assetHealthKPIHistory(payload);
-			console.log('res = available = ', res)
 			if (res.data) {
 				setAssetKPIHistory(res.data);
 				return;
 			}
 		} catch (e) {
-			console.log('res = error = ', e);
 		}
 
 		// Clear stale KPI history when API returns no data / failure

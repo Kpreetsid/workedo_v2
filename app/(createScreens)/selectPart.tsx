@@ -17,10 +17,10 @@ const width = Dimensions.get("window").width;
 
 export default function SelectPart({ showHeader = true, selection = true }: PartInterface) {
 	const [parts, setParts] = useState<any[]>([]);
-	const { formData, setFormValue } = usePreventiveStore();
+	const { parts: storeParts, setPreventiveValue } = usePreventiveStore();
 
 	// ✅ Load previously selected parts from store
-	const [selectedParts, setSelectedParts] = useState<any[]>(formData.parts || []);
+	const [selectedParts, setSelectedParts] = useState<any[]>(storeParts || []);
 
 	useEffect(() => {
 		fetchParts();
@@ -52,7 +52,7 @@ export default function SelectPart({ showHeader = true, selection = true }: Part
 		if (selectedParts.length === 0) {
 			return;
 		}
-		setFormValue("parts", selectedParts);
+		setPreventiveValue("parts", selectedParts);
 		router.back();
 	};
 

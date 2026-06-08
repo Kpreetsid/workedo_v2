@@ -25,7 +25,6 @@ export default function AssetDataChart({
 	const lock = useGestureLock((s) => s.lock);
 	const unlock = useGestureLock((s) => s.unlock);
 
-	// console.log('chart series in assets data chart =  = ', chartSeries)
 	console.log('chart series = ', Array.isArray(chartSeries) ? chartSeries.map((s: any) => ({ axis: s?.axis, unit: s?.unit })) : []);
 
 	// ✅ SAFELY sanitize once (no hooks involved)
@@ -190,7 +189,7 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 	},
 	overlay: {
-		...StyleSheet.absoluteFillObject,
+		...StyleSheet.absoluteFill as any,
 		justifyContent: "center",
 		alignItems: "center",
 		backgroundColor: "rgba(255,255,255,0.8)",

@@ -58,8 +58,6 @@ export default function WorkOrderSummary() {
 				setSelectedBar(null);
 				return;
 			}
-			// console.log('payload = ', selectedAssetsFormatted);
-
 
 			let finalPayload: any = {};
 			// prepare for payload
@@ -77,20 +75,13 @@ export default function WorkOrderSummary() {
 
 			finalPayload.assetIds = selectedAssetsFormatted
 
-			// console.log('final payload = ', finalPayload);
-
-
 			const res = await monthlyCount(
 				finalPayload.startDate,
 				finalPayload.endDate,
 				selectedAssetsFormatted
 			);
 			if (res?.status && Array.isArray(res?.data) && res?.data.length > 0) {
-				console.log('res WO SUMMARY = ', res?.data);
-
 				const barData = transformToBarData(res?.data);
-				// console.log('barData ', barData);
-
 				setWOSummaryData(barData)
 				return;
 			}
@@ -98,7 +89,6 @@ export default function WorkOrderSummary() {
 			setWOSummaryData(null);
 			setSelectedBar(null);
 		} catch (e) {
-			// console.log('e in status = ', e);
 			setWOSummaryData(null);
 			setSelectedBar(null);
 		}
@@ -146,7 +136,6 @@ export default function WorkOrderSummary() {
 
 						// ⭐ ADD X-AXIS LABELS HERE
 						xAxisLabelTexts={woSummaryData.map((item: any) => {
-							// console.log('item = ', item)
 							return item.date
 						})}
 						xAxisLabelTextStyle={styles.axisLabel}

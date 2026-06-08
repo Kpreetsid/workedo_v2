@@ -21,7 +21,7 @@ const collectParentAssetIds = (assets: LocationAsset[]) =>
 
 const countAssetNodes = (assets: LocationAsset[]): number =>
 	assets.reduce((total, asset) => {
-		const childCount = asset.childs?.length ? countAssetNodes(asset.childs as LocationAsset[]) : 0;
+		const childCount = (asset as any).childs?.length ? countAssetNodes((asset as any).childs as LocationAsset[]) : 0;
 		return total + 1 + childCount;
 	}, 0);
 

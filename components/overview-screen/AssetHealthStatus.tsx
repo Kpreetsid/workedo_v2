@@ -25,7 +25,6 @@ export default function AssetHealthStatus() {
 		color: string;
 	} | null>(null);
 
-	// console.log('asset kpi history in health status = ', assetKPIHistory)
 	const [hidden, setHidden] = React.useState<string[]>([]);
 
 	// ✅ Local derived breakup state
@@ -75,7 +74,7 @@ export default function AssetHealthStatus() {
 
 	const pieDataRaw = breakup.map(item => ({
 		value: item.value,
-		color: colorMap[item.name],
+		color: colorMap[item.name] || "#000",
 		text: item.name,
 	}));
 
@@ -93,8 +92,6 @@ export default function AssetHealthStatus() {
 		}))
 		: null;
 
-
-	console.log('finalChartData = ', finalChartData);
 
 	// 🧮 Compute total for normalization
 	const total = finalChartData?.reduce((sum, s) => sum + s.value, 0) || 1;

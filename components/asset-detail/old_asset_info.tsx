@@ -77,7 +77,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 			payload.push(snap.id);
 		})
 
-		console.log('payload = ', payload);
+		
 		const endpointsRes = await getAllEndpoints(payload);
 		console.log('res endpoints = ', endpointsRes);
 
@@ -174,7 +174,7 @@ export default function AssetInfoTab({ asset_data }: AssetInfoTabProps) {
 				<DetailPill icon="location-dot" label="Location" value="New Delhi" iconColor="#EE2E6B" />
 			</View> */}
 
-			<SelectEndpoint endpointSelected={endpointSelected} endpoints={endpoints} />
+			<SelectEndpoint endpointSelected={endpointSelected} endpoints={endpoints} asset_data={asset_data} onEndpointSelect={() => {}} />
 
 			{/* <InfoCards /> */}
 

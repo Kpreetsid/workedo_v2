@@ -103,7 +103,6 @@ const AssetsCard = ({ asset, isChild = false, level = 0, handleDeleteAsset, hand
 						{hasChildren && (
 							<Pressable
 								onPress={() => {
-									console.log('expanding')
 									setExpandedAssetId(isExpanded ? null : asset.id);
 								}}
 							>

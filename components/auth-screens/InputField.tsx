@@ -103,7 +103,6 @@ export default function Field({
 								visible={modalVisible}
 								onClose={() => setModalVisible(false)}
 								onSelect={(country) => {
-									console.log(country)
 									const digitsOnly = value?.number ?? ""; // we already stored number separated
 
 									onChange({

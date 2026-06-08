@@ -39,7 +39,7 @@ export default function CreatePart() {
 	const fetchPartTypes = async () => {
 		try {
 			const res = await getPartTypes();
-			console.log('res = ', res);
+			
 			if(res.status) {
 				setPartTypes(res?.data || []);
 			}
@@ -103,7 +103,7 @@ export default function CreatePart() {
 		const payload = {
 			part_name: data.part_name.trim(),
 			part_number: data.part_number.trim(),
-			part_type: partTypes.find((part: any) => part.name === data.selected_part)?.id || "",
+			part_type: (partTypes as any[]).find((part: any) => part.name === data.selected_part)?.id || "",
 			description: data.description.trim(),
 			quantity: Number(data.available_quantity) || 0,
 			min_quantity: Number(data.min_stock_quantity) || 0,
@@ -118,7 +118,7 @@ export default function CreatePart() {
 		try {
 			if (params && params.data) {
 				const res = await updateFullPart(partId, payload);
-				console.log("✅ Response:", res);
+				
 				if (res?.status) {
 					ToastAndroid.show("Part updated successfully!", ToastAndroid.SHORT);
 					usePartFormStore.getState().resetPartForm();
@@ -128,7 +128,7 @@ export default function CreatePart() {
 				}
 			} else {
 				const res = await createPart(payload);
-				console.log("✅ Response:", res);
+				
 				if (res?.status) {
 					ToastAndroid.show("Part created successfully!", ToastAndroid.SHORT);
 					router.back();

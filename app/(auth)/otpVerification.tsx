@@ -36,6 +36,7 @@ export default function OTPVerification() {
 			const interval = setInterval(() => setTimer((t) => t - 1), 1000);
 			return () => clearInterval(interval);
 		}
+		return undefined;
 	}, [timer]);
 
 	useEffect(() => {

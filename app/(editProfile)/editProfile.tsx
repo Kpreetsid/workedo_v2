@@ -80,9 +80,7 @@ const EditProfile = () => {
 
 	const onSubmit = async (formValues: any) => {
 		const payload = buildUpdatePayload(formValues, user);
-		console.log('payload to update = ', payload);
 		const res = await updateUserInfo(payload, user?.id);
-		console.log('res = ', res);
 		if (res.status) {
 			setUser(res.data);
 			router.back();

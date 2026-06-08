@@ -117,7 +117,7 @@ export default function PDMDashboardLocationSelect() {
 			non_electric_asset: [],
 			top_level_asset: selectedAssets,
 		};
-		console.log('payload = ', payload);
+		
 		try {
 			const res = await assetHealthKPIHistory(payload);
 			console.log('res = available = ', res)

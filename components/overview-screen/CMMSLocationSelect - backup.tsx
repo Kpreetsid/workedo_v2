@@ -10,7 +10,6 @@ import DateRangeCalendar from "./DateRangeCalendar";
 import { useDateRangeStore } from "@/src/store/useDateRangeStore";
 
 export default function CMMSDashboardLocationSelect() {
-	console.log('cmms location')
 	const {
 		parentLocations,
 		childLocations,
@@ -38,7 +37,6 @@ export default function CMMSDashboardLocationSelect() {
 	// 🧩 Fetch all locations initially and select first parent
 	const fetchLocations = async () => {
 		const res = await fetchKPIFilterLocations();
-		console.log('res kpi = ', res);
 		if (res.status) {
 			setParentLocations(res.data.levelOneLocations);
 
@@ -49,13 +47,11 @@ export default function CMMSDashboardLocationSelect() {
 
 	// 🧠 When parent changes — fetch its child locations
 	useEffect(() => {
-		// console.log('parent changes')
 		if (!parentSelectionId) return;
 
 		const fetchChildsForParent = async () => {
 			try {
 				const childs = await fetchParentLocationDetails1(parentSelectionId, "parent");
-				console.log('childs = ', childs);
 
 				// 🧠 CASE 1: API returns success but "status": false (no data found)
 				if (!childs?.status || !Array.isArray(childs.data) || childs.data.length === 0) {
@@ -115,37 +111,16 @@ export default function CMMSDashboardLocationSelect() {
 
 	// Fetch child assets for a parent + selected children
 	const fetchChildAssets = async (parentId?: string, childIds?: string[]) => {
-		// console.log('parentId ids = ', parentId)
-		// console.log('chld ids = ', childIds)
 		const payload = {
 			levelOneLocations: [parentId || parentLocations[0]?.id],
 			levelTwoLocations: childIds || childLocations.map((i) => i.id),
 		};
 
-		console.log('payload for child assets = ', payload);
-
 		const childAssetsRes = await childAssetsAgainstLocation(payload);
-		console.log('childAssetsRes = ', childAssetsRes);
 		if (childAssetsRes.status) {
 			setChildAssets(childAssetsRes.data.assetList);
 		}
 	};
-
-	// // When child assets are ready, fetch KPI data
-	// useEffect(() => {
-	// 	if (!childAssets.length) return;
-	// 	fetchAssetHealthKPIHistory();
-	// }, [childAssets]);
-
-	// const fetchAssetHealthKPIHistory = async () => {
-	// 	const payload = {
-	// 		org_id: user?.account_id,
-	// 		asset_list: childAssets.map((item) => item.id),
-	// 	};
-	// 	// console.log('payload = ', payload);
-	// 	const res = await assetHealthKPIHistory(payload);
-	// 	setAssetKPIHistory(res.data);
-	// };
 
 	return (
 		<>
@@ -176,7 +151,6 @@ export default function CMMSDashboardLocationSelect() {
 				)}
 
 				<Pressable style={styles.iconView} onPress={() => {
-					console.log('pressed')
 					setShowCalendar(true)
 				}}>
 					<Ionicons color={"#777"} name="calendar" size={20} />

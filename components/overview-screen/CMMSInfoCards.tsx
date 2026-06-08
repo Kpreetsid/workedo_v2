@@ -11,13 +11,10 @@ import { collectSelectedAssetIdsWithChildren, type SelectableTreeNode } from "@/
 export default function CMMSInfoCards() {
 	const childAssets = useCMMSStore((state) => state.childAssets);
 	const selectedAssets = useCMMSStore((state) => state.selectedAssets);
-	// console.log('selected assets in wo status = ', selectedAssets);
-
 	const [woInfoCards, setWOInfoCards] = useState<any>(null);
 	const { startDate, endDate, rangeVersion } = useDateRangeStore();
 
 	useEffect(() => {
-		// console.log('because of start date - ', startDate, selectedAssets);
 		if (selectedAssets.length > 0 && childAssets.length > 0) {
 			fetchInfoCards();
 			return;
@@ -56,18 +53,14 @@ export default function CMMSInfoCards() {
 
 			finalPayload.assetIds = selectedAssetsFormatted
 
-			console.log('final payload info cards = ', finalPayload);
-
 			const res = await woSummary(finalPayload);
 			if (res?.status && res?.data) {
-				console.log('res WO info cards = ', res?.data);
 				setWOInfoCards(res?.data)
 				return;
 			}
 
 			setWOInfoCards(null);
 		} catch (e) {
-			// console.log('e in status = ', e);
 			setWOInfoCards(null);
 		}
 	}

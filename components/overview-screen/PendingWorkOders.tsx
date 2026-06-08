@@ -55,46 +55,39 @@ export default function PendingWorkOrders() {
 			} else {
 				finalPayload.endDate = moment().format("YYYY-MM-DD") + timePart;
 			}
-
-			finalPayload.assetIds = selectedAssetsFormatted
-
-			// console.log('final payload pending work orders = ', finalPayload);
-
 			const res = await woPending(
 				finalPayload.startDate,
 				finalPayload.endDate,
 				selectedAssetsFormatted
 			);
 			if (res?.status && Array.isArray(res?.data)) {
-				// console.log('res = ', res?.data);
 				setPendingWO([...res.data].reverse())
 				return;
 			}
 
 			setPendingWO([]);
 		} catch (e) {
-			// console.log('e in status = ', e);
 			setPendingWO([]);
 		}
 	}
 
 	return (
-		<>
+		<View style={{ paddingHorizontal: 20, paddingBottom: 50 }}>
 			{
-				pendingWO.length > 0 &&
-				<FlatList
-					ListHeaderComponent={<Text style={styles.cardTitle}>Pending Work Orders</Text>}
-					data={pendingWO}
-					keyExtractor={(item, index) => String(item?.id ?? item?._id ?? index)}
-					contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 50 }}
-					ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
-					renderItem={({ item }) => <WorkOrderCard item={item} />}
-					showsVerticalScrollIndicator={false}
-					scrollEnabled={false}
-					ListEmptyComponent={<Text style={[styles.detailValue, { fontSize: 16, alignSelf: 'center', marginVertical: 10 }]}>No Pending Work Orders</Text>}
-				/>
+				pendingWO.length > 0 ? (
+					<>
+						<Text style={styles.cardTitle}>Pending Work Orders</Text>
+						{pendingWO.map((item, index) => (
+							<View key={item?.id ?? item?._id ?? index} style={{ marginBottom: index === pendingWO.length - 1 ? 0 : 16 }}>
+								<WorkOrderCard item={item} />
+							</View>
+						))}
+					</>
+				) : (
+					<Text style={[styles.detailValue, { fontSize: 16, alignSelf: 'center', marginVertical: 10 }]}>No Pending Work Orders</Text>
+				)
 			}
-		</>
+		</View>
 	);
 }
 

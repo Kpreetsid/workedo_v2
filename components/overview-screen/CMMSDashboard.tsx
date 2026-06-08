@@ -12,25 +12,15 @@ import { useCallback, useState } from "react"
 import { useFocusEffect } from "expo-router"
 
 export default function CMMSDashboard() {
-	console.log('cmms dashboard')
 	const [refreshing, setRefreshing] = useState(false);
 	const [refreshKey, setRefreshKey] = useState(0);
 
 	const onRefresh = useCallback(() => {
 		setRefreshing(true);
-
-		// 🔥 Force remount of ALL children
 		setRefreshKey((prev) => prev + 1);
 
 		setRefreshing(false);
 	}, []);
-
-	// 🔥 Auto refresh when screen is focused
-	// useFocusEffect(
-	// 	useCallback(() => {
-	// 		setRefreshKey((k) => k + 1);
-	// 	}, [])
-	// );
 
 	return (
 		<FlashList

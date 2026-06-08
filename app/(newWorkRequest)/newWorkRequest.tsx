@@ -133,7 +133,7 @@ export default function NewWorkRequest() {
 			if (isEditMode) {
 				console.log('data.id = ', requestId)
 				const res = await editWorkRequest(requestId, payload);
-				console.log("✅ Response:", res);
+				
 				if (res?.status) {
 					ToastAndroid.show("Work Order updated successfully!", ToastAndroid.SHORT);
 					useWorkRequestStore.getState().resetWorkRequestForm();
@@ -141,7 +141,7 @@ export default function NewWorkRequest() {
 				}
 			} else {
 				const res = await createWorkRequest(payload);
-				console.log("✅ Response:", res);
+				
 				if (res?.status) {
 					ToastAndroid.show("Work Order created successfully!", ToastAndroid.SHORT);
 					useWorkRequestStore.getState().resetWorkRequestForm();

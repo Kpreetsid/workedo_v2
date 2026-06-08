@@ -58,7 +58,6 @@ const AssignSectionNew = ({ type, lockLocation = false }: { type: "workOrders" |
 					store={useWorkOrderStore}
 					setterName="setWorkForm"
 					openPicker={() => {
-						console.log('opening asset')
 						setVisibleAsset(true)
 					}}
 				/>

@@ -21,7 +21,6 @@ export default function RejectedRequests({
 	refreshing,
 	onRefresh,
 }: Props) {
-	console.log('in rejected')
 	if (loading) {
 		return <ActivityIndicator size="large" />;
 	}

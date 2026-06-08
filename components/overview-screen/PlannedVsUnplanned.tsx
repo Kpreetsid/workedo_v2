@@ -79,20 +79,14 @@ export default function PlannedVsUnplanned() {
 
 			finalPayload.assetIds = selectedAssetsFormatted
 
-			console.log('final payload planned = ', finalPayload);
-
 			const res = await plannedUnplanned(
 				finalPayload.startDate,
 				finalPayload.endDate,
 				selectedAssetsFormatted
 			);
 
-			// console.log('res planned - ', res);
-
 			if (res?.status && res?.data?.date?.length) {
 				const input = res.data;
-				// console.log('res data = ', res?.data)
-
 				const work = input.date.map((date: string, index: number) => ({
 					value: input["Work Order"][index],
 					label: date,
@@ -102,21 +96,6 @@ export default function PlannedVsUnplanned() {
 					value: input["Preventive"][index],
 					label: date,
 				}));
-
-				// const work = input.date.map((date: string, index: number) => ({
-				// 	value: input["Work Order"][index] - 1,
-				// 	label: date,
-				// }));
-
-				// const prev = input.date.map((date: string, index: number) => ({
-				// 	value: input["Preventive"][index] - 1,
-				// 	label: date,
-				// }));
-
-				console.log('work = ', work)
-				console.log('prev = ', prev)
-
-				// console.log('work daiofnosdnfod', work)
 				setWorkOrderData(work as any)
 				setPreventiveData(prev as any);
 
@@ -138,17 +117,11 @@ export default function PlannedVsUnplanned() {
 				// CALCULATE SPACING BASED ON POINT COUNT
 				// ------------------------------
 				const totalPoints = work.length;
-				// console.log('totalpo = ', totalPoints)
 				const intervals = Math.max(totalPoints - 1, 1);
-				// console.log('intervals = ', intervals)
-
 				// leave 40px padding (20px left, 20px right)
 				const usableWidth = SCREEN_WIDTH - 40;
-
 				// spacing for LineChart
 				const spacing = (usableWidth / intervals) - (100 / intervals);
-				// console.log('spacing = ', spacing)
-
 				setSpacingValue(spacing);
 
 				const labels = input.date;
@@ -174,7 +147,6 @@ export default function PlannedVsUnplanned() {
 			setChartPayload(null);
 			setNoData(true);
 		} catch (e: any) {
-			// console.log("fetch error = ", e);
 
 			if (!e.status) {
 				if (e.message === "No data found") {

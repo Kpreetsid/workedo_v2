@@ -158,7 +158,7 @@ export default function CreateNewEndPoint() {
 				router.back();
 			}
 		} catch (e: any) {
-			console.log('error = ', e);
+			
 			ToastAndroid.show(e?.message, ToastAndroid.SHORT);
 		}
 

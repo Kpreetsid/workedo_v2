@@ -21,7 +21,6 @@ export default function PendingRequests({
 	refreshing,
 	onRefresh,
 }: Props) {
-	console.log('in pending')
 	if (loading) {
 		return <ActivityIndicator size="large" />;
 	}

@@ -25,7 +25,7 @@ export default function AssetHealthStatusPieChart() {
 	const arcPadding = 1.5;
 
 	// 🧠 Fallback to empty array if data isn't available yet
-	const breakup = assetKPIHistory?.health_breakup_percentage ?? [];
+	const breakup = assetKPIHistory?.top_level_asset?.health_breakup_percentage ?? [];
 
 	// 🎨 Color mapping for each health type
 	const colorMap: Record<string, string> = {
@@ -37,14 +37,14 @@ export default function AssetHealthStatusPieChart() {
 	};
 
 
-	const pieDataRaw = breakup.map(item => ({
+	const pieDataRaw = breakup.map((item: any) => ({
 		value: item.value,
-		color: colorMap[item.name],
+		color: colorMap[item.name] || "#000",
 		text: item.name,
 	}));
 
 	// 2) Filter only for the chart
-	const chartDataRaw = pieDataRaw.filter(item => !hidden.includes(item.text));
+	const chartDataRaw = pieDataRaw.filter((item: any) => !hidden.includes(item.text));
 
 	return (
 		<View style={styles.container}>
@@ -91,7 +91,7 @@ export default function AssetHealthStatusPieChart() {
 				}
 
 				<View>
-					{breakup.map((item, index) => (
+					{breakup.map((item: any, index: number) => (
 						<TouchableOpacity
 							key={index}
 							onPress={() => {

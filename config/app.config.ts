@@ -1,4 +1,4 @@
-export type AppEnvironment = "development" | "staging" | "production";
+export type AppEnvironment = "development" | "production";
 
 type ServiceUrls = {
   cmmsBase: string;
@@ -10,13 +10,6 @@ type ServiceUrls = {
 
 const ENVIRONMENTS: Record<AppEnvironment, ServiceUrls> = {
   development: {
-    cmmsBase: "https://new.presageinsights.ai/cmms_express/",
-    cmmsApi: "https://new.presageinsights.ai/cmms_express/api/",
-    processorApi: "https://staging.presageinsights.ai/api/",
-    validateApi: "https://validate.presageinsights.ai/general/api/",
-    fallbackAssetImage: "https://new.presageinsights.ai/cmms/assets/images/company.jpg",
-  },
-  staging: {
     cmmsBase: "https://new.presageinsights.ai/cmms_express/",
     cmmsApi: "https://new.presageinsights.ai/cmms_express/api/",
     processorApi: "https://staging.presageinsights.ai/api/",

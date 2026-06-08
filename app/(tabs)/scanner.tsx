@@ -145,8 +145,8 @@ const resolveScannerTarget = (rawValue: string): ScannerTarget | null => {
 	if (!payload) {
 		const prefixMatch = trimmed.match(/^(asset|location|work[_-]?order|workorder)\s*[:/]\s*(.+)$/i);
 		if (prefixMatch) {
-			const kind = prefixMatch[1].toLowerCase().replace(/[_-]/g, "");
-			const value = prefixMatch[2].trim();
+			const kind = prefixMatch[1]!.toLowerCase().replace(/[_-]/g, "");
+			const value = prefixMatch[2]!.trim();
 			if (kind === "asset") {
 				return { pathname: "/assetDetail", params: { id: value } };
 			}
@@ -305,7 +305,7 @@ export default function ScannerScreen() {
 					{!scanned ? (
 						permission?.granted && (
 							<CameraView
-								style={StyleSheet.absoluteFillObject}
+								style={StyleSheet.absoluteFill}
 								facing="back"
 								onBarcodeScanned={handleBarCodeScanned}
 								barcodeScannerSettings={{

@@ -28,12 +28,6 @@ apiClientDemo.interceptors.request.use(async (config) => {
 
     const method = config.method?.toUpperCase() || 'GET';
     const requestUrl = getRequestUrl(config.baseURL, config.url);
-
-    console.log(`[apiClientDemo][Request] ${method} ${requestUrl}`, {
-        payload: config.data,
-        params: config.params,
-    });
-
     return config;
 });
 
@@ -42,9 +36,6 @@ apiClientDemo.interceptors.response.use(
     (response) => {
         const method = response.config?.method?.toUpperCase() || 'GET';
         const requestUrl = getRequestUrl(response.config?.baseURL, response.config?.url);
-
-        // console.log(`[apiClientDemo][Response] ${method} ${requestUrl}`, response.data);
-
         return response;
     },
     (error) => {

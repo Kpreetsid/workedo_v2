@@ -43,12 +43,8 @@ const AssignInput: FC<AssignInputProps> = ({
 	// ✅ Call Zustand hook only if both store and field exist
 	let value: any = null;
 	if (store && field) {
-		// console.log('store = ', store)
-		// console.log('field = ', field)
-
 		try {
 			value = store((state: any) => state[field]);
-			// console.log('store value = ', value);
 		} catch (err) {
 			value = null;
 		}
@@ -69,8 +65,6 @@ const AssignInput: FC<AssignInputProps> = ({
 		} else {
 			displayValue = value;
 		}
-
-		// console.log('display value = ', displayValue)
 	}
 
 	return (

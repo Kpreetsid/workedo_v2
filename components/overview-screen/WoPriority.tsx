@@ -69,7 +69,6 @@ export default function WoPriority() {
 				setNoData(false);
 				return;
 			}
-			// console.log('payload = ', selectedAssetsFormatted);
 
 
 			let finalPayload: any = {};
@@ -88,15 +87,11 @@ export default function WoPriority() {
 
 			finalPayload.assetIds = selectedAssetsFormatted
 
-			// console.log('final payload = ', finalPayload);
-
-
 			const res = await woPriority(
 				finalPayload.startDate,
 				finalPayload.endDate,
 				selectedAssetsFormatted
 			);
-			// console.log('res = ', res);
 			if (res?.status && Array.isArray(res?.data) && res?.data.length > 0) {
 
 				// 🎨 Color mapping for each health type
@@ -123,7 +118,6 @@ export default function WoPriority() {
 				const chartDataRaw = pieDataRaw.filter(
 					(item: any) => !hidden.includes(item.text)
 				);
-				// console.log('chart data raw = ', chartDataRaw)
 				setChartDataFinal(chartDataRaw);
 				setNoData(false);
 				return;
@@ -135,8 +129,6 @@ export default function WoPriority() {
 			setSelectedSlice(null);
 			setNoData(true);
 		} catch (e: any) {
-			// console.log('e in priority = ', e);
-
 			if (!e.status) {
 				if (e.message === "No data found") {
 					setChartDataFinal([]);
@@ -192,7 +184,6 @@ export default function WoPriority() {
 
 	useEffect(() => {
 		if (chartDataFinal) {
-			// console.log('this is chart data final = ', chartDataFinal);
 		}
 	}, [chartDataFinal])
 

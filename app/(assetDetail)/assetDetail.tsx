@@ -22,11 +22,6 @@ export default function AssetDetailScreen() {
 
 	const [assetData, setAssetData] = useState<Asset | null>(null);
 
-	// useEffect(() => {
-	// 	console.log('id = ', id);
-	// 	fetchAssetData();
-	// }, [id])
-
 	useFocusEffect(
 		useCallback(() => {
 			fetchAssetData();
@@ -34,15 +29,12 @@ export default function AssetDetailScreen() {
 	)
 
 	const fetchAssetData = async () => {
-		// console.log('fetching asset details', id);
 		try {
 			const assetDataRes = await getAssetData(id);
-			console.log('res asset data = ', assetDataRes);
 			if (assetDataRes.status) {
 				setAssetData(assetDataRes.data[0]);
 			}
 		} catch (err) {
-			// console.error("Error fetching asset details:", err);
 			ToastAndroid.show("Failed to load asset details.", ToastAndroid.SHORT);
 		}
 	}
@@ -54,7 +46,6 @@ export default function AssetDetailScreen() {
 	}, [id]);
 
 	const handleEditAsset = () => {
-		// console.log('handleEditAsset');
 		if (!assetData) return;
 
 		router.push({

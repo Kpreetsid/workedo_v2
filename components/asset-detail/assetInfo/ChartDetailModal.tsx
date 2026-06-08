@@ -147,7 +147,6 @@ export default function ChartDetailModal({
 	}, [visible, signalType, axis, activeTab, selectedPoint]);
 
 	const fetchData = (payload: any) => {
-		// console.log(signalType, payload.axis)
 		switch (signalType) {
 			case "velocity":
 				return getVelocityData(payload);
@@ -169,11 +168,6 @@ export default function ChartDetailModal({
 				);
 
 				const values = keys.map(k => obj[k]);
-
-				// console.log(keys)
-				// console.log(values)
-
-				// const [[axis1, raw]] = Object.entries(obj);
 
 				return {
 					axis: keys[0],
@@ -205,7 +199,7 @@ export default function ChartDetailModal({
 				axis: a.axis,
 				data: a.values,
 				fs: a.fs,
-				color: AXIS_COLORS[a.axis.toLowerCase()],
+				color: AXIS_COLORS[a.axis?.toLowerCase() || ''],
 			}));
 
 			if (activeTab === 'spectrum') {
@@ -292,7 +286,7 @@ export default function ChartDetailModal({
 				axis: a.axis,
 				data: a.values,
 				fs: a.fs,
-				color: AXIS_COLORS[a.axis.toLowerCase()],
+				color: AXIS_COLORS[a.axis?.toLowerCase() || ''],
 			}));
 
 			if (activeTab === 'spectrum') {
@@ -413,7 +407,7 @@ export default function ChartDetailModal({
 				axis: a.axis,
 				data: a.values,
 				fs: a.fs,
-				color: AXIS_COLORS[a.axis.toLowerCase()],
+				color: AXIS_COLORS[a.axis?.toLowerCase() || ''],
 			}));
 
 			if (activeTab === 'spectrum') {

@@ -173,7 +173,6 @@ export default function partDetail() {
 
       ToastAndroid.show("Failed to update stock", ToastAndroid.SHORT);
     } catch (e: any) {
-      console.log(e);
       ToastAndroid.show(e?.message || "Failed to update stock", ToastAndroid.SHORT);
     } finally {
       setSavingStock(false);
@@ -185,7 +184,6 @@ export default function partDetail() {
     try {
       await getPartDetails();
     } catch (e: any) {
-      console.log(e);
     } finally {
       setRefreshing(false);
     }

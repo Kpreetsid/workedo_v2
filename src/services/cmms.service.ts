@@ -3,7 +3,6 @@ import { endpoints } from "../api/endpoints";
 
 export const woStatus = async (fromDate: string, toDate: string, assetIds: string) => {
     const url = `${endpoints.cmms.woStatus}`;
-    // console.log('url = ', url);
     let toSend = {
         fromDate: fromDate,
         toDate: toDate,
@@ -14,7 +13,6 @@ export const woStatus = async (fromDate: string, toDate: string, assetIds: strin
 
 export const woPriority = async (fromDate: string, toDate: string, assetIds: string) => {
     const url = `${endpoints.cmms.woPriority}`;
-    // console.log('url = ', url);
     let toSend = {
         fromDate: fromDate,
         toDate: toDate,
@@ -25,7 +23,6 @@ export const woPriority = async (fromDate: string, toDate: string, assetIds: str
 
 export const monthlyCount = async (fromDate: string, toDate: string, assetIds: string) => {
     const url = `${endpoints.cmms.monthlyCount}`;
-    // console.log('url = ', url);
     let toSend = {
         fromDate: fromDate,
         toDate: toDate,
@@ -36,7 +33,6 @@ export const monthlyCount = async (fromDate: string, toDate: string, assetIds: s
 
 export const plannedUnplanned = async (fromDate: string, toDate: string, assetIds: string) => {
     const url = `${endpoints.cmms.plannedUnplanned}`;
-    // console.log('url = ', url);
     let toSend = {
         fromDate: fromDate,
         toDate: toDate,
@@ -47,7 +43,6 @@ export const plannedUnplanned = async (fromDate: string, toDate: string, assetId
 
 export const woSummary = async (payload: any) => {
     const url = `${endpoints.cmms.woSummary}`;
-    // console.log('url = ', url);
     let toSend = {
         fromDate: payload.startDate,
         toDate: payload.endDate,
@@ -59,7 +54,6 @@ export const woSummary = async (payload: any) => {
 
 export const woPending = async (fromDate: string, toDate: string, assetIds: string) => {
     const url = `${endpoints.cmms.woPending}`;
-    // console.log('url = ', url);
     let toSend = {
         fromDate: fromDate,
         toDate: toDate,

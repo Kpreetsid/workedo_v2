@@ -8,7 +8,6 @@ export default function TabsLayout() {
 	const [modalVisible, setModalVisible] = useState(false);
 
 	useEffect(() => {
-		console.log('modal visible', modalVisible);
 	}, [modalVisible]);
 
 	// 🔥 Handle Android hardware back

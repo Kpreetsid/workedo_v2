@@ -27,7 +27,7 @@ const createLocation = () => {
 
 	// typed, parsed object
 	const data: createLocationParams = {
-		location_data: parseJsonRouteParam<Location>(location_data),
+		location_data: parseJsonRouteParam<Location>(location_data) as any,
 		isEdit: getRouteParamString(isEdit),
 		mode: getRouteParamString(mode)
 	};

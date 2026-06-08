@@ -31,7 +31,6 @@ export const getParts = async (location_id?: string) => {
     if (location_id) {
         url = `${endpoints.parts.getParts}?location_id=${location_id}`;
     }
-    console.log(url)
     return await sendRequest("GET", url);
 };
 

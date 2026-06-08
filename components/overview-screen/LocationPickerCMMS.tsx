@@ -47,7 +47,6 @@ export default function LocationPickerCMMS({ visible, onClose }: LocationPickerC
 				setLocations((res.data ?? []) as LocationNode[]);
 			}
 		} catch (e: any) {
-			console.log("error locations = ", e);
 		} finally {
 			setLoading(false);
 		}

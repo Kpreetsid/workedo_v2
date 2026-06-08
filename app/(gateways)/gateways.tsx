@@ -53,7 +53,7 @@ export default function Gateways() {
 				setSensorsList(sensorsRes?.data);
 			}
 		} catch (error) {
-			console.log('error = ', error);
+			
 		}
 	}
 
@@ -71,10 +71,10 @@ export default function Gateways() {
 	const fetchGateways = async (payload: any) => {
 		try {
 			const resp = await getGateways(payload);
-			console.log('resp = ', resp);
+			
 			setGateways(resp?.data?.mac_id_list.reverse());
 		} catch (error) {
-			console.log('error = ', error);
+			
 		}
 	}
 
@@ -101,11 +101,11 @@ export default function Gateways() {
 									gateway_mac_id: item?.gateway_mac_id
 								}
 								const resp = await deleteGateway(payload);
-								console.log('resp = ', resp);
+								
 								ToastAndroid.show(resp?.message, ToastAndroid.SHORT);
 								setGateways(gateways.filter((g) => g.gateway_mac_id !== item?.gateway_mac_id));
 							} catch (error) {
-								console.log('error = ', error);
+								
 							}
 
 						},

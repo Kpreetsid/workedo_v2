@@ -80,7 +80,7 @@ export default function MyAccount() {
 		console.log('payload to update = ', payload);
 		// return;
 		const res = await updateUserInfo(payload, user?.id);
-		console.log('res = ', res);
+		
 		if (res.status) {
 			setUser(res.data);
 			setEditVisible(false);

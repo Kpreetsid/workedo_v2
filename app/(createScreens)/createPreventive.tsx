@@ -406,7 +406,7 @@ export default function CreatePreventive() {
 		console.log('mode = ', mode);
 		console.log('field = ', field);
 
-		return String(schedule?.[mode]?.[field] ?? "1");
+		return String((mode && field && (schedule as any)?.[mode]?.[field]) ?? "1");
 	};
 
 	const handleRemovePart = (partId: string) => {

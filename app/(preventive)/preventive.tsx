@@ -41,14 +41,14 @@ export default function PreventivePage() {
 		setLoading(true)
 		try {
 			const resp = await getPreventives()
-			console.log('resp = ', resp);
+			
 			if (resp.status) {
 				setPreventives(resp?.data);
 				setLoading(false)
 			}
 		} catch (error) {
 			setLoading(false)
-			console.log('error = ', error);
+			
 		}
 	}
 
@@ -65,20 +65,15 @@ export default function PreventivePage() {
 					text: "Delete",
 					style: "destructive",
 					onPress: async () => {
-
-						console.log('deleting preventive = ', item);
-						// setDeleteLoading(true)
 						try {
 							const resp = await deletePreventive(item?.id);
-							console.log('resp = ', resp);
+							
 							if (resp?.status) {
 								ToastAndroid.show("Preventive Deleted", ToastAndroid.SHORT);
 								fetchPreventives();
 								// setDeleteLoading(false)
 							}
 						} catch (e) {
-							// setDeleteLoading(false)
-							console.log('error deleting = ', e);
 						}
 					},
 				},
@@ -181,7 +176,6 @@ export default function PreventivePage() {
 																				params: { data: JSON.stringify(item) }
 																			})
 																		} else if (index === 2) {
-																			console.log('in it delete = ', item);
 																			handleDeletePreventive?.(item);
 																		}
 																		setOpenPopoverId(null)

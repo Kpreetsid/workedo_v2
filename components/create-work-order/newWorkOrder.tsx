@@ -261,7 +261,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 			setPartStockValidationIssues(shortages);
 
 			if (shortages.length > 0) {
-				const primaryIssue = shortages[0];
+				const primaryIssue = shortages[0]!;
 				ToastAndroid.show(
 					shortages.length === 1
 						? `Insufficient stock for ${primaryIssue.part_name}. Required ${primaryIssue.requiredQuantity}, available ${primaryIssue.availableQuantity}.`
