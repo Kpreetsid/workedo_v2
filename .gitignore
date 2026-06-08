@@ -12,3 +12,4 @@ android/app/*.jks
 android/signing.properties
 *.keystore
 *.jks
+package-lock.json
