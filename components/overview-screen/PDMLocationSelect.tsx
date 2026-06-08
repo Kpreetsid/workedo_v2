@@ -50,7 +50,6 @@ const countSelectedLocations = (selectedIds: string[], locations: LocationNode[]
 };
 
 export default function PDMDashboardLocationSelect() {
-	console.log('pdm location')
 	const [open, setOpen] = useState(false);
 	const [assetOpen, setAssetOpen] = useState(false);
 	const [locations, setLocations] = useState<LocationNode[]>([]);
@@ -72,7 +71,6 @@ export default function PDMDashboardLocationSelect() {
 
 	const fetchLocationsTree = async () => {
 		const res = await locationTree();
-		console.log('res locations PDM = ', res?.data);
 		if (res?.data?.length > 0) {
 			setLocations(res.data as LocationNode[]);
 		}
@@ -84,7 +82,6 @@ export default function PDMDashboardLocationSelect() {
 
 	useEffect(() => {
 		if (parentLocations?.length > 0) {
-			console.log('location selected for PDM = ', parentLocations)
 			fetchAssetsForLocation()
 		}
 	}, [parentLocations])
@@ -95,12 +92,10 @@ export default function PDMDashboardLocationSelect() {
 			if (!locationIds) return;
 
 			const res = await assetTreeForSingleLocation(locationIds)
-			console.log('res assets for location = ', res?.data)
 			const fetchedAssets = (res?.data ?? []) as AssetNode[];
 			setChildAssets(fetchedAssets);
 			setSelectedAssets(collectParentAssetIds(fetchedAssets));
 		} catch (e: any) {
-			console.log('error assets for location = ', e)
 		}
 	}
 
@@ -120,13 +115,11 @@ export default function PDMDashboardLocationSelect() {
 		
 		try {
 			const res = await assetHealthKPIHistory(payload);
-			console.log('res = available = ', res)
 			if (res.data) {
 				setAssetKPIHistory(res.data);
 				return;
 			}
 		} catch (e) {
-			console.log('res = error = ', e);
 		}
 
 		// Clear stale KPI history when API returns no data / failure
