@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
-	FlatList,
 	LayoutChangeEvent,
 	Pressable,
 	StyleSheet,
@@ -18,10 +17,8 @@ import Fonts from "@/constants/Typography";
 import { alarmsHistory } from "@/src/services/alarms.service";
 import { AlarmItem } from "@/src/types/alarm";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
-import { FlashList } from "@shopify/flash-list";
 import AlarmCard from "../alarms/AlarmCard";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 
 const TABS = ["Un-Addressed", "Addressed"] as const;
 type TabType = (typeof TABS)[number];
@@ -31,7 +28,6 @@ export default function Alarms() {
 
 	const [data, setData] = useState<AlarmItem[]>([]);
 	const [page, setPage] = useState(1);
-	const [totalPages, setTotalPages] = useState(1);
 	const [loadingMore, setLoadingMore] = useState(false);
 	const [hasMore, setHasMore] = useState(true);
 
@@ -59,7 +55,6 @@ export default function Alarms() {
 		if (!childAssets.length) {
 			setData([]);
 			setPage(1);
-			setTotalPages(1);
 			setHasMore(false);
 			setLoading(false);
 			setLoadingMore(false);
@@ -110,7 +105,6 @@ export default function Alarms() {
 			const total = res?.totalPages ?? 1;
 
 			setPage(currentPage);
-			setTotalPages(total);
 			setHasMore(currentPage < total);
 		} catch (error) {
 			console.log("alarms error =", error);
@@ -126,7 +120,6 @@ export default function Alarms() {
 	useEffect(() => {
 		if (childAssets.length === 0) {
 			setPage(1);
-			setTotalPages(1);
 			setHasMore(false);
 			setData([]);
 			setLoading(false);
@@ -135,7 +128,6 @@ export default function Alarms() {
 		}
 
 		setPage(1);
-		setTotalPages(1);
 		setHasMore(true);
 		setData([]);
 

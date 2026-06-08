@@ -1,7 +1,6 @@
 import Header from "@/components/global/Header";
-import SegmentedPager from "@/components/global/SegmentPager";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Asset } from "@/src/types/asset";
 import { Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { getAssetData } from "@/src/services/asset.service";

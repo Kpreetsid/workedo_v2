@@ -8,7 +8,7 @@ import {
   Modal,
   Pressable,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Fonts from "@/constants/Typography";
 import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";

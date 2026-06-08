@@ -2,14 +2,13 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable, Image, FlatList, A
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
-import { ArrowBack, CalendarIcon, Calender, StatusIcon } from "@/constants/IconProvider";
+import { ArrowBack, StatusIcon, CalendarIcon } from "@/constants/IconProvider";
 import { Entypo, EvilIcons, Feather, Ionicons, MaterialIcons, Octicons, SimpleLineIcons } from "@expo/vector-icons";
 import { useState } from "react";
 import { storage } from "@/src/storage/mmkv";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { endpoints } from "@/src/api/endpoints";
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import { getProfileService, updateUser, updateUserInfo, uploadImage } from "@/src/services/auth.service";
+import { getProfileService, updateUserInfo } from "@/src/services/auth.service";
 import { useOverviewStore } from "@/src/store/useOverviewStore";
 import { useAssetStore } from "@/src/store/useAssetStore";
 import { useGatewayStore } from "@/src/store/useGatewayStore";

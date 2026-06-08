@@ -5,16 +5,11 @@ import { FormField } from '@/components/global/FormField'
 import { useCreateAssetStore } from '@/src/store/useCreateAsset'
 import Header from '@/components/global/Header'
 import Fonts from '@/constants/Typography'
-import Dropdown from '@/components/overview-screen/DropDown'
-import { useOverviewStore } from '@/src/store/useOverviewStore'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import LocationSelector from '@/components/create-asset/LocationSelector'
 import { DateDropDownIcon } from '@/constants/IconProvider'
 import moment from "moment-timezone";
-import { createNewAsset, mapUserToAsset, singleAssetData, updateNewAsset } from '@/src/services/asset.service'
-import { locationTree, mapUserToLocation } from '@/src/services/location.service'
-import { Location } from '@/src/types/location'
-import { useGlobalStore } from '@/src/store/useGlobal'
+import { createNewAsset, mapUserToAsset, singleAssetData } from '@/src/services/asset.service'
+import { mapUserToLocation } from '@/src/services/location.service'
 import { Asset } from '@/src/types/asset'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import LocationPickerModal from '@/components/create-work-order/LocationPickerModal'
@@ -40,7 +35,10 @@ const createAsset = () => {
 	const assigned_users = useCreateAssetStore((state) => state.assigned_users);
 	const locationObject = useCreateAssetStore((state) => state.locationObject);
 
-	const setAssignedUsers = useCreateAssetStore((state) => state.setAssignedUsers);
+	// ✅ Reactive store subscriptions — prevents stale getState() reads in JSX
+	const attachments = useCreateAssetStore((s) => s.attachments);
+	const parentAsset = useCreateAssetStore((s) => s.parent_asset);
+	const parentLocation = useCreateAssetStore((s) => s.parent_location);
 
 	const [open, setOpen] = useState<boolean | null>(false);
 	const [timezones, setTimezones] = useState<string[]>([]);
@@ -50,8 +48,6 @@ const createAsset = () => {
 		asset_data: parseJsonRouteParam<Asset>(asset_data) as any,
 		mode: getRouteParamString(mode)
 	};
-
-	console.log("Parsed Data:", data);
 
 	useEffect(() => {
 		fetchAllTimezones();
@@ -67,28 +63,30 @@ const createAsset = () => {
 	}, [])
 
 	const fetchAssetData = async () => {
+		// ✅ Guard: never call API with undefined asset ID
+		if (!data.asset_data?.id) {
+			console.warn('[createAsset] fetchAssetData called without asset id');
+			return;
+		}
 		try {
-			const res = await singleAssetData(data.asset_data?.id);
+			const res = await singleAssetData(data.asset_data.id);
 			console.log('single asset data = ', res);
-			if (res?.status) {
-				if (res?.data[0].locationData) {
-					setCreateAssetValue("location", res?.data[0].locationData[0].id);
-					setCreateAssetValue("locationObject", res?.data[0].locationData[0]);
-					setCreateAssetValue("parent_location", res?.data[0].locationData[0]);
-				} else {
-					setCreateAssetValue("location", res?.data[0].locationId.id);
-					setCreateAssetValue("locationObject", res?.data[0].locationId);
-					setCreateAssetValue("parent_location", res?.data[0].locationId);
+			// ✅ Null-safe array access — data[0] crashes if empty
+			if (res?.status && res?.data?.[0]) {
+				const assetData = res.data[0];
+				const locationData = assetData?.locationData?.[0] ?? assetData?.locationId;
+				if (locationData) {
+					setCreateAssetValue("location", locationData.id);
+					setCreateAssetValue("locationObject", locationData);
+					setCreateAssetValue("parent_location", locationData);
 				}
-
 				setCreateAssetValue("parent_asset", {
-					id: res?.data[0].id,
-					asset_name: res?.data[0].asset_name,
+					id: assetData.id,
+					asset_name: assetData.asset_name,
 				} as any);
-
 			}
 		} catch (e) {
-			console.log('error = ', e);
+			console.error('[createAsset] fetchAssetData error:', e);
 		}
 	}
 
@@ -210,23 +208,26 @@ const createAsset = () => {
 		try {
 			const res = await createNewAsset(payload);
 			console.log('res = ', res);
-			if (res.status) {
+			// ✅ Null-safe check — res can be undefined if network fails before throwing
+			if (res?.status) {
 				resetForm();
 				ToastAndroid.show('Asset created successfully', ToastAndroid.SHORT);
 				router.back();
-				setLoading(false)
 			} else {
-				setLoading(false)
+				ToastAndroid.show(res?.message || 'Failed to create asset. Please try again.', ToastAndroid.LONG);
 			}
-		} catch (err) {
-			console.log('error = ', err);
-			setLoading(false)
+		} catch (err: any) {
+			console.error('[createAsset] Error:', err);
+			ToastAndroid.show(err?.message || 'Network error. Please check your connection.', ToastAndroid.LONG);
+		} finally {
+			// ✅ Always reset loading — prevents infinite spinner state
+			setLoading(false);
 		}
 	}
 
 	return (
-		<KeyboardAwareScrollView bottomOffset={30} style={styles.container}>
-			<ScrollView style={styles.container}>
+		// ✅ Removed nested ScrollView — was causing gesture handler conflicts on Android
+		<KeyboardAwareScrollView bottomOffset={30} style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
 				<Header title={`Add New ${data?.mode === undefined ? '' : data?.mode} Asset`} />
 
 				<FormField
@@ -285,16 +286,12 @@ const createAsset = () => {
 								style={[styles.field]}
 							>
 								<Text
-									style={[
-										styles.inputText,
-										{ color: "#222" },
-									]}
-									numberOfLines={1}
-								>
-									{
-										useCreateAssetStore.getState().parent_location?.location_name
-									}
-								</Text>
+								style={[styles.inputText, { color: "#222" }]}
+								numberOfLines={1}
+							>
+								{/* ✅ Reactive subscription — not stale getState() */}
+								{parentLocation?.location_name}
+							</Text>
 							</View>
 						</View>
 						:
@@ -357,15 +354,11 @@ const createAsset = () => {
 							style={[styles.field]}
 						>
 							<Text
-								style={[
-									styles.inputText,
-									{ color: "#222" },
-								]}
+								style={[styles.inputText, { color: "#222" }]}
 								numberOfLines={1}
 							>
-								{
-									useCreateAssetStore.getState().parent_asset?.asset_name
-								}
+								{/* ✅ Reactive subscription */}
+								{parentAsset?.asset_name}
 							</Text>
 						</View>
 					</View>
@@ -452,30 +445,18 @@ const createAsset = () => {
 				/>
 
 
+				{/* ✅ Use reactive `attachments` subscription — getState() was stale */}
 				{
-					useCreateAssetStore.getState().attachments.length > 0 &&
+					attachments.length > 0 &&
 					<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20, alignItems: 'flex-start' }}>
 						<View style={{ position: "relative" }}>
-
 							<Image
-								source={{
-									uri: `${endpoints.baseURL}assets/${useCreateAssetStore.getState().attachments[0].image_path}?t=${Date.now()}`
-								}}
+								source={{ uri: `${endpoints.baseURL}assets/${attachments[0]?.image_path}?t=${Date.now()}` }}
 								style={{ width: 200, height: 200, borderRadius: 8 }}
 							/>
-
 							<TouchableOpacity
-								onPress={() => {
-									setCreateAssetValue("attachments", [])
-								}}
-								style={{
-									position: "absolute",
-									top: -8,
-									right: -8,
-									backgroundColor: "#000",
-									borderRadius: 12,
-									padding: 4,
-								}}
+								onPress={() => setCreateAssetValue("attachments", [])}
+								style={{ position: "absolute", top: -8, right: -8, backgroundColor: "#000", borderRadius: 12, padding: 4 }}
 							>
 								<Feather name="x" size={16} color="#fff" />
 							</TouchableOpacity>
@@ -484,18 +465,18 @@ const createAsset = () => {
 				}
 
 
-				<TouchableOpacity style={[styles.createBtn, { marginBottom: insets.bottom + 60 }]} onPress={handleCreateAsset}>
-					<Text style={styles.createBtnText}>
-						{
-							loading ?
-								<ActivityIndicator size={"small"} color={"#fff"} />
-								:
-								"Create Asset"
-						}
-					</Text>
+				{/* ✅ disabled prevents double-tap duplicate API calls */}
+				<TouchableOpacity
+					style={[styles.createBtn, { marginBottom: insets.bottom + 60 }, loading && { opacity: 0.6 }]}
+					onPress={handleCreateAsset}
+					disabled={loading}
+				>
+					{loading
+						? <ActivityIndicator size={"small"} color={"#fff"} />
+						: <Text style={styles.createBtnText}>Create Asset</Text>
+					}
 				</TouchableOpacity>
 
-			</ScrollView>
 		</KeyboardAwareScrollView>
 	)
 }

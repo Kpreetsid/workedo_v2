@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TextInput, ToastAndroid, View } from "react-native";
+import { StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
 import { Logo } from "@/constants/IconProvider";

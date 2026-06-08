@@ -1,4 +1,4 @@
-import { StyleSheet, View, TouchableOpacity, Text, Dimensions } from "react-native";
+import { StyleSheet, View, TouchableOpacity, Text } from "react-native";
 import { useCallback, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";

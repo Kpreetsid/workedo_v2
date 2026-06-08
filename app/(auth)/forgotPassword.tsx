@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, ToastAndroid } from "react-native";
+import { View, Text, StyleSheet, Image, ToastAndroid } from "react-native";
 import { router } from "expo-router";
 import AuthHeader from "@/components/auth-screens/AuthHeader";
 import { Logo } from "@/constants/IconProvider";

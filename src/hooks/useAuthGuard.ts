@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSegments } from "expo-router";
 import { storage } from "@/src/storage/mmkv";
 import { getAuthToken } from "@/src/storage/secureAuth";

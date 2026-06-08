@@ -5,10 +5,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
 import ActionButton from "@/components/auth-screens/ActionButton";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import Field from "@/components/auth-screens/InputField";
 
-import { loginService, userDetails } from "@/src/services/auth.service";
+import { loginService } from "@/src/services/auth.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { storage } from "@/src/storage/mmkv";
 import { migrateLegacyAuthToken, setAuthToken } from "@/src/storage/secureAuth";

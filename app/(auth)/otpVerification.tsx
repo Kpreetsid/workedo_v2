@@ -5,7 +5,7 @@ import { Logo, OTPEmailIcon } from "@/constants/IconProvider";
 import { useEffect, useRef, useState } from "react";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Fonts from "@/constants/Typography";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import ActionButton from "@/components/auth-screens/ActionButton";
 import { OTPVerificationService, resetPasswordOTPSendService, sendPasswordResetEmail } from "@/src/services/auth.service";
 import { useAuthFlowStore } from "@/src/store/useAuthFlowStore";

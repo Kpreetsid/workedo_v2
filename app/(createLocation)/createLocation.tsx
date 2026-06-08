@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import Header from '@/components/global/Header'
@@ -8,10 +8,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { createNewLocation, singleLocationData, updateNewLocation } from '@/src/services/location.service'
 import Fonts from '@/constants/Typography'
 import { Location } from '@/src/types/location'
-import { DateDropDownIcon } from '@/constants/IconProvider'
 import { Image } from 'expo-image'
 import { endpoints } from '@/src/api/endpoints'
-import { useCreateAssetStore } from '@/src/store/useCreateAsset'
 import { Feather } from '@expo/vector-icons'
 import { getRouteParamString, parseJsonRouteParam } from '@/src/utils/routeParams'
 
@@ -32,11 +30,13 @@ const createLocation = () => {
 		mode: getRouteParamString(mode)
 	};
 
-	console.log("Parsed Data:", data);
-
 	const [loading, setLoading] = useState(false);
 
 	const router = useRouter();
+
+	// ✅ Reactive store subscriptions — prevents stale getState() reads in JSX
+	const attachments = useCreateLocationStore((s) => s.attachments);
+	const parentLocation = useCreateLocationStore((s) => s.parent_location);
 
 	useEffect(() => {
 		// for testing
@@ -104,15 +104,23 @@ const createLocation = () => {
 			return;
 		}
 
-		setLoading(true)
-		let payload: any = {
+		// ✅ Guard: ensure we have location ID before attempting update
+		const isEdit = data?.isEdit === "true";
+		if (isEdit && !data?.location_data?.id) {
+			ToastAndroid.show("Invalid location data. Please go back and try again.", ToastAndroid.LONG);
+			return;
+		}
+
+		setLoading(true);
+		const payload: any = {
 			top_level: data?.mode === 'child' ? false : true,
-			top_level_location_id: (data?.mode === 'child' || data?.isEdit === "true") ? data?.location_data?.id : "",
+			top_level_location_id: (data?.mode === 'child' || isEdit) ? data?.location_data?.id : "",
 			location_name: values.title,
 			description: values.description,
 			location_type: values.location_type,
-			userIdList: values.assigned_users.map((u: any) => u.id),
-			image_path: values.attachments.length > 0 ? values.attachments[0].image_path : "",
+			// ✅ Filter out undefined/null user IDs to avoid API errors
+			userIdList: values.assigned_users.map((u: any) => u?.id).filter(Boolean),
+			image_path: values.attachments.length > 0 ? values.attachments[0]?.image_path : "",
 		};
 
 		if (data?.mode === 'child') {
@@ -122,39 +130,34 @@ const createLocation = () => {
 		console.log('payload = ', payload);
 
 		try {
-			if (data?.isEdit === "true") {
-				const res = await updateNewLocation(data.location_data?.id, payload);
-				console.log('res = ', res);
-				if (res.status) {
-					setLoading(false)
-					resetForm();
-					ToastAndroid.show('Location updated successfully', ToastAndroid.SHORT);
-					router.back();
-				} else {
-					setLoading(false)
-				}
-			} else {
-				const res = await createNewLocation(payload);
-				console.log('res = ', res);
-				if (res.status) {
-					setLoading(false)
-					resetForm();
-					ToastAndroid.show('Location created successfully', ToastAndroid.SHORT);
-					router.back();
-				} else {
-					setLoading(false)
-				}
-			}
+			const res = isEdit
+				? await updateNewLocation(data.location_data!.id, payload)
+				: await createNewLocation(payload);
+			console.log('res = ', res);
 
-		} catch (err) {
-			setLoading(false)
-			console.log('error = ', err);
+			// ✅ Null-safe check on response
+			if (res?.status) {
+				resetForm();
+				ToastAndroid.show(
+					isEdit ? 'Location updated successfully' : 'Location created successfully',
+					ToastAndroid.SHORT
+				);
+				router.back();
+			} else {
+				ToastAndroid.show(res?.message || 'Operation failed. Please try again.', ToastAndroid.LONG);
+			}
+		} catch (err: any) {
+			console.error('[createLocation] Error:', err);
+			ToastAndroid.show(err?.message || 'Network error. Please check your connection.', ToastAndroid.LONG);
+		} finally {
+			// ✅ Always reset loading — prevents infinite spinner
+			setLoading(false);
 		}
 	}
 
 	return (
-		<KeyboardAwareScrollView bottomOffset={30} style={styles.container}>
-			<ScrollView style={styles.container}>
+		// ✅ Removed nested ScrollView — was causing gesture conflicts on Android
+		<KeyboardAwareScrollView bottomOffset={30} style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
 				<Header title={data?.isEdit === "true" ? "Update Location Details" : "Add New Location"} />
 
 				<FormField
@@ -199,29 +202,18 @@ const createLocation = () => {
 
 				{
 					data?.mode === 'child' &&
-					<View
-						style={[
-							styles.locationSelector
-						]}
-					>
+					<View style={[styles.locationSelector]}>
 						<View style={styles.labelContainer}>
 							<Text style={styles.labelText}>Parent Location</Text>
 							<Text style={styles.asterisk}>*</Text>
 						</View>
-
-						<View
-							style={[styles.field]}
-						>
+						<View style={[styles.field]}>
 							<Text
-								style={[
-									styles.inputText,
-									{ color: "#222" },
-								]}
+								style={[styles.inputText, { color: "#222" }]}
 								numberOfLines={1}
 							>
-								{
-									useCreateLocationStore.getState().parent_location?.location_name
-								}
+								{/* ✅ Use reactive subscription, not getState() */}
+								{parentLocation?.location_name}
 							</Text>
 						</View>
 					</View>
@@ -252,33 +244,18 @@ const createLocation = () => {
 					setterName="setCreateLocationValue"
 				/>
 
+				{/* ✅ Use reactive `attachments` subscription — getState() was stale */}
 				{
-					useCreateLocationStore.getState().attachments.length > 0 &&
-					<View style={{
-						backgroundColor: 'transparent', padding: 10, marginHorizontal: 20,
-						alignItems: "flex-start",
-					}}>
-						{/* Image wrapper */}
+					attachments.length > 0 &&
+					<View style={{ backgroundColor: 'transparent', padding: 10, marginHorizontal: 20, alignItems: "flex-start" }}>
 						<View style={{ position: "relative" }}>
 							<Image
-								source={{
-									uri: `${endpoints.baseURL}locations/${useCreateLocationStore.getState().attachments[0].image_path}?t=${Date.now()}`
-								}}
+								source={{ uri: `${endpoints.baseURL}locations/${attachments[0]?.image_path}?t=${Date.now()}` }}
 								style={{ width: 200, height: 200, borderRadius: 8 }}
 							/>
-
 							<TouchableOpacity
-								onPress={() => {
-									setCreateLocationValue("attachments", [])
-								}}
-								style={{
-									position: "absolute",
-									top: -8,
-									right: -8,
-									backgroundColor: "#000",
-									borderRadius: 12,
-									padding: 4,
-								}}
+								onPress={() => setCreateLocationValue("attachments", [])}
+								style={{ position: "absolute", top: -8, right: -8, backgroundColor: "#000", borderRadius: 12, padding: 4 }}
 							>
 								<Feather name="x" size={16} color="#fff" />
 							</TouchableOpacity>
@@ -287,18 +264,18 @@ const createLocation = () => {
 				}
 
 
-				<TouchableOpacity style={styles.createBtn} onPress={handleCreateLocation}>
-					<Text style={styles.createBtnText}>
-						{
-							loading ?
-								<ActivityIndicator size={"small"} color={"#fff"} />
-								:
-								data?.isEdit === "true" ? "Update Location" : "Create Location"
-						}
-					</Text>
+				{/* ✅ disabled prop prevents double-tap duplicate submissions */}
+				<TouchableOpacity
+					style={[styles.createBtn, loading && { opacity: 0.6 }]}
+					onPress={handleCreateLocation}
+					disabled={loading}
+				>
+					{loading
+						? <ActivityIndicator size={"small"} color={"#fff"} />
+						: <Text style={styles.createBtnText}>{data?.isEdit === "true" ? "Update Location" : "Create Location"}</Text>
+					}
 				</TouchableOpacity>
 
-			</ScrollView>
 		</KeyboardAwareScrollView>
 	)
 }

@@ -8,8 +8,6 @@ const apiClientDemo = axios.create({
     timeout: 15000,
 });
 
-const getRequestUrl = (baseURL?: string, url?: string) => `${baseURL || ''}${url || ''}`;
-
 // 🔹 Instantly read token (synchronous)
 apiClientDemo.interceptors.request.use(async (config) => {
     const token = await getAuthToken();
@@ -26,16 +24,14 @@ apiClientDemo.interceptors.request.use(async (config) => {
         }
     }
 
-    const method = config.method?.toUpperCase() || 'GET';
-    const requestUrl = getRequestUrl(config.baseURL, config.url);
     return config;
 });
+
+const getRequestUrl = (baseURL?: string, url?: string) => `${baseURL || ''}${url || ''}`;
 
 // 🔹 Handle errors globally
 apiClientDemo.interceptors.response.use(
     (response) => {
-        const method = response.config?.method?.toUpperCase() || 'GET';
-        const requestUrl = getRequestUrl(response.config?.baseURL, response.config?.url);
         return response;
     },
     (error) => {

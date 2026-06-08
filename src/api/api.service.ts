@@ -1,7 +1,6 @@
 import apiClient from './apiClient';
 import apiClientDemo from './apiClientDemo';
 import apiClientValidate from './apiClientValidate';
-import { endpoints } from './endpoints';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 

@@ -8,8 +8,6 @@ const apiClient = axios.create({
   timeout: 15000,
 });
 
-const getRequestUrl = (baseURL?: string, url?: string) => `${baseURL || ''}${url || ''}`;
-
 // 🔹 Instantly read token (synchronous)
 apiClient.interceptors.request.use(async (config) => {
   const token = await getAuthToken();
@@ -23,24 +21,15 @@ apiClient.interceptors.request.use(async (config) => {
     config.headers.accountID = data?.user?.account_id;
   }
 
-  const method = config.method?.toUpperCase() || 'GET';
-  const requestUrl = getRequestUrl(config.baseURL, config.url);
   return config;
 });
 
 // 🔹 Handle errors globally
 apiClient.interceptors.response.use(
   (response) => {
-    const method = response.config?.method?.toUpperCase() || 'GET';
-    const requestUrl = getRequestUrl(response.config?.baseURL, response.config?.url);
-
     return response;
   },
   (error) => {
-    const method = error?.config?.method?.toUpperCase() || 'UNKNOWN';
-    const requestUrl = getRequestUrl(error?.config?.baseURL, error?.config?.url);
-    const errorPayload = error?.response?.data || error?.response || error;
-
     // console.error(`[apiClient][Error] ${method} ${requestUrl}`, errorPayload);
     throw error?.response?.data || error;
   }
