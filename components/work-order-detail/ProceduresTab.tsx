@@ -96,6 +96,17 @@ export default function ProceduresTab({ params, onSaved }: ProceduresTabProps) {
   }, [params]);
 
   const incompleteCount = useMemo(() => getIncompleteProcedureCount(procedures), [procedures]);
+  const procedurePartsSummary = useMemo(() => {
+    return procedures.reduce(
+      (summary, procedure) => {
+        const requiredParts = getProcedureRequiredParts(procedure);
+        summary.requiredParts += requiredParts.length;
+        summary.shortages += requiredParts.filter((part) => Number(part?.quantity ?? 0) > Number(part?.inventory?.quantity ?? 0)).length;
+        return summary;
+      },
+      { requiredParts: 0, shortages: 0 }
+    );
+  }, [procedures]);
 
   const updateResponse = (procedureId: string, stepId: string, value: any) => {
     setProcedures((prev) =>
@@ -179,6 +190,12 @@ export default function ProceduresTab({ params, onSaved }: ProceduresTabProps) {
               ? `${incompleteCount} procedure${incompleteCount > 1 ? "s" : ""} still needs required responses before it becomes the official completion record.`
               : "All required procedure responses are complete. Saving will submit them as the official completion record."}
           </Text>
+          {procedurePartsSummary.requiredParts > 0 ? (
+            <Text style={styles.summarySupportText}>
+              Required procedure parts: {procedurePartsSummary.requiredParts}
+              {procedurePartsSummary.shortages > 0 ? ` | shortages detected: ${procedurePartsSummary.shortages}` : " | no shortages detected"}
+            </Text>
+          ) : null}
         </View>
 
         {procedures.map((procedure) => {
@@ -319,6 +336,12 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     color: "#334155",
     lineHeight: 16,
+  },
+  summarySupportText: {
+    marginTop: 8,
+    fontSize: 10,
+    fontFamily: Fonts.medium,
+    color: "#1D4ED8",
   },
   procedureCard: {
     backgroundColor: "#FFFFFF",

@@ -16,9 +16,11 @@ export default function Requests() {
 	const [loading, setLoading] = useState(false);
 	const [refreshing, setRefreshing] = useState(false);
 	const [allRequests, setAllRequests] = useState<WorkRequest[]>([]);
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
 	const fetchRequests = async () => {
 		setLoading(true);
+		setErrorMessage(null);
 		try {
 			const res = await getWorkRequests();
 			if (res?.status) {
@@ -26,6 +28,7 @@ export default function Requests() {
 			}
 		} catch (e) {
 			console.log("request list error =", e);
+			setErrorMessage("We couldn't refresh work requests. Pull to retry or tap Retry below.");
 		} finally {
 			setLoading(false);
 			setRefreshing(false);
@@ -92,6 +95,8 @@ export default function Requests() {
 									setRefreshing(true);
 									fetchRequests();
 								}}
+								errorMessage={errorMessage}
+								onRetry={fetchRequests}
 								emptyTitle="No open requests"
 								emptyMessage="Newly created requests that are still waiting for review will appear here."
 							/>
@@ -109,6 +114,8 @@ export default function Requests() {
 									setRefreshing(true);
 									fetchRequests();
 								}}
+								errorMessage={errorMessage}
+								onRetry={fetchRequests}
 								emptyTitle="No approved requests"
 								emptyMessage="Requests that are approved and ready to convert into work orders will appear here."
 							/>
@@ -126,6 +133,8 @@ export default function Requests() {
 									setRefreshing(true);
 									fetchRequests();
 								}}
+								errorMessage={errorMessage}
+								onRetry={fetchRequests}
 								emptyTitle="No closed requests"
 								emptyMessage="Rejected requests and requests already converted into work orders will appear here."
 							/>

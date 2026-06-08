@@ -18,6 +18,8 @@ interface RequestListProps {
   loading: boolean;
   refreshing: boolean;
   onRefresh: () => void;
+  errorMessage?: string | null;
+  onRetry?: () => void;
   emptyTitle: string;
   emptyMessage: string;
 }
@@ -56,6 +58,8 @@ export default function RequestList({
   loading,
   refreshing,
   onRefresh,
+  errorMessage,
+  onRetry,
   emptyTitle,
   emptyMessage,
 }: RequestListProps) {
@@ -77,8 +81,13 @@ export default function RequestList({
       contentContainerStyle={[styles.listContainer, data.length === 0 && styles.emptyContainer]}
       ListEmptyComponent={
         <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>{emptyTitle}</Text>
-          <Text style={styles.emptyMessage}>{emptyMessage}</Text>
+          <Text style={styles.emptyTitle}>{errorMessage ? "Unable to load requests" : emptyTitle}</Text>
+          <Text style={styles.emptyMessage}>{errorMessage || emptyMessage}</Text>
+          {errorMessage && onRetry ? (
+            <Pressable style={styles.retryButton} onPress={onRetry}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </Pressable>
+          ) : null}
         </View>
       }
       renderItem={({ item, index }) => {
@@ -112,10 +121,10 @@ export default function RequestList({
             </View>
 
             <Text style={styles.metaText}>
-              {item.location_id?.location_name || "No location"}{item.asset_id?.asset_name ? ` • ${item.asset_id.asset_name}` : ""}
+              {item.location_id?.location_name || "No location"}{item.asset_id?.asset_name ? ` | ${item.asset_id.asset_name}` : ""}
             </Text>
             <Text style={styles.metaText}>
-              Requested by {formatRequestUserLabel(item.createdBy)} • {moment(item.createdAt).format("DD MMM YYYY")}
+              Requested by {formatRequestUserLabel(item.createdBy)} | {moment(item.createdAt).format("DD MMM YYYY")}
             </Text>
             <Text style={[styles.governanceText, { color: governance.text }]}>
               {getWorkRequestGovernanceLabel(item)}
@@ -171,6 +180,18 @@ const styles = StyleSheet.create({
     color: "#64748B",
     textAlign: "center",
     lineHeight: 18,
+  },
+  retryButton: {
+    marginTop: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    backgroundColor: "#EEF2FF",
+  },
+  retryButtonText: {
+    fontFamily: Fonts.semiBold,
+    fontSize: 11,
+    color: "#4F46E5",
   },
   card: {
     backgroundColor: "#FFFFFF",

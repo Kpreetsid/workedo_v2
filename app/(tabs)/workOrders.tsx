@@ -15,9 +15,9 @@ export default function WorkOrders() {
 			<Header title="Work Orders" />
 
 			<SegmentedPager tabs={[
-				{ label: "To Do", icon: <ToDoIcon />, component: () => <ToDoTab /> },
+				{ label: "My Work", icon: <ToDoIcon />, component: () => <ToDoTab /> },
 				{ label: "Planner", component: () => <PlannerTab /> },
-				{ label: "Done", icon: <DoneIcon />, component: () => <DoneTab /> }]}
+				{ label: "Completed", icon: <DoneIcon />, component: () => <DoneTab /> }]}
 			/>
 
 			<CreateFAB label="Create Work Order" onPress={() => router.push("/createWorkOrder")} />
