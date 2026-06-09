@@ -10,10 +10,25 @@ class SocketManager {
     if (this.socket?.connected) return;
 
     const token = await getAuthToken();
+    const useAuthStore = require('@/src/state/auth/useAuthStore').useAuthStore;
+    const accountId = useAuthStore.getState().user?.account_id || '';
 
-    this.socket = io(this.url, {
-      auth: { token },
-      transports: ['websocket'],
+    let socketUrl = this.url;
+    let socketPath = '/socket.io';
+    try {
+      const parsedUrl = new URL(this.url);
+      if (parsedUrl.pathname && parsedUrl.pathname !== '/') {
+        socketPath = `${parsedUrl.pathname}/socket.io`.replace(/\/\//g, '/');
+      }
+      socketUrl = parsedUrl.origin;
+    } catch (e) {
+      console.warn('[Socket] Could not parse URL for socket path', e);
+    }
+
+    this.socket = io(socketUrl, {
+      path: socketPath,
+      auth: { token, accountId },
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
