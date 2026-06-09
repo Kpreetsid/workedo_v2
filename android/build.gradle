@@ -18,6 +18,21 @@ allprojects {
     mavenCentral()
     maven { url 'https://www.jitpack.io' }
   }
+
+  // Workaround for NDK 27: Ensure libc++_shared is linked for all native modules
+  afterEvaluate { project ->
+    if (project.hasProperty('android')) {
+      project.android {
+        defaultConfig {
+          externalNativeBuild {
+            cmake {
+              arguments "-DCMAKE_SHARED_LINKER_FLAGS=-lc++_shared"
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 apply plugin: "expo-root-project"
