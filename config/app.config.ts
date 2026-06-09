@@ -1,36 +1,12 @@
+import Config from '@/src/config/env';
+
 export type AppEnvironment = "development" | "production";
 
-type ServiceUrls = {
-  cmmsBase: string;
-  cmmsApi: string;
-  processorApi: string;
-  validateApi: string;
-  fallbackAssetImage: string;
-};
-
-const ENVIRONMENTS: Record<AppEnvironment, ServiceUrls> = {
-  development: {
-    cmmsBase: "https://new.presageinsights.ai/cmms_express/",
-    cmmsApi: "https://new.presageinsights.ai/cmms_express/api/",
-    processorApi: "https://staging.presageinsights.ai/api/",
-    validateApi: "https://validate.presageinsights.ai/general/api/",
-    fallbackAssetImage: "https://new.presageinsights.ai/cmms/assets/images/company.jpg",
-  },
-  production: {
-    cmmsBase: "https://app.presageinsights.ai/cmms_express/",
-    cmmsApi: "https://app.presageinsights.ai/cmms_express/api/",
-    processorApi: "https://processor.presageinsights.ai/api/",
-    validateApi: "https://validate.presageinsights.ai/general/api/",
-    fallbackAssetImage: "https://new.presageinsights.ai/cmms/assets/images/company.jpg",
-  },
-};
-
-export const APP_ENV = (process.env.EXPO_PUBLIC_APP_ENV ||
-  "production") as AppEnvironment;
+export const APP_ENV = (process.env.EXPO_PUBLIC_APP_ENV || process.env.APP_ENV || "development") as AppEnvironment;
 
 export const appConfig = {
   environment: APP_ENV,
-  urls: ENVIRONMENTS[APP_ENV] || ENVIRONMENTS.production,
+  urls: Config,
   assets: {
     androidChartBase: "file:///android_asset/charts/",
     bundledChartBase: "@/assets/charts/",

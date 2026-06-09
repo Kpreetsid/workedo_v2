@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { appConfig } from '@/config/app.config';
-import { getAuthToken } from '@/src/storage/secureAuth';
+import { getAuthToken, deleteAuthToken } from '@/src/storage/secureAuth';
+import { storage } from '@/src/storage/mmkv';
 import { useAuthStore } from '@/src/state/auth/useAuthStore';
 import { handleApiError } from './apiErrorHandler';
 
@@ -26,6 +27,9 @@ apiClient.interceptors.request.use(
       if (authState?.user?.account_id) {
         config.headers.accountID = authState.user.account_id;
       }
+      
+      console.log(`[API Request]: ${config.baseURL}${config.url}`);
+
     } catch (error) {
       console.warn('Failed to attach auth token to request', error);
     }
@@ -49,8 +53,12 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       try {
         useAuthStore.getState().clearUser();
+        storage.delete('user');
+        deleteAuthToken();
       } catch (refreshError) {
         useAuthStore.getState().clearUser();
+        storage.delete('user');
+        deleteAuthToken();
         return Promise.reject(refreshError);
       }
     }

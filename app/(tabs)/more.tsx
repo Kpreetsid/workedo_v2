@@ -1,4 +1,2 @@
-
-export default function More(){
-    return null;
-}
+import Screen from '@/src/screens/tabs/more';
+export default Screen;

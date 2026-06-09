@@ -6,8 +6,14 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAuthGuard } from "@/src/hooks/useAuthGuard";
 import { ErrorBoundary } from "@/src/core/error/ErrorBoundary";
+import { appConfig } from "@/config/app.config";
 
 SplashScreen.preventAutoHideAsync();
+
+console.log("====================================");
+console.log(`Current Environment: ${appConfig.environment}`);
+console.log(`[Startup] Active API URL: ${appConfig.urls.cmmsApi}`);
+console.log("====================================");
 
 export default function RootLayout() {
 	const authReady = useAuthGuard();

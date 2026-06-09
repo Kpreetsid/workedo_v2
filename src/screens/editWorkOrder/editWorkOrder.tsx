@@ -1,0 +1,112 @@
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { TabView } from 'react-native-tab-view';
+import Header from '@/src/components/global/Header';
+import NewWorkOrder from '@/src/components/create-work-order/newWorkOrder';
+import FormsScreen from '@/src/components/create-work-order/FormsScreen';
+import { useLocalSearchParams } from 'expo-router';
+import { parseJsonRouteParam } from '@/src/utils/routeParams';
+
+const GeneralInfo = ({ data }: any) => (
+	<View style={styles.scene}>
+		<NewWorkOrder passedData={data} />
+	</View>
+);
+
+const Forms = ({ data }: any) => (
+	<View style={styles.scene}>
+		<FormsScreen sourceOrder={data} />
+	</View>
+);
+
+const EditWorkOrder = () => {
+	const layout = Dimensions.get("window");
+	const params: any = useLocalSearchParams();
+
+	const parsedData = parseJsonRouteParam(params?.data);
+
+	const [index, setIndex] = useState(0);
+
+	const [routes] = useState([
+		{ key: "general", title: "General Info" },
+		{ key: "forms", title: "Procedures" },
+	]);
+
+	// 🔥 Scene renderer INSIDE component so it sees parsedData
+	const renderScene = ({ route }: any) => {
+		switch (route.key) {
+			case "general":
+				return <GeneralInfo data={parsedData} />;
+			case "forms":
+				return <Forms data={parsedData} />;
+			default:
+				return null;
+		}
+	};
+
+	const renderTabBar = () => (
+		<View style={styles.tabBar}>
+			{routes.map((route, i) => {
+				const isActive = i === index;
+				return (
+					<TouchableOpacity
+						key={route.key}
+						style={[styles.tabItem, isActive && styles.activeTab]}
+						onPress={() => setIndex(i)}
+					>
+						<Text style={[styles.tabText, isActive && styles.activeTabText]}>
+							{route.title}
+						</Text>
+					</TouchableOpacity>
+				);
+			})}
+		</View>
+	);
+
+	return (
+		<View style={{ flex: 1, backgroundColor: '#f9f9ff' }}>
+			<Header title="Edit Work Order" />
+
+			{renderTabBar()}
+
+			<TabView
+				navigationState={{ index, routes }}
+				renderScene={renderScene}
+				onIndexChange={setIndex}
+				initialLayout={{ width: layout.width }}
+				renderTabBar={() => null}
+			/>
+		</View>
+	);
+};
+
+export default EditWorkOrder;
+
+const styles = StyleSheet.create({
+	tabBar: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		paddingHorizontal: 20,
+		marginTop: 20,
+		marginBottom: 10,
+	},
+	tabItem: {
+		paddingVertical: 10,
+		paddingHorizontal: 20,
+		borderRadius: 30,
+	},
+	activeTab: {
+		backgroundColor: "#742BDE",
+	},
+	tabText: {
+		fontSize: 14,
+		color: "#000",
+	},
+	activeTabText: {
+		color: "#fff",
+		fontWeight: "600",
+	},
+	scene: {
+		flex: 1,
+	},
+});

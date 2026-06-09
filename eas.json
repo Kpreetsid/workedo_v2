@@ -1,0 +1,16 @@
+{
+  "build": {
+    "development": {
+      "env": {
+        "APP_ENV": "development",
+        "EXPO_PUBLIC_APP_ENV": "development"
+      }
+    },
+    "production": {
+      "env": {
+        "APP_ENV": "production",
+        "EXPO_PUBLIC_APP_ENV": "production"
+      }
+    }
+  }
+}

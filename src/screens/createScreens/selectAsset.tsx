@@ -1,0 +1,166 @@
+import Header from "@/src/components/global/Header";
+import { Dimensions, FlatList, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import ActionButton from "@/src/components/create-screens/ActionButton";
+import { router, useLocalSearchParams } from "expo-router";
+import Fonts from "@/constants/Typography";
+import { useEffect, useState } from "react";
+import { usePreventiveStore } from "@/src/state/workOrders/usePreventiveStore";
+import { getFilteredAssets } from "@/src/services/preventive.service";
+import { Asset } from "@/src/types/asset";
+import { useWorkOrderStore } from "@/src/state/workOrders/useWorkOrderStore";
+import { useWorkRequestStore } from "@/src/state/workOrders/useWorkRequestStore";
+import SelectAssetsCard from "@/src/components/assets/SelectAssetsCard";
+
+interface AssetInterface {
+	showHeader?: boolean,
+	selection?: boolean
+}
+
+const width = Dimensions.get("window").width;
+export default function SelectAsset({ showHeader = true, selection = true }: AssetInterface) {
+	const params: any = useLocalSearchParams();
+	const comingFrom = params?.comingFrom;
+
+	console.log('comingFrom in select asset = ', comingFrom);
+	const [assets, setAssets] = useState<Asset[]>([]);
+	const [refreshing, setRefreshing] = useState(false);
+
+	// const preventiveSelectedLocation = usePreventiveStore((state) => state.location);
+	const locationsList = comingFrom === "newWorkOrder" ?
+		useWorkOrderStore((state) => state.location) : (comingFrom === 'newWorkRequest' ? useWorkRequestStore((state) => state.location) : (comingFrom === 'createPreventive' ? usePreventiveStore((state) => state.location) : null));
+
+	useEffect(() => {
+		fetchAssets();
+	}, []);
+
+	const fetchAssets = async () => {
+		try {
+			if (!locationsList) {
+				return;
+			}
+			const payload = {
+				"locationList": [
+					locationsList?.id || locationsList?._id
+				]
+			}
+
+			console.log('locationsList = ', locationsList);
+			const res = await getFilteredAssets(payload);
+
+			if (res.status) {
+				console.log('res assets = ', res?.data);
+				setAssets(res?.data);
+			}
+		} catch (err: any) {
+			console.error("Login failed:", err);
+			if (!err.status) {
+				if (err.message === "No data found") {
+					ToastAndroid.show("No assets found", ToastAndroid.SHORT);
+					setAssets([]);
+				}
+			}
+		}
+	};
+
+	const handleRefresh = async () => {
+		setRefreshing(true);
+		await fetchAssets();
+		setRefreshing(false);
+	};
+
+	return (
+		<>
+			{showHeader && <Header title="Select Asset" />}
+			<View style={{ flex: 1 }}>
+
+				<FlatList
+					data={assets}
+					keyExtractor={(_, index) => index.toString()}
+					renderItem={
+						({ item }: { item: Asset }) => <SelectAssetsCard
+							item={item}
+							comingFrom={comingFrom}
+						/>
+					}
+					contentContainerStyle={styles.container}
+					refreshing={refreshing}
+					onRefresh={handleRefresh}
+					ListEmptyComponent={() => (
+						<View style={styles.emptyContainer}>
+							<Text style={styles.assetsText}>No assets found</Text>
+						</View>
+					)}
+				/>
+
+				{selection && <ActionButton onPress={() => router.back()} label="Confirm Asset" buttonStyle={styles.actionButton} />}
+			</View>
+		</>
+	)
+}
+
+const styles = StyleSheet.create({
+	searchContainer: {
+		backgroundColor: "#fff",
+		borderRadius: 8,
+		alignItems: "center",
+		flexDirection: "row",
+		paddingHorizontal: 20,
+		marginHorizontal: 20,
+		marginVertical: 10,
+		gap: 10
+	},
+	input: {
+		fontSize: 12,
+		fontFamily: Fonts.regular
+	},
+	container: {
+		flexGrow: 1,
+		backgroundColor: "#F5F7FA",
+		paddingHorizontal: 25,
+		paddingTop: 15,
+		paddingBottom: 105,
+		gap: 10
+	},
+	locationButton: {
+		borderWidth: 0.6,
+		borderRadius: 7,
+		height: 50,
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		paddingHorizontal: 20,
+	},
+	textRow: {
+		flexDirection: "row",
+		gap: 5,
+		alignItems: "center",
+	},
+	locationText: {
+		fontSize: 10,
+		fontFamily: Fonts.semiBold,
+		color: "#201F23",
+		lineHeight: 20
+	},
+	actionButton: {
+		position: "absolute",
+		bottom: 20,
+		alignSelf: "center",
+		width: width - 50
+	},
+	emptyContainer: {
+		flex: 1,
+		justifyContent: "center",
+		alignItems: "center",
+		backgroundColor: "#F5F7FA",
+		paddingHorizontal: 25,
+		paddingTop: 15,
+		paddingBottom: 105,
+		gap: 10
+	},
+	assetsText: {
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
+		color: "#201F23",
+		lineHeight: 20
+	}
+})
