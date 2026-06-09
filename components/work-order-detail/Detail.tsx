@@ -11,13 +11,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { evaluateWorkOrderReadiness } from "@/src/utils/workOrderReadiness";
 import { formatWorkOrderStatusLabel, getWorkOrderStatusTone } from "@/src/utils/workOrderStatus";
+import { useAuthStore } from "@/src/store/useAuthStore";
+import { isAssignedToUser, isDueTodayWorkOrder, isOverdueWorkOrder } from "@/src/utils/workerWorkOrders";
 
 interface Props {
 	params: WorkOrder;
+	onSaved?: () => void;
 }
 
-export default function Detail({ params }: Props) {
+export default function Detail({ params, onSaved }: Props) {
 	const router = useRouter();
+	const { user } = useAuthStore();
 	const [userModalVisible, setUserModalVisible] = useState(false);
 	const [partsModalVisible, setPartsModalVisible] = useState(false);
 	const [moreInfoModalVisible, setMoreInfoModalVisible] = useState(false);
@@ -46,6 +50,63 @@ export default function Detail({ params }: Props) {
 	const childProgressPercent = childSummary?.total ? Math.round((Number(childSummary?.completed || 0) / Number(childSummary.total || 1)) * 100) : 0;
 	const parentReference = params?.parentOrder || params?.hierarchy?.parentReference;
 	const readiness = evaluateWorkOrderReadiness(params);
+	const statusTone = getWorkOrderStatusTone(params?.status);
+	const assignedToCurrentUser = isAssignedToUser(params, user);
+	const dueToday = isDueTodayWorkOrder(params);
+	const overdue = isOverdueWorkOrder(params);
+	const dueLabel = params?.end_date ? moment(params.end_date).format("DD MMM YYYY") : "No due date";
+	const assetLabel = params?.asset?.asset_name || "No asset linked";
+	const locationLabel = params?.location?.location_name || "No location linked";
+	const partSummary = (Array.isArray(params?.parts) ? params.parts : []).reduce(
+		(summary, part) => {
+			summary.planned += Number(part?.plannedQuantity ?? part?.estimatedQuantity ?? 0) || 0;
+			summary.actual += Number(part?.actualQuantity ?? 0) || 0;
+			return summary;
+		},
+		{ planned: 0, actual: 0 }
+	);
+
+	const workerAction = (() => {
+		if (params?.hierarchy?.executionOwnedByChildren) {
+			return {
+				title: "Use child work orders for execution",
+				message: "This parent work order rolls up child execution. Open a child work order to log parts, procedures, labor, and completion updates.",
+			};
+		}
+
+		if (String(params?.status || "").trim() === "Completed") {
+			return {
+				title: "Work is already completed",
+				message: "Use history, comments, and attachments to review what happened on the floor. Execution fields are now locked for closeout accuracy.",
+			};
+		}
+
+		if (["Blocked", "Waiting-on-Parts", "Waiting-on-Permit", "On-Hold"].includes(String(params?.status || "").trim())) {
+			return {
+				title: "This work order is waiting on an unblock",
+				message: params?.block_reason || "Review the blocker note, update status when the issue is cleared, and continue execution once the job is ready again.",
+			};
+		}
+
+		if (String(params?.status || "").trim() === "In-Progress") {
+			return {
+				title: "Keep execution updates current",
+				message: "Use procedures, parts, tasks, comments, and attachments to record work as it happens before marking the job complete.",
+			};
+		}
+
+		if (readiness.executionReady) {
+			return {
+				title: "Ready to start work",
+				message: "This work order has enough context to begin execution from the floor. Move it to In Progress when work starts.",
+			};
+		}
+
+		return {
+			title: "Review blockers before starting",
+			message: readiness.summary,
+		};
+	})();
 
 	const openFollowUpCreate = () => {
 		router.push({
@@ -74,6 +135,40 @@ export default function Detail({ params }: Props) {
 					</Text>
 				</View>
 			) : null}
+
+			<View style={styles.workerFocusCard}>
+				<View style={styles.rowBetween}>
+					<Text style={styles.workerFocusEyebrow}>Worker Focus</Text>
+					<View style={[styles.statusChip, { backgroundColor: statusTone.bg, borderColor: statusTone.border }]}>
+						<Text style={[styles.statusChipText, { color: statusTone.text }]}>{formatWorkOrderStatusLabel(params?.status)}</Text>
+					</View>
+				</View>
+				<Text style={styles.workerFocusTitle}>{workerAction.title}</Text>
+				<Text style={styles.workerFocusText}>{workerAction.message}</Text>
+
+				<View style={styles.workerMetaWrap}>
+					<View style={styles.workerMetaChip}>
+						<Ionicons name="cube-outline" size={14} color="#1D4ED8" />
+						<Text style={styles.workerMetaChipText} numberOfLines={1}>{assetLabel}</Text>
+					</View>
+					<View style={styles.workerMetaChip}>
+						<Ionicons name="location-outline" size={14} color="#1D4ED8" />
+						<Text style={styles.workerMetaChipText} numberOfLines={1}>{locationLabel}</Text>
+					</View>
+					<View style={[styles.workerMetaChip, overdue ? styles.workerMetaChipDanger : dueToday ? styles.workerMetaChipWarning : null]}>
+						<Ionicons name="calendar-outline" size={14} color={overdue ? "#B91C1C" : dueToday ? "#92400E" : "#1D4ED8"} />
+						<Text style={[styles.workerMetaChipText, overdue ? styles.workerMetaChipDangerText : dueToday ? styles.workerMetaChipWarningText : null]}>
+							{overdue ? `Overdue • ${dueLabel}` : dueToday ? `Due today • ${dueLabel}` : `Due • ${dueLabel}`}
+						</Text>
+					</View>
+					<View style={[styles.workerMetaChip, assignedToCurrentUser ? styles.workerMetaChipSuccess : null]}>
+						<Ionicons name="person-outline" size={14} color={assignedToCurrentUser ? "#047857" : "#1D4ED8"} />
+						<Text style={[styles.workerMetaChipText, assignedToCurrentUser ? styles.workerMetaChipSuccessText : null]}>
+							{assignedToCurrentUser ? "Assigned to you" : assignedUsers.length ? "Assigned team work" : "No assignee"}
+						</Text>
+					</View>
+				</View>
+			</View>
 
 			{parentReference ? (
 				<Pressable
@@ -334,7 +429,10 @@ export default function Detail({ params }: Props) {
 
 			<Pressable style={styles.card} onPress={() => setPartsModalVisible(true)}>
 				<View style={styles.rowBetween}>
-					<Text style={styles.cardTitle}>Parts</Text>
+					<View>
+						<Text style={styles.cardTitle}>Parts</Text>
+						<Text style={styles.cardSubtitle}>Planned {partSummary.planned} | Actual {partSummary.actual}</Text>
+					</View>
 					<View style={styles.avatarRow}>
 						<Text style={styles.linkText}>{params?.parts?.length || 0} Parts</Text>
 						<Ionicons name="chevron-forward" size={18} color="#742BDE" />
@@ -368,7 +466,15 @@ export default function Detail({ params }: Props) {
 
 			<AssignedUsersModal visible={userModalVisible} onClose={() => setUserModalVisible(false)} users={params?.assignedUsers} />
 
-			<PartsInfoModal visible={partsModalVisible} onClose={() => setPartsModalVisible(false)} parts={params?.parts} />
+			<PartsInfoModal
+				visible={partsModalVisible}
+				onClose={() => setPartsModalVisible(false)}
+				parts={Array.isArray(params?.parts) ? params.parts : []}
+				workOrderId={params?.id}
+				inventoryWarnings={Array.isArray(params?.inventoryWarnings) ? params.inventoryWarnings : []}
+				readOnly={Boolean(params?.hierarchy?.executionOwnedByChildren) || String(params?.status || "").trim() === "Completed"}
+				onSaved={onSaved}
+			/>
 
 			<MoreInfoModal
 				visible={moreInfoModalVisible}
@@ -386,6 +492,79 @@ const styles = StyleSheet.create({
 		flexGrow: 1,
 		paddingVertical: 12,
 		paddingHorizontal: 20,
+	},
+	workerFocusCard: {
+		backgroundColor: "#F8FAFF",
+		borderRadius: 12,
+		padding: 14,
+		marginBottom: 10,
+		borderWidth: 1,
+		borderColor: "#BFDBFE",
+	},
+	workerFocusEyebrow: {
+		fontSize: 11,
+		fontFamily: Fonts.semiBold,
+		color: "#1D4ED8",
+		textTransform: "uppercase",
+		letterSpacing: 0.6,
+	},
+	workerFocusTitle: {
+		fontSize: 15,
+		fontFamily: Fonts.bold,
+		color: "#0F172A",
+		marginTop: 10,
+	},
+	workerFocusText: {
+		fontSize: 11,
+		fontFamily: Fonts.regular,
+		color: "#334155",
+		marginTop: 6,
+		lineHeight: 17,
+	},
+	workerMetaWrap: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: 8,
+		marginTop: 12,
+	},
+	workerMetaChip: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 6,
+		paddingVertical: 7,
+		paddingHorizontal: 10,
+		borderRadius: 999,
+		backgroundColor: "#EFF6FF",
+		borderWidth: 1,
+		borderColor: "#BFDBFE",
+		maxWidth: "100%",
+	},
+	workerMetaChipText: {
+		fontSize: 10,
+		fontFamily: Fonts.medium,
+		color: "#1E3A8A",
+		flexShrink: 1,
+	},
+	workerMetaChipSuccess: {
+		backgroundColor: "#ECFDF5",
+		borderColor: "#A7F3D0",
+	},
+	workerMetaChipSuccessText: {
+		color: "#047857",
+	},
+	workerMetaChipWarning: {
+		backgroundColor: "#FFFBEB",
+		borderColor: "#FDE68A",
+	},
+	workerMetaChipWarningText: {
+		color: "#92400E",
+	},
+	workerMetaChipDanger: {
+		backgroundColor: "#FEF2F2",
+		borderColor: "#FECACA",
+	},
+	workerMetaChipDangerText: {
+		color: "#B91C1C",
 	},
 	card: {
 		backgroundColor: "#F1F3F8",

@@ -1,13 +1,13 @@
-import { Pressable, Text, View, StyleSheet } from "react-native";
-import Fonts from "@/constants/Typography";
-import { WorkOrderCardLogo } from "@/constants/IconProvider";
-import { WorkOrder } from "@/src/types/workOrder";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import moment from "moment";
 import { router } from "expo-router";
 import { Image } from "expo-image";
-import { WorkOrderReadinessModel } from "@/src/utils/workOrderReadiness";
-import { evaluateWorkOrderReadiness } from "@/src/utils/workOrderReadiness";
+
+import Fonts from "@/constants/Typography";
+import { WorkOrder } from "@/src/types/workOrder";
+import { WorkOrderReadinessModel, evaluateWorkOrderReadiness } from "@/src/utils/workOrderReadiness";
 import { formatWorkOrderStatusLabel, getWorkOrderStatusTone } from "@/src/utils/workOrderStatus";
+import { isAssignedToUser, isDueTodayWorkOrder, isOverdueWorkOrder } from "@/src/utils/workerWorkOrders";
 
 const getPriorityColor = (priority: WorkOrder["priority"]) => {
 	switch (priority) {
@@ -16,9 +16,10 @@ const getPriorityColor = (priority: WorkOrder["priority"]) => {
 		case "Medium":
 			return { bg: "#FF4D0040", text: "#D67B00" };
 		case "High":
+		case "Urgent":
 			return { bg: "#FF040042", text: "#D63928" };
 		default:
-			return { bg: "#eee", text: "#000" };
+			return { bg: "#E2E8F0", text: "#334155" };
 	}
 };
 
@@ -33,17 +34,17 @@ const getReadinessTone = (state: WorkOrderReadinessModel["state"]) => {
 	}
 };
 
-const WorkOrderCard = ({
+export default function WorkOrderCard({
 	item,
 	isSelected,
 	variant = "default",
 	readiness,
 	plannerMeta,
-	// onPress
+	currentUser,
 }: {
 	item: WorkOrder;
 	isSelected?: boolean;
-	variant?: "default" | "planner";
+	variant?: "default" | "planner" | "worker";
 	readiness?: WorkOrderReadinessModel;
 	plannerMeta?: {
 		bucketLabel?: string;
@@ -54,69 +55,128 @@ const WorkOrderCard = ({
 		hierarchyBadge?: { label: string; tone: "parent" | "child" } | null;
 		hierarchySummary?: string;
 	};
-}) => {
-	// onPress: () => void;
-
+	currentUser?: any;
+}) {
 	const priorityStyle = getPriorityColor(item.priority);
 	const readinessModel = readiness || evaluateWorkOrderReadiness(item);
 	const readinessTone = getReadinessTone(readinessModel.state);
 	const blockerPreview = (plannerMeta?.blockers || readinessModel.blockers || []).slice(0, 2);
 	const statusTone = getWorkOrderStatusTone(item?.status);
+	const dueLabel = item?.end_date ? moment(item.end_date).format("DD MMM, YYYY") : "No due date";
+	const assetName = item?.asset?.asset_name || "No asset";
+	const locationName = item?.location?.location_name || "No location";
+	const assignedToCurrentUser = isAssignedToUser(item, currentUser);
+	const dueToday = isDueTodayWorkOrder(item);
+	const overdue = isOverdueWorkOrder(item);
 
 	const onCardPress = () => {
-		// onPress();
-		// isSelected && 
 		router.push({
 			pathname: "/workOrderDetail",
-			params: { data: JSON.stringify(item) }
+			params: { data: JSON.stringify(item) },
 		});
-	}
+	};
 
 	return (
-		<Pressable style={({ pressed }) => [
-			styles.card,
-			isSelected && styles.selectedCard,
-			pressed && {backgroundColor: '#fadb7d'},
-		]} onPress={onCardPress}>
-
+		<Pressable
+			style={({ pressed }) => [
+				styles.card,
+				isSelected && styles.selectedCard,
+				pressed && styles.pressedCard,
+			]}
+			onPress={onCardPress}
+		>
 			<View style={styles.leftSection}>
 				<Text style={styles.id}>#{item?.order_no}</Text>
-				<Text style={styles.title} numberOfLines={2}>{item?.title}</Text>
-				<Text style={styles.subText}>Created On : {moment(item?.createdAt).format("DD MMM, YYYY")}</Text>
+				<Text style={styles.title} numberOfLines={2}>
+					{item?.title}
+				</Text>
+				<Text style={styles.subText}>Created on: {moment(item?.createdAt).format("DD MMM, YYYY")}</Text>
+				<Text style={styles.executionMeta} numberOfLines={1}>
+					{assetName} • {locationName}
+				</Text>
+				<Text style={styles.executionMeta}>Due: {dueLabel}</Text>
+
 				<View style={styles.metaRow}>
 					<View style={[styles.readinessPill, { backgroundColor: readinessTone.bg, borderColor: readinessTone.border }]}>
 						<Text style={[styles.readinessText, { color: readinessTone.text }]}>
 							{readinessModel.state === "ready" ? "Ready" : readinessModel.state === "attention" ? "Needs Review" : "Blocked"}
 						</Text>
 					</View>
+
+					{variant === "worker" && assignedToCurrentUser ? (
+						<View style={[styles.metaChip, styles.workerMetaChip]}>
+							<Text style={[styles.metaChipText, styles.workerMetaChipText]}>Assigned to you</Text>
+						</View>
+					) : null}
+
+					{variant === "worker" && dueToday ? (
+						<View style={[styles.metaChip, styles.workerDueChip]}>
+							<Text style={[styles.metaChipText, styles.workerDueChipText]}>Due today</Text>
+						</View>
+					) : null}
+
+					{variant === "worker" && overdue ? (
+						<View style={[styles.metaChip, styles.workerOverdueChip]}>
+							<Text style={[styles.metaChipText, styles.workerOverdueChipText]}>Overdue</Text>
+						</View>
+					) : null}
+
 					{plannerMeta?.bucketLabel ? (
 						<View style={styles.metaChip}>
 							<Text style={styles.metaChipText}>{plannerMeta.bucketLabel}</Text>
 						</View>
 					) : null}
+
 					{plannerMeta?.hierarchyBadge ? (
-						<View style={[styles.metaChip, plannerMeta.hierarchyBadge.tone === "parent" ? styles.metaChipParent : styles.metaChipChild]}>
-							<Text style={[styles.metaChipText, plannerMeta.hierarchyBadge.tone === "parent" ? styles.metaChipParentText : styles.metaChipChildText]}>
+						<View
+							style={[
+								styles.metaChip,
+								plannerMeta.hierarchyBadge.tone === "parent" ? styles.metaChipParent : styles.metaChipChild,
+							]}
+						>
+							<Text
+								style={[
+									styles.metaChipText,
+									plannerMeta.hierarchyBadge.tone === "parent" ? styles.metaChipParentText : styles.metaChipChildText,
+								]}
+							>
 								{plannerMeta.hierarchyBadge.label}
 							</Text>
 						</View>
 					) : null}
 				</View>
-				<Text style={styles.readinessSummary} numberOfLines={2}>{readinessModel.summary}</Text>
+
+				<Text style={styles.readinessSummary} numberOfLines={2}>
+					{readinessModel.summary}
+				</Text>
+
 				{variant === "planner" && plannerMeta?.hierarchySummary ? (
 					<Text style={styles.plannerMetaText}>{plannerMeta.hierarchySummary}</Text>
 				) : null}
+
 				{variant === "planner" ? (
 					<Text style={styles.plannerMetaText}>
-						{plannerMeta?.assigneeCount || 0} assignee{(plannerMeta?.assigneeCount || 0) === 1 ? "" : "s"} • {plannerMeta?.taskSummary || "No checklist"}
+						{plannerMeta?.assigneeCount || 0} assignee{(plannerMeta?.assigneeCount || 0) === 1 ? "" : "s"} •{" "}
+						{plannerMeta?.taskSummary || "No checklist"}
 						{plannerMeta?.overdueDays ? ` • ${plannerMeta.overdueDays}d overdue` : ""}
 					</Text>
 				) : null}
+
+				{variant === "worker" ? (
+					<Text style={styles.plannerMetaText} numberOfLines={2}>
+						{readinessModel.executionReady
+							? "Ready for field execution. Open the work order to log progress and completion details."
+							: "Review blockers, schedule, parts, or procedure details before starting work."}
+					</Text>
+				) : null}
+
 				{blockerPreview.length > 0 ? (
 					<View style={styles.blockerWrap}>
 						{blockerPreview.map((blocker) => (
 							<View key={blocker} style={styles.blockerChip}>
-								<Text style={styles.blockerChipText} numberOfLines={1}>{blocker}</Text>
+								<Text style={styles.blockerChipText} numberOfLines={1}>
+									{blocker}
+								</Text>
 							</View>
 						))}
 					</View>
@@ -124,10 +184,9 @@ const WorkOrderCard = ({
 			</View>
 
 			<View style={styles.rightSection}>
-				{/* <WorkOrderCardLogo /> */}
-					<Image source={require("../../assets/images/work_order.svg")} style={{ width: 40, height: 40 }} />
+				<Image source={require("../../assets/images/work_order.svg")} style={styles.icon} />
 
-					<View style={styles.badgesRow}>
+				<View style={styles.badgesRow}>
 					<View style={[styles.statusBadge, { backgroundColor: statusTone.bg, borderColor: statusTone.border }]}>
 						<Text style={[styles.statusText, { color: statusTone.text }]}>{formatWorkOrderStatusLabel(item?.status)}</Text>
 					</View>
@@ -139,34 +198,34 @@ const WorkOrderCard = ({
 			</View>
 		</Pressable>
 	);
-};
-
-export default WorkOrderCard;
+}
 
 const styles = StyleSheet.create({
 	card: {
 		flexDirection: "row",
 		backgroundColor: "#FFFFFF",
-		borderRadius: 8,
+		borderRadius: 12,
 		padding: 12,
 		marginBottom: 12,
 		shadowColor: "#0000000A",
-		shadowOpacity: 0.04,
-		shadowRadius: 5,
+		shadowOpacity: 0.05,
+		shadowRadius: 6,
 		shadowOffset: { width: 0, height: 2 },
 		elevation: 2,
-		borderWidth: 0.2,
-		borderColor: "#0000004D",
-		justifyContent: "space-between"
+		borderWidth: 0.5,
+		borderColor: "#CBD5E1",
+		justifyContent: "space-between",
 	},
 	selectedCard: {
 		borderColor: "#742BDE4D",
-		borderWidth: 0.6,
+		borderWidth: 1,
 		backgroundColor: "#742BDE14",
-		shadowColor: "#0000000A",
 		shadowOpacity: 0.15,
 		shadowRadius: 10,
 		elevation: 4,
+	},
+	pressedCard: {
+		backgroundColor: "#F8FAFC",
 	},
 	id: {
 		fontFamily: Fonts.regular,
@@ -177,7 +236,7 @@ const styles = StyleSheet.create({
 	title: {
 		fontFamily: Fonts.bold,
 		fontSize: 12,
-		height: 35,
+		minHeight: 34,
 		marginBottom: 2,
 		color: "#000000",
 	},
@@ -185,13 +244,19 @@ const styles = StyleSheet.create({
 		fontSize: 9,
 		color: "#555",
 		marginBottom: 2,
-		fontFamily: Fonts.light
+		fontFamily: Fonts.light,
+	},
+	executionMeta: {
+		fontSize: 9,
+		color: "#475569",
+		marginTop: 2,
+		fontFamily: Fonts.medium,
 	},
 	metaRow: {
 		flexDirection: "row",
 		flexWrap: "wrap",
 		gap: 6,
-		marginTop: 4,
+		marginTop: 6,
 	},
 	readinessPill: {
 		paddingVertical: 3,
@@ -226,10 +291,28 @@ const styles = StyleSheet.create({
 	metaChipChildText: {
 		color: "#C2410C",
 	},
+	workerMetaChip: {
+		backgroundColor: "#E0F2FE",
+	},
+	workerMetaChipText: {
+		color: "#075985",
+	},
+	workerDueChip: {
+		backgroundColor: "#FEF3C7",
+	},
+	workerDueChipText: {
+		color: "#92400E",
+	},
+	workerOverdueChip: {
+		backgroundColor: "#FEE2E2",
+	},
+	workerOverdueChipText: {
+		color: "#B91C1C",
+	},
 	readinessSummary: {
 		fontSize: 9,
 		color: "#475569",
-		marginTop: 5,
+		marginTop: 6,
 		fontFamily: Fonts.regular,
 		lineHeight: 13,
 	},
@@ -238,6 +321,7 @@ const styles = StyleSheet.create({
 		color: "#64748B",
 		marginTop: 4,
 		fontFamily: Fonts.medium,
+		lineHeight: 13,
 	},
 	blockerWrap: {
 		flexDirection: "row",
@@ -258,23 +342,29 @@ const styles = StyleSheet.create({
 		color: "#BE123C",
 	},
 	leftSection: {
-		flex: 6
+		flex: 6,
 	},
 	rightSection: {
 		flex: 4,
 		alignItems: "flex-end",
 		justifyContent: "space-between",
+		paddingLeft: 10,
+	},
+	icon: {
+		width: 40,
+		height: 40,
 	},
 	badgesRow: {
 		flexDirection: "row",
 		gap: 6,
+		flexWrap: "wrap",
+		justifyContent: "flex-end",
 	},
 	statusBadge: {
 		paddingVertical: 2,
 		paddingHorizontal: 10,
-		borderRadius: 2,
-		borderWidth: 0.2,
-		borderColor: "#3F009A99",
+		borderRadius: 6,
+		borderWidth: 0.8,
 	},
 	statusText: {
 		fontSize: 9,
@@ -283,11 +373,10 @@ const styles = StyleSheet.create({
 	priorityBadge: {
 		paddingVertical: 2,
 		paddingHorizontal: 10,
-		borderRadius: 2,
+		borderRadius: 6,
 	},
 	priorityText: {
 		fontSize: 9,
-		color: "#000000",
-		fontFamily: Fonts.light
+		fontFamily: Fonts.light,
 	},
-})
+});

@@ -15,7 +15,7 @@ export interface WorkOrder {
     start_date: string;
     end_date: string;
     sop_form_id: string | null;
-    parts: any[];
+    parts: WorkOrderPartLine[];
     tasks: WorkOrderTask[];
     task_submitted: boolean;
     files: WorkOrderAttachment[];
@@ -69,6 +69,31 @@ export interface WorkOrderAttachment {
     filePath?: string;
     size?: number;
     image_path?: string;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface WorkOrderPartLine {
+    id?: string;
+    _id?: string;
+    part_id?: string;
+    part_name: string;
+    part_number?: string;
+    barcode?: string;
+    part_type?: string;
+    unit?: string;
+    cost?: number;
+    currency?: string;
+    quantity?: number;
+    min_quantity?: number;
+    availabilityStatus?: string;
+    estimatedQuantity?: number;
+    plannedQuantity?: number;
+    actualQuantity?: number | null;
+    procedureLinked?: boolean;
+    procedureNames?: string[];
+    manualQuantity?: number;
+    procedureQuantity?: number;
 }
 
 export interface WorkOrderTask {

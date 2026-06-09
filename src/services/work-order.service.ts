@@ -75,6 +75,42 @@ export const deleteWorkOrderComment = async (workOrderID: string, commentID: str
     return await sendRequest('DELETE', `${endpoints.workOrders.workOrders}/${workOrderID}/${endpoints.workOrders.postComments}/${commentID}`);
 };
 
+export const uploadWorkOrderAttachment = async (workOrderId: string, asset: any, user: any) => {
+    try {
+        const token = storage.getString('token');
+        const randomName = Math.floor(Math.random() * 1000000);
+        const fileName = asset?.fileName || `${randomName}.jpg`;
+        const fileType = asset?.type || 'image/jpeg';
+
+        const formData = new FormData();
+        formData.append('files', {
+            uri: asset.uri,
+            name: fileName,
+            type: fileType,
+        } as any);
+
+        const response = await fetch(`${endpoints.baseURL}api/${endpoints.workOrders.workOrders}/${workOrderId}/attachments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${token}`,
+                'accountID': user?.account_id,
+            },
+            body: formData,
+        });
+
+        const result = await response.json();
+        if (result?.status) {
+            ToastAndroid.show('Attachment uploaded successfully!', ToastAndroid.SHORT);
+        }
+        return result;
+    } catch (error) {
+        console.error('Work order attachment upload failed:', error);
+        ToastAndroid.show('Attachment upload failed. Please try again.', ToastAndroid.SHORT);
+        throw error;
+    }
+};
+
 export const workOrderImageUpload = async (image: any, user: any) => {
     try {
         // Step 1: Show loader

@@ -14,7 +14,8 @@ import Forms from "@/components/work-order-detail/Forms";
 import SegmentedPager from "@/components/global/SegmentPager";
 import History from "@/components/work-order-detail/History";
 import ProceduresTab from "@/components/work-order-detail/ProceduresTab";
-import { ALL_WORK_ORDER_STATUSES, formatWorkOrderStatusLabel, getWorkOrderStatusTone, isClosedWorkOrderStatus, normalizeWorkOrderStatus, requiresWorkOrderBlockReason } from "@/src/utils/workOrderStatus";
+import ExecutionTab from "@/components/work-order-detail/ExecutionTab";
+import { formatWorkOrderStatusLabel, getWorkOrderStatusTone, isClosedWorkOrderStatus, normalizeWorkOrderStatus, requiresWorkOrderBlockReason } from "@/src/utils/workOrderStatus";
 
 const safeJsonParse = (value?: string) => {
 	if (!value || typeof value !== "string") return null;
@@ -25,6 +26,16 @@ const safeJsonParse = (value?: string) => {
 		return null;
 	}
 };
+
+const WORKER_ACTIONABLE_STATUSES = [
+	"Open",
+	"In-Progress",
+	"On-Hold",
+	"Blocked",
+	"Waiting-on-Parts",
+	"Waiting-on-Permit",
+	"Completed",
+] as const;
 
 export default function WorkOrderDetail() {
 	const router = useRouter();
@@ -60,6 +71,11 @@ export default function WorkOrderDetail() {
 		(Array.isArray(workOrderData?.procedure_ids) && workOrderData.procedure_ids.length > 0);
 	const isExecutionOwnedByChildren = Boolean(workOrderData?.hierarchy?.executionOwnedByChildren);
 	const childSummary = workOrderData?.hierarchy?.childStatusSummary;
+	const hasExecutionData =
+		Boolean(workOrderData?.actual_start_date) ||
+		Boolean(workOrderData?.actual_end_date) ||
+		Number(workOrderData?.actual_time || 0) > 0 ||
+		(Array.isArray(workOrderData?.labor_entries) && workOrderData.labor_entries.length > 0);
 
 	const openFollowUpCreate = () => {
 		router.push({
@@ -102,7 +118,8 @@ export default function WorkOrderDetail() {
 	);
 
 	const detailTabs = [
-		{ label: "Details", component: <Detail params={workOrderData} /> },
+		{ label: "Details", component: <Detail params={workOrderData} onSaved={fetchWorkOrderDetails} /> },
+		{ label: "Execution", component: <ExecutionTab params={workOrderData} onSaved={fetchWorkOrderDetails} /> },
 		...(hasTasks ? [{ label: "Tasks", component: <Tasks params={workOrderData} onSaved={fetchWorkOrderDetails} /> }] : []),
 		...(hasProcedures ? [{ label: "Procedures", component: <ProceduresTab params={workOrderData} onSaved={fetchWorkOrderDetails} /> }] : []),
 		...(hasForms ? [{ label: "Forms", component: <Forms params={workOrderData} /> }] : []),
@@ -181,6 +198,30 @@ export default function WorkOrderDetail() {
 			);
 			return;
 		}
+
+		if (targetStatus === "Completed" && !hasExecutionData) {
+			Alert.alert(
+				"Complete Without Execution Log?",
+				"No actual time or labor has been captured yet. You can still complete the work order, but field execution details will be thin in history and reports.",
+				[
+					{ text: "Cancel", style: "cancel" },
+					{
+						text: "Complete Anyway",
+						style: "destructive",
+						onPress: async () => {
+							await handleStatusUpdateConfirmed(targetStatus, blockReason);
+						},
+					},
+				]
+			);
+			return;
+		}
+
+		await handleStatusUpdateConfirmed(targetStatus, blockReason);
+	};
+
+	const handleStatusUpdateConfirmed = async (targetStatus: string, blockReason?: string) => {
+		if (!workOrderData?.id) return;
 
 		try {
 			const payload: Record<string, string> = { status: targetStatus };
@@ -327,9 +368,9 @@ export default function WorkOrderDetail() {
 					</View>
 				</View>
 
-				<Text style={styles.statusSectionLabel}>Status</Text>
+				<Text style={styles.statusSectionLabel}>Update Work Status</Text>
 				<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statusTabs}>
-					{ALL_WORK_ORDER_STATUSES.map((status) => {
+					{WORKER_ACTIONABLE_STATUSES.map((status) => {
 						const isActive = normalizeWorkOrderStatus(workOrderData?.status) === normalizeWorkOrderStatus(status);
 						const tone = getWorkOrderStatusTone(status);
 

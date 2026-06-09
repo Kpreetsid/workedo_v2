@@ -1,25 +1,15 @@
 import Header from "@/components/global/Header";
-import FormInput from "@/components/create-screens/FormInput";
-import { Pressable, ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
-import AssignInput from "@/components/create-screens/AssignInput";
+import { ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import Fonts from "@/constants/Typography";
-import { DropDownIcon } from "@/constants/IconProvider";
 import ActionButton from "@/components/create-screens/ActionButton";
-import AssignInputContainer from "@/components/create-work-order/AssignInputContainer";
-import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
-import DropDownInput from "@/components/create-screens/DropDownInput";
-import { Feather, Ionicons } from "@expo/vector-icons";
-import { createWorkOrder, createWorkRequest, editWorkRequest } from "@/src/services/work-request.service";
-import { useEffect, useRef, useState } from "react";
-import { getSOPs } from "@/src/services/preventive.service";
+import { Feather } from "@expo/vector-icons";
+import { createWorkRequest, editWorkRequest } from "@/src/services/work-request.service";
+import { useEffect, useMemo, useState } from "react";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import DatePicker from "@/components/global/DatePicker";
-import moment from "moment";
 import { AssignSection } from "@/components/create-work-order/AssignSection";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
 import { FormField } from "@/components/global/FormField";
-import AssignSectionNew from "@/components/create-work-order/AssignSectionNew";
 import { Image } from "expo-image";
 import { endpoints } from "@/src/api/endpoints";
 import { WorkRequest } from "@/src/types/workRequest";
@@ -32,17 +22,18 @@ export default function NewWorkRequest() {
 	const [data, setData] = useState<{ passedData: WorkRequest | null; isEdit: string | undefined }>({ passedData: null, isEdit: undefined });
 	const [initialized, setInitialized] = useState(false);
 	const { setWorkRequestForm, resetWorkRequestForm } = useWorkRequestStore();
-	const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-	const [activeDateField, setActiveDateField] = useState<"start_date" | "end_date" | null>(null);
 	const isEditMode = params?.isEdit === "true" && Boolean(params?.passedData);
 
 	const [requestId, setRequestId] = useState<string>("");
-
-	useEffect(() => {
-		return () => {
-			resetWorkRequestForm();
-		}
-	}, [])
+	const draftTitle = useWorkRequestStore((state) => state.title);
+	const draftMessage = useWorkRequestStore((state) => state.message);
+	const draftLocation = useWorkRequestStore((state) => state.location);
+	const draftAsset = useWorkRequestStore((state) => state.selected_asset);
+	const draftAttachments = useWorkRequestStore((state) => state.attachments);
+	const hasDraft = useMemo(
+		() => Boolean(draftTitle || draftMessage || draftLocation || draftAsset || draftAttachments.length),
+		[draftAsset, draftAttachments.length, draftLocation, draftMessage, draftTitle]
+	);
 
 	// typed, parsed object
 	useEffect(() => {
@@ -53,13 +44,22 @@ export default function NewWorkRequest() {
 		if (!passedData) {
 			// Missing payload is normal in create mode; warn only for broken edit navigation.
 			if (isEdit === "true") {
-				console.warn("❌ passedData: passedData param missing");
+				console.warn("passedData param missing for work request edit mode");
 			}
 			setData({ passedData: null, isEdit: undefined });
 			return;
 		}
-		const parsed = parseJsonRouteParam<WorkRequest>(passedData);
-		if (!parsed) {
+
+		try {
+			const parsed = JSON.parse(passedData) as WorkRequest;
+			console.log('parsed now = ', parsed)
+			setData({
+				passedData: parsed,
+				isEdit,
+			});
+			console.log("Parsed Data:", { passedData: parsed, isEdit });
+		} catch (e) {
+			console.error("newWorkRequest: failed to parse passedData", e);
 			setData({ passedData: null, isEdit: undefined });
 			return;
 		}
@@ -95,7 +95,6 @@ export default function NewWorkRequest() {
 		const data: any = useWorkRequestStore.getState();
 		console.log("Work request Form =", data);
 
-		// ✅ Basic validation
 		const required: (keyof typeof data)[] = [
 			"title",
 			"message",
@@ -115,7 +114,6 @@ export default function NewWorkRequest() {
 			}
 		}
 
-		// ✅ Build final payload matching your structure
 		const payload = {
 			asset_id: data.selected_asset?.id || "",
 			description: data.message,
@@ -127,7 +125,7 @@ export default function NewWorkRequest() {
 			title: data.title,
 		};
 
-		console.log("📦 Final Work Request Payload:", payload);
+		console.log("Final Work Request Payload:", payload);
 
 		try {
 			if (isEditMode) {
@@ -135,7 +133,7 @@ export default function NewWorkRequest() {
 				const res = await editWorkRequest(requestId, payload);
 				
 				if (res?.status) {
-					ToastAndroid.show("Work Order updated successfully!", ToastAndroid.SHORT);
+					ToastAndroid.show("Work request updated successfully!", ToastAndroid.SHORT);
 					useWorkRequestStore.getState().resetWorkRequestForm();
 					router.back();
 				}
@@ -143,14 +141,14 @@ export default function NewWorkRequest() {
 				const res = await createWorkRequest(payload);
 				
 				if (res?.status) {
-					ToastAndroid.show("Work Order created successfully!", ToastAndroid.SHORT);
+					ToastAndroid.show("Work request created successfully!", ToastAndroid.SHORT);
 					useWorkRequestStore.getState().resetWorkRequestForm();
 					router.back();
 				}
 			}
 
 		} catch (error) {
-			console.error("❌ Error creating work request:", error);
+			console.error("Error creating work request:", error);
 			ToastAndroid.show("Failed to create work request!", ToastAndroid.SHORT);
 		}
 	};
@@ -161,6 +159,20 @@ export default function NewWorkRequest() {
 
 			<KeyboardAwareScrollView bottomOffset={30} style={{ backgroundColor: "#F5F7FA" }}>
 				<ScrollView style={styles.container}>
+					{!isEditMode && hasDraft ? (
+						<View style={styles.draftBanner}>
+							<View style={{ flex: 1 }}>
+								<Text style={styles.draftBannerTitle}>Draft restored</Text>
+								<Text style={styles.draftBannerText}>
+									Your unsaved work request is still available. Continue editing or clear it and start fresh.
+								</Text>
+							</View>
+							<TouchableOpacity onPress={resetWorkRequestForm} style={styles.draftBannerAction}>
+								<Text style={styles.draftBannerActionText}>Clear</Text>
+							</TouchableOpacity>
+						</View>
+					) : null}
+
 					<View style={styles.subContainer}>
 
 						<FormField
@@ -283,6 +295,42 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		backgroundColor: "#f9f9ff",
+	},
+	draftBanner: {
+		marginHorizontal: 20,
+		marginTop: 14,
+		marginBottom: 6,
+		padding: 14,
+		borderRadius: 14,
+		backgroundColor: "#EFF6FF",
+		borderWidth: 1,
+		borderColor: "#BFDBFE",
+		flexDirection: "row",
+		gap: 12,
+		alignItems: "flex-start",
+	},
+	draftBannerTitle: {
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
+		color: "#1D4ED8",
+	},
+	draftBannerText: {
+		marginTop: 4,
+		fontSize: 11,
+		lineHeight: 16,
+		fontFamily: Fonts.regular,
+		color: "#475569",
+	},
+	draftBannerAction: {
+		paddingVertical: 6,
+		paddingHorizontal: 10,
+		borderRadius: 999,
+		backgroundColor: "#DBEAFE",
+	},
+	draftBannerActionText: {
+		fontSize: 10,
+		fontFamily: Fonts.semiBold,
+		color: "#1D4ED8",
 	},
 	subContainer: {
 		backgroundColor: "#f9f9ff",

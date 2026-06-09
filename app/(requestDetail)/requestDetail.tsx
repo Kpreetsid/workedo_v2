@@ -48,6 +48,7 @@ export default function WorkRequestDetail() {
 	const [openPopover, setOpenPopover] = useState(false);
 	const ellipsesRef = useRef<any>(null);
 	const [workRequestData, setWorkRequestData] = useState<WorkRequest>(initialRequest);
+	const [loadingError, setLoadingError] = useState<string | null>(null);
 
 	const stage = getWorkRequestStage(workRequestData);
 	const governanceState = getWorkRequestGovernanceState(workRequestData);
@@ -90,12 +91,14 @@ export default function WorkRequestDetail() {
 		if (!workRequestData?.id) return;
 
 		try {
+			setLoadingError(null);
 			const res = await getWorkRequestDetails(workRequestData.id);
 			if (res?.status && res?.data) {
 				setWorkRequestData(res.data);
 			}
 		} catch (e) {
 			console.log("request detail error =", e);
+			setLoadingError("Unable to refresh this request right now. Check your connection and try again.");
 		}
 	};
 
@@ -243,6 +246,18 @@ export default function WorkRequestDetail() {
 			</Popover>
 
 			<ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+				{loadingError ? (
+					<View style={styles.retryBanner}>
+						<View style={{ flex: 1 }}>
+							<Text style={styles.retryBannerTitle}>Request details may be outdated</Text>
+							<Text style={styles.retryBannerText}>{loadingError}</Text>
+						</View>
+						<Pressable onPress={fetchWorkRequestDetails} style={styles.retryBannerAction}>
+							<Text style={styles.retryBannerActionText}>Retry</Text>
+						</Pressable>
+					</View>
+				) : null}
+
 				<View style={styles.heroCard}>
 					<View style={styles.heroHeader}>
 						<View style={styles.heroTextWrap}>
@@ -258,7 +273,7 @@ export default function WorkRequestDetail() {
 					</View>
 
 					<Text style={styles.heroMeta}>
-						Requested by {formatRequestUserLabel(workRequestData?.createdBy)} • {formatRequestDateTime(workRequestData?.createdAt)}
+						Requested by {formatRequestUserLabel(workRequestData?.createdBy)} | {formatRequestDateTime(workRequestData?.createdAt)}
 					</Text>
 
 					<View style={[styles.governanceCard, { backgroundColor: governanceTone.bg, borderColor: governanceTone.border }]}>
@@ -370,6 +385,40 @@ const styles = StyleSheet.create({
 		backgroundColor: "#F5F7FA",
 		padding: 20,
 		paddingBottom: 120,
+	},
+	retryBanner: {
+		backgroundColor: "#FFF7ED",
+		borderRadius: 18,
+		padding: 14,
+		borderWidth: 1,
+		borderColor: "#FDBA74",
+		marginBottom: 8,
+		flexDirection: "row",
+		gap: 12,
+		alignItems: "flex-start",
+	},
+	retryBannerTitle: {
+		fontFamily: Fonts.semiBold,
+		fontSize: 12,
+		color: "#9A3412",
+	},
+	retryBannerText: {
+		marginTop: 4,
+		fontFamily: Fonts.regular,
+		fontSize: 11,
+		lineHeight: 16,
+		color: "#9A3412",
+	},
+	retryBannerAction: {
+		paddingVertical: 6,
+		paddingHorizontal: 10,
+		borderRadius: 999,
+		backgroundColor: "#FED7AA",
+	},
+	retryBannerActionText: {
+		fontFamily: Fonts.semiBold,
+		fontSize: 10,
+		color: "#9A3412",
 	},
 	heroCard: {
 		backgroundColor: "#FFFFFF",
