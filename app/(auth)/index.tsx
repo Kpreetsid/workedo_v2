@@ -1,15 +1,15 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, ToastAndroid } from "react-native";
-import AuthHeader from "@/components/auth-screens/AuthHeader";
+import AuthHeader from "@/src/components/auth-screens/AuthHeader";
 import { Logo } from "@/constants/IconProvider";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
-import ActionButton from "@/components/auth-screens/ActionButton";
+import ActionButton from "@/src/components/auth-screens/ActionButton";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useForm } from "react-hook-form";
-import Field from "@/components/auth-screens/InputField";
+import Field from "@/src/components/auth-screens/InputField";
 
 import { loginService } from "@/src/services/auth.service";
-import { useAuthStore } from "@/src/store/useAuthStore";
+import { useAuthStore } from "@/src/state/auth/useAuthStore";
 import { storage } from "@/src/storage/mmkv";
 import { migrateLegacyAuthToken, setAuthToken } from "@/src/storage/secureAuth";
 import { useEffect } from "react";

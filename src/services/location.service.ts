@@ -1,6 +1,6 @@
 import { ToastAndroid } from 'react-native';
-import { sendRequest, sendRequestDemo } from '../api/api.service';
-import { endpoints } from '../api/endpoints';
+import { sendRequest, sendRequestDemo } from './api/api.service';
+import { endpoints } from './api/endpoints';
 import { getAuthToken } from '../storage/secureAuth';
 
 export const locationTree = async () => {

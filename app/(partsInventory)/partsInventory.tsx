@@ -1,16 +1,16 @@
-import Header from "@/components/global/Header";
-import SearchBar from "@/components/global/SearchBar";
+import Header from "@/src/components/global/Header";
+import SearchBar from "@/src/components/global/SearchBar";
 import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, View, Text, Pressable, FlatList, TouchableOpacity, Alert, ToastAndroid } from "react-native";
 import { Entypo, FontAwesome, Ionicons } from "@expo/vector-icons";
 import Fonts from "@/constants/Typography";
 import { router, useFocusEffect } from "expo-router";
 import { deletePart, getParts } from "@/src/services/part.service";
-import CreateFAB from "@/components/global/CreateFAB";
+import CreateFAB from "@/src/components/global/CreateFAB";
 import Popover from "react-native-popover-view";
 import { Part } from "@/src/types/part";
 import { Location } from "@/src/types/location";
-import LocationPickerModal from "@/components/create-work-order/LocationPickerModal";
+import LocationPickerModal from "@/src/components/create-work-order/LocationPickerModal";
 import {
   getPartAlternativeLocationCount,
   getPartLocationCount,

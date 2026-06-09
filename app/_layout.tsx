@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAuthGuard } from "@/src/hooks/useAuthGuard";
+import { ErrorBoundary } from "@/src/core/error/ErrorBoundary";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -28,15 +29,16 @@ export default function RootLayout() {
 	if ((!loaded && !error) || !authReady) return null;
 
 	return (
-		<GestureHandlerRootView style={{ flex: 1 }}>
-			<KeyboardProvider>
-				{/* <Stack screenOptions={{ headerShown: false }} /> */}
-				<Stack initialRouteName="(auth)/index" screenOptions={{
-					headerShown: false,
-					navigationBarColor: "#742BDE",
-					animation: "fade",
-				}} />
-			</KeyboardProvider>
-		</GestureHandlerRootView>
+		<ErrorBoundary>
+			<GestureHandlerRootView style={{ flex: 1 }}>
+				<KeyboardProvider>
+					<Stack initialRouteName="(auth)/index" screenOptions={{
+						headerShown: false,
+						navigationBarColor: "#742BDE",
+						animation: "fade",
+					}} />
+				</KeyboardProvider>
+			</GestureHandlerRootView>
+		</ErrorBoundary>
 	)
 }

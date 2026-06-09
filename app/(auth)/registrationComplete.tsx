@@ -1,9 +1,9 @@
 import {Image, StyleSheet, Text, View} from "react-native";
 import {router} from "expo-router";
-import AuthHeader from "@/components/auth-screens/AuthHeader";
+import AuthHeader from "@/src/components/auth-screens/AuthHeader";
 import {Logo, RegistrationCompleteIcon} from "@/constants/IconProvider";
 import {SafeAreaView} from "react-native-safe-area-context";
-import ActionButton from "@/components/auth-screens/ActionButton";
+import ActionButton from "@/src/components/auth-screens/ActionButton";
 import Fonts from "@/constants/Typography";
 
 export default function RegistrationComplete() {

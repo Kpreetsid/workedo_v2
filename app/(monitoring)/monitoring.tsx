@@ -1,7 +1,7 @@
-import Header from "@/components/global/Header";
-import SegmentedPager from "@/components/global/SegmentPager";
+import Header from "@/src/components/global/Header";
+import SegmentedPager from "@/src/components/global/SegmentPager";
 import {Foundation, MaterialCommunityIcons} from "@expo/vector-icons";
-import MonitoringTabs from "@/components/monitoring/MonitoringTabs";
+import MonitoringTabs from "@/src/components/monitoring/MonitoringTabs";
 import { StyleSheet, View } from "react-native";
 
 export default function Monitoring() {

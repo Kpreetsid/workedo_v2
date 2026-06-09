@@ -1,16 +1,16 @@
-import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import Header from '@/components/global/Header'
+import Header from '@/src/components/global/Header'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import AddPartCard from './AddPartCard'
 import { getParts } from '@/src/services/part.service'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { usePreventiveStore } from '@/src/store/usePreventiveStore'
-import { usePartFormStore } from '@/src/store/usePartFormStore'
-import { useWorkOrderStore } from '@/src/store/useWorkOrderStore'
-import { useWorkRequestStore } from '@/src/store/useWorkRequestStore'
+import { usePreventiveStore } from '@/src/state/workOrders/usePreventiveStore'
+import { usePartFormStore } from '@/src/state/inventory/usePartFormStore'
+import { useWorkOrderStore } from '@/src/state/workOrders/useWorkOrderStore'
+import { useWorkRequestStore } from '@/src/state/workOrders/useWorkRequestStore'
 import { Ionicons } from '@expo/vector-icons'
-import ActionButton from '@/components/auth-screens/ActionButton'
+import ActionButton from '@/src/components/auth-screens/ActionButton'
 
 const addParts = () => {
 	const router = useRouter();
@@ -123,7 +123,7 @@ const addParts = () => {
 
 
 				{
-					parts?.map((item, index) => {
+					parts?.map((item) => {
 						return (
 							<AddPartCard
 								key={item.id}

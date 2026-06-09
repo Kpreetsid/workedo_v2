@@ -1,22 +1,15 @@
-import Header from "@/components/global/Header";
-import { Dimensions, FlatList, Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
-import ActionButton from "@/components/create-screens/ActionButton";
+import Header from "@/src/components/global/Header";
+import { Dimensions, FlatList, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import ActionButton from "@/src/components/create-screens/ActionButton";
 import { router, useLocalSearchParams } from "expo-router";
 import Fonts from "@/constants/Typography";
-import { ArrowRight, MapIcon } from "@/constants/IconProvider";
 import { useEffect, useState } from "react";
-import SearchBar from "@/components/global/SearchBar";
-import { locationTree } from "@/src/services/location.service";
-import { useAuthStore } from "@/src/store/useAuthStore";
-import { Location } from "@/src/types/location";
-import { useLocationStore } from "@/src/store/useLocationStore";
-import { usePreventiveStore } from "@/src/store/usePreventiveStore";
+import { usePreventiveStore } from "@/src/state/workOrders/usePreventiveStore";
 import { getFilteredAssets } from "@/src/services/preventive.service";
 import { Asset } from "@/src/types/asset";
-import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
-import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
-import { Ionicons } from "@expo/vector-icons";
-import SelectAssetsCard from "@/components/assets/SelectAssetsCard";
+import { useWorkOrderStore } from "@/src/state/workOrders/useWorkOrderStore";
+import { useWorkRequestStore } from "@/src/state/workOrders/useWorkRequestStore";
+import SelectAssetsCard from "@/src/components/assets/SelectAssetsCard";
 
 interface AssetInterface {
 	showHeader?: boolean,
@@ -29,8 +22,6 @@ export default function SelectAsset({ showHeader = true, selection = true }: Ass
 	const comingFrom = params?.comingFrom;
 
 	console.log('comingFrom in select asset = ', comingFrom);
-	const [searchText, setSearchText] = useState("");
-	const user = useAuthStore((state) => state.user);
 	const [assets, setAssets] = useState<Asset[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
 

@@ -3,10 +3,10 @@ import { StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { FontAwesome6 } from "@expo/vector-icons";
 
-import Header from "@/components/global/Header";
-import SegmentedPager from "@/components/global/SegmentPager";
-import CreateFAB from "@/components/global/CreateFAB";
-import RequestList from "@/components/requests/RequestList";
+import Header from "@/src/components/global/Header";
+import SegmentedPager from "@/src/components/global/SegmentPager";
+import CreateFAB from "@/src/components/global/CreateFAB";
+import RequestList from "@/src/components/requests/RequestList";
 import Fonts from "@/constants/Typography";
 import { getWorkRequests } from "@/src/services/work-request.service";
 import { WorkRequest } from "@/src/types/workRequest";

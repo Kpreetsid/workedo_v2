@@ -1,8 +1,8 @@
-import Header from "@/components/global/Header";
+import Header from "@/src/components/global/Header";
 import { router, useFocusEffect } from "expo-router";
-import CreateFAB from "@/components/global/CreateFAB";
-import SearchBar from "@/components/global/SearchBar";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import CreateFAB from "@/src/components/global/CreateFAB";
+import SearchBar from "@/src/components/global/SearchBar";
+import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import Fonts from "@/constants/Typography";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -10,13 +10,6 @@ import { deletePreventive, getPreventives } from "@/src/services/preventive.serv
 import { Preventive } from "@/src/types/preventive";
 import Popover from "react-native-popover-view";
 
-const mockData = Array.from({ length: 10 }, (_, i) => ({
-	id: `${i + 1}`,
-	title: `Weekly Preventive Test ${i + 1}`,
-	assignedTo: i % 2 === 0 ? "Parwez" : "John Doe",
-	location: i % 3 === 0 ? "New Delhi" : "Mumbai",
-	status: i % 2 === 0 ? "Active" : "Inactive",
-}));
 
 export default function PreventivePage() {
 	const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);

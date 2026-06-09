@@ -1,6 +1,6 @@
 import { ToastAndroid } from 'react-native';
-import { sendRequest } from '../api/api.service';
-import { endpoints } from '../api/endpoints';
+import { sendRequest } from './api/api.service';
+import { endpoints } from './api/endpoints';
 import { deleteAuthToken, getAuthToken, setAuthToken } from '../storage/secureAuth';
 
 const BASE_URL = 'https://new.presageinsights.ai/cmms_express/api/upload/user_profile_img';

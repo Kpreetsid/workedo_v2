@@ -1,5 +1,5 @@
-import { sendRequest, sendRequestDemo, sendRequestValidate } from '../api/api.service';
-import { endpoints } from '../api/endpoints';
+import { sendRequest, sendRequestDemo, sendRequestValidate } from './api/api.service';
+import { endpoints } from './api/endpoints';
 
 export const assetTree = async () => {
     const url = `${endpoints.asset.tree}`;

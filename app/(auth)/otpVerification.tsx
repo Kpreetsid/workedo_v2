@@ -1,14 +1,14 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet, Text, TextInput, ToastAndroid, View } from "react-native";
-import AuthHeader from "@/components/auth-screens/AuthHeader";
+import AuthHeader from "@/src/components/auth-screens/AuthHeader";
 import { Logo, OTPEmailIcon } from "@/constants/IconProvider";
 import { useEffect, useRef, useState } from "react";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Fonts from "@/constants/Typography";
 import { router } from "expo-router";
-import ActionButton from "@/components/auth-screens/ActionButton";
+import ActionButton from "@/src/components/auth-screens/ActionButton";
 import { OTPVerificationService, resetPasswordOTPSendService, sendPasswordResetEmail } from "@/src/services/auth.service";
-import { useAuthFlowStore } from "@/src/store/useAuthFlowStore";
+import { useAuthFlowStore } from "@/src/state/auth/useAuthFlowStore";
 
 export default function OTPVerification() {
 	const [otp, setOtp] = useState(["", "", "", "", "", ""]);

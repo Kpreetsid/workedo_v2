@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import ActionButton from "@/components/create-screens/ActionButton";
+import ActionButton from "@/src/components/create-screens/ActionButton";
 import Fonts from "@/constants/Typography";
-import Header from "@/components/global/Header";
+import Header from "@/src/components/global/Header";
 import { useRouter } from "expo-router";
 
 type ScannerTarget =

@@ -1,19 +1,18 @@
-import { useCallback } from "react";
 import { storage } from "@/src/storage/mmkv";
 import { deleteAuthToken } from "@/src/storage/secureAuth";
 import { useRouter } from "expo-router";
-import { useAuthStore } from "@/src/store/useAuthStore";
-import { useOverviewStore } from "@/src/store/useOverviewStore";
-import { useAssetStore } from "@/src/store/useAssetStore";
-import { useGatewayStore } from "@/src/store/useGatewayStore";
-import { useLocationStore } from "@/src/store/useLocationStore";
-import { usePartFormStore } from "@/src/store/usePartFormStore";
-import { usePreventiveStore } from "@/src/store/usePreventiveStore";
-import { useUserFormStore } from "@/src/store/useUserFormStore";
-import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
-import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
-import { useCreateLocationStore } from "@/src/store/useCreateLocationStore";
-import { useCreateAssetStore } from "@/src/store/useCreateAsset";
+import { useAuthStore } from "@/src/state/auth/useAuthStore";
+import { useOverviewStore } from "@/src/state/app/useOverviewStore";
+import { useAssetStore } from "@/src/state/assets/useAssetStore";
+import { useGatewayStore } from "@/src/state/sensors/useGatewayStore";
+import { useLocationStore } from "@/src/state/locations/useLocationStore";
+import { usePartFormStore } from "@/src/state/inventory/usePartFormStore";
+import { usePreventiveStore } from "@/src/state/workOrders/usePreventiveStore";
+import { useUserFormStore } from "@/src/state/auth/useUserFormStore";
+import { useWorkOrderStore } from "@/src/state/workOrders/useWorkOrderStore";
+import { useWorkRequestStore } from "@/src/state/workOrders/useWorkRequestStore";
+import { useCreateLocationStore } from "@/src/state/locations/useCreateLocationStore";
+import { useCreateAssetStore } from "@/src/state/assets/useCreateAsset";
 
 export function useGlobal() {
 	const router = useRouter();

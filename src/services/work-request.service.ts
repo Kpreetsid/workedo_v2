@@ -1,6 +1,6 @@
 
-import { sendRequest } from "../api/api.service";
-import { endpoints } from "../api/endpoints";
+import { sendRequest } from "./api/api.service";
+import { endpoints } from "./api/endpoints";
 
 export const createWorkOrder = async (payload: any) => {
     return await sendRequest('POST', `${endpoints.workOrders.createWorkOrder}`, payload);

@@ -12,9 +12,9 @@ import React, { useState } from "react";
 import Fonts from "@/constants/Typography";
 import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import Header from "@/components/global/Header";
-import { usePreventiveStore } from "@/src/store/usePreventiveStore";
-import ActionButton from "@/components/auth-screens/ActionButton";
+import Header from "@/src/components/global/Header";
+import { usePreventiveStore } from "@/src/state/workOrders/usePreventiveStore";
+import ActionButton from "@/src/components/auth-screens/ActionButton";
 import { useRouter } from "expo-router";
 import { ToastAndroid } from "react-native";
 

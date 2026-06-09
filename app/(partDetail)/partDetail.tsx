@@ -1,4 +1,4 @@
-import Header from "@/components/global/Header";
+import Header from "@/src/components/global/Header";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View } from "react-native";
 import { FontAwesome6 } from "@expo/vector-icons";
 import Fonts from "@/constants/Typography";

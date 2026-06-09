@@ -1,7 +1,7 @@
-import Header from "@/components/global/Header";
-import FormInput from "@/components/create-screens/FormInput";
-import DropDownInput from "@/components/create-screens/DropDownInput";
-import ActionButton from "@/components/create-screens/ActionButton";
+import Header from "@/src/components/global/Header";
+import FormInput from "@/src/components/create-screens/FormInput";
+import DropDownInput from "@/src/components/create-screens/DropDownInput";
+import ActionButton from "@/src/components/create-screens/ActionButton";
 import Fonts from "@/constants/Typography";
 import { Text, TouchableOpacity, StyleSheet, View, Pressable, ToastAndroid } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -10,11 +10,10 @@ import { useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { getParts } from "@/src/services/part.service";
-import { usePreventiveStore } from "@/src/store/usePreventiveStore";
-import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
-import { usePartFormStore } from "@/src/store/usePartFormStore";
-import NewWorkRequest from "../(newWorkRequest)/newWorkRequest";
-import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
+import { usePreventiveStore } from "@/src/state/workOrders/usePreventiveStore";
+import { useWorkOrderStore } from "@/src/state/workOrders/useWorkOrderStore";
+import { usePartFormStore } from "@/src/state/inventory/usePartFormStore";
+import { useWorkRequestStore } from "@/src/state/workOrders/useWorkRequestStore";
 
 export default function UpdateParts() {
 	const router = useRouter();

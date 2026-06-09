@@ -1,24 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
-import SearchBar from "@/components/global/SearchBar";
+import SearchBar from "@/src/components/global/SearchBar";
 import Fonts from "@/constants/Typography";
 import { ArrowDown } from "@/constants/IconProvider";
-import Header from "@/components/global/Header";
+import Header from "@/src/components/global/Header";
 import { router, useFocusEffect } from "expo-router";
-import CreateFAB from "@/components/global/CreateFAB";
+import CreateFAB from "@/src/components/global/CreateFAB";
 import { deleteGateway, getGateways, getSensorsList } from "@/src/services/gateway.service";
-import { useAuthStore } from "@/src/store/useAuthStore";
+import { useAuthStore } from "@/src/state/auth/useAuthStore";
 
-const mockGateways = [
-	{ id: "1", macId: "70:B8:F6:62:01:5c", name: "Main Gateway" },
-	{ id: "2", macId: "kamal_test1", name: "Gateway Test 1" },
-	{ id: "3", macId: "kamal_test2", name: "Gateway Test 2" },
-	{ id: "4", macId: "parwez_dummy", name: "Gateway Dummy" },
-	{ id: "5", macId: "70:B8:F6:62:01:5c", name: "Main Gateway Copy" },
-	{ id: "6", macId: "kamal_test1", name: "Gateway Test 1 Copy" },
-	{ id: "7", macId: "kamal_test2", name: "Gateway Test 2 Copy" },
-	{ id: "8", macId: "parwez_dummy", name: "Gateway Dummy Copy" },
-];
 
 export default function Gateways() {
 	const [refreshing, setRefreshing] = useState(false);
@@ -29,9 +19,6 @@ export default function Gateways() {
 	const [searchText, setSearchText] = useState("");
 	const [expandedId, setExpandedId] = useState<string | null>(null);
 
-	const filteredGateways = mockGateways.filter((g) =>
-		g.macId.toLowerCase().includes(searchText.toLowerCase()) ||
-		g.name.toLowerCase().includes(searchText.toLowerCase()));
 
 	useFocusEffect(
 		useCallback(() => {
@@ -128,7 +115,7 @@ export default function Gateways() {
 				<SearchBar placeholder="Search..." value={searchText} onChangeText={setSearchText} />
 				<FlatList
 					data={gateways}
-					keyExtractor={(item, index) => index.toString()}
+					keyExtractor={(_, index) => index.toString()}
 					renderItem={({ item, index }: any) => {
 						const isExpanded = expandedId === index;
 						return (

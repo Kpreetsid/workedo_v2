@@ -1,16 +1,16 @@
-import Header from "@/components/global/Header";
+import Header from "@/src/components/global/Header";
 import { Pressable, Text, StyleSheet, FlatList, View, Dimensions } from "react-native";
 import Fonts from "@/constants/Typography";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import { TickIcon } from "@/constants/IconProvider";
-import ActionButton from "@/components/create-screens/ActionButton";
+import ActionButton from "@/src/components/create-screens/ActionButton";
 import { router, useLocalSearchParams } from "expo-router";
 import { getUsers } from "@/src/services/preventive.service";
-import { usePreventiveStore } from "@/src/store/usePreventiveStore";
-import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
-import { useCreateAssetStore } from "@/src/store/useCreateAsset";
-import { useCreateLocationStore } from "@/src/store/useCreateLocationStore";
+import { usePreventiveStore } from "@/src/state/workOrders/usePreventiveStore";
+import { useWorkOrderStore } from "@/src/state/workOrders/useWorkOrderStore";
+import { useCreateAssetStore } from "@/src/state/assets/useCreateAsset";
+import { useCreateLocationStore } from "@/src/state/locations/useCreateLocationStore";
 import { getRouteParamString, parseJsonRouteParam } from "@/src/utils/routeParams";
 
 const width = Dimensions.get("window").width;

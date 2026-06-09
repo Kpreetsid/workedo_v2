@@ -4,10 +4,10 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import Popover from "react-native-popover-view";
 
-import Header from "@/components/global/Header";
-import RejectModal from "@/components/request-detail/RejectModal.tsx";
+import Header from "@/src/components/global/Header";
+import RejectModal from "@/src/components/request-detail/RejectModal.tsx";
 import Fonts from "@/constants/Typography";
-import { useAuthStore } from "@/src/store/useAuthStore";
+import { useAuthStore } from "@/src/state/auth/useAuthStore";
 import {
 	approveWorkRequest,
 	deleteWorkRequest,
@@ -352,7 +352,6 @@ export default function WorkRequestDetail() {
 
 			<RejectModal
 				visible={rejectVisible}
-				item={workRequestData}
 				onCancel={() => setRejectVisible(false)}
 				onSubmit={async (reason) => {
 					setRejectVisible(false);

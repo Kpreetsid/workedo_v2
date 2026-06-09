@@ -1,17 +1,16 @@
-import Header from "@/components/global/Header";
-import FormInput from "@/components/create-screens/FormInput";
+import Header from "@/src/components/global/Header";
+import FormInput from "@/src/components/create-screens/FormInput";
 import { ActivityIndicator, Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Fonts from "@/constants/Typography";
-import ActionButton from "@/components/create-screens/ActionButton";
+import ActionButton from "@/src/components/create-screens/ActionButton";
 import { useEffect, useRef, useState } from "react";
 import { createEndpoint, getBearingDetails, updateEndpoint } from "@/src/services/asset.service";
-import { useAuthStore } from "@/src/store/useAuthStore";
+import { useAuthStore } from "@/src/state/auth/useAuthStore";
 import { useRouter } from "expo-router";
 import { useLocalSearchParams } from "expo-router/build/hooks";
-import { useAssetStore } from "@/src/store/useAssetStore";
-import DropDownInput from "@/components/create-screens/DropDownInput";
-import DropDownLocation from "@/components/create-endpoint/DropDownLocation";
+import { useAssetStore } from "@/src/state/assets/useAssetStore";
+import DropDownLocation from "@/src/components/create-endpoint/DropDownLocation";
 
 export default function CreateNewEndPoint() {
 	const { id } = useLocalSearchParams();

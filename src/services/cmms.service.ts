@@ -1,5 +1,5 @@
-import { sendRequest } from "../api/api.service";
-import { endpoints } from "../api/endpoints";
+import { sendRequest } from "./api/api.service";
+import { endpoints } from "./api/endpoints";
 
 export const woStatus = async (fromDate: string, toDate: string, assetIds: string) => {
     const url = `${endpoints.cmms.woStatus}`;

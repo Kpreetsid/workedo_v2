@@ -1,24 +1,19 @@
-import Header from "@/components/global/Header";
-import { StyleSheet, ToastAndroid, View } from "react-native";
-import FormInput from "@/components/create-screens/FormInput";
-import AssignInput from "@/components/create-screens/AssignInput";
-import ActionButton from "@/components/create-screens/ActionButton";
+import Header from "@/src/components/global/Header";
+import { ToastAndroid, View } from "react-native";
+import ActionButton from "@/src/components/create-screens/ActionButton";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { router, useLocalSearchParams, useRouter } from "expo-router";
-import DropDownInput from "@/components/create-screens/DropDownInput";
-import React, { useEffect, useRef, useState } from "react";
-import { useLocationStore } from "@/src/store/useLocationStore";
-import { usePartFormStore } from "@/src/store/usePartFormStore";
-import { createPart, getPartTypes, updateFullPart, updatePart } from "@/src/services/part.service";
-import { FormField } from "@/components/global/FormField";
-import LocationPickerModal from "@/components/create-work-order/LocationPickerModal";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { usePartFormStore } from "@/src/state/inventory/usePartFormStore";
+import { createPart, getPartTypes, updateFullPart } from "@/src/services/part.service";
+import { FormField } from "@/src/components/global/FormField";
+import LocationPickerModal from "@/src/components/create-work-order/LocationPickerModal";
 import { parseJsonRouteParam } from "@/src/utils/routeParams";
 
 export default function CreatePart() {
 	const params: any = useLocalSearchParams();
 	console.log('params = ', params);
 
-	const data = params?.data;
 	const isEdit = !!params?.data;
 
 	const router = useRouter();
@@ -27,6 +22,7 @@ export default function CreatePart() {
 	const { setPartFormValue, resetPartForm, isLoaded } = usePartFormStore();
 
 	const [partTypes, setPartTypes] = useState([]);
+    // @ts-ignore
 	const [selectedPartTypeId, setSelectedPartTypeId] = useState("");
 
 	useEffect(() => {
@@ -257,9 +253,3 @@ export default function CreatePart() {
 	);
 }
 
-const styles = StyleSheet.create({
-	descriptionInput: {
-		height: 80,
-		textAlignVertical: "top"
-	}
-})

@@ -1,23 +1,14 @@
-import Header from "@/components/global/Header";
-import { ActivityIndicator, Alert, Dimensions, FlatList, Pressable, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
-import ActionButton from "@/components/create-screens/ActionButton";
+import Header from "@/src/components/global/Header";
+import { ActivityIndicator, Alert, Dimensions, FlatList, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import ActionButton from "@/src/components/create-screens/ActionButton";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import Fonts from "@/constants/Typography";
-import { ArrowRight, MapIcon } from "@/constants/IconProvider";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import SearchBar from "@/components/global/SearchBar";
+import SearchBar from "@/src/components/global/SearchBar";
 import { copyLocation, deleteLocation, locationTree } from "@/src/services/location.service";
-import { useAuthStore } from "@/src/store/useAuthStore";
 import { Location } from "@/src/types/location";
-import { useLocationStore } from "@/src/store/useLocationStore";
-import { usePreventiveStore } from "@/src/store/usePreventiveStore";
-import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
-import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
-import { usePartFormStore } from "@/src/store/usePartFormStore";
-import { Fontisto, Ionicons } from "@expo/vector-icons";
-import Popover from "react-native-popover-view";
-import LocationCard from "@/components/locations/LocationCard";
-import CreateFAB from "@/components/global/CreateFAB";
+import LocationCard from "@/src/components/locations/LocationCard";
+import CreateFAB from "@/src/components/global/CreateFAB";
 
 interface LocationInterface {
 	showHeader?: boolean,
@@ -34,14 +25,11 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 	const comingFrom = params?.comingFrom;
 
 	const [searchText, setSearchText] = useState("");
-	const user = useAuthStore((state) => state.user);
 	const [locations, setLocations] = useState<Location[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
 
-	const [deleteLoading, setDeleteLoading] = useState(false);
-
-
-	const flattenLocations = (list: Location[]) => {
+	const [, setDeleteLoading] = useState(false);
+const flattenLocations = (list: Location[]) => {
 		const out: Location[] = [];
 		const walk = (items: Location[]) => {
 			items.forEach(i => {

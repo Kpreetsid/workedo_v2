@@ -1,12 +1,12 @@
-import Header from "@/components/global/Header";
+import Header from "@/src/components/global/Header";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Asset } from "@/src/types/asset";
 import { Pressable, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { getAssetData } from "@/src/services/asset.service";
 import Fonts from "@/constants/Typography";
-import AssetInfoTab from "@/components/asset-detail/assetInfo/AssetInfoTab";
-import AssetSensorsTab from "@/components/asset-detail/assetSensors/AssetSensorsTab";
+import AssetInfoTab from "@/src/components/asset-detail/assetInfo/AssetInfoTab";
+import AssetSensorsTab from "@/src/components/asset-detail/assetSensors/AssetSensorsTab";
 
 export default function AssetDetailScreen() {
 	const [activeTab, setActiveTab] = useState<"info" | "sensors">("info");

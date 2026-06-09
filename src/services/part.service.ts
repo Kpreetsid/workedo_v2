@@ -1,5 +1,5 @@
-import { sendRequest } from "../api/api.service";
-import { endpoints } from "../api/endpoints";
+import { sendRequest } from "./api/api.service";
+import { endpoints } from "./api/endpoints";
 
 export const createPart = async (payload: any) => {
     const url = `${endpoints.parts.createPart}`;

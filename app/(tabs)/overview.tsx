@@ -3,17 +3,17 @@ import { useCallback, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import OverviewHeader from "@/components/overview-screen/OverviewHeader";
-import FAB from "@/components/overview-screen/FAB";
-import CreateAlertBox from "@/components/overview-screen/CreateAlertBox";
+import OverviewHeader from "@/src/components/overview-screen/OverviewHeader";
+import FAB from "@/src/components/overview-screen/FAB";
+import CreateAlertBox from "@/src/components/overview-screen/CreateAlertBox";
 
-import CMMSDashboard from "@/components/overview-screen/CMMSDashboard";
-import PDMDashboard from "@/components/overview-screen/PDMDashboard";
+import CMMSDashboard from "@/src/components/overview-screen/CMMSDashboard";
+import PDMDashboard from "@/src/components/overview-screen/PDMDashboard";
 
 import { getProfileService } from "@/src/services/auth.service";
-import { useAuthStore } from "@/src/store/useAuthStore";
-import { useOverviewStore } from "@/src/store/useOverviewStore";
-import { useCMMSStore } from "@/src/store/useCMMSStore";
+import { useAuthStore } from "@/src/state/auth/useAuthStore";
+import { useOverviewStore } from "@/src/state/app/useOverviewStore";
+import { useCMMSStore } from "@/src/state/app/useCMMSStore";
 
 export default function Overview() {
 	const [activeTab, setActiveTab] = useState<"pdm" | "cmms">("pdm");

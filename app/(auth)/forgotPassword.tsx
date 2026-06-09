@@ -1,15 +1,15 @@
 import { View, Text, StyleSheet, Image, ToastAndroid } from "react-native";
 import { router } from "expo-router";
-import AuthHeader from "@/components/auth-screens/AuthHeader";
+import AuthHeader from "@/src/components/auth-screens/AuthHeader";
 import { Logo } from "@/constants/IconProvider";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
-import ActionButton from "@/components/auth-screens/ActionButton";
+import ActionButton from "@/src/components/auth-screens/ActionButton";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import Field from "@/components/auth-screens/InputField";
+import Field from "@/src/components/auth-screens/InputField";
 import { useForm } from "react-hook-form";
 import { sendPasswordResetEmail } from "@/src/services/auth.service";
-import { useAuthFlowStore } from "@/src/store/useAuthFlowStore";
+import { useAuthFlowStore } from "@/src/state/auth/useAuthFlowStore";
 
 interface ForgotPasswordFormValues {
 	email: string;

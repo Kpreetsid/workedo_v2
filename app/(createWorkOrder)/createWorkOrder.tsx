@@ -1,9 +1,9 @@
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useState } from 'react'
-import { SceneMap, TabView } from 'react-native-tab-view'
-import Header from '@/components/global/Header';
-import NewWorkOrder from '@/components/create-work-order/newWorkOrder';
-import FormsScreen from '@/components/create-work-order/FormsScreen';
+import { TabView } from 'react-native-tab-view'
+import Header from '@/src/components/global/Header';
+import NewWorkOrder from '@/src/components/create-work-order/newWorkOrder';
+import FormsScreen from '@/src/components/create-work-order/FormsScreen';
 import { useLocalSearchParams } from 'expo-router';
 import { parseJsonRouteParam } from '@/src/utils/routeParams';
 

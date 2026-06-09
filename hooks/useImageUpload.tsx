@@ -1,5 +1,5 @@
 import { getProfileService, updateUser, uploadImage } from "@/src/services/auth.service";
-import { useAuthStore } from "@/src/store/useAuthStore";
+import { useAuthStore } from "@/src/state/auth/useAuthStore";
 import { Alert } from "react-native";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
 

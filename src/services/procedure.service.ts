@@ -1,5 +1,5 @@
-import { sendRequest } from "../api/api.service";
-import { endpoints } from "../api/endpoints";
+import { sendRequest } from "./api/api.service";
+import { endpoints } from "./api/endpoints";
 
 export const getProcedures = async (params: {
   location_id?: string;

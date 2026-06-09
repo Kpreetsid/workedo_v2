@@ -1,21 +1,19 @@
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, View, } from "react-native";
-import Header from "@/components/global/Header";
+import Header from "@/src/components/global/Header";
 import Fonts from "@/constants/Typography";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { assetsHealthLocation, singleLocationData, topLevelAssets } from "@/src/services/location.service";
-import { useLocationStore } from "@/src/store/useLocationStore";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useAuthStore } from "@/src/store/useAuthStore";
+import { useAuthStore } from "@/src/state/auth/useAuthStore";
 import moment from "moment";
 import { AssetHealth } from "@/src/types/assetHealth";
-import apiClient from "@/src/api/apiClient";
 import { Image } from 'expo-image';
 import { LocationAsset } from "@/src/types/locationAsset";
-import { endpoints } from "@/src/api/endpoints";
+import { endpoints } from "@/src/services/api/endpoints";
 import { Ionicons } from "@expo/vector-icons";
 import { Location } from "@/src/types/location";
-import AssetUserInfo from "@/components/asset-detail/AssetUserInfo";
-import AssignedUsersModal from "@/components/work-order-detail/AssignUserModal";
+import AssetUserInfo from "@/src/components/asset-detail/AssetUserInfo";
+import AssignedUsersModal from "@/src/components/work-order-detail/AssignUserModal";
 import { getRouteParamString, parseJsonRouteParam } from "@/src/utils/routeParams";
 
 const blurhash =
@@ -37,8 +35,8 @@ export default function LocationDetail() {
 	const { user } = useAuthStore();
 	const [visible, setVisible] = useState(false);
 	const [assets, setAssets] = useState<LocationAsset[] | null>(null);
-	const [loading, setLoading] = useState(false);
-	const [locationData, setLocationData] = useState<Location | null>(null);
+	const [, setLoading] = useState(false);
+const [locationData, setLocationData] = useState<Location | null>(null);
 
 	useFocusEffect(
 		useCallback(() => {

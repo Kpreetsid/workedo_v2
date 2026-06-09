@@ -1,15 +1,15 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import AuthHeader from "../../components/auth-screens/AuthHeader";
+import AuthHeader from "../../src/components/auth-screens/AuthHeader";
 import { Image, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { Logo } from "../../constants/IconProvider";
-import Field from "../../components/auth-screens/InputField";
-import ActionButton from "../../components/auth-screens/ActionButton";
+import Field from "../../src/components/auth-screens/InputField";
+import ActionButton from "../../src/components/auth-screens/ActionButton";
 import { router } from "expo-router";
 import Fonts from "../../constants/Typography";
 import { useForm } from "react-hook-form";
 import { changePassword } from "@/src/services/auth.service";
-import { useAuthFlowStore } from "@/src/store/useAuthFlowStore";
+import { useAuthFlowStore } from "@/src/state/auth/useAuthFlowStore";
 
 export default function ChangePassword() {
 	const {

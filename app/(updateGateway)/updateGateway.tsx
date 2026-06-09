@@ -1,15 +1,14 @@
-import Header from "@/components/global/Header";
-import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, ToastAndroid, View } from "react-native";
+import Header from "@/src/components/global/Header";
+import { Pressable, StyleSheet, Text, TextInput, ToastAndroid, View } from "react-native";
 import { AddNewGatewayIcon, ArrowRight, CloudIcon } from "@/constants/IconProvider";
 import Fonts from "@/constants/Typography";
-import ActionButton from "@/components/create-screens/ActionButton";
+import ActionButton from "@/src/components/create-screens/ActionButton";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useGatewayStore } from "@/src/store/useGatewayStore";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { locationTree } from "@/src/services/location.service";
 import { Location } from "@/src/types/location";
-import SelectLocationModal from "@/components/global/SelectLocationModal";
-import { useAuthStore } from "@/src/store/useAuthStore";
+import SelectLocationModal from "@/src/components/global/SelectLocationModal";
+import { useAuthStore } from "@/src/state/auth/useAuthStore";
 import { getLocationById, saveGateway, sensorValidation } from "@/src/services/gateway.service";
 import { getRouteParamString, parseJsonRouteParam } from "@/src/utils/routeParams";
 

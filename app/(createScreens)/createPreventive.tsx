@@ -1,29 +1,25 @@
-import Header from "@/components/global/Header";
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import FormInput from "@/components/create-screens/FormInput";
+import Header from "@/src/components/global/Header";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import AssignInput from "@/components/create-screens/AssignInput";
-import ActionButton from "@/components/create-screens/ActionButton";
-import AssignSchedule from "@/components/create-screens/AssignSchedule";
-import { router } from "expo-router";
+import AssignInput from "@/src/components/create-screens/AssignInput";
+import ActionButton from "@/src/components/create-screens/ActionButton";
 import { useEffect, useState } from "react";
-import { PreventiveFormData, usePreventiveStore } from "@/src/store/usePreventiveStore";
+import { PreventiveFormData, usePreventiveStore } from "@/src/state/workOrders/usePreventiveStore";
 import { useRouter } from "expo-router";
 import { ToastAndroid } from "react-native";
 import moment from "moment";
-import DropDownInput from "@/components/create-screens/DropDownInput";
 import Fonts from "@/constants/Typography";
 import { Ionicons } from "@expo/vector-icons";
 import { createPreventive, getSOPs, updatePreventive } from "@/src/services/preventive.service";
-import { FormField } from "@/components/global/FormField";
-import SkipDatesUI from "@/components/create-preventive/skipDates";
-import SkipWeekendSelector from "@/components/create-preventive/skipWeekendSelector";
+import { FormField } from "@/src/components/global/FormField";
+import SkipDatesUI from "@/src/components/create-preventive/skipDates";
+import SkipWeekendSelector from "@/src/components/create-preventive/skipWeekendSelector";
 import { useLocalSearchParams } from "expo-router/build/hooks";
-import LocationPickerModal from "@/components/create-work-order/LocationPickerModal";
-import AssetPickerModal from "@/components/create-work-order/AssetPickerModal";
-import WeekDays from "@/components/create-preventive/weekDaysComponent";
-import MonthDays from "@/components/create-preventive/monthDaysComponent";
-import ModalCalendar from "@/components/global/ModalCalendar";
+import LocationPickerModal from "@/src/components/create-work-order/LocationPickerModal";
+import AssetPickerModal from "@/src/components/create-work-order/AssetPickerModal";
+import WeekDays from "@/src/components/create-preventive/weekDaysComponent";
+import MonthDays from "@/src/components/create-preventive/monthDaysComponent";
+import ModalCalendar from "@/src/components/global/ModalCalendar";
 import { getRouteParamString, parseJsonRouteParam } from "@/src/utils/routeParams";
 
 const MODE_FIELD_MAP: Record<string, string> = {
@@ -61,6 +57,7 @@ export default function CreatePreventive() {
 	const [visible, setVisible] = useState(false);
 	const [visibleAsset, setVisibleAsset] = useState(false);
 
+    // @ts-ignore
 	const [dates, setDates] = useState<string[]>([]);
 	const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
@@ -449,7 +446,7 @@ export default function CreatePreventive() {
 					placeholder="Enter Location"
 					field="location"
 					router={router}
-					comingFrom="createPreventive"
+					
 					store={usePreventiveStore}
 					setterName="setPreventiveValue"
 					openPicker={() => {
@@ -559,7 +556,6 @@ export default function CreatePreventive() {
 					required={false}
 					field="tasks"
 					store={usePreventiveStore}
-					comingFrom="createPreventive"
 					onPress={() => router.push("/addTasks")}
 				/>
 
@@ -585,7 +581,6 @@ export default function CreatePreventive() {
 					required={false}
 					field="parts"
 					store={usePreventiveStore}
-					comingFrom="createPreventive"
 					onPress={() => {
 						if (preventiveLocation) {
 							router.push({

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSegments } from "expo-router";
 import { storage } from "@/src/storage/mmkv";
 import { getAuthToken } from "@/src/storage/secureAuth";
-import { useAuthStore } from "@/src/store/useAuthStore";
+import { useAuthStore } from "@/src/state/auth/useAuthStore";
 
 const PUBLIC_ROUTE_GROUPS = new Set(["(auth)"]);
 

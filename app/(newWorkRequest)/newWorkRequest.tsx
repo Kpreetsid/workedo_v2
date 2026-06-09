@@ -1,19 +1,19 @@
-import Header from "@/components/global/Header";
+import Header from "@/src/components/global/Header";
 import { ScrollView, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 import Fonts from "@/constants/Typography";
-import ActionButton from "@/components/create-screens/ActionButton";
+import ActionButton from "@/src/components/create-screens/ActionButton";
 import { Feather } from "@expo/vector-icons";
 import { createWorkRequest, editWorkRequest } from "@/src/services/work-request.service";
 import { useEffect, useMemo, useState } from "react";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { AssignSection } from "@/components/create-work-order/AssignSection";
+import { AssignSection } from "@/src/components/create-work-order/AssignSection";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
-import { FormField } from "@/components/global/FormField";
+import { useWorkRequestStore } from "@/src/state/workOrders/useWorkRequestStore";
+import { FormField } from "@/src/components/global/FormField";
 import { Image } from "expo-image";
-import { endpoints } from "@/src/api/endpoints";
+import { endpoints } from "@/src/services/api/endpoints";
 import { WorkRequest } from "@/src/types/workRequest";
-import { getRouteParamString, parseJsonRouteParam } from "@/src/utils/routeParams";
+import { getRouteParamString } from "@/src/utils/routeParams";
 
 export default function NewWorkRequest() {
 	const router = useRouter();
@@ -55,7 +55,7 @@ export default function NewWorkRequest() {
 			console.log('parsed now = ', parsed)
 			setData({
 				passedData: parsed,
-				isEdit,
+				isEdit: getRouteParamString(isEdit),
 			});
 			console.log("Parsed Data:", { passedData: parsed, isEdit });
 		} catch (e) {
@@ -63,11 +63,6 @@ export default function NewWorkRequest() {
 			setData({ passedData: null, isEdit: undefined });
 			return;
 		}
-
-		setData({
-			passedData: parsed,
-			isEdit: getRouteParamString(isEdit),
-		});
 	}, [params?.passedData, params?.isEdit, initialized]);
 
 	useEffect(() => {

@@ -1,7 +1,7 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import Header from "@/components/global/Header";
-import Detail from "@/components/work-order-detail/Detail";
-import Comments from "@/components/work-order-detail/Comments";
+import Header from "@/src/components/global/Header";
+import Detail from "@/src/components/work-order-detail/Detail";
+import Comments from "@/src/components/work-order-detail/Comments";
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from "react-native";
 import Fonts from "@/constants/Typography";
 import { deleteWorkOrder, getWorkOrderDetails, updateWorkOrderStatus } from "@/src/services/work-order.service";
@@ -9,12 +9,12 @@ import { useCallback, useState } from "react";
 import Popover from "react-native-popover-view";
 import { Ionicons } from "@expo/vector-icons";
 import { WorkOrder } from "@/src/types/workOrder";
-import Tasks from "@/components/work-order-detail/Tasks";
-import Forms from "@/components/work-order-detail/Forms";
-import SegmentedPager from "@/components/global/SegmentPager";
-import History from "@/components/work-order-detail/History";
-import ProceduresTab from "@/components/work-order-detail/ProceduresTab";
-import ExecutionTab from "@/components/work-order-detail/ExecutionTab";
+import Tasks from "@/src/components/work-order-detail/Tasks";
+import Forms from "@/src/components/work-order-detail/Forms";
+import SegmentedPager from "@/src/components/global/SegmentPager";
+import History from "@/src/components/work-order-detail/History";
+import ProceduresTab from "@/src/components/work-order-detail/ProceduresTab";
+import ExecutionTab from "@/src/components/work-order-detail/ExecutionTab";
 import { formatWorkOrderStatusLabel, getWorkOrderStatusTone, isClosedWorkOrderStatus, normalizeWorkOrderStatus, requiresWorkOrderBlockReason } from "@/src/utils/workOrderStatus";
 
 const safeJsonParse = (value?: string) => {

@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
 import { useEffect, useState } from "react";
-import CustomTabBar from "@/components/tab-bar/CustomTabBar";
-import MoreTabModal from "@/components/tab-bar/MoreTabModal";
+import CustomTabBar from "@/src/components/tab-bar/CustomTabBar";
+import MoreTabModal from "@/src/components/tab-bar/MoreTabModal";
 import { BackHandler, StyleSheet, View } from "react-native";
 
 export default function TabsLayout() {

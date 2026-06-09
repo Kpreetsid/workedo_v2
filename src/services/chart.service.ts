@@ -1,5 +1,5 @@
-import { sendRequestDemo } from "../api/api.service";
-import { endpoints } from "../api/endpoints";
+import { sendRequestDemo } from "./api/api.service";
+import { endpoints } from "./api/endpoints";
 
 export const getAccelerationData = async (payload: any) => {
   const url = `${endpoints.asset.get_acceleration_data}`;

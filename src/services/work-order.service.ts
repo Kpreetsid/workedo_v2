@@ -1,6 +1,6 @@
 import { ToastAndroid } from "react-native";
-import { sendRequest } from "../api/api.service";
-import { endpoints } from "../api/endpoints";
+import { sendRequest } from "./api/api.service";
+import { endpoints } from "./api/endpoints";
 import { getAuthToken } from "../storage/secureAuth";
 import { ACTIVE_WORK_ORDER_STATUSES, CLOSED_WORK_ORDER_STATUSES } from "../utils/workOrderStatus";
 
@@ -77,7 +77,7 @@ export const deleteWorkOrderComment = async (workOrderID: string, commentID: str
 
 export const uploadWorkOrderAttachment = async (workOrderId: string, asset: any, user: any) => {
     try {
-        const token = storage.getString('token');
+        const token = await getAuthToken();
         const randomName = Math.floor(Math.random() * 1000000);
         const fileName = asset?.fileName || `${randomName}.jpg`;
         const fileType = asset?.type || 'image/jpeg';

@@ -1,5 +1,5 @@
-import { sendRequest, sendRequestDemo, sendRequestValidate } from '../api/api.service';
-import { endpoints } from '../api/endpoints';
+import {  sendRequestDemo } from './api/api.service';
+import { endpoints } from './api/endpoints';
 
 export const alarmsHistory = async (payload: any) => {
     const url = `${endpoints.overview.alarmsHistory}`;

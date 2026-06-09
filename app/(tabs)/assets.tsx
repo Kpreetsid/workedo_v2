@@ -1,19 +1,18 @@
-import Header from "@/components/global/Header";
-import SegmentedPager from "@/components/global/SegmentPager";
-import AssetsTab from "@/components/assets/AssetsTab";
+import Header from "@/src/components/global/Header";
+import SegmentedPager from "@/src/components/global/SegmentPager";
+import AssetsTab from "@/src/components/assets/AssetsTab";
 import { AssetsTabIcon, LocationTabIcon } from "@/constants/IconProvider";
 import { StatusBar } from "expo-status-bar";
 import SelectLocation from "../(createScreens)/selectLocation";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import CreateFAB from "@/components/global/CreateFAB";
+import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 
 export default function Assets() {
 	const { initialIndex } = useLocalSearchParams<{ initialIndex?: string }>();
 	const startIndex = initialIndex ? Number(initialIndex) : 0;
+    // @ts-ignore
 	const [activeTab, setActiveTab] = useState(startIndex);
 
-	const router = useRouter();
 
 	return (
 		<>

@@ -1,18 +1,11 @@
-import Header from "@/components/global/Header";
+import Header from "@/src/components/global/Header";
 import { useLocalSearchParams } from "expo-router";
-import { ActivityIndicator, Dimensions, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Fonts from "@/constants/Typography";
-import { AssignUserRightIcon } from "@/constants/IconProvider";
 import { useEffect, useState } from "react";
-import AssignedUsersModal from "@/components/work-order-detail/AssignUserModal";
-import PartsInfoModal from "@/components/work-order-detail/PartsInfoModal";
-import MoreInfoModal from "@/components/work-order-detail/MoreInfoModal";
-import { endpoints } from "@/src/api/endpoints";
-import moment from "moment";
-import { getSOPs, toggleWorkOrderStatus } from "@/src/services/preventive.service";
 import PreventiveDetails from "./Preventive-details";
 import PreventiveForm from "./Preventive-form";
-import Tasks from "@/components/work-order-detail/Tasks";
+import Tasks from "@/src/components/work-order-detail/Tasks";
 import { TabView } from "react-native-tab-view";
 import { parseJsonRouteParam } from "@/src/utils/routeParams";
 
@@ -20,7 +13,9 @@ export default function PreventiveDetail() {
 	const params: any = useLocalSearchParams();
 	let item = parseJsonRouteParam<any>(params?.data, {});
 
+    // @ts-ignore
 	const [preventiveDetails, setPreventiveDetails] = useState(item);
+    // @ts-ignore
 	const [preventiveStatus, setPreventiveStatus] = useState(item?.schedule?.enabled);
 	const layout = Dimensions.get("window");
 	const [index, setIndex] = useState(0);
@@ -29,25 +24,6 @@ export default function PreventiveDetail() {
 		{ key: "tasks", title: "Tasks" },
 		{ key: "forms", title: "Forms" },
 	]);
-
-	const [userModalVisible, setUserModalVisible] = useState(false);
-	const [partsModalVisible, setPartsModalVisible] = useState(false);
-	const [moreInfoModalVisible, setMoreInfoModalVisible] = useState(false);
-
-	const toggleStatus = async () => {
-		try {
-			let scheduleEnabled = !item.schedule.enabled;
-			item.schedule.enabled = scheduleEnabled;
-			console.log('item schedule = ', item?.schedule);
-			const resp = await toggleWorkOrderStatus(item?.id, item);
-			
-			if (resp?.status) {
-				setPreventiveStatus(resp?.data?.schedule?.enabled);
-			}
-		} catch (error) {
-			
-		}
-	}
 
 	useEffect(() => {
 		console.log('preventive details = ', preventiveDetails);

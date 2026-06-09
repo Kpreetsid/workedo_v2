@@ -1,29 +1,13 @@
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Image, FlatList, Alert, ToastAndroid, Modal } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Image, FlatList } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
 import { ArrowBack, StatusIcon, CalendarIcon } from "@/constants/IconProvider";
-import { Entypo, EvilIcons, Feather, Ionicons, MaterialIcons, Octicons, SimpleLineIcons } from "@expo/vector-icons";
+import { Entypo, Feather, Ionicons, MaterialIcons, Octicons, SimpleLineIcons } from "@expo/vector-icons";
 import { useState } from "react";
-import { storage } from "@/src/storage/mmkv";
-import { useAuthStore } from "@/src/store/useAuthStore";
-import { endpoints } from "@/src/api/endpoints";
-import { getProfileService, updateUserInfo } from "@/src/services/auth.service";
-import { useOverviewStore } from "@/src/store/useOverviewStore";
-import { useAssetStore } from "@/src/store/useAssetStore";
-import { useGatewayStore } from "@/src/store/useGatewayStore";
-import { useLocationStore } from "@/src/store/useLocationStore";
-import { usePartFormStore } from "@/src/store/usePartFormStore";
-import { usePreventiveStore } from "@/src/store/usePreventiveStore";
-import { useUserFormStore } from "@/src/store/useUserFormStore";
-import { useWorkOrderStore } from "@/src/store/useWorkOrderStore";
-import { useWorkRequestStore } from "@/src/store/useWorkRequestStore";
-import FormInput from "@/components/create-screens/FormInput";
-import ActionButton from "@/components/create-screens/ActionButton";
-import Header from "@/components/global/Header";
+import { useAuthStore } from "@/src/state/auth/useAuthStore";
+import { endpoints } from "@/src/services/api/endpoints";
 import moment from "moment";
-import { useCreateAssetStore } from "@/src/store/useCreateAsset";
-import { useCreateLocationStore } from "@/src/store/useCreateLocationStore";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { useGlobal } from "@/hooks/useGlobal";
 
@@ -41,13 +25,14 @@ const supportData = [
 ];
 
 export default function MyAccount() {
+    // @ts-ignore
 	const [activeTab, setActiveTab] = useState<"Profile" | "Account" | "Support">("Profile");
-	const [editVisible, setEditVisible] = useState(false);
-	const { user, setUser } = useAuthStore();
+	const { user } = useAuthStore();
 	console.log('my account = ', user);
 
 	const [imgError, setImgError] = useState(false);
 
+    // @ts-ignore
 	const { pickImage } = useImageUpload();
 	const { logout } = useGlobal();
 
@@ -74,38 +59,8 @@ export default function MyAccount() {
 		// setEditVisible(true);
 	}
 
-	const onSubmit = async (formValues: any) => {
-		const payload = buildUpdatePayload(formValues, user);
-		console.log('payload to update = ', payload);
-		// return;
-		const res = await updateUserInfo(payload, user?.id);
-		
-		if (res.status) {
-			setUser(res.data);
-			setEditVisible(false);
-		}
-	};
 
-	const buildUpdatePayload = (form: any, originalUser: any) => {
-		return {
-			firstName: form.firstName?.trim() ?? originalUser.firstName,
-			lastName: form.lastName?.trim() ?? originalUser.lastName,
-			phone_no: form.phone_no ? form.phone_no : originalUser.phone_no
-		};
-	};
 
-	const parsePhone = (input: string) => {
-		const cleaned = input.replace(/\D/g, ""); // remove spaces, dashes, etc.
-
-		return {
-			number: input,
-			internationalNumber: `+91 ${input}`,
-			nationalNumber: input,
-			e164Number: `+91${cleaned}`,
-			countryCode: "IN",
-			dialCode: "+91",
-		};
-	};
 
 	return (
 		<SafeAreaView style={styles.container}>

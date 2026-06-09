@@ -1,20 +1,17 @@
 import { Alert, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native'
 import React, { useEffect } from 'react'
-import { useAuthStore } from '@/src/store/useAuthStore';
+import { useAuthStore } from '@/src/state/auth/useAuthStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Fonts from '@/constants/Typography';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { storage } from '@/src/storage/mmkv';
 import { useGlobal } from '@/hooks/useGlobal';
 import { ArrowBack } from '@/constants/IconProvider';
 import { Image } from 'expo-image';
-import { endpoints } from '@/src/api/endpoints';
+import { endpoints } from '@/src/services/api/endpoints';
 import { useImageUpload } from '@/hooks/useImageUpload';
-import FormInput from '@/components/create-screens/FormInput';
-import Field from '@/components/auth-screens/InputField';
+import Field from '@/src/components/auth-screens/InputField';
 import { useForm } from 'react-hook-form';
-import ActionButton from '@/components/auth-screens/ActionButton';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { updateUserInfo } from '@/src/services/auth.service';
 

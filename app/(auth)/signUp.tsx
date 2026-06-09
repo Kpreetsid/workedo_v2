@@ -2,14 +2,14 @@ import { StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
 import { Logo } from "@/constants/IconProvider";
-import AuthHeader from "@/components/auth-screens/AuthHeader";
-import Field from "@/components/auth-screens/InputField";
-import ActionButton from "@/components/auth-screens/ActionButton";
+import AuthHeader from "@/src/components/auth-screens/AuthHeader";
+import Field from "@/src/components/auth-screens/InputField";
+import ActionButton from "@/src/components/auth-screens/ActionButton";
 import { router } from "expo-router";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useForm } from "react-hook-form";
 import { registerService } from "@/src/services/auth.service";
-import { AuthPayload, useAuthFlowStore } from "@/src/store/useAuthFlowStore";
+import { AuthPayload, useAuthFlowStore } from "@/src/state/auth/useAuthFlowStore";
 
 type RegisterFormValues = {
 	companyName: string;

@@ -4,18 +4,18 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Asset } from '@/src/types/asset';
 import moment from 'moment';
-import { useCreateAssetStore } from '@/src/store/useCreateAsset';
-import { singleAssetData, updateNewAsset } from '@/src/services/asset.service';
+import { useCreateAssetStore } from '@/src/state/assets/useCreateAsset';
+import { updateNewAsset } from '@/src/services/asset.service';
 import Fonts from '@/constants/Typography';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { ScrollView } from 'react-native-gesture-handler';
-import Header from '@/components/global/Header';
-import { FormField } from '@/components/global/FormField';
+import Header from '@/src/components/global/Header';
+import { FormField } from '@/src/components/global/FormField';
 import { DateDropDownIcon } from '@/constants/IconProvider';
-import LocationPickerModal from '@/components/create-work-order/LocationPickerModal';
+import LocationPickerModal from '@/src/components/create-work-order/LocationPickerModal';
 import { mapUserToLocation } from '@/src/services/location.service';
 import { Image } from 'expo-image';
-import { endpoints } from '@/src/api/endpoints';
+import { endpoints } from '@/src/services/api/endpoints';
 import { Feather } from '@expo/vector-icons';
 import { getRouteParamString, parseJsonRouteParam } from '@/src/utils/routeParams';
 
@@ -64,7 +64,6 @@ const editAsset = () => {
   }, [params]);
 
   const { resetForm, setCreateAssetValue } = useCreateAssetStore();
-  const assigned_users = useCreateAssetStore((state) => state.assigned_users);
   const locationObject = useCreateAssetStore((state) => state.locationObject);
   if (locationObject) {
     console.log('locationObject called = ', locationObject);

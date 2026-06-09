@@ -2,8 +2,6 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import Fonts from '@/constants/Typography';
 import { Preventive } from '@/src/types/preventive';
-import ActionButton from '@/components/auth-screens/ActionButton';
-import { useRouter } from 'expo-router';
 import moment from 'moment';
 
 
@@ -17,7 +15,6 @@ const InfoField = ({ label, value }: { label: string; value: string }) => (
 );
 
 const PreventiveDetails = ({ item }: { item: Preventive | any }) => {
-  const router = useRouter();
   const createdOn = item?.createdAt ?? item?.work_order?.createdAt;
   const updatedOn = item?.updatedAt ?? item?.work_order?.updatedAt;
 

@@ -1,12 +1,12 @@
-import Header from "@/components/global/Header";
+import Header from "@/src/components/global/Header";
 import { Dimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import ActionButton from "@/components/create-screens/ActionButton";
+import ActionButton from "@/src/components/create-screens/ActionButton";
 import { router } from "expo-router";
 import Fonts from "@/constants/Typography";
-import { ArrowRight, MapIcon, TickIcon } from "@/constants/IconProvider";
+import { MapIcon } from "@/constants/IconProvider";
 import { useEffect, useState } from "react";
 import { getParts } from "@/src/services/part.service";
-import { usePreventiveStore } from "@/src/store/usePreventiveStore";
+import { usePreventiveStore } from "@/src/state/workOrders/usePreventiveStore";
 
 interface PartInterface {
 	showHeader?: boolean;

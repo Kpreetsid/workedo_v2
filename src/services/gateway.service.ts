@@ -1,5 +1,5 @@
-import { sendRequest, sendRequestDemo, sendRequestValidate } from "../api/api.service";
-import { endpoints } from "../api/endpoints";
+import { sendRequest, sendRequestDemo, sendRequestValidate } from "./api/api.service";
+import { endpoints } from "./api/endpoints";
 
 export const getSensorsList = async () => {
     const url = `${endpoints.gateways.sensorsList}`;
