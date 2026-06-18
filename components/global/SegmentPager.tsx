@@ -49,6 +49,7 @@ export default function SegmentedPager({ tabs, comingFrom, initialPage = 0, cont
 			prev.includes(pos) ? prev : [...prev, pos]
 		);
 		setActiveTab(pos);
+		onPageChange?.(pos);
 	};
 
 	return (
