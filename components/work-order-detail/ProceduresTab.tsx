@@ -10,6 +10,7 @@ import {
   getProcedureRequiredFieldCount,
   getProcedureRequiredParts,
   getProcedureScoreLabel,
+  getProcedureScoreSummary,
   getProcedureTriggeredActions,
   isProcedureComplete,
   normalizeWorkOrderProcedures,
@@ -202,7 +203,8 @@ export default function ProceduresTab({ params, onSaved }: ProceduresTabProps) {
           const requiredFields = getProcedureRequiredFieldCount(procedure.steps || []);
           const answeredFields = getProcedureAnsweredRequiredFieldCount(procedure.steps || [], procedure.responses || {});
           const complete = isProcedureComplete(procedure);
-          const scoreLabel = getProcedureScoreLabel(procedure.score_summary);
+          const scoreSummary = getProcedureScoreSummary(procedure);
+          const scoreLabel = getProcedureScoreLabel(scoreSummary);
           const triggeredActions = getProcedureTriggeredActions(procedure);
           const requiredParts = getProcedureRequiredParts(procedure);
           const isExpanded = expandedProcedureId === procedure.id;
@@ -498,3 +500,4 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
 });
+

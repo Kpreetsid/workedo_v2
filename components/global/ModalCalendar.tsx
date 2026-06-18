@@ -9,7 +9,7 @@ interface ModalCalendarProps {
 	showCalendar: boolean;
 	setShowCalendar: (value: boolean) => void;
 	onSelectDate: (date: string) => void;
-	activeDateField: "start_date" | "end_date";
+	activeDateField: "start_date" | "end_date" | "work_date";
 	startDate?: string | null;
 	currentDate?: string | null;
 }
@@ -51,8 +51,10 @@ const ModalCalendar = ({
 	// 🔑 THIS IS THE ONLY DATE LOGIC YOU NEED
 	const minDate =
 		activeDateField === "start_date"
-			? moment().format("YYYY-MM-DD")        // disable past only
-			: startDate ?? moment().format("YYYY-MM-DD"); // disable before start date
+			? moment().format("YYYY-MM-DD")
+			: activeDateField === "end_date"
+				? startDate ?? moment().format("YYYY-MM-DD")
+				: undefined;
 
 	return (
 		<Modal visible={showCalendar} transparent animationType="slide">

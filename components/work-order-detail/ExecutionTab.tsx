@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -15,7 +17,7 @@ import moment from "moment";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
 
 import Fonts from "@/constants/Typography";
-import ActionButton from "../auth-screens/ActionButton";
+import ModalCalendar from "../global/ModalCalendar";
 import { WorkOrder, WorkOrderLaborEntry } from "@/src/types/workOrder";
 import { WorkOrderActivityRecord } from "@/src/types/workOrderActivity";
 import { getWorkOrderActivity, patchWorkOrder, uploadWorkOrderAttachment } from "@/src/services/work-order.service";
@@ -39,15 +41,14 @@ type EditableLaborEntry = {
   source: "user" | "vendor";
 };
 
-const normalizeStatus = (value?: string | null) => String(value || "").trim().toLowerCase();
-
-const formatDateTimeLabel = (value?: string | null) => {
-  if (!value) return "Not captured";
-  const parsed = moment(value);
-  return parsed.isValid() ? parsed.format("DD MMM YYYY, hh:mm A") : String(value);
+type PendingAttachment = {
+  key: string;
+  uri: string;
+  fileName: string;
+  type: string;
 };
 
-const nowIso = () => new Date().toISOString();
+const normalizeStatus = (value?: string | null) => String(value || "").trim().toLowerCase();
 
 const toDateInputValue = (value?: string | null) => {
   if (!value) return moment().format("YYYY-MM-DD");
@@ -92,7 +93,7 @@ const sanitizeLaborEntries = (entries: EditableLaborEntry[]) =>
       return {
         user_id: entry.source === "user" ? entry.user_id || undefined : undefined,
         vendor_name: entry.source === "vendor" ? String(entry.vendor_name || "").trim() : "",
-        work_date: entry.work_date ? moment(entry.work_date, "YYYY-MM-DD", true).isValid() ? entry.work_date : null : null,
+        work_date: entry.work_date ? (moment(entry.work_date, "YYYY-MM-DD", true).isValid() ? entry.work_date : null) : null,
         hours: Number.isFinite(numericHours) ? numericHours : null,
         notes: String(entry.notes || "").trim(),
       };
@@ -114,41 +115,36 @@ const getAttachmentUri = (file: any) => {
   return "";
 };
 
+const buildPendingAttachments = (assets: any[] = []): PendingAttachment[] =>
+  assets
+    .filter((asset) => asset?.uri)
+    .map((asset, index) => ({
+      key: `${asset?.uri || "attachment"}-${Date.now()}-${index}`,
+      uri: String(asset.uri),
+      fileName: asset?.fileName || `attachment-${Date.now()}-${index + 1}.jpg`,
+      type: asset?.type || "image/jpeg",
+    }));
+
 export default function ExecutionTab({ params, onSaved }: Props) {
   const { user } = useAuthStore();
-  const [actualStartDate, setActualStartDate] = useState<string | null>(params?.actual_start_date || null);
-  const [actualEndDate, setActualEndDate] = useState<string | null>(params?.actual_end_date || null);
-  const [actualTime, setActualTime] = useState<string>(params?.actual_time !== null && params?.actual_time !== undefined ? String(params.actual_time) : "");
   const [laborEntries, setLaborEntries] = useState<EditableLaborEntry[]>([]);
-  const [saving, setSaving] = useState(false);
+  const [savingLabor, setSavingLabor] = useState(false);
   const [refreshingActivity, setRefreshingActivity] = useState(false);
   const [activityLoading, setActivityLoading] = useState(true);
   const [recentActivity, setRecentActivity] = useState<WorkOrderActivityRecord[]>([]);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+  const [previewImageUri, setPreviewImageUri] = useState<string | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [activeLaborDateKey, setActiveLaborDateKey] = useState<string | null>(null);
 
   const readOnly = Boolean(params?.hierarchy?.executionOwnedByChildren) || normalizeStatus(params?.status) === "completed";
 
   useEffect(() => {
-    setActualStartDate(params?.actual_start_date || null);
-    setActualEndDate(params?.actual_end_date || null);
-    setActualTime(params?.actual_time !== null && params?.actual_time !== undefined ? String(params.actual_time) : "");
     setLaborEntries(
       Array.isArray(params?.labor_entries) ? params.labor_entries.map((entry, index) => toEditableLaborEntry(entry, index)) : []
     );
-  }, [params?.actual_start_date, params?.actual_end_date, params?.actual_time, params?.labor_entries]);
-
-  useEffect(() => {
-    if (!actualStartDate || !actualEndDate) return;
-    const start = new Date(actualStartDate);
-    const end = new Date(actualEndDate);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
-    if (end.getTime() < start.getTime()) return;
-
-    const derivedHours = Number((((end.getTime() - start.getTime()) / 3600000)).toFixed(2));
-    if (Number.isFinite(derivedHours)) {
-      setActualTime(String(derivedHours));
-    }
-  }, [actualEndDate, actualStartDate]);
+  }, [params?.labor_entries]);
 
   const fetchRecentActivity = useCallback(async (showLoader = true) => {
     if (!params?.id) {
@@ -209,65 +205,87 @@ export default function ExecutionTab({ params, onSaved }: Props) {
     setLaborEntries((prev) => [...prev, buildVendorEntry()]);
   };
 
-  const saveExecution = async () => {
+  const saveLaborEntries = async () => {
     if (!params?.id || readOnly) return;
 
-    if (actualStartDate && actualEndDate) {
-      const start = new Date(actualStartDate);
-      const end = new Date(actualEndDate);
-      if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && end.getTime() < start.getTime()) {
-        ToastAndroid.show("Actual end must be after actual start.", ToastAndroid.SHORT);
-        return;
-      }
-    }
-
     const sanitizedLabor = sanitizeLaborEntries(laborEntries);
-    const numericActualTime = actualTime === "" ? null : Number(actualTime);
-
-    if (actualTime !== "" && !Number.isFinite(numericActualTime || NaN)) {
-      ToastAndroid.show("Actual time must be a valid number.", ToastAndroid.SHORT);
+    if (laborEntries.length > 0 && sanitizedLabor.length === 0) {
+      ToastAndroid.show("Add hours and a contributor before saving labor.", ToastAndroid.SHORT);
       return;
     }
 
-    setSaving(true);
+    setSavingLabor(true);
     try {
-      const payload = {
-        actual_start_date: actualStartDate || null,
-        actual_end_date: actualEndDate || null,
-        actual_time: numericActualTime,
+      const response = await patchWorkOrder(params.id, {
         labor_entries: sanitizedLabor,
-      };
+      });
 
-      const response = await patchWorkOrder(params.id, payload);
       if (response?.status) {
-        ToastAndroid.show("Execution progress saved", ToastAndroid.SHORT);
+        ToastAndroid.show("Labor entries saved", ToastAndroid.SHORT);
         onSaved?.();
         fetchRecentActivity(false);
         return;
       }
 
-      ToastAndroid.show(response?.message || "Unable to save execution progress", ToastAndroid.SHORT);
+      ToastAndroid.show(response?.message || "Unable to save labor entries", ToastAndroid.SHORT);
     } catch (error: any) {
-      ToastAndroid.show(error?.message || "Unable to save execution progress", ToastAndroid.LONG);
+      ToastAndroid.show(error?.message || "Unable to save labor entries", ToastAndroid.LONG);
     } finally {
-      setSaving(false);
+      setSavingLabor(false);
     }
   };
 
-  const handleAttachmentResponse = async (response: any) => {
+  const queueAttachmentsFromResponse = (response: any) => {
     if (response?.didCancel || response?.errorCode) {
       return;
     }
 
-    const asset = response?.assets?.[0];
-    if (!asset?.uri || !params?.id) {
+    const nextAttachments = buildPendingAttachments(Array.isArray(response?.assets) ? response.assets : []);
+    if (!nextAttachments.length) {
+      return;
+    }
+
+    setPendingAttachments((prev) => [...prev, ...nextAttachments]);
+  };
+
+  const openAttachmentPicker = () => {
+    launchImageLibrary({ mediaType: "photo", selectionLimit: 0 }, queueAttachmentsFromResponse);
+  };
+
+  const openAttachmentCamera = () => {
+    launchCamera({ mediaType: "photo", saveToPhotos: true }, queueAttachmentsFromResponse);
+  };
+
+  const removePendingAttachment = (key: string) => {
+    setPendingAttachments((prev) => prev.filter((attachment) => attachment.key !== key));
+  };
+
+  const uploadPendingAttachments = async () => {
+    if (!params?.id || readOnly || pendingAttachments.length === 0) {
       return;
     }
 
     setUploadingAttachment(true);
     try {
-      const uploadResponse = await uploadWorkOrderAttachment(params.id, asset, user);
-      if (uploadResponse?.status) {
+      let uploadedCount = 0;
+      for (const attachment of pendingAttachments) {
+        const uploadResponse = await uploadWorkOrderAttachment(
+          params.id,
+          {
+            uri: attachment.uri,
+            fileName: attachment.fileName,
+            type: attachment.type,
+          },
+          user
+        );
+
+        if (uploadResponse?.status) {
+          uploadedCount += 1;
+        }
+      }
+
+      if (uploadedCount > 0) {
+        setPendingAttachments([]);
         onSaved?.();
         fetchRecentActivity(false);
       }
@@ -278,294 +296,309 @@ export default function ExecutionTab({ params, onSaved }: Props) {
     }
   };
 
-  const openAttachmentPicker = () => {
-    launchImageLibrary({ mediaType: "photo", selectionLimit: 1 }, handleAttachmentResponse);
+  const openWorkDateCalendar = (entryKey: string) => {
+    setActiveLaborDateKey(entryKey);
+    setShowCalendar(true);
   };
 
-  const openAttachmentCamera = () => {
-    launchCamera({ mediaType: "photo", saveToPhotos: true }, handleAttachmentResponse);
+  const handleLaborDateSelect = (date: string) => {
+    if (!activeLaborDateKey) return;
+    updateLaborEntry(activeLaborDateKey, "work_date", date);
+    setActiveLaborDateKey(null);
   };
+
+  const activeWorkDate = laborEntries.find((entry) => entry.key === activeLaborDateKey)?.work_date || moment().format("YYYY-MM-DD");
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshingActivity}
-          onRefresh={() => {
-            setRefreshingActivity(true);
-            fetchRecentActivity(false);
-          }}
-        />
-      }
-    >
-      <View style={styles.heroCard}>
-        <Text style={styles.heroEyebrow}>Execution Log</Text>
-        <Text style={styles.heroTitle}>Capture work as it happens</Text>
-        <Text style={styles.heroSubtitle}>
-          Record actual start and end times, log labor, and keep execution updates current before closing the work order.
-        </Text>
-      </View>
-
-      {readOnly ? (
-        <View style={styles.infoBanner}>
-          <Text style={styles.infoBannerTitle}>
-            {normalizeStatus(params?.status) === "completed" ? "Execution is locked after completion" : "Execution belongs on child work orders"}
-          </Text>
-          <Text style={styles.infoBannerText}>
-            {normalizeStatus(params?.status) === "completed"
-              ? "Actuals and labor remain visible for audit consistency, but they can no longer be edited from mobile."
-              : "This parent work order rolls up child execution. Record execution details on the child work orders instead."}
-          </Text>
-        </View>
-      ) : null}
-
-      <View style={styles.sectionCard}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Actual Execution</Text>
-          <Text style={styles.sectionMeta}>{actualTime ? `${actualTime}h logged` : "No actual hours yet"}</Text>
-        </View>
-
-        <View style={styles.metricGrid}>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricLabel}>Actual Start</Text>
-            <Text style={styles.metricValue}>{formatDateTimeLabel(actualStartDate)}</Text>
-            {!readOnly ? (
-              <View style={styles.inlineActionsRow}>
-                <Pressable style={styles.inlineButton} onPress={() => setActualStartDate(nowIso())}>
-                  <Text style={styles.inlineButtonText}>Start now</Text>
-                </Pressable>
-                {actualStartDate ? (
-                  <Pressable style={styles.inlineButtonMuted} onPress={() => setActualStartDate(null)}>
-                    <Text style={styles.inlineButtonMutedText}>Clear</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            ) : null}
-          </View>
-
-          <View style={styles.metricCard}>
-            <Text style={styles.metricLabel}>Actual End</Text>
-            <Text style={styles.metricValue}>{formatDateTimeLabel(actualEndDate)}</Text>
-            {!readOnly ? (
-              <View style={styles.inlineActionsRow}>
-                <Pressable style={styles.inlineButton} onPress={() => setActualEndDate(nowIso())}>
-                  <Text style={styles.inlineButtonText}>End now</Text>
-                </Pressable>
-                {actualEndDate ? (
-                  <Pressable style={styles.inlineButtonMuted} onPress={() => setActualEndDate(null)}>
-                    <Text style={styles.inlineButtonMutedText}>Clear</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            ) : null}
-          </View>
-        </View>
-
-        <View style={styles.actualHoursCard}>
-          <Text style={styles.metricLabel}>Actual Hours</Text>
-          <TextInput
-            editable={!readOnly}
-            style={[styles.input, readOnly && styles.inputDisabled]}
-            keyboardType="decimal-pad"
-            value={actualTime}
-            onChangeText={(text) => setActualTime(text.replace(/[^0-9.]/g, ""))}
-            placeholder="0.00"
-            placeholderTextColor="#94A3B8"
+    <>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshingActivity}
+            onRefresh={() => {
+              setRefreshingActivity(true);
+              fetchRecentActivity(false);
+            }}
           />
-          <Text style={styles.helperText}>
-            When both actual start and end are captured, mobile will derive the hours automatically. You can still adjust them if needed.
+        }
+      >
+        <View style={styles.heroCard}>
+          <Text style={styles.heroEyebrow}>Execution Log</Text>
+          <Text style={styles.heroTitle}>Keep field updates current</Text>
+          <Text style={styles.heroSubtitle}>
+            Log labor with the correct work date, review recent execution updates, and attach visual evidence from the field.
           </Text>
         </View>
-      </View>
 
-      <View style={styles.sectionCard}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Labor Entries</Text>
-          <Text style={styles.sectionMeta}>{totalLoggedHours.toFixed(2)}h total</Text>
-        </View>
-
-        {!readOnly ? (
-          <View style={styles.laborActionRow}>
-            <Pressable style={styles.addEntryButton} onPress={addCurrentUserEntry}>
-              <Ionicons name="person-add-outline" size={16} color="#1D4ED8" />
-              <Text style={styles.addEntryButtonText}>Log My Time</Text>
-            </Pressable>
-            <Pressable style={styles.addEntryButton} onPress={addVendorEntry}>
-              <Ionicons name="briefcase-outline" size={16} color="#1D4ED8" />
-              <Text style={styles.addEntryButtonText}>Log Vendor Time</Text>
-            </Pressable>
+        {readOnly ? (
+          <View style={styles.infoBanner}>
+            <Text style={styles.infoBannerTitle}>
+              {normalizeStatus(params?.status) === "completed" ? "Execution is locked after completion" : "Execution belongs on child work orders"}
+            </Text>
+            <Text style={styles.infoBannerText}>
+              {normalizeStatus(params?.status) === "completed"
+                ? "Labor and attachments remain visible for audit consistency, but they can no longer be edited from mobile."
+                : "This parent work order rolls up child execution. Record labor and field evidence on the child work orders instead."}
+            </Text>
           </View>
         ) : null}
 
-        {laborEntries.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>No labor entries captured yet.</Text>
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Labor Entries</Text>
+            <View style={styles.headerActionCluster}>
+              <Text style={styles.sectionMeta}>{totalLoggedHours.toFixed(2)}h total</Text>
+              {!readOnly ? (
+                <Pressable style={styles.sectionSaveButton} onPress={saveLaborEntries} disabled={savingLabor}>
+                  <Ionicons name="save-outline" size={14} color="#FFFFFF" />
+                  <Text style={styles.sectionSaveButtonText}>{savingLabor ? "Saving..." : "Quick Save"}</Text>
+                </Pressable>
+              ) : null}
+            </View>
           </View>
-        ) : (
-          laborEntries.map((entry, index) => (
-            <View key={entry.key} style={styles.laborCard}>
-              <View style={styles.rowBetween}>
-                <Text style={styles.laborTitle}>
-                  {entry.source === "user" ? entry.contributorLabel || `Contributor ${index + 1}` : `Vendor entry ${index + 1}`}
-                </Text>
-                {!readOnly ? (
-                  <Pressable onPress={() => removeLaborEntry(entry.key)} hitSlop={8}>
-                    <Ionicons name="trash-outline" size={18} color="#DC2626" />
-                  </Pressable>
-                ) : null}
-              </View>
 
-              {entry.source === "vendor" ? (
+          {!readOnly ? (
+            <View style={styles.laborActionRow}>
+              <Pressable style={styles.addEntryButton} onPress={addCurrentUserEntry}>
+                <Ionicons name="person-add-outline" size={16} color="#1D4ED8" />
+                <Text style={styles.addEntryButtonText}>Log My Time</Text>
+              </Pressable>
+              <Pressable style={styles.addEntryButton} onPress={addVendorEntry}>
+                <Ionicons name="briefcase-outline" size={16} color="#1D4ED8" />
+                <Text style={styles.addEntryButtonText}>Log Vendor Time</Text>
+              </Pressable>
+            </View>
+          ) : null}
+
+          {laborEntries.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>No labor entries captured yet.</Text>
+            </View>
+          ) : (
+            laborEntries.map((entry, index) => (
+              <View key={entry.key} style={styles.laborCard}>
+                <View style={styles.rowBetween}>
+                  <Text style={styles.laborTitle}>
+                    {entry.source === "user" ? entry.contributorLabel || `Contributor ${index + 1}` : `Vendor entry ${index + 1}`}
+                  </Text>
+                  {!readOnly ? (
+                    <Pressable onPress={() => removeLaborEntry(entry.key)} hitSlop={8}>
+                      <Ionicons name="trash-outline" size={18} color="#DC2626" />
+                    </Pressable>
+                  ) : null}
+                </View>
+
+                {entry.source === "vendor" ? (
+                  <View style={styles.fieldWrap}>
+                    <Text style={styles.fieldLabel}>Vendor Name</Text>
+                    <TextInput
+                      editable={!readOnly}
+                      style={[styles.input, readOnly && styles.inputDisabled]}
+                      value={entry.vendor_name || ""}
+                      onChangeText={(text) => updateLaborEntry(entry.key, "vendor_name", text)}
+                      placeholder="Vendor or external contributor"
+                      placeholderTextColor="#94A3B8"
+                    />
+                  </View>
+                ) : null}
+
                 <View style={styles.fieldWrap}>
-                  <Text style={styles.fieldLabel}>Vendor Name</Text>
+                  <Text style={styles.fieldLabel}>Work Date</Text>
+                  <Pressable
+                    style={[styles.calendarField, readOnly && styles.inputDisabled]}
+                    onPress={() => {
+                      if (!readOnly) {
+                        openWorkDateCalendar(entry.key);
+                      }
+                    }}
+                  >
+                    <Text style={styles.calendarFieldValue}>
+                      {entry.work_date ? moment(entry.work_date, "YYYY-MM-DD").format("DD MMM YYYY") : "Select work date"}
+                    </Text>
+                    <Ionicons name="calendar-outline" size={18} color="#475569" />
+                  </Pressable>
+                </View>
+
+                <View style={styles.fieldWrap}>
+                  <Text style={styles.fieldLabel}>Hours</Text>
                   <TextInput
                     editable={!readOnly}
                     style={[styles.input, readOnly && styles.inputDisabled]}
-                    value={entry.vendor_name || ""}
-                    onChangeText={(text) => updateLaborEntry(entry.key, "vendor_name", text)}
-                    placeholder="Vendor or external contributor"
+                    keyboardType="decimal-pad"
+                    value={entry.hours}
+                    onChangeText={(text) => updateLaborEntry(entry.key, "hours", text.replace(/[^0-9.]/g, ""))}
+                    placeholder="0.00"
                     placeholderTextColor="#94A3B8"
                   />
                 </View>
+
+                <View style={styles.fieldWrap}>
+                  <Text style={styles.fieldLabel}>Notes</Text>
+                  <TextInput
+                    editable={!readOnly}
+                    multiline
+                    style={[styles.input, styles.notesInput, readOnly && styles.inputDisabled]}
+                    value={entry.notes || ""}
+                    onChangeText={(text) => updateLaborEntry(entry.key, "notes", text)}
+                    placeholder="Shift, vendor, rework, breakdown details..."
+                    placeholderTextColor="#94A3B8"
+                  />
+                </View>
+              </View>
+            ))
+          )}
+        </View>
+
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Execution Activity</Text>
+            <Text style={styles.sectionMeta}>Latest worker-facing updates</Text>
+          </View>
+
+          {activityLoading ? (
+            <View style={styles.emptyCard}>
+              <ActivityIndicator size="small" color="#742BDE" />
+              <Text style={styles.emptyText}>Loading recent execution updates...</Text>
+            </View>
+          ) : recentActivity.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>No execution-related activity recorded yet.</Text>
+            </View>
+          ) : (
+            recentActivity.map((entry, index) => {
+              const tone = getWorkOrderActivityTone(entry.action_type);
+              return (
+                <View key={entry.id || entry._id || `${entry.action_type}-${index}`} style={[styles.activityCard, { backgroundColor: tone.bg, borderColor: tone.border }]}>
+                  <View style={styles.activityHeader}>
+                    <Ionicons name={getWorkOrderActivityIcon(entry.action_type)} size={16} color={tone.icon} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.activityTitle, { color: tone.text }]}>{getWorkOrderActivityLabel(entry.action_type)}</Text>
+                      <Text style={styles.activityMeta}>
+                        {(entry.actor_name || "System")} - {moment(entry.createdAt).format("DD MMM YYYY, hh:mm A")}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.activityNote}>{entry.note || "No execution note provided."}</Text>
+                </View>
+              );
+            })
+          )}
+        </View>
+
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Field Evidence</Text>
+            <View style={styles.headerActionCluster}>
+              <Text style={styles.sectionMeta}>{attachmentFiles.length + pendingAttachments.length} tile{attachmentFiles.length + pendingAttachments.length === 1 ? "" : "s"}</Text>
+              {!readOnly && pendingAttachments.length > 0 ? (
+                <Pressable style={styles.sectionSaveButton} onPress={uploadPendingAttachments} disabled={uploadingAttachment}>
+                  <Ionicons name="cloud-upload-outline" size={14} color="#FFFFFF" />
+                  <Text style={styles.sectionSaveButtonText}>{uploadingAttachment ? "Uploading..." : "Upload Selected"}</Text>
+                </Pressable>
               ) : null}
+            </View>
+          </View>
 
-              <View style={styles.fieldWrap}>
-                <Text style={styles.fieldLabel}>Work Date</Text>
-                <TextInput
-                  editable={!readOnly}
-                  style={[styles.input, readOnly && styles.inputDisabled]}
-                  value={entry.work_date || ""}
-                  onChangeText={(text) => updateLaborEntry(entry.key, "work_date", text)}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#94A3B8"
-                />
-              </View>
+          {!readOnly ? (
+            <View style={styles.laborActionRow}>
+              <Pressable style={styles.addEntryButton} onPress={openAttachmentCamera} disabled={uploadingAttachment}>
+                <Ionicons name="camera-outline" size={16} color="#1D4ED8" />
+                <Text style={styles.addEntryButtonText}>Take Photo</Text>
+              </Pressable>
+              <Pressable style={styles.addEntryButton} onPress={openAttachmentPicker} disabled={uploadingAttachment}>
+                <Ionicons name="images-outline" size={16} color="#1D4ED8" />
+                <Text style={styles.addEntryButtonText}>Add from Gallery</Text>
+              </Pressable>
+            </View>
+          ) : null}
 
-              <View style={styles.fieldWrap}>
-                <Text style={styles.fieldLabel}>Hours</Text>
-                <TextInput
-                  editable={!readOnly}
-                  style={[styles.input, readOnly && styles.inputDisabled]}
-                  keyboardType="decimal-pad"
-                  value={entry.hours}
-                  onChangeText={(text) => updateLaborEntry(entry.key, "hours", text.replace(/[^0-9.]/g, ""))}
-                  placeholder="0.00"
-                  placeholderTextColor="#94A3B8"
-                />
-              </View>
-
-              <View style={styles.fieldWrap}>
-                <Text style={styles.fieldLabel}>Notes</Text>
-                <TextInput
-                  editable={!readOnly}
-                  multiline
-                  style={[styles.input, styles.notesInput, readOnly && styles.inputDisabled]}
-                  value={entry.notes || ""}
-                  onChangeText={(text) => updateLaborEntry(entry.key, "notes", text)}
-                  placeholder="Shift, vendor, rework, breakdown details..."
-                  placeholderTextColor="#94A3B8"
-                />
+          {pendingAttachments.length > 0 ? (
+            <View style={styles.previewGroup}>
+              <Text style={styles.previewGroupTitle}>Ready to Upload</Text>
+              <View style={styles.tileGrid}>
+                {pendingAttachments.map((attachment) => (
+                  <Pressable key={attachment.key} style={styles.imageTile} onPress={() => setPreviewImageUri(attachment.uri)}>
+                    <Image source={{ uri: attachment.uri }} style={styles.imageTilePhoto} />
+                    {!readOnly ? (
+                      <Pressable style={styles.imageTileRemove} onPress={() => removePendingAttachment(attachment.key)} hitSlop={6}>
+                        <Ionicons name="close" size={14} color="#FFFFFF" />
+                      </Pressable>
+                    ) : null}
+                  </Pressable>
+                ))}
               </View>
             </View>
-          ))
-        )}
-      </View>
+          ) : null}
 
-      <View style={styles.sectionCard}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Execution Activity</Text>
-          <Text style={styles.sectionMeta}>Latest worker-facing updates</Text>
-        </View>
+          {attachmentFiles.length === 0 && pendingAttachments.length === 0 ? (
+            <View style={styles.emptyCard}>
+              {uploadingAttachment ? <ActivityIndicator size="small" color="#742BDE" /> : null}
+              <Text style={styles.emptyText}>
+                {uploadingAttachment ? "Uploading attachment..." : "No field photos or files uploaded yet."}
+              </Text>
+            </View>
+          ) : null}
 
-        {activityLoading ? (
-          <View style={styles.emptyCard}>
-            <ActivityIndicator size="small" color="#742BDE" />
-            <Text style={styles.emptyText}>Loading recent execution updates...</Text>
-          </View>
-        ) : recentActivity.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>No execution-related activity recorded yet.</Text>
-          </View>
-        ) : (
-          recentActivity.map((entry, index) => {
-            const tone = getWorkOrderActivityTone(entry.action_type);
-            return (
-              <View key={entry.id || entry._id || `${entry.action_type}-${index}`} style={[styles.activityCard, { backgroundColor: tone.bg, borderColor: tone.border }]}>
-                <View style={styles.activityHeader}>
-                  <Ionicons name={getWorkOrderActivityIcon(entry.action_type)} size={16} color={tone.icon} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.activityTitle, { color: tone.text }]}>{getWorkOrderActivityLabel(entry.action_type)}</Text>
-                    <Text style={styles.activityMeta}>
-                      {(entry.actor_name || "System")} - {moment(entry.createdAt).format("DD MMM YYYY, hh:mm A")}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={styles.activityNote}>{entry.note || "No execution note provided."}</Text>
+          {attachmentFiles.length > 0 ? (
+            <View style={styles.previewGroup}>
+              <Text style={styles.previewGroupTitle}>Uploaded Evidence</Text>
+              <View style={styles.tileGrid}>
+                {attachmentFiles.map((file, index) => {
+                  const fileUri = getAttachmentUri(file);
+                  const fileName = file?.originalName || file?.fileName || `Attachment ${index + 1}`;
+                  return (
+                    <Pressable
+                      key={`${fileName}-${index}`}
+                      style={styles.imageTile}
+                      onPress={() => {
+                        if (fileUri) {
+                          setPreviewImageUri(fileUri);
+                        }
+                      }}
+                    >
+                      {fileUri ? (
+                        <Image source={{ uri: fileUri }} style={styles.imageTilePhoto} />
+                      ) : (
+                        <View style={styles.imageTileFallback}>
+                          <Ionicons name="document-outline" size={18} color="#475569" />
+                          <Text style={styles.imageTileFallbackText} numberOfLines={2}>{fileName}</Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
               </View>
-            );
-          })
-        )}
-      </View>
-
-      <View style={styles.sectionCard}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Field Evidence</Text>
-          <Text style={styles.sectionMeta}>{attachmentFiles.length} file{attachmentFiles.length === 1 ? "" : "s"}</Text>
+            </View>
+          ) : null}
         </View>
+      </ScrollView>
 
-        {!readOnly ? (
-          <View style={styles.laborActionRow}>
-            <Pressable style={styles.addEntryButton} onPress={openAttachmentCamera} disabled={uploadingAttachment}>
-              <Ionicons name="camera-outline" size={16} color="#1D4ED8" />
-              <Text style={styles.addEntryButtonText}>{uploadingAttachment ? "Uploading..." : "Take Photo"}</Text>
-            </Pressable>
-            <Pressable style={styles.addEntryButton} onPress={openAttachmentPicker} disabled={uploadingAttachment}>
-              <Ionicons name="images-outline" size={16} color="#1D4ED8" />
-              <Text style={styles.addEntryButtonText}>Add from Gallery</Text>
+      <ModalCalendar
+        showCalendar={showCalendar}
+        setShowCalendar={(value) => {
+          if (!value) {
+            setActiveLaborDateKey(null);
+          }
+          setShowCalendar(value);
+        }}
+        onSelectDate={handleLaborDateSelect}
+        activeDateField="work_date"
+        currentDate={activeWorkDate}
+      />
+
+      <Modal visible={!!previewImageUri} transparent animationType="fade" onRequestClose={() => setPreviewImageUri(null)}>
+        <Pressable style={styles.previewModalBackdrop} onPress={() => setPreviewImageUri(null)}>
+          <View style={styles.previewModalContent}>
+            {previewImageUri ? <Image source={{ uri: previewImageUri }} style={styles.previewModalImage} resizeMode="contain" /> : null}
+            <Pressable style={styles.previewModalClose} onPress={() => setPreviewImageUri(null)}>
+              <Ionicons name="close" size={20} color="#FFFFFF" />
             </Pressable>
           </View>
-        ) : null}
-
-        {attachmentFiles.length === 0 ? (
-          <View style={styles.emptyCard}>
-            {uploadingAttachment ? <ActivityIndicator size="small" color="#742BDE" /> : null}
-            <Text style={styles.emptyText}>
-              {uploadingAttachment ? "Uploading attachment..." : "No field photos or files uploaded yet."}
-            </Text>
-          </View>
-        ) : (
-          attachmentFiles.map((file, index) => {
-            const fileUri = getAttachmentUri(file);
-            const fileName = file?.originalName || file?.fileName || `Attachment ${index + 1}`;
-            const uploadedAt = file?.createdAt ? moment(file.createdAt).format("DD MMM YYYY, hh:mm A") : null;
-
-            return (
-              <View key={`${fileName}-${index}`} style={styles.attachmentCard}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.attachmentTitle} numberOfLines={1}>{fileName}</Text>
-                  <Text style={styles.attachmentMeta}>
-                    {file?.type || "File"}
-                    {uploadedAt ? ` | ${uploadedAt}` : ""}
-                  </Text>
-                </View>
-                {fileUri ? <Text style={styles.attachmentLink}>Saved</Text> : null}
-              </View>
-            );
-          })
-        )}
-      </View>
-
-      {!readOnly ? (
-        <ActionButton
-          label={saving ? "Saving..." : "Save Execution Progress"}
-          onPress={saveExecution}
-          disabled={saving}
-          style={styles.saveButton}
-        />
-      ) : null}
-    </ScrollView>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -650,57 +683,26 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.medium,
     color: "#64748B",
   },
-  metricGrid: {
-    gap: 10,
-  },
-  metricCard: {
-    backgroundColor: "#F8FAFC",
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  metricLabel: {
-    fontSize: 10,
-    fontFamily: Fonts.medium,
-    color: "#64748B",
-  },
-  metricValue: {
-    fontSize: 12,
-    fontFamily: Fonts.semiBold,
-    color: "#0F172A",
-    marginTop: 6,
-  },
-  inlineActionsRow: {
+  headerActionCluster: {
     flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     flexWrap: "wrap",
-    gap: 8,
-    marginTop: 10,
+    justifyContent: "flex-end",
   },
-  inlineButton: {
-    paddingVertical: 7,
+  sectionSaveButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
     paddingHorizontal: 10,
-    borderRadius: 999,
-    backgroundColor: "#DBEAFE",
+    borderRadius: 10,
+    backgroundColor: "#1D4ED8",
   },
-  inlineButtonText: {
+  sectionSaveButtonText: {
     fontSize: 10,
-    fontFamily: Fonts.medium,
-    color: "#1D4ED8",
-  },
-  inlineButtonMuted: {
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    borderRadius: 999,
-    backgroundColor: "#F1F5F9",
-  },
-  inlineButtonMutedText: {
-    fontSize: 10,
-    fontFamily: Fonts.medium,
-    color: "#475569",
-  },
-  actualHoursCard: {
-    gap: 8,
+    fontFamily: Fonts.semiBold,
+    color: "#FFFFFF",
   },
   input: {
     backgroundColor: "#F8FAFC",
@@ -716,12 +718,6 @@ const styles = StyleSheet.create({
   inputDisabled: {
     backgroundColor: "#F1F5F9",
     color: "#64748B",
-  },
-  helperText: {
-    fontSize: 10,
-    fontFamily: Fonts.regular,
-    color: "#64748B",
-    lineHeight: 15,
   },
   laborActionRow: {
     flexDirection: "row",
@@ -771,6 +767,24 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.medium,
     color: "#64748B",
   },
+  calendarField: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  calendarFieldValue: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    color: "#0F172A",
+  },
   notesInput: {
     minHeight: 74,
     textAlignVertical: "top",
@@ -816,34 +830,85 @@ const styles = StyleSheet.create({
     color: "#334155",
     lineHeight: 15,
   },
-  attachmentCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#FFFFFF",
-    padding: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
+  previewGroup: {
+    gap: 8,
   },
-  attachmentTitle: {
-    fontSize: 12,
-    fontFamily: Fonts.semiBold,
-    color: "#0F172A",
-  },
-  attachmentMeta: {
-    marginTop: 4,
+  previewGroupTitle: {
     fontSize: 10,
-    fontFamily: Fonts.regular,
-    color: "#64748B",
-  },
-  attachmentLink: {
-    fontSize: 11,
     fontFamily: Fonts.semiBold,
-    color: "#1D4ED8",
+    color: "#64748B",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  saveButton: {
-    marginTop: 4,
-    marginBottom: 8,
+  tileGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  imageTile: {
+    width: 88,
+    height: 88,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#E2E8F0",
+    position: "relative",
+  },
+  imageTilePhoto: {
+    width: "100%",
+    height: "100%",
+  },
+  imageTileRemove: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "rgba(15, 23, 42, 0.78)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  imageTileFallback: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+    gap: 6,
+    backgroundColor: "#F8FAFC",
+  },
+  imageTileFallbackText: {
+    fontSize: 10,
+    fontFamily: Fonts.medium,
+    color: "#334155",
+    textAlign: "center",
+  },
+  previewModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(2, 6, 23, 0.88)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  previewModalContent: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  previewModalImage: {
+    width: "100%",
+    height: "82%",
+  },
+  previewModalClose: {
+    position: "absolute",
+    top: 18,
+    right: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(15, 23, 42, 0.72)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

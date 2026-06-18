@@ -291,41 +291,15 @@ export default function Detail({ params, onSaved }: Props) {
 
 			<View style={styles.readinessCard}>
 				<View style={styles.rowBetween}>
-					<Text style={styles.readinessTitle}>Readiness</Text>
-					<View
-						style={[
-							styles.readinessBadge,
-							readiness.state === "ready"
-								? styles.readinessBadgeReady
-								: readiness.state === "attention"
-									? styles.readinessBadgeAttention
-									: styles.readinessBadgeBlocked,
-						]}
-					>
-						<Text
-							style={[
-								styles.readinessBadgeText,
-								readiness.state === "ready"
-									? styles.readinessBadgeTextReady
-									: readiness.state === "attention"
-										? styles.readinessBadgeTextAttention
-										: styles.readinessBadgeTextBlocked,
-							]}
-						>
-							{readiness.state === "ready" ? "Ready" : readiness.state === "attention" ? "Needs Review" : "Blocked"}
-						</Text>
+					<View style={{ flex: 1, paddingRight: 12 }}>
+						<Text style={styles.readinessTitle}>Readiness</Text>
+						<Text style={styles.readinessSummary}>Review these four checks to see what is attached, what is missing, and how complete the setup is.</Text>
+					</View>
+					<View style={styles.readinessScoreCard}>
+						<Text style={styles.readinessScoreValue}>{readiness.score}</Text>
+						<Text style={styles.readinessScoreLabel}>/100</Text>
 					</View>
 				</View>
-				<Text style={styles.readinessSummary}>{readiness.summary}</Text>
-				{readiness.blockers.length > 0 ? (
-					<View style={styles.readinessBlockersWrap}>
-						{readiness.blockers.map((blocker) => (
-							<View key={blocker} style={styles.readinessBlockerChip}>
-								<Text style={styles.readinessBlockerText}>{blocker}</Text>
-							</View>
-						))}
-					</View>
-				) : null}
 				<View style={styles.readinessSectionsWrap}>
 					{readiness.sections.map((section) => (
 						<View key={section.id} style={styles.readinessSectionRow}>
@@ -333,18 +307,6 @@ export default function Detail({ params, onSaved }: Props) {
 								<Text style={styles.readinessSectionLabel}>{section.label}</Text>
 								<Text style={styles.readinessSectionSummary}>{section.summary}</Text>
 							</View>
-							<Text
-								style={[
-									styles.readinessSectionState,
-									section.state === "ready"
-										? styles.readinessSectionStateReady
-										: section.state === "attention"
-											? styles.readinessSectionStateAttention
-											: styles.readinessSectionStateBlocked,
-								]}
-							>
-								{section.state === "ready" ? "Ready" : section.state === "attention" ? "Review" : "Blocked"}
-							</Text>
 						</View>
 					))}
 				</View>
@@ -664,33 +626,6 @@ const styles = StyleSheet.create({
 		fontFamily: Fonts.semiBold,
 		color: "#0F172A",
 	},
-	readinessBadge: {
-		paddingHorizontal: 8,
-		paddingVertical: 4,
-		borderRadius: 999,
-	},
-	readinessBadgeReady: {
-		backgroundColor: "#ECFDF5",
-	},
-	readinessBadgeAttention: {
-		backgroundColor: "#FFF7ED",
-	},
-	readinessBadgeBlocked: {
-		backgroundColor: "#FEF2F2",
-	},
-	readinessBadgeText: {
-		fontSize: 9,
-		fontFamily: Fonts.semiBold,
-	},
-	readinessBadgeTextReady: {
-		color: "#047857",
-	},
-	readinessBadgeTextAttention: {
-		color: "#C2410C",
-	},
-	readinessBadgeTextBlocked: {
-		color: "#B91C1C",
-	},
 	readinessSummary: {
 		fontSize: 10,
 		fontFamily: Fonts.regular,
@@ -698,22 +633,27 @@ const styles = StyleSheet.create({
 		marginTop: 8,
 		lineHeight: 15,
 	},
-	readinessBlockersWrap: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		gap: 6,
-		marginTop: 10,
+	readinessScoreCard: {
+		minWidth: 68,
+		paddingHorizontal: 12,
+		paddingVertical: 10,
+		borderRadius: 12,
+		backgroundColor: "#EEF4FF",
+		borderWidth: 0.8,
+		borderColor: "#BFD3FF",
+		alignItems: "center",
+		justifyContent: "center",
 	},
-	readinessBlockerChip: {
-		paddingHorizontal: 8,
-		paddingVertical: 4,
-		borderRadius: 999,
-		backgroundColor: "#FFF1F2",
+	readinessScoreValue: {
+		fontSize: 18,
+		fontFamily: Fonts.bold,
+		color: "#1D4ED8",
 	},
-	readinessBlockerText: {
-		fontSize: 9,
+	readinessScoreLabel: {
+		fontSize: 10,
 		fontFamily: Fonts.medium,
-		color: "#BE123C",
+		color: "#475569",
+		marginTop: 2,
 	},
 	readinessSectionsWrap: {
 		marginTop: 12,
@@ -735,19 +675,6 @@ const styles = StyleSheet.create({
 		color: "#64748B",
 		marginTop: 2,
 		lineHeight: 13,
-	},
-	readinessSectionState: {
-		fontSize: 9,
-		fontFamily: Fonts.semiBold,
-	},
-	readinessSectionStateReady: {
-		color: "#047857",
-	},
-	readinessSectionStateAttention: {
-		color: "#C2410C",
-	},
-	readinessSectionStateBlocked: {
-		color: "#B91C1C",
 	},
 	cardTitle: {
 		width: "50%",
@@ -931,3 +858,5 @@ const styles = StyleSheet.create({
 		fontSize: 12,
 	},
 });
+
+
