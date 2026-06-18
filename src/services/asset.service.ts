@@ -55,6 +55,11 @@ export const getSensorConfig = async (payload: any) => {
     return await sendRequestDemo("POST", url, payload);
 };
 
+export const getEnergyConfig = async (payload: any) => {
+    const url = `${endpoints.asset.energyConfig}`;
+    return await sendRequestDemo("GET", url, undefined, { params: payload });
+};
+
 export const getBearingDetails = async (payload: any) => {
     const url = `${endpoints.asset.bearingDetails}`;
     return await sendRequestValidate("POST", url, payload);
