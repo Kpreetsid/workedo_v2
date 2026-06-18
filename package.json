@@ -43,6 +43,7 @@
     "react-native-image-picker": "^8.2.1",
     "react-native-keyboard-controller": "1.18.5",
     "react-native-mmkv": "^3.3.3",
+    "sp-react-native-mqtt": "^0.6.1",
     "react-native-pager-view": "6.9.1",
     "react-native-popover-view": "^6.1.0",
     "react-native-reanimated": "~4.1.1",

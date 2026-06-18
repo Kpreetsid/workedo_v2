@@ -15,6 +15,7 @@ config.resolver.extraNodeModules = new Proxy(
   {
     ...(config.resolver.extraNodeModules || {}),
     "react-native-keyboard-controller": keyboardControllerRoot,
+    buffer: path.join(projectRoot, "polyfills", "buffer"),
   },
   {
     get(target, name) {

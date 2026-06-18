@@ -36,4 +36,6 @@ rootProject.name = 'Workedo'
 expoAutolinking.useExpoVersionCatalog()
 
 include ':app'
+include ':react-native-keyboard-controller'
+project(':react-native-keyboard-controller').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-keyboard-controller/android')
 includeBuild(expoAutolinking.reactNativeGradlePlugin)
