@@ -1,15 +1,13 @@
 import { ActivityIndicator, Modal, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
-import { TextInput } from 'react-native-gesture-handler'
+import React, { useEffect, useState } from 'react'
 import { FormField } from '@/components/global/FormField'
 import { useSensorStore } from '@/src/store/useSensorStore'
-import Fonts from '@/constants/Typography'
 import Header from '@/components/global/Header'
 import { AssetEndpoint } from '@/src/types/assetEndpoint'
 import { sensorValidation } from '@/src/services/gateway.service'
 import { useAuthStore } from '@/src/store/useAuthStore'
 import { addSensor } from '@/src/services/asset.service'
-import { useAssetStore } from '@/src/store/useAssetStore'
+import MacIdInput from '@/components/monitoring/MacIdInput'
 
 interface AttachSensorProps {
 	showAttachSensor: {
@@ -50,7 +48,7 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 		if (!macId) return;
 
 		if (typeof macId === "string") {
-			setSensorForm("mac_id", macId.split("_")[1] || "");
+			setSensorForm("mac_id", (macId.split("_")[1] || "").trim().toUpperCase());
 			setSensorForm("sensor_type", "wireless");
 		}
 
@@ -96,9 +94,11 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 
 	async function handleAttachSensor() {
 		console.log('handling attach sensor');
+		const normalizedMacId = useSensorStore.getState().mac_id.trim().toUpperCase();
+		setSensorForm("mac_id", normalizedMacId);
 
 		// all fields are mandatory, apply if else conditions
-		if (!useSensorStore.getState().mac_id) {
+		if (!normalizedMacId) {
 			console.log('Mac ID is required');
 			ToastAndroid.show("Mac ID is required", ToastAndroid.SHORT)
 			return;
@@ -144,7 +144,7 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 		setLoading(true)
 		// validate sensor
 		let payload = {
-			"macID": useSensorStore.getState().mac_id,
+			"macID": normalizedMacId,
 			"sensor_type": useSensorStore.getState().sensor_type,
 			"comp_id": user?.account_id
 		}
@@ -173,7 +173,7 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 				"comp_id": user?.account_id,
 				"asset_id": showAttachSensor.data?.asset_id,
 				"mount_id": showAttachSensor.data?.id,
-				"mac_id": useSensorStore.getState().mac_id,
+				"mac_id": useSensorStore.getState().mac_id.trim().toUpperCase(),
 				"sensor_type": useSensorStore.getState().sensor_type,
 				"mount_direction": useSensorStore.getState().mount_orientation,
 				"mount_material": useSensorStore.getState().mount_material,
@@ -214,14 +214,11 @@ const AttachSensor = ({ showAttachSensor, setShowAttachSensor }: AttachSensorPro
 						<Header title="Attach Sensor" showBack={false} />
 						{/* Body */}
 						<View style={styles.body}>
-							<FormField
+							<MacIdInput
 								label="Mac ID"
 								placeholder="Enter Mac ID"
-								field="mac_id"
-								store={useSensorStore}
-								setterName="setSensorForm"
-								required={true}
-								styles={{ paddingHorizontal: 0 }}
+								value={useSensorStore((s) => s.mac_id)}
+								onChangeText={(nextValue) => setSensorForm("mac_id", nextValue.trim().toUpperCase())}
 							/>
 
 							<FormField

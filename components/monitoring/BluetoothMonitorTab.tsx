@@ -1,4 +1,5 @@
 import Fonts from "@/constants/Typography";
+import MacIdInput from "@/components/monitoring/MacIdInput";
 import RadioSelector from "@/components/monitoring/RadioSelector";
 import {
   BLE_DEFAULT_CA_BASE64,
@@ -26,7 +27,7 @@ interface BluetoothMonitorTabProps {
   active: boolean;
 }
 
-const WAIT_TIMEOUT_MS = 30_000;
+const WAIT_TIMEOUT_MS = 5 * 60_000;
 const DEFAULT_BROKER = {
   host: "a12rinclmy9hw6-ats.iot.ap-south-1.amazonaws.com",
   port: 8883,
@@ -132,7 +133,7 @@ export default function BluetoothMonitorTab({ active }: BluetoothMonitorTabProps
     timeoutRef.current = setTimeout(() => {
       setSession({
         phase: "timeout",
-        errorMessage: "No data received in the last 30 seconds.",
+        errorMessage: "No data received in the last 5 minutes.",
       });
     }, WAIT_TIMEOUT_MS);
   };
@@ -355,17 +356,12 @@ export default function BluetoothMonitorTab({ active }: BluetoothMonitorTabProps
           </View>
         ) : null}
 
-        <View style={styles.fieldBlock}>
-          <Text style={styles.fieldLabel}>MAC ID</Text>
-          <TextInput
-            style={styles.input}
-            value={macId}
-            onChangeText={(value) => setDraftField("macId", value.toUpperCase())}
-            placeholder="Enter the BLE sensor MAC ID"
-            placeholderTextColor="#94A3B8"
-            autoCapitalize="characters"
-          />
-        </View>
+        <MacIdInput
+          label="MAC ID"
+          value={macId}
+          onChangeText={(value) => setDraftField("macId", value)}
+          placeholder="Enter the BLE sensor MAC ID"
+        />
 
         <View style={styles.buttonRow}>
           <Pressable

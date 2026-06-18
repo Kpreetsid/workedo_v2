@@ -1,4 +1,5 @@
 import Fonts from "@/constants/Typography";
+import MacIdInput from "@/components/monitoring/MacIdInput";
 import RadioSelector from "@/components/monitoring/RadioSelector";
 import { createMonitoringBrokerConfig, normalizePayloadPreview, startWiredMonitorSession } from "@/src/services/mqtt-monitor.service";
 import { useMonitoringStore } from "@/src/store/useMonitoringStore";
@@ -21,7 +22,7 @@ interface WiredMonitorTabProps {
   active: boolean;
 }
 
-const WAIT_TIMEOUT_MS = 30_000;
+const WAIT_TIMEOUT_MS = 5 * 60_000;
 const DEFAULT_BROKER = {
   host: "mqtt.presageinsights.ai",
   port: 1883,
@@ -132,7 +133,7 @@ export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
     timeoutRef.current = setTimeout(() => {
       setSession({
         phase: "timeout",
-        errorMessage: "No data received in the last 30 seconds.",
+        errorMessage: "No data received in the last 5 minutes.",
       });
     }, WAIT_TIMEOUT_MS);
   };
@@ -351,17 +352,12 @@ export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
           </View>
         ) : null}
 
-        <View style={styles.fieldBlock}>
-          <Text style={styles.fieldLabel}>MAC ID</Text>
-          <TextInput
-            style={styles.input}
-            value={macId}
-            onChangeText={(value) => setDraftField("macId", value.toUpperCase())}
-            placeholder="Enter the wired sensor MAC ID"
-            placeholderTextColor="#94A3B8"
-            autoCapitalize="characters"
-          />
-        </View>
+        <MacIdInput
+          label="MAC ID"
+          value={macId}
+          onChangeText={(value) => setDraftField("macId", value)}
+          placeholder="Enter the wired sensor MAC ID"
+        />
 
         <View style={styles.buttonRow}>
           <Pressable

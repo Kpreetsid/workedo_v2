@@ -13,6 +13,7 @@ import com.facebook.react.common.ReleaseLevel
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.reactnativekeyboardcontroller.KeyboardControllerPackage
+import com.app.workedo.MacTextRecognitionPackage
 
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper
@@ -28,6 +29,9 @@ class MainApplication : Application(), ReactApplication {
               // PackageList on local dev builds, so keep a safe manual fallback.
               if (none { it.javaClass.name == KeyboardControllerPackage::class.java.name }) {
                 add(KeyboardControllerPackage())
+              }
+              if (none { it.javaClass.name == MacTextRecognitionPackage::class.java.name }) {
+                add(MacTextRecognitionPackage())
               }
             }
 
