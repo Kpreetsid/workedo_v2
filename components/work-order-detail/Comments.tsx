@@ -7,6 +7,7 @@ import { WorkOrder, WorkOrderComment, WorkOrderCommentReply } from "@/src/types/
 import moment from "moment";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Alert,
   ActivityIndicator,
   FlatList,
   Image,
@@ -111,18 +112,32 @@ export default function Comments({ params }: Props) {
 
   const onDeletePress = async (id: string) => {
     if (!params?.id) return;
-    try {
-      const res = await deleteWorkOrderComment(params.id, id);
-      if (res?.status) {
-        ToastAndroid.show("Comment deleted successfully!", ToastAndroid.SHORT);
-        if (parentCommentId === id) {
-          clearReplyState();
-        }
-        fetchComments();
-      }
-    } catch (e) {
-      console.log("error deleting comment =", e);
-    }
+    Alert.alert(
+      "Delete Comment",
+      "Are you sure you want to delete this comment?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const res = await deleteWorkOrderComment(params.id, id);
+              if (res?.status) {
+                ToastAndroid.show("Comment deleted successfully!", ToastAndroid.SHORT);
+                if (parentCommentId === id) {
+                  clearReplyState();
+                }
+                fetchComments();
+              }
+            } catch (e) {
+              console.log("error deleting comment =", e);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const isOwnComment = (item: WorkOrderComment | WorkOrderCommentReply) => {

@@ -54,8 +54,8 @@ export default function PreventivePage() {
 
 	const handleDeletePreventive = async (item: Preventive) => {
 		Alert.alert(
-			"Delete Gateway",
-			`Are you sure you want to delete this gateway?`,
+			"Delete Preventive",
+			`Are you sure you want to delete ${item?.title || "this preventive"}?`,
 			[
 				{
 					text: "Cancel",
