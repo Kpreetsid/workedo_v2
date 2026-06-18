@@ -31,9 +31,10 @@ export default function RadioSelector({ selected, onSelect }: RadioSelectorProps
 
 const styles = StyleSheet.create({
     container: {
-        marginHorizontal: 25,
-        gap: 8,
+        marginHorizontal: 0,
+        gap: 10,
         marginBottom: 10,
+        flexDirection: "row",
     },
     option: {
         flexDirection: "row",
@@ -45,7 +46,7 @@ const styles = StyleSheet.create({
         borderColor: "#ddd",
         paddingVertical: 8,
         paddingHorizontal: 15,
-        width: "100%",
+        flex: 1,
         gap: 10,
     },
     selectedOption: {

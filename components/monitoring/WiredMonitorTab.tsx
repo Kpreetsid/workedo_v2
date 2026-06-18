@@ -3,7 +3,7 @@ import RadioSelector from "@/components/monitoring/RadioSelector";
 import { createMonitoringBrokerConfig, normalizePayloadPreview, startWiredMonitorSession } from "@/src/services/mqtt-monitor.service";
 import { useMonitoringStore } from "@/src/store/useMonitoringStore";
 import { MonitoringBrokerConfig, MonitoringPhase } from "@/src/types/monitoring";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -15,6 +15,7 @@ import {
   ToastAndroid,
   View,
 } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 interface WiredMonitorTabProps {
   active: boolean;
@@ -76,6 +77,7 @@ export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const manualDisconnectRef = useRef(false);
   const currentSessionRef = useRef(0);
+  const [showPassword, setShowPassword] = useState(false);
 
   const tone = phaseTones[session.phase];
   const isSessionActive = ["connecting", "connected", "subscribed", "waiting", "success"].includes(session.phase);
@@ -141,30 +143,46 @@ export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
   };
 
   const buildConfig = (): MonitoringBrokerConfig => {
-    const resolvedPort = Number(port.trim() || "1883");
+    const trimmedHost = host.trim();
+    const trimmedPort = port.trim();
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+    const resolvedPort = Number(trimmedPort || "1883");
     return createMonitoringBrokerConfig({
       mode,
-      host: mode === "default" ? DEFAULT_BROKER.host : host,
+      host: mode === "default" ? DEFAULT_BROKER.host : trimmedHost,
       port: mode === "default" ? DEFAULT_BROKER.port : Number.isFinite(resolvedPort) ? resolvedPort : 1883,
-      username: mode === "default" ? DEFAULT_BROKER.username : username,
-      password: mode === "default" ? DEFAULT_BROKER.password : password,
+      username: mode === "default" ? DEFAULT_BROKER.username : trimmedUsername,
+      password: mode === "default" ? DEFAULT_BROKER.password : trimmedPassword,
       clientId: generateClientId(),
     });
   };
 
   const handleConnect = async () => {
-    const trimmedMacId = macId.trim();
+    const trimmedMacId = macId.trim().toUpperCase();
     if (!trimmedMacId) {
       ToastAndroid.show("MAC ID is required", ToastAndroid.SHORT);
       return;
     }
 
     if (mode === "custom") {
-      if (!host.trim() || !port.trim() || !username.trim() || !password.trim()) {
+      const trimmedHost = host.trim();
+      const trimmedPort = port.trim();
+      const trimmedUsername = username.trim();
+      const trimmedPassword = password.trim();
+
+      setDraftField("host", trimmedHost);
+      setDraftField("port", trimmedPort);
+      setDraftField("username", trimmedUsername);
+      setDraftField("password", trimmedPassword);
+
+      if (!trimmedHost || !trimmedPort || !trimmedUsername || !trimmedPassword) {
         ToastAndroid.show("Complete all custom broker fields", ToastAndroid.SHORT);
         return;
       }
     }
+
+    setDraftField("macId", trimmedMacId);
 
     disconnectSession(true);
     resetSession();
@@ -251,16 +269,15 @@ export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
   const metrics = [
     { label: "Packet count", value: `${session.packetCount}` },
     { label: "Last message", value: formatDateTime(session.lastMessageAt) },
-    { label: "Last topic", value: session.lastTopic || "-" },
+    // { label: "Last topic", value: session.lastTopic || "-" },
   ];
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Wired Sensor Diagnostic</Text>
+        <Text style={styles.sectionTitle}>Wired Sensor Monitoring</Text>
         <Text style={styles.sectionText}>
-          Verify that a wired sensor is publishing to the cloud by connecting to the MQTT broker and listening on the
-          RMS and raw topics for the entered MAC ID.
+          Verify that a wired sensor is publishing to the cloud for the entered MAC ID.
         </Text>
       </View>
 
@@ -268,13 +285,7 @@ export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
         <Text style={styles.eyebrow}>Connection Mode</Text>
         <RadioSelector selected={mode === "custom" ? "Custom" : "Default"} onSelect={handleModeChange} />
 
-        {mode === "default" ? (
-          <View style={styles.defaultBrokerCard}>
-            <Text style={styles.defaultBrokerTitle}>Using Presage default broker</Text>
-            <Text style={styles.defaultBrokerValue}>mqtt.presageinsights.ai:1883</Text>
-            <Text style={styles.defaultBrokerHint}>Username and password are prefilled for the default flow.</Text>
-          </View>
-        ) : (
+        {mode === "custom" ? (
           <View style={styles.formGrid}>
             <View style={styles.fieldBlock}>
               <Text style={styles.fieldLabel}>Host</Text>
@@ -314,28 +325,41 @@ export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
 
             <View style={styles.fieldBlock}>
               <Text style={styles.fieldLabel}>Password</Text>
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={(value) => setDraftField("password", value)}
-                placeholder="Enter password"
-                placeholderTextColor="#94A3B8"
-                secureTextEntry
-                autoCapitalize="none"
-              />
+              <View style={styles.passwordInputWrap}>
+                <TextInput
+                  style={[styles.input, styles.passwordInput]}
+                  value={password}
+                  onChangeText={(value) => setDraftField("password", value)}
+                  placeholder="Enter password"
+                  placeholderTextColor="#94A3B8"
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                />
+                <Pressable
+                  style={styles.passwordToggle}
+                  onPress={() => setShowPassword((prev) => !prev)}
+                  hitSlop={8}
+                >
+                  <MaterialCommunityIcons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={20}
+                    color="#64748B"
+                  />
+                </Pressable>
+              </View>
             </View>
           </View>
-        )}
+        ) : null}
 
         <View style={styles.fieldBlock}>
           <Text style={styles.fieldLabel}>MAC ID</Text>
           <TextInput
             style={styles.input}
             value={macId}
-            onChangeText={(value) => setDraftField("macId", value)}
+            onChangeText={(value) => setDraftField("macId", value.toUpperCase())}
             placeholder="Enter the wired sensor MAC ID"
             placeholderTextColor="#94A3B8"
-            autoCapitalize="none"
+            autoCapitalize="characters"
           />
         </View>
 
@@ -362,9 +386,9 @@ export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
 
       <View style={styles.sectionCard}>
         <View style={styles.statusHeaderRow}>
-          <View>
+          <View style={styles.statusCopy}>
             <Text style={styles.sectionTitle}>Session Status</Text>
-            <Text style={styles.sectionText}>The first message received on either wired topic confirms a healthy installation path.</Text>
+            {/* <Text style={styles.sectionText}>The first message received on either wired topic confirms a healthy installation path.</Text> */}
           </View>
           <View style={[styles.phasePill, { backgroundColor: tone.background, borderColor: tone.border }]}>
             <Text style={[styles.phasePillText, { color: tone.text }]}>{phaseLabels[session.phase]}</Text>
@@ -372,17 +396,23 @@ export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
         </View>
 
         <View style={styles.metricGrid}>
-          {metrics.map((metric) => (
-            <View key={metric.label} style={styles.metricCard}>
+          {metrics.map((metric, index) => (
+            <View
+              key={metric.label}
+              style={[
+                styles.metricCard,
+                index === 0 ? styles.metricCardCompact : styles.metricCardExpanded,
+              ]}
+            >
               <Text style={styles.metricLabel}>{metric.label}</Text>
-              <Text style={styles.metricValue} numberOfLines={2}>
+              <Text style={styles.metricValue} numberOfLines={1}>
                 {metric.value}
               </Text>
             </View>
           ))}
         </View>
 
-        <View style={styles.detailCard}>
+        {/* <View style={styles.detailCard}>
           <Text style={styles.detailLabel}>Subscribed topics</Text>
           {session.topics.length ? (
             session.topics.map((topic) => (
@@ -393,7 +423,7 @@ export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
           ) : (
             <Text style={styles.emptyHint}>No topics subscribed yet.</Text>
           )}
-        </View>
+        </View> */}
 
         <View style={styles.detailCard}>
           <Text style={styles.detailLabel}>Last payload preview</Text>
@@ -441,47 +471,22 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: Fonts.semiBold,
-    fontSize: 18,
+    fontSize: 16,
     color: "#111827",
     marginBottom: 6,
   },
   sectionText: {
     fontFamily: Fonts.regular,
-    fontSize: 13,
+    fontSize: 12,
     lineHeight: 20,
     color: "#64748B",
-  },
-  defaultBrokerCard: {
-    borderRadius: 14,
-    backgroundColor: "#F6F4FF",
-    borderWidth: 1,
-    borderColor: "#E6D9FF",
-    padding: 14,
-    marginBottom: 14,
-  },
-  defaultBrokerTitle: {
-    fontFamily: Fonts.semiBold,
-    fontSize: 13,
-    color: "#4C1D95",
-    marginBottom: 4,
-  },
-  defaultBrokerValue: {
-    fontFamily: Fonts.medium,
-    fontSize: 14,
-    color: "#1F2937",
-    marginBottom: 4,
-  },
-  defaultBrokerHint: {
-    fontFamily: Fonts.regular,
-    fontSize: 12,
-    color: "#6B7280",
   },
   formGrid: {
     gap: 12,
     marginBottom: 12,
   },
   fieldBlock: {
-    marginBottom: 12,
+    marginBottom: 0,
   },
   fieldLabel: {
     fontFamily: Fonts.semiBold,
@@ -499,6 +504,20 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: 13,
     color: "#111827",
+  },
+  passwordInputWrap: {
+    position: "relative",
+  },
+  passwordInput: {
+    paddingRight: 44,
+  },
+  passwordToggle: {
+    position: "absolute",
+    right: 12,
+    top: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonRow: {
     flexDirection: "row",
@@ -537,35 +556,51 @@ const styles = StyleSheet.create({
   },
   statusHeaderRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    justifyContent: "flex-start",
+    alignItems: "center",
     gap: 12,
     marginBottom: 14,
   },
+  statusCopy: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: 4,
+  },
   phasePill: {
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     borderWidth: 1,
+    flexShrink: 1,
+    alignSelf: "flex-start",
+    maxWidth: "38%",
   },
   phasePillText: {
     fontFamily: Fonts.semiBold,
-    fontSize: 12,
+    fontSize: 11,
   },
   metricGrid: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: 10,
     marginBottom: 12,
   },
   metricCard: {
-    width: "31%",
-    minWidth: 98,
     backgroundColor: "#F8FAFC",
     borderRadius: 14,
     padding: 12,
     borderWidth: 1,
     borderColor: "#E2E8F0",
+  },
+  metricCardCompact: {
+    flexBasis: "30%",
+    flexGrow: 0,
+    flexShrink: 0,
+  },
+  metricCardExpanded: {
+    flexBasis: "67%",
+    flexGrow: 1,
+    flexShrink: 1,
+    minWidth: 0,
   },
   metricLabel: {
     fontFamily: Fonts.medium,

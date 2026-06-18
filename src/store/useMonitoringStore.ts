@@ -34,10 +34,10 @@ const defaultSessionState: MonitoringSessionState = {
 const defaultDraftState: MonitoringDraftState = {
   mode: "default",
   macId: "",
-  host: "mqtt.presageinsights.ai",
-  port: "1883",
-  username: "presage",
-  password: "Xn5sQkDAu61yt7",
+  host: "",
+  port: "",
+  username: "",
+  password: "",
 };
 
 export const useMonitoringStore = create<MonitoringStore>()(
@@ -56,6 +56,14 @@ export const useMonitoringStore = create<MonitoringStore>()(
         set((state) => ({
           ...state,
           mode,
+          ...(mode === "custom"
+            ? {
+                host: "",
+                port: "",
+                username: "",
+                password: "",
+              }
+            : {}),
         })),
 
       setSession: (session) =>
