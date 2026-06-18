@@ -71,6 +71,7 @@ export const endpoints = {
     singleAssetHealthHistory: 'single_asset_health_history/',
     graphData: 'get_function_trend_data_v2/',
     sensorConfig: 'get_device_config/',
+    energyConfig: 'energy_config/',
     bearingDetails: 'get_bearing_details/',
     createEndpoint: 'endPointApi/',
     updateEndpoint: 'update_endpoint/',

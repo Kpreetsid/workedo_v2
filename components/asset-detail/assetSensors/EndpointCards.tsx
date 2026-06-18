@@ -1,25 +1,68 @@
-import { Pressable, ScrollView, Text, TouchableOpacity, View, StyleSheet, RefreshControl, FlatList, ToastAndroid } from "react-native";
+import { Alert, Pressable, ScrollView, Text, TouchableOpacity, View, StyleSheet, RefreshControl, ToastAndroid } from "react-native";
 import { Fontisto, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { AssetEndpoint } from "@/src/types/assetEndpoint";
 import { useAssetStore } from "@/src/store/useAssetStore";
 import { useCallback, useEffect, useState } from "react";
 import { Asset } from "@/src/types/asset";
-import { deleteEndpoint, getAllEndpoints, getSensorConfig } from "@/src/services/asset.service";
+import { deleteEndpoint, fetchAssetChildren, getAllEndpoints, getEnergyConfig, getSensorConfig } from "@/src/services/asset.service";
 import Popover from "react-native-popover-view";
 import { useFocusEffect, useRouter } from "expo-router";
 import Fonts from "@/constants/Typography";
 import AttachSensor from "./AttachSensor";
-import { useSensorStore } from "@/src/store/useSensorStore";
-import { useGlobal } from "@/hooks/useGlobal";
+import { SvgXml } from "react-native-svg";
 
 interface Props {
 	asset_data: Asset;
 }
 
+const linkedIconXml = `<svg width="26" height="48" viewBox="0 0 26 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 1H11C5.47715 1 1 5.47715 1 11V31C1 36.5228 5.47715 41 11 41H15C20.5228 41 25 36.5228 25 31V11C25 5.47715 20.5228 1 15 1Z" stroke="#32CD32" stroke-width="2"/><path d="M13 9V33" stroke="#32CD32" stroke-width="2" stroke-linecap="round"/><path d="M20 41H6C4.34315 41 3 42.3431 3 44C3 45.6569 4.34315 47 6 47H20C21.6569 47 23 45.6569 23 44C23 42.3431 21.6569 41 20 41Z" stroke="#32CD32" stroke-width="2"/></svg>`;
+const unlinkedIconXml = `<svg width="26" height="49" viewBox="0 0 26 49" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.1719 12L4.8318 29.5784" stroke="#9A9A9A" stroke-width="2" stroke-linecap="round"/><path d="M15 1H11C5.47715 1 1 5.47715 1 11V31C1 36.5228 5.47715 41 11 41H15C20.5228 41 25 36.5228 25 31V11C25 5.47715 20.5228 1 15 1Z" stroke="#9A9A9A" stroke-width="2"/><path d="M13 7V17" stroke="#9A9A9A" stroke-width="2" stroke-linecap="round"/><path d="M13 25V33" stroke="#9A9A9A" stroke-width="2" stroke-linecap="round"/><path d="M20 42H6C4.34315 42 3 43.3431 3 45C3 46.6569 4.34315 48 6 48H20C21.6569 48 23 46.6569 23 45C23 43.3431 21.6569 42 20 42Z" stroke="#9A9A9A" stroke-width="2"/></svg>`;
+
+const getDeviceType = (endpoint: AssetEndpoint) => {
+	if (!endpoint?.mac_id) return "-";
+	const prefix = endpoint?.composite_id?.split("_")[0];
+
+	switch (prefix) {
+		case "e":
+			return "energy";
+		case "c":
+			return "current";
+		case "ble":
+			return "Bluetooth";
+		case "wl":
+			return "Wireless";
+		case "w":
+			return "Wired";
+		case "p":
+			return "Portable";
+		default:
+			return "Unknown";
+	}
+};
+
+const getSensorLinkState = (endpoint: AssetEndpoint) => {
+	if (typeof endpoint?.is_linked === "boolean") {
+		return endpoint.is_linked;
+	}
+
+	return Boolean(endpoint?.mac_id);
+};
+
+const getSensorStatusTone = (online?: string) => {
+	if (online === "True") {
+		return { label: "Online", color: "#22C55E" };
+	}
+
+	if (online === "False") {
+		return { label: "Offline", color: "#EF4444" };
+	}
+
+	return { label: "Status N/A", color: "#94A3B8" };
+};
+
 export default function EndpointCards({ asset_data }: Props) {
-	const { mapAPItoConfigData } = useGlobal();
 	const endpoints = useAssetStore<AssetEndpoint[]>((state) => state.endpoints);
-	const { deviceInfo, setDeviceInfo } = useAssetStore((state) => state);
+	const setDeviceInfo = useAssetStore((state) => state.setDeviceInfo);
 	const setEndpoints = useAssetStore((state) => state.setEndpoints);
 	const selectedSensor = useAssetStore((state) => state.selectedSensor);
 	const setSelectedSensor = useAssetStore((state) => state.setSelectedSensor);
@@ -34,11 +77,39 @@ export default function EndpointCards({ asset_data }: Props) {
 				action: ""
 			}
 		);
-	const setSensorForm = useSensorStore((s) => s.setSensorForm);
 
 	const router = useRouter();
 
 	const [refreshing, setRefreshing] = useState(false);
+
+	const confirmDeleteEndpoint = (ep: AssetEndpoint) => {
+		Alert.alert(
+			"Delete EndPoint",
+			`Are you sure you want to delete ${ep?.point_name || "this endpoint"}?`,
+			[
+				{
+					text: "Cancel",
+					style: "cancel",
+				},
+				{
+					text: "Delete",
+					style: "destructive",
+					onPress: async () => {
+						try {
+							const re = await deleteEndpoint(ep?.id?.toString() || "");
+							if (re?.message === "End Point deleted successfully.") {
+								ToastAndroid.show("Endpoint deleted successfully", ToastAndroid.SHORT);
+								fetchEndpoints("afterDelete");
+							}
+						} catch (error) {
+							console.log("error deleting endpoint = ", error);
+						}
+					},
+				},
+			],
+			{ cancelable: true }
+		);
+	};
 
 	useEffect(() => {
 		console.log('selcted sensor = ', endpoints, selectedSensor)
@@ -71,18 +142,40 @@ export default function EndpointCards({ asset_data }: Props) {
 	const fetchEndpoints = async (type?: string) => {
 		console.log('fetching endpoints');
 		try {
-			console.log('asset_data = ', asset_data);
-
-			let payload: string[] = [asset_data?.id];
-			console.log('payload for endpoints = ', payload);
+			const childAssetsRes = await fetchAssetChildren(asset_data?.id);
+			const childAssets = Array.isArray(childAssetsRes?.data) ? childAssetsRes.data : [];
+			const relatedAssets = [asset_data, ...childAssets].filter(Boolean);
+			const payload = Array.from(
+				new Set(
+					relatedAssets
+						.map((asset: any) => asset?.id)
+						.filter(Boolean)
+				)
+			);
 			const endpointsRes = await getAllEndpoints(payload);
-			console.log('res endpoints = ', endpointsRes);
+			const endpointData = Array.isArray(endpointsRes?.data) ? endpointsRes.data : [];
+			const currentData = Array.isArray(endpointsRes?.current) ? endpointsRes.current : [];
+			const energyData = Array.isArray(endpointsRes?.Energy) ? endpointsRes.Energy : Array.isArray(endpointsRes?.energy) ? endpointsRes.energy : [];
+			const allEndpoints = [...endpointData, ...currentData, ...energyData];
 
-			if (endpointsRes?.data?.length > 0) {
-				setEndpoints(endpointsRes.data);
-				setSelectedSensor(endpointsRes.data[0]);
+			if (allEndpoints.length > 0) {
+				const enrichedEndpoints = allEndpoints.map((endpoint: AssetEndpoint) => {
+					const matchingAsset = relatedAssets.find((asset: any) => String(asset?.id) === String(endpoint?.asset_id));
+					return {
+						...endpoint,
+						asset_name: endpoint?.asset_name || matchingAsset?.asset_name || asset_data?.asset_name || "-",
+					};
+				});
+
+				setEndpoints(enrichedEndpoints);
+
 				if (type === 'afterDelete') {
-					setSelectedSensor(endpointsRes.data[endpointsRes.data.length - 1]);
+					setSelectedSensor(enrichedEndpoints[enrichedEndpoints.length - 1]);
+				} else if (selectedSensor?.id) {
+					const existingSelected = enrichedEndpoints.find((endpoint: AssetEndpoint) => String(endpoint?.id) === String(selectedSensor?.id));
+					setSelectedSensor(existingSelected || enrichedEndpoints[0]);
+				} else {
+					setSelectedSensor(enrichedEndpoints[0]);
 				}
 			} else {
 				setEndpoints([]);
@@ -100,26 +193,47 @@ export default function EndpointCards({ asset_data }: Props) {
 	}
 
 	const fetchSensorData = async (ep: any) => {
-		console.log('sadfdsf', ep)
-		setSelectedSensor(ep)
+		setSelectedSensor(ep);
+		const deviceType = getDeviceType(ep);
+
+		if (deviceType === "current") {
+			const currentPayload = { viewType: "current", config: null, endpoint: ep };
+			setDeviceInfo(currentPayload);
+			setShowAttachSensor((prev) => (prev.state ? { ...prev, data: { ...ep, deviceInfo: currentPayload } } : prev));
+			return ep;
+		}
+
 		const payload = {
 			composite_key: ep?.composite_id,
 			mount_id: ep?.id,
+		};
+
+		try {
+			const res =
+				deviceType === "energy"
+					? await getEnergyConfig(payload)
+					: await getSensorConfig(payload);
+			const configPayload = {
+				viewType: deviceType === "energy" ? "energy" : "vibration",
+				config: res?.config || null,
+				endpoint: ep,
+			};
+
+			ep.deviceInfo = configPayload;
+			setDeviceInfo(configPayload);
+			setShowAttachSensor((prev) => (
+				prev.state ? { ...prev, data: { ...ep, deviceInfo: configPayload } } : prev
+			));
+			return ep;
+		} catch (error) {
+			const fallbackPayload = {
+				viewType: deviceType === "energy" ? "energy" : "vibration",
+				config: null,
+				endpoint: ep,
+			};
+			setDeviceInfo(fallbackPayload);
+			return ep;
 		}
-
-		const res = await getSensorConfig(payload);
-		console.log('sensor config = ', res);
-
-		const mapped = mapAPItoConfigData(res?.config);
-		console.log('mapped data = ', mapped);
-		ep.deviceInfo = mapped;
-		setDeviceInfo(mapped)
-		setShowAttachSensor((prev) => (
-			prev.state
-				? { ...prev, data: { ...ep, deviceInfo: mapped } }
-				: prev
-		));
-		return ep;
 	}
 
 	useEffect(() => {
@@ -151,8 +265,13 @@ export default function EndpointCards({ asset_data }: Props) {
 			}
 		>
 			{endpoints.map((ep) => {
-				console.log('ep e p= ', ep)
 				const isSelected = selectedSensor?.id === ep.id;
+				const isLinked = getSensorLinkState(ep);
+				const statusTone = getSensorStatusTone(ep.online);
+				const deviceType = getDeviceType(ep);
+				const sensorLabel = ep.mac_id
+					? (ep.mac_id.includes("_") ? ep.mac_id.split("_").slice(1).join("_") : ep.mac_id)
+					: "No Sensor Mapped";
 				return (
 					<Pressable key={ep.id} onPress={() => handleSelect(ep)}>
 						<View
@@ -167,119 +286,118 @@ export default function EndpointCards({ asset_data }: Props) {
 							]}
 						>
 							<View style={styles.cardHeader}>
-								<Text style={styles.cardMac}>
-									{ep.mac_id
-										? ep.mac_id.split("_").slice(1).join("_") || "No Sensor Mapped"
-										: "No Sensor Mapped"}
-								</Text>
-								<Popover
-									isVisible={openPopoverId === Number(ep.id)}
-									onRequestClose={() => setOpenPopoverId(null)}
-									from={(
-										<TouchableOpacity style={{ padding: 6 }} onPress={() => setOpenPopoverId(Number(ep.id))}>
-											<Fontisto name="more-v-a" size={15} color="#201F23" />
-										</TouchableOpacity>
-									)}>
-									<View style={styles.popoverContent}>
-										{
-											["Edit Endpoint", "Delete Endpoint"].map((item, index) => {
-												return (
-													<Pressable
-														style={styles.popoverItem}
-														key={index}
-														onPress={async () => {
-															setOpenPopoverId(null);
+								<View style={styles.headerLeft}>
+									<SvgXml xml={isLinked ? linkedIconXml : unlinkedIconXml} width={14} height={28} />
+									<Text style={styles.cardMac} numberOfLines={1}>
+										{sensorLabel}
+									</Text>
+								</View>
 
-															if (index === 1) {
-																const re = await deleteEndpoint(ep?.id?.toString() || "")
-																console.log('re = ', re);
-																if (re?.message === "End Point deleted successfully.") {
-																	ToastAndroid.show("Endpoint deleted successfully", ToastAndroid.SHORT);
-																	fetchEndpoints('afterDelete');
-																}
-															}
-
-															if (index === 0) {
-																setSelectedEndpointToEdit(ep);
-																// Small timeout helps ensure popover unmounts smoothly before navigation
-																setTimeout(() => {
-																	router.push("/createNewEndPoint");
-																}, 150);
-															}
-														}}
-													>
-														<Text>{item}</Text>
-													</Pressable>
-												);
-											})
-										}
+								<View style={styles.headerRight}>
+									<View style={styles.connectionTypeWrap}>
+										<View style={[styles.kindDot, { backgroundColor: statusTone.color }]} />
+										<Text style={styles.kindText}>{deviceType}</Text>
 									</View>
-								</Popover>
+
+									<Popover
+										isVisible={openPopoverId === Number(ep.id)}
+										onRequestClose={() => setOpenPopoverId(null)}
+										from={(
+											<TouchableOpacity style={styles.menuTrigger} onPress={() => setOpenPopoverId(Number(ep.id))}>
+												<Fontisto name="more-v-a" size={16} color="#201F23" />
+											</TouchableOpacity>
+										)}>
+										<View style={styles.popoverContent}>
+											<Pressable
+												style={styles.popoverItem}
+												onPress={() => {
+													setOpenPopoverId(null);
+													setSelectedEndpointToEdit(ep);
+													setTimeout(() => {
+														router.push("/createNewEndPoint");
+													}, 150);
+												}}
+											>
+												<MaterialCommunityIcons name="pencil" size={18} color="#5552FE" />
+												<Text style={styles.popoverText}>Edit EndPoint</Text>
+											</Pressable>
+
+											<Pressable
+												style={styles.popoverItem}
+												onPress={() => {
+													setOpenPopoverId(null);
+													handleAttachSensor(ep);
+												}}
+												disabled={deviceType === "current" || deviceType === "energy"}
+											>
+												<Ionicons
+													name="radio-outline"
+													size={18}
+													color={deviceType === "current" || deviceType === "energy" ? "#94A3B8" : "#5552FE"}
+												/>
+												<Text
+													style={[
+														styles.popoverText,
+														(deviceType === "current" || deviceType === "energy") && styles.popoverTextDisabled,
+													]}
+												>
+													Attach sensor
+												</Text>
+											</Pressable>
+
+											<Pressable
+												style={styles.popoverItem}
+												onPress={() => {
+													setOpenPopoverId(null);
+													handleSelect(ep);
+													ToastAndroid.show("Configuration details are shown below.", ToastAndroid.SHORT);
+												}}
+												disabled={!ep?.mac_id || deviceType === "current"}
+											>
+												<MaterialCommunityIcons
+													name="cog-outline"
+													size={18}
+													color={ep?.mac_id && deviceType !== "current" ? "#5552FE" : "#94A3B8"}
+												/>
+												<Text
+													style={[
+														styles.popoverText,
+														(!ep?.mac_id || deviceType === "current") && styles.popoverTextDisabled,
+													]}
+												>
+													Update configuration
+												</Text>
+											</Pressable>
+
+											<Pressable
+												style={styles.popoverItem}
+												onPress={() => {
+													setOpenPopoverId(null);
+													confirmDeleteEndpoint(ep);
+												}}
+											>
+												<MaterialCommunityIcons name="delete-outline" size={18} color="#DC2626" />
+												<Text style={[styles.popoverText, styles.popoverTextDanger]}>Delete EndPoint</Text>
+											</Pressable>
+										</View>
+									</Popover>
+								</View>
 							</View>
 
-							<View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-								<View style={styles.kindRow}>
-									<View
-										style={[
-											styles.kindDot,
-											ep.online === "True" ? styles.greenDot : styles.redDot,
-										]}
-									/>
-									<Text style={styles.kindText}>
-										{ep.online === "True" ? "Online" : "Offline"}
-									</Text>
-								</View>
-
-								<View style={styles.kindRow}>
-									<Text style={styles.kindText}>
-										{
-
-											ep.mac_id &&
-											(
-												ep.mac_id && ep.mac_id.startsWith('wl_') ?
-													"Wireless"
-													:
-													(
-														ep.mac_id.startsWith('w_')
-															?
-															"Wired"
-															:
-															"Bluetooth"
-													)
-											)
-										}
-									</Text>
-								</View>
-
-							</View>
-
-							<View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-								<View>
+							<View style={styles.endpointInfoRow}>
+								<View style={styles.infoBlock}>
 									<Text style={styles.cardTitle}>End Point</Text>
-									<Text style={styles.cardSub}>{ep.point_name || ""} - {ep.mount_location}</Text>
+									<Text style={styles.cardSub} numberOfLines={2}>
+										{ep.point_name || "-"}{ep.mount_location ? ` - ${ep.mount_location}` : ""}
+									</Text>
 								</View>
 
-								<View style={{ width: 1, backgroundColor: "#5552FE30", height: "70%" }} />
-
-								<View>
-									<Text style={styles.cardTitle}>Mount Direction</Text>
-									<Text style={styles.cardSub}>{ep.mount_direction}</Text>
+								<View style={styles.infoBlock}>
+									<Text style={styles.cardTitle}>Asset Name</Text>
+									<Text style={styles.cardSub} numberOfLines={2}>
+										{ep.asset_name || asset_data?.asset_name || "-"}
+									</Text>
 								</View>
-							</View>
-
-							<View style={styles.cardFooter}>
-								{/* <TouchableOpacity
-									style={styles.iconBtn}
-									onPress={() => console.log("Settings pressed")}
-								>
-									<MaterialCommunityIcons name="cog-outline" size={13} color="#fff" />
-								</TouchableOpacity> */}
-								<TouchableOpacity
-									style={styles.iconBtn}
-									onPress={() => handleAttachSensor(ep)}
-								>
-									<Ionicons name="radio" size={13} color="#fff" />
-								</TouchableOpacity>
 							</View>
 						</View>
 					</Pressable>
@@ -299,8 +417,9 @@ const styles = StyleSheet.create({
 	},
 	card: {
 		backgroundColor: "#FFFFFF",
-		borderRadius: 8,
+		borderRadius: 14,
 		padding: 12,
+		width: 314,
 		shadowColor: "#742BDE",
 		shadowOpacity: 0.06,
 		shadowRadius: 8,
@@ -313,76 +432,94 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "space-between",
+		gap: 10,
+	},
+	headerLeft: {
+		flex: 1,
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 10,
+	},
+	headerRight: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 10,
 	},
 	cardMac: {
 		fontSize: 11,
 		fontFamily: Fonts.semiBold,
 		color: "#201F23",
 		borderWidth: 0.3,
-		borderColor: "#002143",
-		borderRadius: 2,
-		padding: 4,
-		textTransform: 'capitalize'
+		borderColor: "#C7D2FE",
+		borderRadius: 6,
+		paddingHorizontal: 8,
+		paddingVertical: 6,
+		textTransform: 'capitalize',
+		flexShrink: 1,
 	},
 	popoverContent: {
-		borderRadius: 20,
+		borderRadius: 16,
 		backgroundColor: "#fff",
-		padding: 10,
+		paddingVertical: 8,
 	},
 	popoverItem: {
-		width: 150,
-		padding: 10,
+		width: 205,
+		paddingHorizontal: 14,
+		paddingVertical: 12,
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 12,
 	},
-	cardMenu: {
+	popoverText: {
+		fontSize: 15,
+		fontFamily: Fonts.medium,
+		color: "#201F23",
+	},
+	popoverTextDisabled: {
+		color: "#94A3B8",
+	},
+	popoverTextDanger: {
+		color: "#DC2626",
+	},
+	menuTrigger: {
 		padding: 6,
 	},
-	kindRow: {
+	connectionTypeWrap: {
 		flexDirection: "row",
 		alignItems: "center",
-		marginBottom: 6,
+		gap: 6,
 	},
 	kindDot: {
-		width: 8,
-		height: 8,
-		borderRadius: 8,
-		marginRight: 8,
-	},
-	greenDot: {
-		backgroundColor: "#32CD32",
-	},
-	redDot: {
-		backgroundColor: "#FF3B30",
+		width: 10,
+		height: 10,
+		borderRadius: 10,
 	},
 	kindText: {
-		fontSize: 11,
+		fontSize: 12,
 		fontFamily: Fonts.semiBold,
 		color: "#201F23",
+		fontStyle: "italic",
+	},
+	endpointInfoRow: {
+		flexDirection: "row",
+		alignItems: "flex-start",
+		justifyContent: "space-between",
+		gap: 14,
+		marginTop: 10,
+	},
+	infoBlock: {
+		flex: 1,
 	},
 	cardTitle: {
-		fontSize: 10,
+		fontSize: 12,
 		fontFamily: Fonts.semiBold,
 		color: "#201F23",
+		marginBottom: 4,
 	},
 	cardSub: {
-		fontSize: 11,
-		fontFamily: Fonts.light,
+		fontSize: 12,
+		fontFamily: Fonts.regular,
 		color: "#6B7888",
 		textTransform: 'capitalize'
-	},
-	cardFooter: {
-		marginTop: 2,
-		flexDirection: "row",
-		justifyContent: "space-between"
-	},
-	iconBtn: {
-		width: 22,
-		height: 22,
-		borderRadius: 6,
-		borderWidth: 1,
-		borderColor: "#E7DFFF",
-		backgroundColor: "#5552FE",
-		alignItems: "center",
-		justifyContent: "center",
-		marginRight: 8,
 	},
 })
