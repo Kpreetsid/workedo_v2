@@ -18,6 +18,11 @@ export interface MonitoringBrokerConfig {
   username: string;
   password: string;
   clientId: string;
+  tls?: boolean;
+  protocol?: "mqtt" | "mqtts";
+  certificate?: string;
+  certificatePass?: string;
+  ca?: string;
 }
 
 export interface MonitoringMessageSnapshot {

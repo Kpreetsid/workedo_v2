@@ -1,7 +1,7 @@
 import Header from "@/components/global/Header";
 import SegmentedPager from "@/components/global/SegmentPager";
 import {Foundation, MaterialCommunityIcons} from "@expo/vector-icons";
-import BluetoothMonitorPlaceholder from "@/components/monitoring/BluetoothMonitorPlaceholder";
+import BluetoothMonitorTab from "@/components/monitoring/BluetoothMonitorTab";
 import WiredMonitorTab from "@/components/monitoring/WiredMonitorTab";
 import { StyleSheet, View } from "react-native";
 import { useState } from "react";
@@ -15,7 +15,7 @@ export default function Monitoring() {
 
             <SegmentedPager tabs={[
                 {label: "Wired", icon: <MaterialCommunityIcons name="ethernet" size={15}/>, component: () => <WiredMonitorTab active={activeTab === 0} />},
-                {label: "Bluetooth", icon: <Foundation name="bluetooth" size={13}/>, component: () => <BluetoothMonitorPlaceholder />}
+                {label: "Bluetooth", icon: <Foundation name="bluetooth" size={13}/>, component: () => <BluetoothMonitorTab active={activeTab === 1} />}
             ]} onPageChange={setActiveTab} />
         </View>
     )

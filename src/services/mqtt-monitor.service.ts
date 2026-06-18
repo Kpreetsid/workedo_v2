@@ -22,6 +22,9 @@ interface MqttModule {
     port?: number;
     protocol?: "mqtt" | "tcp" | "wss" | "mqtts" | "ws";
     tls?: boolean;
+    certificate?: string;
+    certificatePass?: string;
+    ca?: string;
     keepalive?: number;
     clean?: boolean;
     auth?: boolean;
@@ -50,6 +53,11 @@ export const buildWiredTopics = (macId: string) => {
   return [`wired/rms/${trimmedMacId}`, `wired/rawdata/${trimmedMacId}`];
 };
 
+export const buildBleTopics = (macId: string) => {
+  const trimmedMacId = macId.trim();
+  return [`raw/ble/${trimmedMacId}`, `rms/ble/${trimmedMacId}`];
+};
+
 export const normalizePayloadPreview = (payload: string) => {
   if (!payload) return "";
   return payload.length > 320 ? `${payload.slice(0, 320)}...` : payload;
@@ -59,11 +67,12 @@ export const createMonitoringBrokerConfig = (input: MonitoringBrokerConfig): Mon
   ...input,
   host: input.host.trim(),
   username: input.username.trim(),
+  password: input.password.trim(),
 });
 
-export const startWiredMonitorSession = async (
+const startMonitorSession = async (
   config: MonitoringBrokerConfig,
-  macId: string,
+  topics: string[],
   callbacks: {
     onConnected: () => void;
     onSubscribed: (topics: string[]) => void;
@@ -73,16 +82,19 @@ export const startWiredMonitorSession = async (
   }
 ): Promise<MonitoringClientHandle> => {
   const mqtt = resolveMqttModule();
-  const topics = buildWiredTopics(macId);
-  const uri = `mqtt://${config.host}:${config.port}`;
+  const protocol = config.tls ? "mqtts" : "mqtt";
+  const uri = `${protocol}://${config.host}:${config.port}`;
 
   const client = await mqtt.createClient({
     clientId: config.clientId,
     uri,
     host: config.host,
     port: config.port,
-    protocol: "mqtt",
-    tls: false,
+    protocol,
+    tls: Boolean(config.tls),
+    certificate: config.certificate,
+    certificatePass: config.certificatePass,
+    ca: config.ca,
     keepalive: 30,
     clean: true,
     auth: Boolean(config.username || config.password),
@@ -121,3 +133,27 @@ export const startWiredMonitorSession = async (
     },
   };
 };
+
+export const startWiredMonitorSession = async (
+  config: MonitoringBrokerConfig,
+  macId: string,
+  callbacks: {
+    onConnected: () => void;
+    onSubscribed: (topics: string[]) => void;
+    onMessage: (message: MonitoringMessageSnapshot) => void;
+    onClosed: () => void;
+    onError: (message: string) => void;
+  }
+) => startMonitorSession(config, buildWiredTopics(macId), callbacks);
+
+export const startBleMonitorSession = async (
+  config: MonitoringBrokerConfig,
+  macId: string,
+  callbacks: {
+    onConnected: () => void;
+    onSubscribed: (topics: string[]) => void;
+    onMessage: (message: MonitoringMessageSnapshot) => void;
+    onClosed: () => void;
+    onError: (message: string) => void;
+  }
+) => startMonitorSession(config, buildBleTopics(macId), callbacks);
