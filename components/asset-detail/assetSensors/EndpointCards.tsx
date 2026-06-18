@@ -308,7 +308,7 @@ export default function EndpointCards({ asset_data }: Props) {
 											</TouchableOpacity>
 										)}>
 										<View style={styles.popoverContent}>
-											<Pressable
+										<Pressable
 												style={styles.popoverItem}
 												onPress={() => {
 													setOpenPopoverId(null);
@@ -318,8 +318,10 @@ export default function EndpointCards({ asset_data }: Props) {
 													}, 150);
 												}}
 											>
-												<MaterialCommunityIcons name="pencil" size={18} color="#5552FE" />
-												<Text style={styles.popoverText}>Edit EndPoint</Text>
+												<View style={styles.popoverIconWrap}>
+													<MaterialCommunityIcons name="pencil" size={17} color="#5552FE" />
+												</View>
+												<Text style={styles.popoverText}>Edit endpoint</Text>
 											</Pressable>
 
 											<Pressable
@@ -330,11 +332,13 @@ export default function EndpointCards({ asset_data }: Props) {
 												}}
 												disabled={deviceType === "current" || deviceType === "energy"}
 											>
-												<Ionicons
-													name="radio-outline"
-													size={18}
-													color={deviceType === "current" || deviceType === "energy" ? "#94A3B8" : "#5552FE"}
-												/>
+												<View style={styles.popoverIconWrap}>
+													<Ionicons
+														name="radio-outline"
+														size={17}
+														color={deviceType === "current" || deviceType === "energy" ? "#94A3B8" : "#5552FE"}
+													/>
+												</View>
 												<Text
 													style={[
 														styles.popoverText,
@@ -354,11 +358,13 @@ export default function EndpointCards({ asset_data }: Props) {
 												}}
 												disabled={!ep?.mac_id || deviceType === "current"}
 											>
-												<MaterialCommunityIcons
-													name="cog-outline"
-													size={18}
-													color={ep?.mac_id && deviceType !== "current" ? "#5552FE" : "#94A3B8"}
-												/>
+												<View style={styles.popoverIconWrap}>
+													<MaterialCommunityIcons
+														name="cog-outline"
+														size={17}
+														color={ep?.mac_id && deviceType !== "current" ? "#5552FE" : "#94A3B8"}
+													/>
+												</View>
 												<Text
 													style={[
 														styles.popoverText,
@@ -376,8 +382,10 @@ export default function EndpointCards({ asset_data }: Props) {
 													confirmDeleteEndpoint(ep);
 												}}
 											>
-												<MaterialCommunityIcons name="delete-outline" size={18} color="#DC2626" />
-												<Text style={[styles.popoverText, styles.popoverTextDanger]}>Delete EndPoint</Text>
+												<View style={styles.popoverIconWrap}>
+													<MaterialCommunityIcons name="delete-outline" size={17} color="#DC2626" />
+												</View>
+												<Text style={[styles.popoverText, styles.popoverTextDanger]}>Delete endpoint</Text>
 											</Pressable>
 										</View>
 									</Popover>
@@ -458,22 +466,41 @@ const styles = StyleSheet.create({
 		flexShrink: 1,
 	},
 	popoverContent: {
-		borderRadius: 16,
+		borderRadius: 14,
 		backgroundColor: "#fff",
-		paddingVertical: 8,
+		paddingVertical: 6,
+		minWidth: 198,
+		maxWidth: 220,
+		shadowColor: "#0F172A",
+		shadowOpacity: 0.14,
+		shadowRadius: 12,
+		shadowOffset: { width: 0, height: 6 },
+		elevation: 6,
+		borderWidth: 1,
+		borderColor: "#EEF2F7",
 	},
 	popoverItem: {
-		width: 205,
-		paddingHorizontal: 14,
-		paddingVertical: 12,
+		paddingHorizontal: 12,
+		paddingVertical: 11,
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 12,
+		gap: 10,
+		minHeight: 46,
+	},
+	popoverIconWrap: {
+		width: 24,
+		height: 24,
+		borderRadius: 12,
+		alignItems: "center",
+		justifyContent: "center",
+		backgroundColor: "#F8F4FF",
 	},
 	popoverText: {
-		fontSize: 15,
+		flex: 1,
+		fontSize: 14,
 		fontFamily: Fonts.medium,
 		color: "#201F23",
+		flexShrink: 1,
 	},
 	popoverTextDisabled: {
 		color: "#94A3B8",

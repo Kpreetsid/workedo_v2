@@ -1,4 +1,4 @@
-import { FlatList, Pressable, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { useEffect } from "react";
 import Fonts from "@/constants/Typography";
@@ -19,6 +19,9 @@ type MoreTabItem =
 interface MoreTabModalProps {
 	setModalVisible: (visible: boolean) => void;
 }
+
+const TAB_BAR_HEIGHT = 70;
+const SHEET_GAP_ABOVE_TAB_BAR = 8;
 
 const items: MoreTabItem[] = [
 	"Gateways",
@@ -63,15 +66,13 @@ export default function MoreTabModal({ setModalVisible }: MoreTabModalProps) {
 	}));
 
 	return (
-		<Animated.View style={[styles.overlay, overlayStyle]}>
-			<TouchableWithoutFeedback onPress={closeModal}>
-				<View style={styles.modalOverlay} />
-			</TouchableWithoutFeedback>
+		<Animated.View pointerEvents="box-none" style={[styles.overlay, overlayStyle]}>
+			<Animated.View pointerEvents="none" style={styles.backdropTint} />
 
 			<Animated.View
 				style={[
 					styles.bottomSheet,
-					{ marginBottom: insets.bottom },
+					{ marginBottom: insets.bottom + TAB_BAR_HEIGHT + SHEET_GAP_ABOVE_TAB_BAR },
 					sheetStyle,
 				]}
 			>
@@ -126,12 +127,13 @@ const styles = StyleSheet.create({
 		top: 0,
 		left: 0,
 		right: 0,
-		bottom: 70,
+		bottom: 0,
 		zIndex: 999,
-		backgroundColor: "rgba(0,0,0,0.2)", // soft dim
+		justifyContent: "flex-end",
 	},
-	modalOverlay: {
-		flex: 1,
+	backdropTint: {
+		...StyleSheet.absoluteFillObject,
+		backgroundColor: "rgba(0,0,0,0.2)",
 	},
 	bottomSheet: {
 		backgroundColor: "#742BDE",
