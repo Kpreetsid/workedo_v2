@@ -83,6 +83,7 @@ export default function AssetsTab({
 			}
 			return () => {
 				console.log('assets blurred')
+				setSearchText("");
 				// setIgnoreFilter(true)
 			}
 		}, [])

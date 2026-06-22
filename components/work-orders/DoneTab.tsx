@@ -6,6 +6,13 @@ import { getWorkOrders } from "@/src/services/work-order.service";
 import { WorkOrder } from "@/src/types/workOrder";
 import { useFocusEffect } from "expo-router";
 
+const sortNewestFirst = (orders: WorkOrder[]) =>
+	[...orders].sort((a, b) => {
+		const timeA = new Date(a?.createdAt || 0).getTime();
+		const timeB = new Date(b?.createdAt || 0).getTime();
+		return timeB - timeA;
+	});
+
 export default function DoneTab() {
 	const [selectedId, setSelectedId] = useState<string | null>(null);
 	const [workorders, setWorkOrders] = useState<WorkOrder[]>([]);
@@ -32,7 +39,7 @@ export default function DoneTab() {
 			}
 
 			if (res?.status && incoming.length > 0) {
-				setWorkOrders([...incoming].reverse());
+				setWorkOrders(sortNewestFirst(incoming));
 				return;
 			}
 

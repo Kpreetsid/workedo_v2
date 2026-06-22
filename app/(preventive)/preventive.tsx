@@ -28,6 +28,9 @@ export default function PreventivePage() {
 	useFocusEffect(
 		useCallback(() => {
 			fetchPreventives();
+			return () => {
+				setSearchQuery("");
+			};
 		}, [])
 	);
 

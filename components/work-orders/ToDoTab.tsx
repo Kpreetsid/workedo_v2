@@ -35,6 +35,13 @@ const FILTER_EMPTY_MESSAGES: Record<WorkerQueueFilterId, string> = {
 	allOpen: "No open work orders found.",
 };
 
+const sortNewestFirst = (orders: WorkOrder[]) =>
+	[...orders].sort((a, b) => {
+		const timeA = new Date(a?.createdAt || 0).getTime();
+		const timeB = new Date(b?.createdAt || 0).getTime();
+		return timeB - timeA;
+	});
+
 export default function ToDoTab() {
 	const { user } = useAuthStore();
 	const [searchText, setSearchText] = useState("");
@@ -53,7 +60,7 @@ export default function ToDoTab() {
 		try {
 			const response = await getWorkOrders("todo");
 			const nextOrders = Array.isArray(response?.data) ? (response.data as WorkOrder[]) : [];
-			setWorkOrders(nextOrders);
+			setWorkOrders(sortNewestFirst(nextOrders));
 		} catch (error) {
 			console.log("worker queue fetch error", error);
 			setWorkOrders([]);
@@ -66,6 +73,9 @@ export default function ToDoTab() {
 	useFocusEffect(
 		useCallback(() => {
 			fetchWorkOrders();
+			return () => {
+				setSearchText("");
+			};
 		}, [])
 	);
 

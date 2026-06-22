@@ -67,6 +67,9 @@ export default function SelectLocation({ showHeader = true, selection = true }: 
 	useFocusEffect(
 		useCallback(() => {
 			fetchLocations();
+			return () => {
+				setSearchText("");
+			};
 		}, [])
 	);
 

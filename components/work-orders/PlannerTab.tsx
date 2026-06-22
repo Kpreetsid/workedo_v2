@@ -7,6 +7,13 @@ import { WorkOrder } from "@/src/types/workOrder";
 import { buildPlannerBuckets, buildPlannerInsights, filterPlannerOrdersByInsight, PlannerInsightId } from "@/src/utils/workOrderPlanner";
 import WorkOrderCard from "./WorkOrderCard";
 
+const sortNewestFirst = (orders: WorkOrder[]) =>
+  [...orders].sort((a, b) => {
+    const timeA = new Date(a?.createdAt || 0).getTime();
+    const timeB = new Date(b?.createdAt || 0).getTime();
+    return timeB - timeA;
+  });
+
 export default function PlannerTab() {
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(false);
@@ -19,7 +26,7 @@ export default function PlannerTab() {
       const res = await getWorkOrders("todo");
       const incoming = Array.isArray(res?.data) ? (res.data as WorkOrder[]) : [];
       if (res?.status && incoming.length > 0) {
-        setWorkOrders(incoming);
+        setWorkOrders(sortNewestFirst(incoming));
         return;
       }
       setWorkOrders([]);

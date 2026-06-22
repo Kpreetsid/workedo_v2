@@ -48,6 +48,9 @@ export default function PartsInventory() {
   useFocusEffect(
     useCallback(() => {
       fetchParts(selectedLocation?.id);
+      return () => {
+        setSearchQuery("");
+      };
     }, [fetchParts, selectedLocation?.id])
   );
 

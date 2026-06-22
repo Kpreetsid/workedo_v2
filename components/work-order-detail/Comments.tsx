@@ -47,6 +47,13 @@ export default function Comments({ params }: Props) {
     [comments, parentCommentId]
   );
 
+  const totalCommentCount = useMemo(() => {
+    const countNested = (items: Array<WorkOrderComment | WorkOrderCommentReply>) =>
+      items.reduce((total, item) => total + 1 + countNested(item.replies || []), 0);
+
+    return countNested(comments);
+  }, [comments]);
+
   const fetchComments = async () => {
     if (!params?.id) {
       setComments([]);
@@ -177,12 +184,20 @@ export default function Comments({ params }: Props) {
             </View>
             <View style={styles.actionRow}>
               {level === 0 ? (
-                <TouchableOpacity onPress={() => onReplyPress(item.id)} style={styles.actionButton}>
+                <TouchableOpacity
+                  onPress={() => onReplyPress(item.id)}
+                  style={styles.actionButton}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
                   <Text style={styles.replyText}>Reply</Text>
                 </TouchableOpacity>
               ) : null}
               {isOwnComment(item) ? (
-                <TouchableOpacity onPress={() => onDeletePress(item.id)} style={styles.actionButton}>
+                <TouchableOpacity
+                  onPress={() => onDeletePress(item.id)}
+                  style={styles.actionButton}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
                   <Text style={styles.deleteText}>Delete</Text>
                 </TouchableOpacity>
               ) : null}
@@ -232,7 +247,9 @@ export default function Comments({ params }: Props) {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.sectionLabel}>{comments.length} comment{comments.length === 1 ? "" : "s"}</Text>
+          <Text style={styles.sectionLabel}>
+            {totalCommentCount} comment{totalCommentCount === 1 ? "" : "s"}
+          </Text>
         </View>
       }
       ListEmptyComponent={
@@ -416,8 +433,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   actionButton: {
-    paddingVertical: 2,
-    paddingHorizontal: 4,
+    minHeight: 32,
+    minWidth: 52,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    justifyContent: "center",
+    alignItems: "center",
   },
   comment: {
     fontFamily: Fonts.regular,

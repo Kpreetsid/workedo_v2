@@ -36,6 +36,9 @@ export default function Gateways() {
 	useFocusEffect(
 		useCallback(() => {
 			fetchSensorsList();
+			return () => {
+				setSearchText("");
+			};
 		}, [])
 	);
 
