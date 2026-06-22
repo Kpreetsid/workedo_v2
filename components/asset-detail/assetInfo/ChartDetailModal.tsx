@@ -42,6 +42,31 @@ const envelopechart = "file:///android_asset/charts/envelope-waveform.html";
 const spectrumwaveform = "file:///android_asset/charts/spectrum-waveform.html";
 const spectrumenvelopechart = "file:///android_asset/charts/spectrum-envelope-waveform.html";
 
+function resolveSignalType(signal?: string): SignalType {
+	const normalized = String(signal || "").toLowerCase();
+	if (normalized.includes("velocity")) return "velocity";
+	if (normalized.includes("displacement")) return "displacement";
+	return "acceleration";
+}
+
+function resolvePointUnixTimestamp(selectedPoint: any) {
+	if (typeof selectedPoint?.rawTimestamp === "number") {
+		return selectedPoint.rawTimestamp;
+	}
+
+	if (typeof selectedPoint?.timestamp === "number") {
+		return selectedPoint.timestamp;
+	}
+
+	const parsed = moment(
+		selectedPoint?.timestamp,
+		["DD/MM/YYYY, HH:mm:ss", "DD/MM/YYYY HH:mm:ss", moment.ISO_8601],
+		true
+	);
+
+	return parsed.isValid() ? parsed.unix() : null;
+}
+
 export default function ChartDetailModal({
 	visible,
 	onClose,
@@ -61,6 +86,7 @@ export default function ChartDetailModal({
 	// ---------------------------
 	const selectedAxis = useAssetStore((s) => s.selectedAxis);
 	console.log('selected axis changed in modal = ', selectedAxis)
+	const selectedSignal = useAssetStore((s) => s.selectedSignal);
 	const selectedValueType = useAssetStore((s) => s.selectedValueType);
 
 	const [axis, setAxis] = useState<any[]>([]);
@@ -94,8 +120,16 @@ export default function ChartDetailModal({
 	`;
 
 	useEffect(() => {
-		setAxis(selectedAxis)
-	}, [selectedAxis])
+		if (selectedPoint?.axis) {
+			setAxis([selectedPoint.axis]);
+			return;
+		}
+		setAxis(selectedAxis);
+	}, [selectedAxis, selectedPoint]);
+
+	useEffect(() => {
+		setSignalType(resolveSignalType(selectedSignal));
+	}, [selectedSignal]);
 
 	// ---------------------------
 	// BUILD PAYLOAD
@@ -104,13 +138,12 @@ export default function ChartDetailModal({
 		if (!selectedPoint || !endpointSelected) return null;
 
 		const isSpectrum = activeTab === "spectrum";
+		const resolvedTimestamp = resolvePointUnixTimestamp(selectedPoint);
+		if (!resolvedTimestamp) return null;
 
 		const payload: any = {
 			mac_id: endpointSelected.composite_id,
-			timestamp: moment(
-				selectedPoint.timestamp,
-				"DD/MM/YYYY, HH:mm:ss"
-			).unix(),
+			timestamp: resolvedTimestamp,
 			axis,
 			assetId: asset_data.id,
 			domain: isSpectrum ? "frequency" : "time",
@@ -382,11 +415,16 @@ export default function ChartDetailModal({
 
 		try {
 			setAnalyzeLoading(true)
+			const resolvedTimestamp = resolvePointUnixTimestamp(selectedPoint);
+			if (!resolvedTimestamp) {
+				setAnalyzeLoading(false);
+				ToastAndroid.show("Unable to resolve the selected reading timestamp.", ToastAndroid.SHORT);
+				return;
+			}
 			let payload = {
 				"axis": axis,
 				"composite_id": endpointSelected?.composite_id,
-				// "timestamp": moment.utc(selectedPoint?.timestamp, "DD/MM/YYYY HH:mm:ss").unix(),
-				"timestamp": 1705037400,
+				"timestamp": resolvedTimestamp,
 				"high_pass": highPass,
 				"low_pass": lowPass
 			};

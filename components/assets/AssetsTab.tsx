@@ -25,6 +25,7 @@ export default function AssetsTab({
 	selection = true,
 }: AssetsTabInterface) {
 	const [loading, setLoading] = useState(true);
+	const [listHydrating, setListHydrating] = useState(false);
 	let { comingFrom, card_id } = useLocalSearchParams();
 	console.log('rendering assets = ', comingFrom, card_id);
 
@@ -97,6 +98,7 @@ export default function AssetsTab({
 
 	useEffect(() => {
 		if (!assets.length) {
+			setListHydrating(false);
 			setFilteredAssets([]);
 			return;
 		}
@@ -112,7 +114,6 @@ export default function AssetsTab({
 		if (!cardId) {
 			console.log('no if')
 			console.log('card id is undefined = ', cardId);
-			setFilteredAssets([]); // ensures FlashList uses full assets array
 			fetchAssetsHealthLocation(assets)
 		}
 	}, [assets, childAssets, cardId]);
@@ -124,19 +125,23 @@ export default function AssetsTab({
 			const incoming = Array.isArray(res?.data) ? (res.data as Asset[]) : [];
 
 			if (res?.message === "No data found" || !res?.status || incoming.length === 0) {
+				setListHydrating(false);
 				setAssets([]);
 				return;
 			}
 
 			console.log('res assets = ', res?.data);
+			setListHydrating(true);
 			setAssets(incoming);
 		} catch (err: any) {
 			if (err?.message === "No data found") {
+				setListHydrating(false);
 				setAssets([]);
 				return;
 			}
 
 			console.error("Login failed:", err);
+			setListHydrating(false);
 			setAssets([]);
 		} finally {
 			setLoading(false);
@@ -156,25 +161,76 @@ export default function AssetsTab({
 			// now filter based on asset status
 			fetchAssetsHealthLocation(filteredAssets1);
 		} else {
+			setListHydrating(false);
 			setFilteredAssets([]);
 		}
 	}
 
 	const fetchAssetsHealthLocation = async (filtered: Asset[]) => {
+		setListHydrating(true);
+
 		const obj: { org_id: string, asset_list: string[] } = {
 			org_id: user?.account_id,
 			asset_list: filtered?.map((asset: Asset) => asset.id),
 		};
 
 		console.log("obj = ", obj);
-		// return;
-		const resp = await assetsHealthLocation(obj);
-		const healthData = Array.isArray(resp?.data) ? resp.data : [];
-		console.log("resp health location = ", resp, card_id);
-		if (cardId) {
-			if (card_id === "1") {
-				console.log("inside if card_id 1");
+		try {
+			const resp = await assetsHealthLocation(obj);
+			const healthData = Array.isArray(resp?.data) ? resp.data : [];
+			console.log("resp health location = ", resp, card_id);
+			if (cardId) {
+				if (card_id === "1") {
+					console.log("inside if card_id 1");
 
+					const enriched = filtered.map((asset: Asset) => {
+						const statusObj = healthData.find(
+							(item: any) => item.asset_id === asset.id
+						);
+
+						return {
+							...asset,
+							asset_status: statusObj?.asset_status || "Not Defined",
+						};
+					});
+
+					setFilteredAssets(enriched);
+				} else if (card_id === '2') {
+					console.log('inside if card_id 2')
+					const dangerAssetMap = new Map(
+						healthData
+							.filter((asset: any) => asset?.asset_status === "Danger")
+							.map((asset: any) => [asset.asset_id, asset])
+					);
+
+					const enrichedDangerAssets = filtered
+						.filter((asset: Asset) => dangerAssetMap.has(asset.id))
+						.map((asset: Asset) => ({
+							...asset,
+							asset_status: dangerAssetMap.get(asset.id)?.asset_status || "Danger",
+						}));
+
+					setFilteredAssets(enrichedDangerAssets);
+				} else if (card_id === '3') {
+					console.log('inside if card_id 3');
+					const criticalAssetMap = new Map(
+						healthData
+							.filter((asset: any) => asset?.asset_status === "Critical")
+							.map((asset: any) => [asset.asset_id, asset])
+					);
+
+					const enrichedCriticalAssets = filtered
+						.filter((asset: Asset) => criticalAssetMap.has(asset.id))
+						.map((asset: Asset) => ({
+							...asset,
+							asset_status: criticalAssetMap.get(asset.id)?.asset_status || "Critical",
+						}));
+
+					setFilteredAssets(enrichedCriticalAssets);
+
+				}
+			} else {
+				console.log("inside else");
 				const enriched = filtered.map((asset: Asset) => {
 					const statusObj = healthData.find(
 						(item: any) => item.asset_id === asset.id
@@ -185,67 +241,14 @@ export default function AssetsTab({
 						asset_status: statusObj?.asset_status || "Not Defined",
 					};
 				});
-
+				console.log("enriched = ", enriched);
 				setFilteredAssets(enriched);
-			} else if (card_id === '2') {
-				console.log('inside if card_id 2')
-				let dangerAssets = healthData.filter((asset: any) => asset?.asset_status === "Danger")
-				if (dangerAssets.length > 0) {
-					let found = filtered.find((a: Asset) => a.id === dangerAssets[0].asset_id);
-
-					if (found) {
-						setFilteredAssets([
-							{
-								...found,
-								asset_status: dangerAssets[0].asset_status, // add/override status
-							}
-						]);
-					}
-
-				} else {
-					setFilteredAssets([]);
-				}
-			} else if (card_id === '3') {
-				console.log('inside if card_id 3');
-
-				const match = healthData.find(
-					(item: any) => item.asset_status === "Critical"
-				);
-
-				if (match) {
-					const found = filtered.find(
-						(a: Asset) => a.id === match.asset_id
-					);
-
-					if (found) {
-						setFilteredAssets([
-							{
-								...found,
-								asset_status: match.asset_status, // attach status
-							}
-						]);
-					} else {
-						setFilteredAssets([]);
-					}
-				} else {
-					setFilteredAssets([]);
-				}
-
 			}
-		} else {
-			console.log("inside else");
-			const enriched = filtered.map((asset: Asset) => {
-				const statusObj = healthData.find(
-					(item: any) => item.asset_id === asset.id
-				);
-
-				return {
-					...asset,
-					asset_status: statusObj?.asset_status || "Not Defined",
-				};
-			});
-			console.log("enriched = ", enriched);
-			setFilteredAssets(enriched);
+		} catch (error) {
+			console.log("error fetching asset health location = ", error);
+			setFilteredAssets(filtered);
+		} finally {
+			setListHydrating(false);
 		}
 	}
 
@@ -316,7 +319,6 @@ export default function AssetsTab({
 
 	const clearFilters = async () => {
 		setCardId(null);  // 🔥 disable overview filtering
-		setFilteredAssets([]);  // 🔥 reset your filtered list
 		await fetchAssets();    // 🔥 reload normally
 	};
 
@@ -375,7 +377,7 @@ export default function AssetsTab({
 				onRefresh={handleRefresh}
 				ListEmptyComponent={
 					<View style={styles.emptyState}>
-						{loading || refreshing ? (
+						{loading || refreshing || listHydrating ? (
 							<ActivityIndicator size={"large"} />
 						) : (
 							<Text style={styles.emptyText}>No Assets found!</Text>

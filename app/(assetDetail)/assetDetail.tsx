@@ -54,13 +54,41 @@ export default function AssetDetailScreen() {
 	}, [id]);
 
 	const handleEditAsset = () => {
-		// console.log('handleEditAsset');
 		if (!assetData) return;
+		const routeAssetId = Array.isArray(id) ? id[0] : id;
+		const assetId = String(routeAssetId ?? assetData?.id ?? assetData?._id ?? "");
+		const assetPrefill = {
+			id: assetData?.id,
+			_id: assetData?._id,
+			asset_name: assetData?.asset_name,
+			asset_id: assetData?.asset_id,
+			asset_type: assetData?.asset_type,
+			asset_model: assetData?.asset_model,
+			model: assetData?.model,
+			asset_timezone: assetData?.asset_timezone,
+			locationId: assetData?.locationId,
+			locationData: assetData?.locationData,
+			location_name: (assetData as any)?.location_name,
+			manufacturer: assetData?.manufacturer,
+			year: assetData?.year,
+			description: assetData?.description,
+			userList: assetData?.userList,
+			image_path: assetData?.image_path,
+			asset_build_type: assetData?.asset_build_type,
+			parent_id: assetData?.parent_id,
+			top_level: assetData?.top_level,
+		};
+
+		if (!assetId) {
+			ToastAndroid.show("Unable to open asset editor.", ToastAndroid.SHORT);
+			return;
+		}
 
 		router.push({
 			pathname: "/editAsset",
 			params: {
-				asset_data: JSON.stringify(assetData),
+				asset_id: assetId,
+				asset_data: JSON.stringify(assetPrefill),
 				mode: assetData?.top_level == false ? 'child' : 'parent'
 			},
 		});

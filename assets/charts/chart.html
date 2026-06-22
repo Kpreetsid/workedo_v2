@@ -1,16 +1,10 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-	<!-- Chart.js -->
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
-
-	<!-- Gesture + Zoom -->
 	<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
-
 	<style>
 		html,
 		body {
@@ -19,7 +13,6 @@
 			height: 100%;
 			background: #ffffff;
 			font-family: system-ui, -apple-system, BlinkMacSystemFont;
-
 			overflow: hidden;
 			touch-action: none;
 		}
@@ -36,7 +29,6 @@
 			touch-action: none;
 		}
 
-		/* Tooltip */
 		#tooltip {
 			position: absolute;
 			background: #fff;
@@ -65,7 +57,6 @@
 		}
 	</style>
 </head>
-
 <body>
 	<div id="wrapper">
 		<canvas id="chart"></canvas>
@@ -74,171 +65,174 @@
 
 	<script>
 		let chart;
+		let currentPayload = null;
 
-		function createChart(payload) {
-			console.log("INIT payload.yUnit =", payload.yUnit);
-			const ctx = document.getElementById("chart").getContext("2d");
+		function hasDetail(point) {
+			return !!(currentPayload && (currentPayload.fftEnabled || point.flag === false));
+		}
 
-			const datasets = payload.series.map(series => ({
+		function buildDatasets(payload) {
+			currentPayload = payload;
+
+			return payload.series.map((series) => ({
 				label: series.axis,
-				data: series.points.map((p, i) => ({
-					x: i,
-					y: p.y,
-					fullDate: p.fullDate,
-					flag: p.flag
+				data: series.points.map((point, index) => ({
+					x: index,
+					y: point.y,
+					fullDate: point.fullDate,
+					timestamp: point.timestamp || point.fullDate,
+					rawTimestamp: point.rawTimestamp,
+					flag: point.flag,
 				})),
 				borderColor: series.color,
-				borderWidth: 1.5,
-				tension: 0.5,
+				borderWidth: 1.25,
+				tension: 0.25,
 				cubicInterpolationMode: "monotone",
 				borderCapStyle: "round",
 				borderJoinStyle: "round",
-				// pointRadius: 0
 				pointRadius: (ctx) => {
 					const point = ctx.raw;
-					return point.flag === false ? 2 : 0;
+					if (payload.fftEnabled) return 1.75;
+					return point.flag === false ? 1.2 : 0;
 				},
+				pointHoverRadius: payload.fftEnabled ? 3.5 : 2.4,
+				pointHitRadius: 14,
+				pointBackgroundColor: series.color,
+				clip: false,
+				spanGaps: true,
 			}));
+		}
 
+		function buildChartOptions(payload) {
+			return {
+				animation: false,
+				normalized: true,
+				responsive: true,
+				maintainAspectRatio: false,
+				parsing: false,
+				layout: {
+					padding: {
+						top: 6,
+						right: 10,
+						bottom: 2,
+						left: 0,
+					},
+				},
+				interaction: {
+					mode: "nearest",
+					intersect: false,
+				},
+				onClick: (evt, elements) => {
+					if (!elements.length) return;
+
+					const element = elements[0];
+					const dataset = chart.data.datasets[element.datasetIndex];
+					const point = dataset.data[element.index];
+					const payloadPoint = {
+						axis: dataset.label,
+						index: element.index,
+						value: point.y,
+						timestamp: point.timestamp || point.fullDate,
+						rawTimestamp: point.rawTimestamp,
+						flag: point.flag,
+					};
+
+					window.ReactNativeWebView?.postMessage(
+						JSON.stringify({
+							type: hasDetail(point) ? "VIEW_DETAILS" : "POINT_TAP",
+							payload: payloadPoint,
+						})
+					);
+				},
+				scales: {
+					x: {
+						type: "linear",
+						min: -0.15,
+						max: payload.maxX + 0.35,
+						grid: {
+							display: false,
+							drawBorder: false,
+						},
+						ticks: {
+							autoSkip: true,
+							maxTicksLimit: 6,
+							maxRotation: 0,
+							color: "#A0A0A0",
+							font: { size: 9 },
+							callback: (value) => payload.xLabels[Math.round(value)] || "",
+						},
+					},
+					y: {
+						min: payload.yMin,
+						max: payload.yMax,
+						title: {
+							display: !!payload.yUnit,
+							text: payload.yUnit,
+							position: "left",
+							align: "center",
+							color: "#666",
+							font: {
+								size: 11,
+								weight: "600",
+							},
+							padding: { top: 4, bottom: 4 },
+						},
+						ticks: {
+							color: "#A0A0A0",
+							font: { size: 9 },
+						},
+					},
+				},
+				plugins: {
+					legend: {
+						display: !payload.hideLegend,
+						position: "top",
+						align: "center",
+						labels: {
+							color: "#45515C",
+							font: {
+								family: "system-ui, -apple-system, BlinkMacSystemFont",
+								size: 12,
+								weight: "500",
+							},
+							boxWidth: 10,
+							boxHeight: 10,
+							padding: 16,
+							usePointStyle: true,
+							pointStyle: "circle",
+						},
+					},
+					zoom: {
+						pan: {
+							enabled: true,
+							mode: "x",
+						},
+						zoom: {
+							pinch: { enabled: true, threshold: 0 },
+							wheel: { enabled: true },
+							mode: "x",
+							speed: 0.08,
+							limits: {
+								x: {
+									minRange: 1,
+								},
+							},
+						},
+					},
+					tooltip: {
+						enabled: false,
+						external: externalTooltip,
+					},
+				},
+			};
+		}
+
+		function createChart(payload) {
+			const ctx = document.getElementById("chart").getContext("2d");
 			chart = new Chart(ctx, {
 				type: "line",
-				data: { datasets },
-				options: {
-					animation: false,     // ✅ no reflow during pan/zoom
-					normalized: true,     // ✅ stabilizes datasets
-					responsive: true,
-					maintainAspectRatio: false,
-					parsing: false,
-
-					interaction: {
-						mode: "nearest",
-						intersect: false
-					},
-
-					onClick: (evt, elements) => {
-						if (!elements.length) return;
-
-						const element = elements[0];
-
-						const datasetIndex = element.datasetIndex;
-						const index = element.index;
-
-						const dataset = chart.data.datasets[datasetIndex];
-						const point = dataset.data[index];
-
-						// 🔴 SEND TO REACT NATIVE
-						window.ReactNativeWebView?.postMessage(
-							JSON.stringify({
-								type: "POINT_TAP",
-								payload: {
-									axis: dataset.label,
-									index,
-									value: point.y,
-									timestamp: point.fullDate,
-									flag: point.flag
-								}
-							})
-						);
-					},
-
-					scales: {
-						x: {
-							type: "linear",
-
-							min: 0,
-							max: payload.maxX,
-
-							grid: {
-								display: false,      // 🔴 hides vertical grid lines
-								drawBorder: false,   // 🔴 hides axis border line
-							},
-
-							ticks: {
-								autoSkip: true,
-								maxTicksLimit: 6,        // ✅ evenly spaced (change 5–8 as needed)
-								maxRotation: 0,
-								color: "#A0A0A0",
-								font: { size: 9 },
-								callback: (_, index) => payload.xLabels[index] || ""
-							}
-						},
-						y: {
-							min: payload.yMin,
-							max: payload.yMax > 0 ? payload.yMax * 1.2 : payload.yMax,
-
-							title: {
-								display: !!payload.yUnit,
-								text: payload.yUnit,
-								position: "left",
-								align: "center",
-								color: "#666",
-								font: {
-									size: 11,
-									weight: "600"
-								},
-								padding: { top: 4, bottom: 4 }
-							},
-
-							// grid: {
-							// 	display: false,      // 🔴 hides horizontal grid lines
-							// 	drawBorder: false,   // 🔴 hides axis border line
-							// },
-
-							ticks: {
-								color: "#A0A0A0",
-								font: { size: 9 }
-							}
-						}
-					},
-
-					plugins: {
-						legend: {
-							display: true,
-							position: "top",
-							align: "center",
-
-							labels: {
-								color: "#45515C",
-								font: {
-									family: "system-ui, -apple-system, BlinkMacSystemFont",
-									size: 12,
-									weight: "500",
-								},
-
-								boxWidth: 10,
-								boxHeight: 10,
-								padding: 16,
-
-								usePointStyle: true,   // 👈 circle instead of square
-								pointStyle: "circle",
-							},
-						},
-
-						zoom: {
-							pan: {
-								enabled: true,
-								mode: "x",
-								// threshold: 0,
-							},
-							zoom: {
-								pinch: { enabled: true, threshold: 0 },
-								wheel: { enabled: true },
-								mode: "x",
-								speed: 0.08,
-								limits: {
-									x: {
-										minRange: 1, // ✅ allow deep zoom (1 data point wide)
-									}
-								}
-							}
-						},
-
-						tooltip: {
-							enabled: false,
-							external: externalTooltip
-						}
-					}
-				}
+				data: { datasets: buildDatasets(payload) },
+				options: buildChartOptions(payload),
 			});
 		}
 
@@ -253,16 +247,15 @@
 
 			const point = tooltip.dataPoints[0].raw;
 			const color = tooltip.dataPoints[0].dataset.borderColor;
+			const detailAvailable = hasDetail(point);
 
 			tooltipEl.innerHTML = `
 				<div>${point.fullDate || ""}</div>
-
 				<div class="tooltip-row">
 					<div class="dot" style="background:${color}"></div>
 					<div>${point.y}</div>
 				</div>
-
-				${point.flag === false ? `
+				${detailAvailable ? `
 					<div
 						id="view-details"
 						style="
@@ -277,36 +270,30 @@
 						View details
 					</div>
 				` : ""}
-
-				`;
-
+			`;
 
 			tooltipEl.style.display = "block";
 			tooltipEl.style.left = tooltip.caretX + "px";
 			tooltipEl.style.top = tooltip.caretY + "px";
 
-			const btn = tooltipEl.querySelector("#view-details");
+			const button = tooltipEl.querySelector("#view-details");
+			if (!button) return;
 
-			if (!btn) return;
-
-			btn.onclick = () => {
+			button.onclick = () => {
 				window.ReactNativeWebView?.postMessage(
 					JSON.stringify({
 						type: "VIEW_DETAILS",
 						payload: {
 							axis: tooltip.dataPoints[0].dataset.label,
 							value: point.y,
-							timestamp: point.fullDate,
-							flag: point.flag
-						}
+							timestamp: point.timestamp || point.fullDate,
+							rawTimestamp: point.rawTimestamp,
+							flag: point.flag,
+						},
 					})
 				);
 			};
 		}
-
-		/* ===============================
-			 RN ↔ WebView MESSAGE BRIDGE
-			 =============================== */
 
 		function handleMessage(event) {
 			let payload;
@@ -321,55 +308,19 @@
 			}
 
 			if (payload.type === "UPDATE" && chart) {
-				// chart.options.scales.x.min = 0;
-				// chart.options.scales.x.max = payload.maxX;
-
-				chart.options.scales.y.min = payload.yMin;
-				chart.options.scales.y.max = payload.yMax > 0 ? payload.yMax * 1.2 : payload.yMax;
-
-				chart.options.scales.y.title.text = payload.yUnit || "";
-				chart.options.scales.y.title.display = !!payload.yUnit;
-
-				chart.data.datasets = payload.series.map(series => ({
-					label: series.axis,
-					data: series.points.map((p, i) => ({
-						x: i,
-						y: p.y,
-						fullDate: p.fullDate,
-						flag: p.flag
-					})),
-					borderColor: series.color,
-					borderWidth: 1.5,
-					tension: 0.35,
-					// pointRadius: 0
-					pointRadius: (ctx) => {
-						const point = ctx.raw;
-						return point.flag === false ? 2 : 0;
-					},
-
-				}));
-
+				currentPayload = payload;
+				chart.options = buildChartOptions(payload);
+				chart.data.datasets = buildDatasets(payload);
 				chart.update("none");
 			}
 		}
 
-		// 🔴 REQUIRED for React Native WebView
 		document.addEventListener("message", handleMessage);
 		window.addEventListener("message", handleMessage);
 
-		/* ===============================
-			 Gesture lock hooks
-			 =============================== */
 		const canvas = document.getElementById("chart");
-
-		canvas.addEventListener("touchstart", () => {
-			// window.ReactNativeWebView?.postMessage("touch-start");
-		});
-
-		canvas.addEventListener("touchend", () => {
-			// window.ReactNativeWebView?.postMessage("touch-end");
-		});
+		canvas.addEventListener("touchstart", () => {});
+		canvas.addEventListener("touchend", () => {});
 	</script>
 </body>
-
 </html>

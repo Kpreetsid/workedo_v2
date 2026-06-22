@@ -5,13 +5,32 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Fonts from "@/constants/Typography";
 import ActionButton from "@/components/create-screens/ActionButton";
 import { useEffect, useRef, useState } from "react";
-import { createEndpoint, getBearingDetails, updateEndpoint } from "@/src/services/asset.service";
+import { createEndpoint, searchBearingNumbers, updateEndpoint } from "@/src/services/asset.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { useRouter } from "expo-router";
 import { useLocalSearchParams } from "expo-router/build/hooks";
 import { useAssetStore } from "@/src/store/useAssetStore";
-import DropDownInput from "@/components/create-screens/DropDownInput";
 import DropDownLocation from "@/components/create-endpoint/DropDownLocation";
+
+interface BearingSuggestion {
+	bearing_number: string;
+	bpfo?: string;
+	bpfi?: string;
+	bsf?: string;
+	ftf?: string;
+}
+
+const asText = (value: unknown) => {
+	if (value === null || value === undefined) return "";
+	return String(value);
+};
+
+const emptyBearingData = {
+	bpfo: "",
+	bpfi: "",
+	bsf: "",
+	ftf: "",
+};
 
 export default function CreateNewEndPoint() {
 	const { id } = useLocalSearchParams();
@@ -25,18 +44,18 @@ export default function CreateNewEndPoint() {
 	const router = useRouter();
 	const user = useAuthStore(state => state.user);
 	const [selectedPart, setSelectedPart] = useState<string>("DE");
+	const [bearingNumber, setBearingNumber] = useState("");
+	const [bearingSuggestions, setBearingSuggestions] = useState<BearingSuggestion[]>([]);
+	const [bearingSearchLoading, setBearingSearchLoading] = useState(false);
+	const [bearingSearchAttempted, setBearingSearchAttempted] = useState(false);
+	const [selectedBearingValue, setSelectedBearingValue] = useState("");
 
 	// Refs for all text inputs
 	const nameRef = useRef("");
 	const rpmRef = useRef("");
 	const bearingNoRef = useRef("");
 
-	const [bearingData, setBearingData] = useState({
-		bpfo: "",
-		bpfi: "",
-		bsf: "",
-		ftf: "",
-	});
+	const [bearingData, setBearingData] = useState(emptyBearingData);
 
 	useEffect(() => {
 		return () => {
@@ -49,8 +68,63 @@ export default function CreateNewEndPoint() {
 		if (selectedEndpointToEdit) {
 			nameRef.current = selectedEndpointToEdit?.point_name || "";
 			setSelectedPart(selectedEndpointToEdit?.mount_location || "DE");
+			rpmRef.current = selectedEndpointToEdit?.rpm ? String(selectedEndpointToEdit.rpm) : "";
+			const existingBearingNumber = selectedEndpointToEdit?.bearing_number || "";
+			bearingNoRef.current = existingBearingNumber;
+			setBearingNumber(existingBearingNumber);
+			setSelectedBearingValue(existingBearingNumber);
+			setBearingData({
+				bpfo: asText(selectedEndpointToEdit?.bpfo),
+				bpfi: asText(selectedEndpointToEdit?.bpfi),
+				bsf: asText(selectedEndpointToEdit?.bsf),
+				ftf: asText(selectedEndpointToEdit?.ftf),
+			});
 		}
 	}, [selectedEndpointToEdit]);
+
+	useEffect(() => {
+		if (selectedEndpointToEdit) {
+			setBearingSuggestions([]);
+			setBearingSearchLoading(false);
+			setBearingSearchAttempted(false);
+			return;
+		}
+
+		const query = bearingNumber.trim();
+
+		if (query.length < 2 || query === selectedBearingValue) {
+			setBearingSuggestions([]);
+			setBearingSearchLoading(false);
+			setBearingSearchAttempted(false);
+			return;
+		}
+
+		let isCancelled = false;
+		const timer = setTimeout(async () => {
+			try {
+				setBearingSearchLoading(true);
+				setBearingSearchAttempted(false);
+				const res = await searchBearingNumbers(query);
+				if (isCancelled) return;
+				setBearingSuggestions(Array.isArray(res?.results) ? res.results : []);
+				setBearingSearchAttempted(true);
+			} catch (error) {
+				if (!isCancelled) {
+					setBearingSuggestions([]);
+					setBearingSearchAttempted(true);
+				}
+			} finally {
+				if (!isCancelled) {
+					setBearingSearchLoading(false);
+				}
+			}
+		}, 400);
+
+		return () => {
+			isCancelled = true;
+			clearTimeout(timer);
+		};
+	}, [bearingNumber, selectedBearingValue, selectedEndpointToEdit]);
 
 	const handleSubmit = async () => {
 		const name = nameRef.current?.trim();
@@ -164,33 +238,34 @@ export default function CreateNewEndPoint() {
 
 	};
 
-	const fetchBearingDetails = async () => {
-		console.log("Bearing Number:", bearingNoRef.current);
-		if (!bearingNoRef.current) return;
+	const handleBearingNumberChange = (text: string) => {
+		bearingNoRef.current = text;
+		setBearingNumber(text);
 
-		const payload = {
-			account_id: user?.account_id,
-			bearing_number: bearingNoRef.current,
-			user_id: user?.id,
-		};
-		try {
-			const res = await getBearingDetails(payload);
-			console.log("Bearing Details:", res);
-			if (res.result) {
-				setBearingData({
-					bpfo: res.message.bpfo,
-					bpfi: res.message.bpfi,
-					bsf: res.message.bsf,
-					ftf: res.message.ftf
-				})
-			}
-		} catch (e: any) {
-			console.log('e = ', e);
-			if (!e.result) {
-				ToastAndroid.show(e?.message, ToastAndroid.SHORT);
-			}
+		if (text.trim() !== selectedBearingValue) {
+			setSelectedBearingValue("");
+			setBearingData(emptyBearingData);
 		}
 
+		if (text.trim().length < 2) {
+			setBearingSuggestions([]);
+			setBearingSearchAttempted(false);
+		}
+	};
+
+	const handleSelectBearing = (item: BearingSuggestion) => {
+		const nextBearingNumber = item?.bearing_number || "";
+		bearingNoRef.current = nextBearingNumber;
+		setBearingNumber(nextBearingNumber);
+		setSelectedBearingValue(nextBearingNumber);
+		setBearingData({
+			bpfo: asText(item?.bpfo),
+			bpfi: asText(item?.bpfi),
+			bsf: asText(item?.bsf),
+			ftf: asText(item?.ftf),
+		});
+		setBearingSuggestions([]);
+		setBearingSearchAttempted(false);
 	};
 
 	return (
@@ -221,22 +296,49 @@ export default function CreateNewEndPoint() {
 					required={false}
 					showKeyboardType="numeric"
 					placeholder="Input machine RPM"
+					defaultValue={selectedEndpointToEdit?.rpm ? String(selectedEndpointToEdit.rpm) : ""}
 					onChangeText={(text) => (rpmRef.current = text)}
 					containerStyle={{ paddingHorizontal: 25 }}
 				/>
 
 				<View style={styles.row}>
-					<FormInput
-						required={false}
-						readOnly={selectedEndpointToEdit ? true : false}
-						label="Bearing Number"
-						placeholder="Bearing No. of Measuring Point"
-						containerStyle={styles.inputContainer}
-						onChangeText={(text) => (bearingNoRef.current = text)}
-					/>
-					<Pressable style={styles.buttonContainer} onPress={fetchBearingDetails}>
-						<Text style={styles.buttonText}>Get Details</Text>
-					</Pressable>
+					<View style={styles.bearingFieldContainer}>
+						<FormInput
+							required={false}
+							readOnly={selectedEndpointToEdit ? true : false}
+							label="Bearing Number"
+							placeholder="Bearing No. of Measuring Point"
+							containerStyle={styles.bearingInputContainer}
+							value={bearingNumber}
+							onChangeText={handleBearingNumberChange}
+						/>
+
+						{!selectedEndpointToEdit && (bearingSearchLoading || bearingSuggestions.length > 0 || (bearingSearchAttempted && bearingNumber.trim().length >= 2)) ? (
+							<View style={styles.suggestionCard}>
+								{bearingSearchLoading ? (
+									<View style={styles.suggestionState}>
+										<ActivityIndicator size="small" color="#742BDE" />
+										<Text style={styles.suggestionHint}>Searching bearing numbers...</Text>
+									</View>
+								) : bearingSuggestions.length > 0 ? (
+									bearingSuggestions.map((item) => (
+										<Pressable
+											key={item.bearing_number}
+											style={styles.suggestionItem}
+											onPress={() => handleSelectBearing(item)}
+										>
+											<Text style={styles.suggestionTitle}>{item.bearing_number}</Text>
+											<Text style={styles.suggestionMeta}>
+												{`BPFO ${item.bpfo || "-"}  BPFI ${item.bpfi || "-"}  BSF ${item.bsf || "-"}  FTF ${item.ftf || "-"}`}
+											</Text>
+										</Pressable>
+									))
+								) : bearingSearchAttempted ? (
+									<Text style={styles.suggestionHint}>No bearing numbers found.</Text>
+								) : null}
+							</View>
+						) : null}
+					</View>
 				</View>
 
 				<View style={styles.row}>
@@ -282,21 +384,50 @@ const styles = StyleSheet.create({
 		flexGrow: 1,
 		width: "45%",
 	},
-	buttonContainer: {
+	bearingFieldContainer: {
+		width: "100%",
+	},
+	bearingInputContainer: {
+		paddingHorizontal: 0,
+		width: "100%",
+	},
+	suggestionCard: {
+		marginTop: 4,
+		borderWidth: 1,
+		borderColor: "#E1E8EE",
+		borderRadius: 10,
+		backgroundColor: "#FFFFFF",
+		overflow: "hidden",
+	},
+	suggestionState: {
+		paddingHorizontal: 12,
+		paddingVertical: 14,
 		flexDirection: "row",
 		alignItems: "center",
-		backgroundColor: "#742BDE",
-		paddingHorizontal: 10,
-		paddingVertical: 5,
-		justifyContent: "center",
-		borderRadius: 5,
-		alignSelf: "flex-end",
-		marginBottom: 13
+		gap: 10,
 	},
-	buttonText: {
-		fontSize: 10,
-		fontFamily: Fonts.regular,
-		color: "#FFFFFF",
-		lineHeight: 20,
+	suggestionHint: {
+		fontSize: 12,
+		fontFamily: Fonts.light,
+		color: "#5A5D6C",
+		paddingHorizontal: 12,
+		paddingVertical: 14,
+	},
+	suggestionItem: {
+		paddingHorizontal: 12,
+		paddingVertical: 12,
+		borderTopWidth: 1,
+		borderTopColor: "#F1F3F5",
+	},
+	suggestionTitle: {
+		fontSize: 13,
+		fontFamily: Fonts.semiBold,
+		color: "#201F23",
+	},
+	suggestionMeta: {
+		marginTop: 4,
+		fontSize: 11,
+		fontFamily: Fonts.light,
+		color: "#6B7888",
 	},
 })

@@ -5,10 +5,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
 import ActionButton from "@/components/auth-screens/ActionButton";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import Field from "@/components/auth-screens/InputField";
-
-import { loginService, userDetails } from "@/src/services/auth.service";
+import { loginService } from "@/src/services/auth.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { storage } from "@/src/storage/mmkv";
 import { useEffect } from "react";
@@ -24,33 +23,27 @@ export default function Login() {
 	const {
 		control,
 		handleSubmit,
-		formState: { isSubmitting }
+		formState: { isSubmitting },
 	} = useForm<LoginFormValues>({
 		defaultValues: {
 			username: "",
-			password: ""
-			// username: "abhay_test",
-			// username: "test",
-			// password: "12345"
+			password: "",
 		},
 	});
 
 	const setUser = useAuthStore((state) => state.setUser);
 
 	useEffect(() => {
-		const user = storage.getString('user');
+		const user = storage.getString("user");
 		if (user) {
-			console.log('user in login = ', JSON.parse(user));
 			setUser(JSON.parse(user));
 			router.replace("/overview");
 		}
 	}, []);
 
 	const onSubmit = async (values: LoginFormValues) => {
-		console.log('login values = ', values);
 		try {
 			const res = await loginService(values.username, values.password);
-			console.log('res in login = ', res);
 
 			if (res?.error || res?.error?.message === "Invalid credentials") {
 				const errorMsg =
@@ -61,15 +54,13 @@ export default function Login() {
 			}
 
 			if (res?.status) {
-				storage.set('token', res?.data?.token);
-				storage.set('user', JSON.stringify(res?.data?.userDetails));
+				storage.set("token", res?.data?.token);
+				storage.set("user", JSON.stringify(res?.data?.userDetails));
 				setUser(res?.data?.userDetails);
 				ToastAndroid.show("Login successful!", ToastAndroid.SHORT);
 				router.replace("/overview");
 			}
-
 		} catch (err: any) {
-			console.error("Login failed:", err);
 			const errMsg = err?.message || "Something went wrong. Please try again.";
 			ToastAndroid.show(errMsg, ToastAndroid.SHORT);
 		}
@@ -77,159 +68,176 @@ export default function Login() {
 
 	return (
 		<SafeAreaView style={styles.container}>
-			<KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-				<AuthHeader title="Don't have an account yet?" btnText="Get Started" onPress={() => router.push("/signUp")} />
-				<View style={styles.logoContainer}>
-					<Logo />
-				</View>
+			<KeyboardAwareScrollView
+				contentContainerStyle={styles.scrollContent}
+				keyboardShouldPersistTaps="handled"
+			>
+				<AuthHeader
+					title="Don't have an account yet?"
+					btnText="Get Started"
+					onPress={() => router.push("/signUp")}
+				/>
 
-				<View style={styles.card}>
-					<View style={styles.cardShadow} />
-					<View style={styles.handle} />
-					<Text style={styles.title}>Welcome Back! 👋</Text>
-					<Text style={styles.subtitle}>Enter Your Details Below</Text>
-
-					<View style={styles.col}>
-						<Field
-							icon="person"
-							name="username"
-							control={control}
-							placeholder="Username"
-							rules={{
-								required: "Username is required",
-								// minLength: {
-								// 	value: 2,
-								// 	message: "Username must be at least 2 characters",
-								// },
-								// maxLength: {
-								// 	value: 1000,
-									// message: "Username must be less than 1000 characters",
-								// },
-								// pattern: {
-								// 	value: /^[a-zA-Z0-9_]+$/,
-								// 	message: "Only letters, numbers, and underscores are allowed",
-								// },
-							}}
-						/>
-
-						{/* Password Field */}
-						<Field
-							icon="lock"
-							name="password"
-							control={control}
-							placeholder="Password"
-							secure
-							rules={{
-								required: "Password is required",
-								// minLength: { value: 8, message: "At least 8 characters" },
-							}}
-						/>
+				<View style={styles.hero}>
+					<View style={styles.logoContainer}>
+						<Logo />
 					</View>
 
-					<ActionButton
-						label={isSubmitting ? "Logging in..." : "Login"}
-						onPress={handleSubmit(onSubmit)}
-						disabled={isSubmitting}
-					/>
+					<View style={styles.loginShell}>
+						<View style={styles.card}>
+							<Text style={styles.title}>Login</Text>
+							<Text style={styles.subtitle}>Welcome Back!</Text>
 
-					<TouchableOpacity style={styles.forgotBtn} onPress={() => {
-						router.push("/(auth)/forgotPassword")
-					}}>
-						<Text style={styles.forgotText}>Forgot Your Password?</Text>
-					</TouchableOpacity>
+							<View style={styles.formBlock}>
+								<Field
+									icon="person"
+									name="username"
+									control={control}
+									placeholder="Username"
+									rules={{
+										required: "Username is required",
+									}}
+								/>
 
-				</View>
+								<Field
+									icon="lock"
+									name="password"
+									control={control}
+									placeholder="Password"
+									secure
+									rules={{
+										required: "Password is required",
+									}}
+								/>
+							</View>
 
-				<View style={styles.imageContainer}>
-					<Image source={require("../../assets/images/presage.png")} style={styles.image} />
+							<TouchableOpacity
+								style={styles.forgotBtn}
+								onPress={() => router.push("/(auth)/forgotPassword")}
+							>
+								<Text style={styles.forgotText}>Forgot Password</Text>
+							</TouchableOpacity>
+
+							<ActionButton
+								label={isSubmitting ? "Signing in..." : "Sign in"}
+								onPress={handleSubmit(onSubmit)}
+								disabled={isSubmitting}
+								icon
+								style={styles.actionButton}
+							/>
+						</View>
+
+						<View style={styles.illustrationPane}>
+							<Image
+								source={require("../../assets/images/presage.png")}
+								style={styles.illustration}
+							/>
+							<Text style={styles.illustrationCaption}>
+								Presage CMMS keeps your maintenance workflow clear, connected, and ready for action.
+							</Text>
+						</View>
+					</View>
 				</View>
 			</KeyboardAwareScrollView>
 		</SafeAreaView>
-	)
+	);
 }
 
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		height: "100%",
 		backgroundColor: "#742BDE",
+	},
+	scrollContent: {
+		flexGrow: 1,
+		paddingBottom: 28,
+	},
+	hero: {
+		flex: 1,
+		paddingHorizontal: 18,
+		paddingTop: 28,
+		paddingBottom: 20,
 	},
 	logoContainer: {
 		alignSelf: "center",
-		marginVertical: 70,
+		marginBottom: 28,
+	},
+	loginShell: {
+		backgroundColor: "#FFFFFF",
+		borderRadius: 28,
+		overflow: "hidden",
+		shadowColor: "#2C0C61",
+		shadowOpacity: 0.18,
+		shadowRadius: 18,
+		shadowOffset: { width: 0, height: 10 },
+		elevation: 8,
 	},
 	card: {
-		flex: 1,
-		height: "75%",
-		backgroundColor: "#fff",
-		borderTopLeftRadius: 40,
-		borderTopRightRadius: 40,
-		paddingHorizontal: 16,
-		paddingTop: 10,
-		position: "relative",
-	},
-	cardShadow: {
-		width: '92%',
-		height: 30,
-		backgroundColor: '#D6B8FF',
-		alignSelf: "center",
-		borderTopLeftRadius: 100,
-		borderTopRightRadius: 100,
-		position: 'absolute',
-		top: -10,
-		zIndex: -1,
-	},
-	handle: {
-		width: 75,
-		height: 5,
-		borderRadius: 2,
-		backgroundColor: "#D9D9D9",
-		alignSelf: "center",
-		marginBottom: 15,
+		paddingHorizontal: 22,
+		paddingTop: 28,
+		paddingBottom: 24,
 	},
 	title: {
-		fontSize: 20,
+		fontSize: 28,
 		fontFamily: Fonts.semiBold,
-		textAlign: "center",
-		color: "#000000",
+		textAlign: "left",
+		color: "#742BDE",
 	},
 	subtitle: {
-		fontSize: 12,
-		textAlign: "center",
-		color: "#00000099",
-		fontFamily: Fonts.light,
-		marginBottom: 40,
+		fontSize: 16,
+		textAlign: "left",
+		color: "#8E76BE",
+		fontFamily: Fonts.regular,
+		marginTop: 6,
+		marginBottom: 22,
 	},
-	col: {
-		flexDirection: "column",
-		justifyContent: "space-between",
-		gap: 12,
-		marginBottom: 12,
+	formBlock: {
+		gap: 16,
+		marginBottom: 8,
 	},
 	forgotBtn: {
-		marginVertical: 20,
-		zIndex: 1,
+		alignSelf: "flex-start",
+		marginBottom: 18,
+		marginTop: 6,
 	},
 	forgotText: {
-		fontFamily: Fonts.regular,
+		fontFamily: Fonts.medium,
 		fontSize: 12,
+		textAlign: "left",
+		color: "#742BDE",
+	},
+	actionButton: {
+		height: 56,
+		borderRadius: 12,
+		marginTop: 0,
+		backgroundColor: "#742BDE",
+		shadowColor: "#742BDE",
+		shadowOpacity: 0.22,
+		shadowRadius: 10,
+		shadowOffset: { width: 0, height: 6 },
+		elevation: 4,
+	},
+	illustrationPane: {
+		backgroundColor: "#F6F1FF",
+		paddingHorizontal: 22,
+		paddingTop: 18,
+		paddingBottom: 20,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	illustration: {
+		width: "100%",
+		height: 96,
+		backgroundColor: "transparent",
+		resizeMode: "contain",
+	},
+	illustrationCaption: {
+		marginTop: 14,
+		fontSize: 12,
+		lineHeight: 18,
+		color: "#6F5A93",
+		fontFamily: Fonts.regular,
 		textAlign: "center",
+		paddingHorizontal: 10,
 	},
-	imageContainer: {
-		width: "100%",
-		height: "25%",
-		backgroundColor: "#fff",
-	},
-	image: {
-		width: "100%",
-		height: "100%",
-		backgroundColor: '#fff'
-	},
-	errorText: {
-		color: "red",
-		fontSize: 12,
-		marginTop: -8,
-		marginBottom: 8,
-		fontFamily: Fonts.regular,
-	},
-})
+});

@@ -32,6 +32,25 @@ const collectLocationIds = (node: LocationNode): string[] => {
 	return [node.id, ...childIds];
 };
 
+const collectSelectedLocationIds = (selectedIds: string[], locations: LocationNode[]) => {
+	const selectedSet = new Set(selectedIds);
+	const collectedIds = new Set<string>();
+
+	const visit = (node: LocationNode, ancestorSelected = false) => {
+		const isSelected = ancestorSelected || selectedSet.has(node.id);
+
+		if (isSelected) {
+			collectedIds.add(node.id);
+		}
+
+		node.childs?.forEach((child) => visit(child, isSelected));
+	};
+
+	locations.forEach((node) => visit(node));
+
+	return Array.from(collectedIds);
+};
+
 const countSelectedLocations = (selectedIds: string[], locations: LocationNode[]) => {
 	const selectedSet = new Set(selectedIds);
 	const countedIds = new Set<string>();
@@ -87,15 +106,19 @@ export default function PDMDashboardLocationSelect() {
 			console.log('location selected for PDM = ', parentLocations)
 			fetchAssetsForLocation()
 		}
-	}, [parentLocations])
+	}, [parentLocations, locations])
 
 	const fetchAssetsForLocation = async () => {
 		try {
-			const locationIds = parentLocations?.map((location) => location.id).join(',');
+			const selectedLocationIds = parentLocations?.map((location) => location.id) ?? [];
+			const expandedLocationIds = locations.length
+				? collectSelectedLocationIds(selectedLocationIds, locations)
+				: selectedLocationIds;
+			const locationIds = expandedLocationIds.join(',');
 			if (!locationIds) return;
 
 			const res = await assetTreeForSingleLocation(locationIds)
-			console.log('res assets for location = ', res?.data)
+			console.log('res assets for location = ', res?.data, 'locationIds = ', locationIds)
 			const fetchedAssets = (res?.data ?? []) as AssetNode[];
 			setChildAssets(fetchedAssets);
 			setSelectedAssets(collectParentAssetIds(fetchedAssets));
@@ -139,7 +162,14 @@ export default function PDMDashboardLocationSelect() {
 	const selectedLocationCount = locations.length
 		? countSelectedLocations(parentLocations.map((location) => location.id), locations)
 		: parentLocations.length;
-	const selectedAssetCount = childAssets.length ? countAssetNodes(childAssets as AssetNode[]) : selectedAssets.length;
+	const kpiAssetCount = assetKPIHistory
+		? (assetKPIHistory.top_level_asset.Alert || 0)
+		+ (assetKPIHistory.top_level_asset.Critical || 0)
+		+ (assetKPIHistory.top_level_asset.Danger || 0)
+		+ (assetKPIHistory.top_level_asset.Healthy || 0)
+		+ (assetKPIHistory.top_level_asset["Not Defined"] || 0)
+		: null;
+	const selectedAssetCount = kpiAssetCount ?? (childAssets.length ? countAssetNodes(childAssets as AssetNode[]) : selectedAssets.length);
 
 	return (
 		<>

@@ -19,6 +19,7 @@ import { endpoints } from '@/src/api/endpoints';
 import { Feather } from '@expo/vector-icons';
 
 interface editAssetParams {
+  asset_id?: string;
   asset_data: Asset | null;
   mode?: string;
 }
@@ -36,39 +37,67 @@ const editAsset = () => {
   const [usersMappedToLocation, setUsersMappedToLocation] = useState([])
   const [initialized, setInitialized] = useState(false);
 
-  // 🔒 SAFE PARSE
   const [data, setData] = useState<editAssetParams | null>(null);
 
-  // typed, parsed object
+  const normalizeParamValue = (value: string | string[] | undefined) => {
+    if (Array.isArray(value)) return value[0];
+    return value;
+  };
+
   useEffect(() => {
     if (initialized) return;
 
-    const { asset_data, mode } = params as { asset_data?: string; mode?: string };
+    const {
+      asset_id,
+      asset_data,
+      mode
+    } = params as {
+      asset_id?: string;
+      asset_data?: string;
+      mode?: string;
+    };
 
-    if (!asset_data) {
-      console.warn("❌ editAsset: asset_data param missing");
+    const normalizedAssetId = normalizeParamValue(asset_id);
+    const normalizedAssetData = normalizeParamValue(asset_data);
+    const normalizedMode = normalizeParamValue(mode) === "child" ? "child" : "parent";
+
+    if (normalizedAssetId) {
+      setData({
+        asset_id: String(normalizedAssetId),
+        asset_data: null,
+        mode: normalizedMode,
+      });
+    }
+
+    if (!normalizedAssetData) {
+      if (normalizedAssetId) {
+        return;
+      }
+
+      console.warn("editAsset: asset route params missing");
       setData(null);
       return;
     }
 
     try {
-      const parsed = JSON.parse(asset_data) as Asset | null;
+      const parsed = JSON.parse(normalizedAssetData) as Asset | null;
       if (!parsed || typeof parsed !== "object") {
-        console.warn("❌ editAsset: invalid asset_data payload");
+        console.warn("editAsset: invalid asset_data payload");
         setData(null);
         return;
       }
 
       setData({
+        asset_id: String(normalizedAssetId ?? (parsed as any)?.id ?? (parsed as any)?._id ?? ""),
         asset_data: parsed,
-        mode,
+        mode: normalizedMode,
       });
       console.log("Parsed Data:", { asset_data: parsed, mode });
     } catch (e) {
-      console.error("❌ editAsset: failed to parse asset_data", e);
+      console.error("editAsset: failed to parse asset_data", e);
       setData(null);
     }
-  }, [params]);
+  }, [params, initialized]);
 
   const { resetForm, setCreateAssetValue } = useCreateAssetStore();
   const assigned_users = useCreateAssetStore((state) => state.assigned_users);
@@ -115,6 +144,86 @@ const editAsset = () => {
     };
   }
 
+  function normalizeLocation(asset: any) {
+    const locationData = Array.isArray(asset?.locationData)
+      ? asset.locationData[0]
+      : asset?.locationData ?? null;
+
+    const locationCandidate = asset?.locationId ?? locationData ?? null;
+
+    if (!locationCandidate) {
+      return {
+        locationId: "",
+        locationObject: null,
+      };
+    }
+
+    if (typeof locationCandidate === "string" || typeof locationCandidate === "number") {
+      return {
+        locationId: String(locationCandidate),
+        locationObject: {
+          id: String(locationCandidate),
+          location_name: asset?.location_name ?? "",
+        },
+      };
+    }
+
+    return {
+      locationId: String(locationCandidate?.id ?? locationCandidate?._id ?? ""),
+      locationObject: {
+        ...locationCandidate,
+        id: locationCandidate?.id ?? locationCandidate?._id ?? "",
+        location_name:
+          locationCandidate?.location_name ??
+          locationCandidate?.name ??
+          asset?.location_name ??
+          "",
+      },
+    };
+  }
+
+  useEffect(() => {
+    if (!data?.asset_id || initialized) return;
+
+    let isMounted = true;
+
+    const fetchAssetDetails = async () => {
+      try {
+        const res = await singleAssetData(data.asset_id!);
+        const fetchedAsset = res?.data?.[0] ?? null;
+
+        if (!isMounted) return;
+
+        if (!fetchedAsset) {
+          if (!data?.asset_data) {
+            ToastAndroid.show("Failed to load asset details.", ToastAndroid.SHORT);
+          }
+          return;
+        }
+
+        setData((prev) => prev ? {
+          ...prev,
+          asset_data: fetchedAsset,
+        } : {
+          asset_id: String(data.asset_id),
+          asset_data: fetchedAsset,
+          mode: data.mode,
+        });
+      } catch (err) {
+        console.error("editAsset: failed to fetch asset details", err);
+        if (isMounted && !data?.asset_data) {
+          ToastAndroid.show("Failed to load asset details.", ToastAndroid.SHORT);
+        }
+      }
+    };
+
+    fetchAssetDetails();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [data?.asset_id, data?.asset_data, data?.mode, initialized]);
+
 
   useEffect(() => {
     if (!data?.asset_data) return; // only proceed when parsed asset exists
@@ -130,15 +239,18 @@ const editAsset = () => {
 
     if (!initialized && data) {
       console.log('in if')
+      const currentAssetId = String((data?.asset_data as any)?.id ?? (data?.asset_data as any)?._id ?? data?.asset_id ?? "");
+      const { locationId, locationObject } = normalizeLocation(data?.asset_data);
+
       setCreateAssetValue("title", data?.asset_data?.asset_name ?? "");
-      setCreateAssetValue("asset_id", data?.asset_data?.id);
+      setCreateAssetValue("asset_id", data?.asset_data?.asset_id ?? currentAssetId);
       setCreateAssetValue("asset_type", data?.asset_data?.asset_type);
       setCreateAssetValue("timezone", data?.asset_data?.asset_timezone ?? "");
-      setCreateAssetValue("location", data?.asset_data?.locationId?.id);
-      setCreateAssetValue("locationObject", data?.asset_data?.locationId);
-      setCreateAssetValue("parent_location", data?.asset_data?.locationId);
+      setCreateAssetValue("location", locationId);
+      setCreateAssetValue("locationObject", locationObject);
+      setCreateAssetValue("parent_location", locationObject);
       setCreateAssetValue("manufacturer", data?.asset_data?.manufacturer ?? null);
-      setCreateAssetValue("model", data?.asset_data?.model ?? "");
+      setCreateAssetValue("model", data?.asset_data?.asset_model ?? data?.asset_data?.model ?? "");
       setCreateAssetValue("year", data?.asset_data?.year ?? "");
       setCreateAssetValue("description", data?.asset_data?.description ?? "");
       setCreateAssetValue("assigned_users", data?.asset_data?.userList ?? []);
@@ -244,7 +356,7 @@ const editAsset = () => {
       asset_name: values.title,
       asset_timezone: values.timezone,
       description: values.description,
-      // asset_model: values.model,
+      asset_model: values.model,
       manufacturer: values.manufacturer,
       asset_type: values.asset_type,
       year: values.year,
@@ -297,7 +409,7 @@ const editAsset = () => {
         <Header title={"Update Asset"} />
 
         {
-          initialized && (
+          initialized ? (
             <>
               <FormField
                 label="Title"
@@ -562,6 +674,11 @@ const editAsset = () => {
                 </Text>
               </TouchableOpacity>
             </>
+          ) : (
+            <View style={styles.loadingState}>
+              <ActivityIndicator size="small" color="#742BDE" />
+              <Text style={styles.loadingText}>Loading asset details...</Text>
+            </View>
           )
         }
 
@@ -640,5 +757,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.regular,
     lineHeight: 18,
+  },
+  loadingState: {
+    paddingTop: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  loadingText: {
+    color: "#6B7280",
+    fontSize: 13,
+    fontFamily: Fonts.regular,
   },
 })

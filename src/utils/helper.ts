@@ -9,6 +9,7 @@ export const formatGraphData = (arr: any[]) => {
 
         points: item.data.map(([ts, amp, flag]: [number, number, boolean]) => {
             const date = new Date(ts * 1000);
+            const timestamp = date.toLocaleString("en-GB");
 
             return {
                 value: amp,
@@ -19,7 +20,9 @@ export const formatGraphData = (arr: any[]) => {
                     minute: "2-digit",
                     second: "2-digit",
                 }),
-                fullDate: date.toLocaleString("en-GB"),
+                fullDate: timestamp,
+                timestamp,
+                rawTimestamp: ts,
             };
         }),
     }));

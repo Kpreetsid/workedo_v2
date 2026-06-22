@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { View, StyleSheet, Text, ActivityIndicator, Modal, Pressable } from "react-native";
+import { View, StyleSheet, Text, ActivityIndicator, Platform } from "react-native";
 import { WebView } from "react-native-webview";
-import { useGestureLock } from "@/src/store/useGestureLock";
 import ChartDetailModal from "./ChartDetailModal";
 import { useFocusEffect } from "expo-router";
 
@@ -20,14 +19,11 @@ export default function AssetDataChart({
 	const ref = useRef<WebView>(null);
 	const initializedRef = useRef(false);
 	const [webReady, setWebReady] = useState(false);
+	const [webLoadError, setWebLoadError] = useState(false);
 
-	const lock = useGestureLock((s) => s.lock);
-	const unlock = useGestureLock((s) => s.unlock);
 
-	// console.log('chart series in assets data chart =  = ', chartSeries)
 	console.log('chart series = ', Array.isArray(chartSeries) ? chartSeries.map((s: any) => ({ axis: s?.axis, unit: s?.unit })) : []);
 
-	// ✅ SAFELY sanitize once (no hooks involved)
 	const validSeries = Array.isArray(chartSeries)
 		? chartSeries.filter(
 			(s: any) => s && Array.isArray(s.points) && s.points.length > 0
@@ -36,9 +32,12 @@ export default function AssetDataChart({
 
 	const showEmpty = Array.isArray(chartSeries) && chartSeries.length === 0;
 	const shouldShowLoader = !!loading;
-	const shouldShowEmpty = !shouldShowLoader && (showEmpty || validSeries.length === 0);
+	const shouldShowEmpty = !shouldShowLoader && (webLoadError || showEmpty || validSeries.length === 0);
 
-	// ✅ HOOKS MUST ALWAYS RUN
+	const chartSource = Platform.OS === "android"
+		? { uri: "file:///android_asset/charts/chart.html" }
+		: require("../../../assets/charts/chart.html");
+
 	useEffect(() => {
 		if (!webReady) return;
 		if (validSeries.length === 0) {
@@ -62,7 +61,6 @@ export default function AssetDataChart({
 			yMin: derivedMin,
 			maxX,
 			xLabels,
-			// 🔴 MUST EXIST ON INIT
 			yUnit,
 			series: validSeries.map((s: any) => ({
 				axis: s.axis,
@@ -86,6 +84,7 @@ export default function AssetDataChart({
 		initializedRef.current = true;
 	}, [webReady, validSeries, xLabels, yMaxValue]);
 
+
 	useFocusEffect(
 		useCallback(() => { }, [
 			ScreenOrientation.lockAsync(
@@ -94,25 +93,29 @@ export default function AssetDataChart({
 		])
 	);
 
-	const chartUrl = "file:///android_asset/charts/chart.html";
-
 	return (
 		<View style={styles.wrapper}>
-			{/* WebView ALWAYS mounted */}
 			<WebView
 				ref={ref}
 				originWhitelist={["*"]}
-				source={require("../../../assets/charts/chart.html")}
-				// source={{ uri: chartUrl }}
-
+				source={chartSource}
 				javaScriptEnabled={true}
 				domStorageEnabled={true}
 				allowFileAccess={true}
 				allowFileAccessFromFileURLs={true}
 				allowUniversalAccessFromFileURLs={true}
-
 				webviewDebuggingEnabled
-				onLoadEnd={() => setWebReady(true)}
+				onLoadStart={() => {
+					setWebReady(false);
+					setWebLoadError(false);
+					initializedRef.current = false;
+				}}
+				onLoad={() => setWebReady(true)}
+				onError={(event) => {
+					console.log("asset chart webview error = ", event.nativeEvent);
+					setWebReady(false);
+					setWebLoadError(true);
+				}}
 				onMessage={(e) => {
 					const data = e.nativeEvent.data;
 
@@ -133,17 +136,14 @@ export default function AssetDataChart({
 						// ignore non-JSON messages
 					}
 				}}
-
 			/>
 
-			{/* Loader overlay */}
 			{shouldShowLoader && (
 				<View style={styles.overlay}>
 					<ActivityIndicator size="large" />
 				</View>
 			)}
 
-			{/* Empty state overlay */}
 			{shouldShowEmpty && (
 				<View style={styles.overlay}>
 					<Text style={styles.emptyText}>Unable to load chart data.</Text>
@@ -156,8 +156,6 @@ export default function AssetDataChart({
 				asset_data={asset_data}
 				selectedPoint={selectedPoint}
 			/>
-
-
 		</View>
 	);
 }
@@ -221,6 +219,5 @@ const styles = StyleSheet.create({
 		marginTop: 20,
 		alignSelf: "center",
 	},
-
-
 });
+

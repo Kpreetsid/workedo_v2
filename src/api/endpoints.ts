@@ -73,6 +73,7 @@ export const endpoints = {
     sensorConfig: 'get_device_config/',
     energyConfig: 'energy_config/',
     bearingDetails: 'get_bearing_details/',
+    searchBearingNumbers: 'search_bearing_numbers/',
     createEndpoint: 'endPointApi/',
     updateEndpoint: 'update_endpoint/',
     deleteEndpoint: 'deleteEndPointApi/',

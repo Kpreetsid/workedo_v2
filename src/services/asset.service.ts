@@ -65,6 +65,13 @@ export const getBearingDetails = async (payload: any) => {
     return await sendRequestValidate("POST", url, payload);
 };
 
+export const searchBearingNumbers = async (bearingNumber: string) => {
+    const url = `${endpoints.asset.searchBearingNumbers}`;
+    return await sendRequestValidate("GET", url, undefined, {
+        params: { bearing_number: bearingNumber },
+    });
+};
+
 export const createEndpoint = async (payload: any) => {
     const url = `${endpoints.asset.createEndpoint}`;
     return await sendRequestDemo("POST", url, payload);
