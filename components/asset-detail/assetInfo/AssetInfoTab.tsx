@@ -198,6 +198,15 @@ function orderAxes(axes: string[]) {
 	return AXIS_OPTIONS.filter((axis) => axes.includes(axis));
 }
 
+function getEndpointSelectionKey(endpoint?: Partial<AssetEndpoint> | null) {
+	if (!endpoint) return "";
+	return String(
+		endpoint.mount_id ||
+		endpoint.id ||
+		`${endpoint.composite_id || ""}-${endpoint.point_name || ""}-${endpoint.mount_location || ""}`
+	);
+}
+
 function buildChartModel(rawSeries: any[]) {
 	const formatted = formatGraphData(
 		rawSeries.map((series: any, index: number) => ({
@@ -596,10 +605,11 @@ export default function AssetInfoTab({
 				>
 					{endpointsList.map((endpoint) => {
 						const active =
-							endpointSelected?.composite_id === endpoint.composite_id;
+							getEndpointSelectionKey(endpointSelected) ===
+							getEndpointSelectionKey(endpoint);
 						return (
 							<Pressable
-								key={endpoint.composite_id}
+								key={getEndpointSelectionKey(endpoint)}
 								onPress={() => setEndpointSelected(endpoint)}
 								style={[
 									styles.endpointChip,
