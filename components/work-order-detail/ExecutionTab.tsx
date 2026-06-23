@@ -102,9 +102,16 @@ const sanitizeLaborEntries = (entries: EditableLaborEntry[]) =>
 
 const getAttachmentUri = (file: any) => {
   if (!file) return "";
-  if (file?.fileUrl) return String(file.fileUrl);
   if (file?.folderName && file?.fileName) {
     return `${endpoints.baseURL}${file.folderName}/${file.fileName}`;
+  }
+  if (file?.fileURL) return String(file.fileURL);
+  if (file?.fileUrl) {
+    const rawUrl = String(file.fileUrl);
+    if (/^https?:\/\//i.test(rawUrl) && !/\/work_order\//i.test(rawUrl) && file?.fileName) {
+      return `${endpoints.baseURL}work_order/${file.fileName}`;
+    }
+    return rawUrl;
   }
   if (file?.image_path) {
     return `${endpoints.baseURL}${file.image_path}`;

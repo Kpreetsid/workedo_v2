@@ -57,9 +57,16 @@ const mapEditableParts = (parts: any[] = []) =>
 const resolveWorkOrderAttachmentUri = (attachment: any): string => {
 	if (!attachment) return "";
 	if (attachment?.uri) return String(attachment.uri);
-	if (attachment?.fileUrl) return String(attachment.fileUrl);
 	if (attachment?.folderName && attachment?.fileName) {
 		return `${endpoints.baseURL}${attachment.folderName}/${attachment.fileName}`;
+	}
+	if (attachment?.fileURL) return String(attachment.fileURL);
+	if (attachment?.fileUrl) {
+		const rawUrl = String(attachment.fileUrl);
+		if (/^https?:\/\//i.test(rawUrl) && !/\/work_order\//i.test(rawUrl) && attachment?.fileName) {
+			return `${endpoints.baseURL}work_order/${attachment.fileName}`;
+		}
+		return rawUrl;
 	}
 	if (attachment?.image_path) {
 		return `${endpoints.baseURL}${attachment.image_path}`;
