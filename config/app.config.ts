@@ -58,6 +58,16 @@ export const appConfig = {
     procedures: {
       list: "work/procedures",
     },
+    workOrderTemplates: {
+      list: "work/order-templates",
+    },
+    forms: {
+      sops: "master/sops",
+      categories: "master/form-categories",
+    },
+    inspections: {
+      list: "master/inspections",
+    },
     preventive: {
       users: "master/users",
       create: "master/schedulers",
@@ -101,6 +111,27 @@ export const appConfig = {
       uploadImage: "upload/assets",
       envelopePlay: "envelope_play/",
     },
+    alarms: {
+      overview: "asset-alarm-data-v2/",
+      endpoints: "getAllEndPoints/",
+      plotData: "get_alarm_plot_data_V2/",
+      saveThreshold: "post_alarm_plot_data/",
+      setDynamicThreshold: "set_dynamic_threshold/",
+    },
+    reports: {
+      overview: "asset-health-report/",
+      cards: "asset-cards-data/",
+      healthList: "asset-health-list/",
+      sensorUptime: "sensor-uptime/",
+      request: "reportOverview/request/",
+      tasks: "reportOverview/tasks/",
+    },
+    admin: {
+      users: "master/users",
+      roles: "master/users/roles",
+      userAssets: "map/userToAssets",
+      updateAssetMailFlags: "map/updateAssetsFlags",
+    },
     workOrders: {
       workOrders: "work/orders",
       updateWorkOrder: "work/orders/status",
@@ -118,6 +149,14 @@ export const appConfig = {
       get: "get_gateway_list/",
       validate: "validate_sensor/",
       save: "save_gateway_devices/",
+    },
+    notifications: {
+      list: "notifications",
+      markStatus: "notifications",
+      markAllOpened: "notifications/mark-all-opened",
+    },
+    posts: {
+      list: "master/posts",
     },
   },
 };

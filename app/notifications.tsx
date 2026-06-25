@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect } from 'react';
 
 import { Ionicons } from '@expo/vector-icons';
 import Fonts from '@/constants/Typography';
@@ -7,7 +8,11 @@ import { useNotificationStore, AppNotification } from '@/src/state/notifications
 import Header from '@/src/components/global/Header';
 
 export default function NotificationsScreen() {
-  const { notifications, markAsRead, markAllAsRead } = useNotificationStore();
+  const { notifications, fetchNotifications, markAsRead, markAllAsRead } = useNotificationStore();
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   const handlePress = (item: AppNotification) => {
     if (item.unread) {

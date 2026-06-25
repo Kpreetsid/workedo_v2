@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { sendRequest } from '@/src/services/api/api.service';
+import { endpoints } from '@/src/services/api/endpoints';
 
 export interface AppNotification {
   id: string | number;
@@ -30,7 +31,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   fetchNotifications: async () => {
     set({ isLoading: true });
     try {
-      const response = await sendRequest('GET', '/api/notifications');
+      const response = await sendRequest('GET', endpoints.notifications.list);
       
       const rawData = response?.data || response || [];
       const notifications: AppNotification[] = Array.isArray(rawData) ? rawData.map((n: any) => {
@@ -76,7 +77,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   markAsRead: (id) => {
-    sendRequest('PATCH', `/api/notifications/${id}/status`, { status: 'Opened' }).catch(console.error);
+    sendRequest('PATCH', `${endpoints.notifications.markStatus}/${id}/status`, { status: 'Opened' }).catch(console.error);
     
     const updated = get().notifications.map(n => 
       n.id === id ? { ...n, unread: false } : n
@@ -88,7 +89,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   markAllAsRead: () => {
-    sendRequest('PATCH', '/api/notifications/mark-all-opened', {}).catch(console.error);
+    sendRequest('PATCH', endpoints.notifications.markAllOpened, {}).catch(console.error);
 
     const updated = get().notifications.map(n => ({ ...n, unread: false }));
     set({

@@ -18,3 +18,11 @@ export const getProcedures = async (params: {
   const url = query ? `${endpoints.procedures.list}?${query}` : endpoints.procedures.list;
   return await sendRequest("GET", url);
 };
+
+export const getProcedure = async (id: string) => {
+  return await sendRequest("GET", `${endpoints.procedures.list}/${id}`);
+};
+
+export const deleteProcedure = async (id: string) => {
+  return await sendRequest("DELETE", `${endpoints.procedures.list}/${id}`);
+};
