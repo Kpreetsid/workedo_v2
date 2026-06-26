@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Asset } from '@/src/types/asset';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { useCreateAssetStore } from '@/src/store/useCreateAsset';
 import { singleAssetData, updateNewAsset } from '@/src/services/asset.service';
 import Fonts from '@/constants/Typography';
@@ -25,7 +25,6 @@ interface editAssetParams {
 }
 
 const editAsset = () => {
-  console.log('runing edit asset')
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -61,11 +60,20 @@ const editAsset = () => {
     const normalizedAssetData = normalizeParamValue(asset_data);
     const normalizedMode = normalizeParamValue(mode) === "child" ? "child" : "parent";
 
-    if (normalizedAssetId) {
-      setData({
-        asset_id: String(normalizedAssetId),
-        asset_data: null,
-        mode: normalizedMode,
+    if (normalizedAssetId && !normalizedAssetData) {
+      setData((prev) => {
+        if (
+          prev?.asset_id === String(normalizedAssetId) &&
+          prev?.mode === normalizedMode
+        ) {
+          return prev;
+        }
+
+        return {
+          asset_id: String(normalizedAssetId),
+          asset_data: prev?.asset_id === String(normalizedAssetId) ? prev?.asset_data ?? null : null,
+          mode: normalizedMode,
+        };
       });
     }
 
@@ -92,7 +100,6 @@ const editAsset = () => {
         asset_data: parsed,
         mode: normalizedMode,
       });
-      console.log("Parsed Data:", { asset_data: parsed, mode });
     } catch (e) {
       console.error("editAsset: failed to parse asset_data", e);
       setData(null);
@@ -102,13 +109,8 @@ const editAsset = () => {
   const { resetForm, setCreateAssetValue } = useCreateAssetStore();
   const assigned_users = useCreateAssetStore((state) => state.assigned_users);
   const locationObject = useCreateAssetStore((state) => state.locationObject);
-  if (locationObject) {
-    console.log('locationObject called = ', locationObject);
-  }
-
   useEffect(() => {
     if (locationObject) {
-      console.log('location object in effect = ', locationObject);
       const locationId = locationObject?.id ?? locationObject?._id;
       if (locationId) {
         mapUserToLocationFunc(locationId);
@@ -119,12 +121,8 @@ const editAsset = () => {
   const mapUserToLocationFunc = async (location_id: string) => {
     try {
       const res = await mapUserToLocation(location_id);
-      console.log('res = ', res);
       if (res?.status) {
         setUsersMappedToLocation(res?.data)
-        // console.log('assigned_users = ', assigned_users);
-        // setCreateAssetValue("assigned_users", res?.data);
-        // setCreateAssetValue("assigned_users", [...assigned_users, ...res?.data]);
       }
     } catch (err) {
       console.log('error = ', err);
@@ -238,7 +236,6 @@ const editAsset = () => {
 
 
     if (!initialized && data) {
-      console.log('in if')
       const currentAssetId = String((data?.asset_data as any)?.id ?? (data?.asset_data as any)?._id ?? data?.asset_id ?? "");
       const { locationId, locationObject } = normalizeLocation(data?.asset_data);
 
@@ -280,16 +277,9 @@ const editAsset = () => {
 
   useEffect(() => {
     return () => {
-      console.log("unmount → reset");
       resetForm();
     };
   }, []);
-
-
-  useEffect(() => {
-    console.log('iniialized ran = ', initialized)
-    console.log('store after initialized true = ', useCreateAssetStore.getState())
-  }, [initialized])
 
   // const fetchAssetData = async () => {
   // 	try {
@@ -304,13 +294,13 @@ const editAsset = () => {
   // }
 
   const fetchAllTimezones = () => {
-    // console.log(moment.tz.names())
-    setTimezones(moment.tz.names());
+    const timezoneNames =
+      typeof moment?.tz?.names === "function" ? moment.tz.names() : ["Asia/Kolkata"];
+    setTimezones(timezoneNames);
   }
 
   const handleEditAsset = async () => {
     const values = useCreateAssetStore.getState();
-    console.log('values = ', values);
     const assignedUsers = Array.isArray(values.assigned_users) ? values.assigned_users : [];
     const attachments = Array.isArray(values.attachments) ? values.attachments : [];
     const rawLocationId = values.locationObject?.id ?? values.locationObject?._id;
@@ -383,11 +373,8 @@ const editAsset = () => {
       // 	top_level_asset_id: data?.mode === 'child' ? data?.asset_data?.id : "",
     }
 
-    console.log('payload = ', payload);
-
     try {
       const res = await updateNewAsset(payload, data?.asset_data?.id);
-      console.log('res = ', res);
       if (res.status) {
         setLoading(false)
         resetForm();

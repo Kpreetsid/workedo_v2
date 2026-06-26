@@ -36,6 +36,9 @@ export default function AssetPickerCMMS({ visible, onClose }: AssetPickerCMMSPro
 	const handleSelect = (assetId: string) => {
 		setSelectedIdsLocal((prev) => {
 			if (prev.includes(assetId)) {
+				if (prev.length === 1) {
+					return prev;
+				}
 				return prev.filter((id) => id !== assetId);
 			}
 			return [...prev, assetId];
@@ -43,6 +46,10 @@ export default function AssetPickerCMMS({ visible, onClose }: AssetPickerCMMSPro
 	};
 
 	const onSave = () => {
+		if (!selectedIdsLocal.length) {
+			onClose();
+			return;
+		}
 		setSelectedAssets(selectedIdsLocal);
 		onClose();
 	};

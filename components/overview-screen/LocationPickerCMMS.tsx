@@ -61,6 +61,9 @@ export default function LocationPickerCMMS({ visible, onClose }: LocationPickerC
 		setSelectedLocationsLocal((prev) => {
 			const exists = prev.some((location) => location.id === node.id);
 			if (exists) {
+				if (prev.length === 1) {
+					return prev;
+				}
 				return prev.filter((location) => location.id !== node.id);
 			}
 			return [...prev, { id: node.id, location_name: node.location_name }];
@@ -68,6 +71,10 @@ export default function LocationPickerCMMS({ visible, onClose }: LocationPickerC
 	};
 
 	const onSave = () => {
+		if (!selectedLocationsLocal.length) {
+			onClose();
+			return;
+		}
 		setParentLocations(selectedLocationsLocal);
 		onClose();
 	};

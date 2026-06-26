@@ -70,6 +70,9 @@ export default function LocationPickerPDM({
 			const isAlreadySelected = prev.some((location) => location.id === node.id);
 
 			if (isAlreadySelected) {
+				if (prev.length === 1) {
+					return prev;
+				}
 				return prev.filter((location) => location.id !== node.id);
 			}
 
@@ -78,6 +81,10 @@ export default function LocationPickerPDM({
 	};
 
 	const onSave = () => {
+		if (!selectedLocationsLocal.length) {
+			onClose();
+			return;
+		}
 		setSelectedLocation(selectedLocationsLocal);
 		onClose();
 	};

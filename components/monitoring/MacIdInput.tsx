@@ -2,7 +2,7 @@ import Fonts from "@/constants/Typography";
 import { recognizeMacIdFromImage } from "@/src/services/mac-ocr.service";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, ToastAndroid, View } from "react-native";
+import { ActivityIndicator, Alert, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, TextInput, ToastAndroid, View } from "react-native";
 import { launchCamera } from "react-native-image-picker";
 
 interface MacIdInputProps {
@@ -15,8 +15,35 @@ interface MacIdInputProps {
 export default function MacIdInput({ label, placeholder, value, onChangeText }: MacIdInputProps) {
   const [isScanning, setIsScanning] = useState(false);
 
+  const ensureCameraPermission = async () => {
+    if (Platform.OS !== "android") {
+      return true;
+    }
+
+    const alreadyGranted = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.CAMERA);
+    if (alreadyGranted) {
+      return true;
+    }
+
+    const result = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA, {
+      title: "Camera permission",
+      message: "Allow camera access to scan the sensor MAC sticker.",
+      buttonPositive: "Allow",
+      buttonNegative: "Deny",
+      buttonNeutral: "Later",
+    });
+
+    return result === PermissionsAndroid.RESULTS.GRANTED;
+  };
+
   const handleScan = async () => {
     if (isScanning) return;
+
+    const hasPermission = await ensureCameraPermission();
+    if (!hasPermission) {
+      Alert.alert("Camera permission required", "Please allow camera access to scan the sticker.");
+      return;
+    }
 
     launchCamera(
       {

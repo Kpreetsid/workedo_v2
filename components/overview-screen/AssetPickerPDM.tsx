@@ -45,6 +45,9 @@ export default function AssetPickerPDM
 	const handleSelect = (nodeId: string) => {
 		setSelectedIdsLocal((prev) => {
 			if (prev.includes(nodeId)) {
+				if (prev.length === 1) {
+					return prev;
+				}
 				return prev.filter((id) => id !== nodeId);
 			}
 			return [...prev, nodeId];
@@ -52,6 +55,10 @@ export default function AssetPickerPDM
 	};
 
 	const onSave = () => {
+		if (!selectedIdsLocal.length) {
+			onClose();
+			return;
+		}
 		setSelectedAssets(selectedIdsLocal);
 		onClose();
 	};
