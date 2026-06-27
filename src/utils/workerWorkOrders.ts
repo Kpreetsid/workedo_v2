@@ -49,21 +49,6 @@ const isSameDay = (first: Date, second: Date) =>
   first.getMonth() === second.getMonth() &&
   first.getDate() === second.getDate();
 
-const getPriorityWeight = (priority?: string | null) => {
-  switch (String(priority || "").trim()) {
-    case "Urgent":
-      return 4;
-    case "High":
-      return 3;
-    case "Medium":
-      return 2;
-    case "Low":
-      return 1;
-    default:
-      return 0;
-  }
-};
-
 export const getUserReferenceIds = (user?: any): string[] =>
   [user?.id, user?._id, user?.userId, user?.user_id]
     .filter(Boolean)
@@ -165,30 +150,8 @@ export const filterWorkerQueueOrders = (
       if (!normalizedSearch) return true;
       return getSearchHaystack(workOrder).includes(normalizedSearch);
     })
-    .sort((first, second) => {
-      const firstInProgress = normalizeStatus(first?.status) === normalizeStatus("In-Progress") ? 1 : 0;
-      const secondInProgress = normalizeStatus(second?.status) === normalizeStatus("In-Progress") ? 1 : 0;
-      if (firstInProgress !== secondInProgress) return secondInProgress - firstInProgress;
-
-      const firstBlocked = isBlockedWaitingWorkOrder(first) ? 1 : 0;
-      const secondBlocked = isBlockedWaitingWorkOrder(second) ? 1 : 0;
-      if (firstBlocked !== secondBlocked) return secondBlocked - firstBlocked;
-
-      const firstOverdue = isOverdueWorkOrder(first) ? 1 : 0;
-      const secondOverdue = isOverdueWorkOrder(second) ? 1 : 0;
-      if (firstOverdue !== secondOverdue) return secondOverdue - firstOverdue;
-
-      const firstDueToday = isDueTodayWorkOrder(first) ? 1 : 0;
-      const secondDueToday = isDueTodayWorkOrder(second) ? 1 : 0;
-      if (firstDueToday !== secondDueToday) return secondDueToday - firstDueToday;
-
-      const priorityDiff = getPriorityWeight(second?.priority) - getPriorityWeight(first?.priority);
-      if (priorityDiff !== 0) return priorityDiff;
-
-      const firstDueDate = parseDate(first?.end_date)?.getTime() || Number.MAX_SAFE_INTEGER;
-      const secondDueDate = parseDate(second?.end_date)?.getTime() || Number.MAX_SAFE_INTEGER;
-      if (firstDueDate !== secondDueDate) return firstDueDate - secondDueDate;
-
-      return new Date(second?.createdAt || 0).getTime() - new Date(first?.createdAt || 0).getTime();
-    });
+    .sort(
+      (first, second) =>
+        new Date(second?.createdAt || 0).getTime() - new Date(first?.createdAt || 0).getTime()
+    );
 };

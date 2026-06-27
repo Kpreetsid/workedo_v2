@@ -20,8 +20,11 @@ export default function PlannerTab() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedInsight, setSelectedInsight] = useState<PlannerInsightId>("all");
 
-  const fetchPlannerOrders = async () => {
-    setLoading(true);
+  const fetchPlannerOrders = async (isRefresh = false) => {
+    if (!isRefresh) {
+      setLoading(true);
+    }
+
     try {
       const res = await getWorkOrders("todo");
       const incoming = Array.isArray(res?.data) ? (res.data as WorkOrder[]) : [];
@@ -45,20 +48,24 @@ export default function PlannerTab() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchPlannerOrders();
+    await fetchPlannerOrders(true);
     setRefreshing(false);
   };
 
   const filteredOrders = useMemo(() => filterPlannerOrdersByInsight(workOrders, selectedInsight), [selectedInsight, workOrders]);
   const buckets = useMemo(() => buildPlannerBuckets(filteredOrders), [filteredOrders]);
   const insights = useMemo(() => buildPlannerInsights(workOrders), [workOrders]);
+  const plannerData = loading && workOrders.length === 0 ? [] : buckets;
 
   return (
     <FlatList
-      data={buckets}
+      data={plannerData}
       keyExtractor={(item) => item.id}
       style={styles.list}
-      contentContainerStyle={styles.contentContainer}
+      contentContainerStyle={[
+        styles.contentContainer,
+        plannerData.length === 0 ? styles.emptyContentContainer : null,
+      ]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
       ListHeaderComponent={(
         <View>
@@ -125,7 +132,14 @@ export default function PlannerTab() {
       )}
       ListEmptyComponent={(
         <View style={styles.emptyState}>
-          {loading ? <ActivityIndicator size={28} /> : <Text style={styles.emptyText}>No open work orders found for planner view.</Text>}
+          {loading ? (
+            <>
+              <ActivityIndicator size={28} color="#742BDE" />
+              <Text style={styles.emptyText}>Loading planner work orders...</Text>
+            </>
+          ) : (
+            <Text style={styles.emptyText}>No open work orders found for planner view.</Text>
+          )}
         </View>
       )}
     />
@@ -141,6 +155,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingBottom: 32,
     gap: 12,
+  },
+  emptyContentContainer: {
+    flexGrow: 1,
   },
   summaryCard: {
     backgroundColor: "#EEF4FF",
@@ -253,5 +270,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     color: "#475569",
     textAlign: "center",
+    marginTop: 10,
   },
 });

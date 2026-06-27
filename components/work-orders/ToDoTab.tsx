@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import Fonts from "@/constants/Typography";
 import WorkOrderCard from "@/components/work-orders/WorkOrderCard";
-import { getWorkOrders } from "@/src/services/work-order.service";
+import { workOrdersPaginated } from "@/src/services/work-order.service";
 import { WorkOrder } from "@/src/types/workOrder";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import {
@@ -35,12 +35,28 @@ const FILTER_EMPTY_MESSAGES: Record<WorkerQueueFilterId, string> = {
 	allOpen: "No open work orders found.",
 };
 
-const sortNewestFirst = (orders: WorkOrder[]) =>
-	[...orders].sort((a, b) => {
-		const timeA = new Date(a?.createdAt || 0).getTime();
-		const timeB = new Date(b?.createdAt || 0).getTime();
-		return timeB - timeA;
-	});
+const PAGE_SIZE = 15;
+
+const mergeWorkOrders = (current: WorkOrder[], incoming: WorkOrder[]) => {
+	const merged = [...current];
+	const seenIds = new Set(
+		current.map((order) => String(order?.id || order?._id || order?.order_no || ""))
+	);
+
+	for (const order of incoming) {
+		const orderId = String(order?.id || order?._id || order?.order_no || "");
+		if (orderId && seenIds.has(orderId)) {
+			continue;
+		}
+
+		merged.push(order);
+		if (orderId) {
+			seenIds.add(orderId);
+		}
+	}
+
+	return merged;
+};
 
 export default function ToDoTab() {
 	const { user } = useAuthStore();
@@ -49,30 +65,52 @@ export default function ToDoTab() {
 	const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [refreshing, setRefreshing] = useState(false);
+	const [page, setPage] = useState(1);
+	const [hasNextPage, setHasNextPage] = useState(false);
+	const [loadingMore, setLoadingMore] = useState(false);
 
-	const fetchWorkOrders = async (isRefresh = false) => {
+	const fetchWorkOrders = async (options: { page?: number; reset?: boolean; refresh?: boolean } = {}) => {
+		const nextPage = options.page ?? 1;
+		const reset = Boolean(options.reset);
+		const isRefresh = Boolean(options.refresh);
+
+		if (loadingMore && !reset) {
+			return;
+		}
+
 		if (isRefresh) {
 			setRefreshing(true);
-		} else {
+		} else if (reset) {
 			setLoading(true);
+		} else {
+			setLoadingMore(true);
 		}
 
 		try {
-			const response = await getWorkOrders("todo");
+			const response = await workOrdersPaginated("todo", nextPage, PAGE_SIZE);
 			const nextOrders = Array.isArray(response?.data) ? (response.data as WorkOrder[]) : [];
-			setWorkOrders(sortNewestFirst(nextOrders));
+			const pagination = response?.pagination;
+
+			setWorkOrders((current) => (reset ? nextOrders : mergeWorkOrders(current, nextOrders)));
+			setPage(Number(pagination?.page || nextPage));
+			setHasNextPage(Boolean(pagination?.hasNextPage));
 		} catch (error) {
 			console.log("worker queue fetch error", error);
-			setWorkOrders([]);
+			if (reset) {
+				setWorkOrders([]);
+				setPage(1);
+				setHasNextPage(false);
+			}
 		} finally {
 			setLoading(false);
 			setRefreshing(false);
+			setLoadingMore(false);
 		}
 	};
 
 	useFocusEffect(
 		useCallback(() => {
-			fetchWorkOrders();
+			fetchWorkOrders({ page: 1, reset: true });
 			return () => {
 				setSearchText("");
 			};
@@ -91,6 +129,14 @@ export default function ToDoTab() {
 		[user]
 	);
 
+	const handleLoadMore = useCallback(() => {
+		if (loading || refreshing || loadingMore || !hasNextPage) {
+			return;
+		}
+
+		fetchWorkOrders({ page: page + 1 });
+	}, [hasNextPage, loading, loadingMore, page, refreshing]);
+
 	return (
 		<View style={styles.container}>
 			<FlatList
@@ -98,7 +144,15 @@ export default function ToDoTab() {
 				keyExtractor={(item, index) => `${item.id || item._id || item.order_no}-${index}`}
 				renderItem={renderWorkOrder}
 				style={styles.list}
-				refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchWorkOrders(true)} tintColor={FILTER_ACCENT} />}
+				refreshControl={
+					<RefreshControl
+						refreshing={refreshing}
+						onRefresh={() => fetchWorkOrders({ page: 1, reset: true, refresh: true })}
+						tintColor={FILTER_ACCENT}
+					/>
+				}
+				onEndReached={handleLoadMore}
+				onEndReachedThreshold={0.35}
 				contentContainerStyle={[
 					styles.listContent,
 					filteredOrders.length === 0 && !loading ? styles.emptyListContent : undefined,
@@ -186,6 +240,14 @@ export default function ToDoTab() {
 							</ScrollView>
 					</View>
 				)}
+				ListFooterComponent={
+					loadingMore ? (
+						<View style={styles.footerLoader}>
+							<ActivityIndicator size="small" color={FILTER_ACCENT} />
+							<Text style={styles.footerLoaderText}>Loading more work orders...</Text>
+						</View>
+					) : null
+				}
 				ListEmptyComponent={
 					loading ? (
 						<View style={styles.emptyState}>
@@ -304,5 +366,16 @@ const styles = StyleSheet.create({
 		lineHeight: 19,
 		color: "#64748B",
 		textAlign: "center",
+	},
+	footerLoader: {
+		paddingVertical: 14,
+		alignItems: "center",
+		justifyContent: "center",
+		gap: 8,
+	},
+	footerLoaderText: {
+		fontFamily: Fonts.regular,
+		fontSize: 11,
+		color: "#64748B",
 	},
 });

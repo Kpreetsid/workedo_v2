@@ -85,7 +85,11 @@ export default function CMMSDashboardLocationSelect() {
 	const fetchAssetsForLocation = async () => {
 		try {
 			const locationIds = parentLocations.map((location) => location.id).join(",");
-			if (!locationIds) return;
+			if (!locationIds) {
+				setChildAssets([]);
+				setSelectedAssets([]);
+				return;
+			}
 
 			const res = await assetTreeForSingleLocation(locationIds);
 			console.log("res assets for location = ", res);
@@ -93,9 +97,15 @@ export default function CMMSDashboardLocationSelect() {
 				const fetchedAssets = (res?.data ?? []) as LocationAsset[];
 				setChildAssets(fetchedAssets);
 				setSelectedAssets(collectParentAssetIds(fetchedAssets));
+				return;
 			}
+
+			setChildAssets([]);
+			setSelectedAssets([]);
 		} catch (e: any) {
 			console.log("error assets for location = ", e);
+			setChildAssets([]);
+			setSelectedAssets([]);
 		}
 	};
 

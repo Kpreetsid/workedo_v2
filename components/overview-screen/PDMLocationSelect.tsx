@@ -115,23 +115,39 @@ export default function PDMDashboardLocationSelect() {
 				? collectSelectedLocationIds(selectedLocationIds, locations)
 				: selectedLocationIds;
 			const locationIds = expandedLocationIds.join(',');
-			if (!locationIds) return;
+			if (!locationIds) {
+				setChildAssets([]);
+				setSelectedAssets([]);
+				setAssetKPIHistory(null);
+				return;
+			}
 
 			const res = await assetTreeForSingleLocation(locationIds)
 			console.log('res assets for location = ', res?.data, 'locationIds = ', locationIds)
 			const fetchedAssets = (res?.data ?? []) as AssetNode[];
 			setChildAssets(fetchedAssets);
 			setSelectedAssets(collectParentAssetIds(fetchedAssets));
+			if (fetchedAssets.length === 0) {
+				setAssetKPIHistory(null);
+			}
 		} catch (e: any) {
 			console.log('error assets for location = ', e)
+			setChildAssets([]);
+			setSelectedAssets([]);
+			setAssetKPIHistory(null);
 		}
 	}
 
 	// When child assets are ready, fetch KPI data
 	useEffect(() => {
-		if (!selectedAssets.length) return;
+		if (!selectedAssets.length) {
+			if (assetKPIHistory !== null) {
+				setAssetKPIHistory(null);
+			}
+			return;
+		}
 		fetchAssetHealthKPIHistory();
-	}, [selectedAssets]);
+	}, [selectedAssets, user?.account_id]);
 
 	const fetchAssetHealthKPIHistory = async () => {
 		const payload = {

@@ -524,7 +524,6 @@ export default function AssetInfoTab({
 
 	const handleRefresh = () => {
 		onRefresh();
-		loadEndpointContext();
 	};
 
 	return (

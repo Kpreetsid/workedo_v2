@@ -11,7 +11,7 @@ export default function InfoCards() {
 	// console.log("assetKPIHistory", assetKPIHistory);
 
 	// ✅ Local derived state (single source of truth for UI)
-	const [stats, setStats] = useState({
+	const emptyStats = {
 		Critical: 0,
 		Danger: 0,
 		Alert: 0,
@@ -19,10 +19,14 @@ export default function InfoCards() {
 		NotDefined: 0,
 		openAlarms: 0,
 		total_live_sensors: 0,
-	});
+	};
+	const [stats, setStats] = useState(emptyStats);
 
 	useEffect(() => {
-		if (!assetKPIHistory) return;
+		if (!assetKPIHistory) {
+			setStats(emptyStats);
+			return;
+		}
 
 		const top = assetKPIHistory.top_level_asset;
 
