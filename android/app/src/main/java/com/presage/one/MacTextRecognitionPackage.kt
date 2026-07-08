@@ -1,4 +1,4 @@
-package com.app.workedo
+package com.presage.one
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule

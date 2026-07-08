@@ -1,4 +1,4 @@
-package com.app.workedo
+package com.presage.one
 
 import android.app.Application
 import android.content.res.Configuration
@@ -13,7 +13,7 @@ import com.facebook.react.common.ReleaseLevel
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.reactnativekeyboardcontroller.KeyboardControllerPackage
-import com.app.workedo.MacTextRecognitionPackage
+import com.presage.one.MacTextRecognitionPackage
 
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper

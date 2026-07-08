@@ -1,8 +1,8 @@
 {
     "expo":  {
                  "name":  "Presage One",
-                 "slug":  "Workedo",
-                 "scheme":  "workedo",
+                 "slug":  "presage-one",
+                 "scheme":  "presageone",
                  "version":  "1.0.0",
                  "orientation":  "portrait",
                  "icon":  "./assets/images/presage-app-icon.png",
@@ -15,7 +15,7 @@
                             },
                  "ios":  {
                              "supportsTablet":  true,
-                             "bundleIdentifier":  "com.app.workedo"
+                             "bundleIdentifier":  "com.presage.one"
                          },
                  "android":  {
                                  "adaptiveIcon":  {
@@ -27,7 +27,7 @@
                                                      "android.permission.CAMERA",
                                                      "android.permission.RECORD_AUDIO"
                                                  ],
-                                 "package":  "com.app.workedo"
+                                 "package":  "com.presage.one"
                              },
                  "web":  {
                              "favicon":  "./assets/images/presage-app-icon.png"

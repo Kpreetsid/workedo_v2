@@ -120,9 +120,9 @@ android {
         experimentalProperties["ninja.buildStagingDirectory"] = "D:/_cxx/workedo"
     }
 
-    namespace 'com.app.workedo'
+    namespace 'com.presage.one'
     defaultConfig {
-        applicationId 'com.app.workedo'
+        applicationId 'com.presage.one'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -138,13 +138,19 @@ android {
             keyPassword 'android'
         }
         release {
-            storeFile file('naasta.keystore')
-            storePassword 'Waleed123!'
-            keyAlias 'alias_name'
-            keyPassword 'Waleed123!'
+            // storeFile file('naasta.keystore')
+            // storePassword 'Waleed123!'
+            // keyAlias 'alias_name'
+            // keyPassword 'Waleed123!'
             // storePassword 'Qwerty33#'
             // keyAlias 'presage'
             // keyPassword 'Qwerty33#'
+            if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
+                storeFile file(MYAPP_UPLOAD_STORE_FILE)
+                storePassword MYAPP_UPLOAD_STORE_PASSWORD
+                keyAlias MYAPP_UPLOAD_KEY_ALIAS
+                keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+            }
         }
     }
     buildTypes {
