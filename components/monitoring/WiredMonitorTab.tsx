@@ -61,6 +61,8 @@ const formatDateTime = (value: string | null) => {
   return new Date(value).toLocaleString();
 };
 
+const hasTopicWildcard = (value: string) => /[#\+]/.test(String(value || ""));
+
 export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
   const mode = useMonitoringStore((state) => state.mode);
   const macId = useMonitoringStore((state) => state.macId);
@@ -85,7 +87,7 @@ export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
 
   const canConnect = useMemo(() => {
     const trimmedMac = macId.trim();
-    if (!trimmedMac) return false;
+    if (!trimmedMac || hasTopicWildcard(trimmedMac)) return false;
     if (mode === "default") return true;
 
     return Boolean(
@@ -163,6 +165,11 @@ export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
     const trimmedMacId = macId.trim().toUpperCase();
     if (!trimmedMacId) {
       ToastAndroid.show("MAC ID is required", ToastAndroid.SHORT);
+      return;
+    }
+
+    if (hasTopicWildcard(trimmedMacId)) {
+      ToastAndroid.show("Wildcards are not allowed. Enter a specific MAC ID.", ToastAndroid.SHORT);
       return;
     }
 

@@ -15,6 +15,8 @@ interface MacIdInputProps {
 export default function MacIdInput({ label, placeholder, value, onChangeText }: MacIdInputProps) {
   const [isScanning, setIsScanning] = useState(false);
 
+  const sanitizeMacInput = (nextValue: string) => nextValue.toUpperCase().replace(/[#+]/g, "");
+
   const ensureCameraPermission = async () => {
     if (Platform.OS !== "android") {
       return true;
@@ -80,7 +82,7 @@ export default function MacIdInput({ label, placeholder, value, onChangeText }: 
             return;
           }
 
-          onChangeText(result.macId);
+          onChangeText(sanitizeMacInput(result.macId));
           ToastAndroid.show("MAC ID detected. Please verify it matches the sensor sticker.", ToastAndroid.LONG);
         } catch (error: any) {
           Alert.alert("Scan failed", error?.message || "Unable to recognize the MAC ID from this image.");
@@ -109,7 +111,7 @@ export default function MacIdInput({ label, placeholder, value, onChangeText }: 
       <TextInput
         style={styles.input}
         value={value}
-        onChangeText={(nextValue) => onChangeText(nextValue.toUpperCase())}
+        onChangeText={(nextValue) => onChangeText(sanitizeMacInput(nextValue))}
         placeholder={placeholder}
         placeholderTextColor="#94A3B8"
         autoCapitalize="characters"
