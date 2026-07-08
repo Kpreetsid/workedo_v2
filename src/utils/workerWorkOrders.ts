@@ -60,6 +60,24 @@ export const getAssignedUserReferenceIds = (workOrder?: WorkOrder | any): string
     .filter(Boolean)
     .map((value: any) => String(value));
 
+export const isCreatedByUser = (workOrder: WorkOrder | any, user?: any) => {
+  const userIds = getUserReferenceIds(user);
+  if (!userIds.length) return false;
+
+  const creatorIds = [
+    workOrder?.createdBy?.id,
+    workOrder?.createdBy?._id,
+    workOrder?.createdBy?.userId,
+    workOrder?.reporter?.id,
+    workOrder?.reporter?._id,
+    workOrder?.reporter?.userId,
+  ]
+    .filter(Boolean)
+    .map((value) => String(value));
+
+  return userIds.some((userId) => creatorIds.includes(userId));
+};
+
 export const isAssignedToUser = (workOrder: WorkOrder, user?: any) => {
   const userIds = getUserReferenceIds(user);
   if (!userIds.length) return false;

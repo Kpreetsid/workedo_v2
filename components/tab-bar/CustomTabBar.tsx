@@ -3,6 +3,7 @@ import { Assets, More, Overview, Scanner, WorkOrders } from "@/constants/IconPro
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Fonts from "@/constants/Typography";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { MoreTabIcons } from "@/constants/IconProvider";
 
 // type CustomTabBarProps = {
 //     state: { index: number; routes: { key: string; name: string }[]; };
@@ -57,17 +58,21 @@ type CustomTabBarProps = {
 
 export default function CustomTabBar({ state, descriptors, navigation, onMorePress, onTabPress }: CustomTabBarProps) {
 	const insets = useSafeAreaInsets();
+	const RequestsIcon = MoreTabIcons.Requests;
 	const icons: Record<string, (props: { color: string }) => JSX.Element> = {
 		overview: (props) => <Overview {...props} />,
 		workOrders: (props) => <WorkOrders {...props} />,
 		assets: (props) => <Assets {...props} />,
+		requests: (props) => <RequestsIcon {...props} />,
 		scanner: (props) => <Scanner {...props} />,
 		more: (props) => <More {...props} />,
 	};
+	const visibleRoutes = state.routes.filter((route) => route.name !== "scanner");
 
 	return (
 		<View style={[styles.tabBar, { marginBottom: insets.bottom }]}>
-			{state.routes.map((route, index) => {
+			{visibleRoutes.map((route) => {
+				const index = state.routes.findIndex((item) => item.key === route.key);
 				const { options } = descriptors[route.key];
 				const label = options.title || route.name;
 				const isFocused = state.index === index;

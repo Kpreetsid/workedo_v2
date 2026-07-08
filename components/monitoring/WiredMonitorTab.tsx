@@ -231,7 +231,7 @@ export default function WiredMonitorTab({ active }: WiredMonitorTabProps) {
               packetCount: state.session.packetCount + 1,
               lastMessageAt: new Date().toISOString(),
               lastTopic: message.topic,
-              lastPayloadPreview: normalizePayloadPreview(message.data),
+              lastPayloadPreview: normalizePayloadPreview(message.data, message.topic),
               errorMessage: null,
             },
           }));

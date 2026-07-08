@@ -7,41 +7,42 @@ import {
 	Text,
 	TextInput,
 	View,
-	ScrollView,
 } from "react-native";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import Fonts from "@/constants/Typography";
 import WorkOrderCard from "@/components/work-orders/WorkOrderCard";
-import { workOrdersPaginated } from "@/src/services/work-order.service";
-import { WorkOrder } from "@/src/types/workOrder";
+import { getWorkOrdersPaginated } from "@/src/services/work-order.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
-import {
-	WORKER_QUEUE_FILTERS,
-	WorkerQueueFilterId,
-	buildWorkerQueueCounts,
-	filterWorkerQueueOrders,
-} from "@/src/utils/workerWorkOrders";
+import { WorkOrder } from "@/src/types/workOrder";
+import { isAssignedToUser, isCreatedByUser } from "@/src/utils/workerWorkOrders";
 
 const FILTER_ACCENT = "#1F6FEB";
-
-const FILTER_EMPTY_MESSAGES: Record<WorkerQueueFilterId, string> = {
-	assigned: "No active work orders are assigned to you right now.",
-	dueToday: "Nothing assigned to you is due today.",
-	inProgress: "You do not have any work orders in progress.",
-	blockedWaiting: "You do not have any blocked or waiting work orders.",
-	allOpen: "No open work orders found.",
+const PAGE_SIZE = 25;
+const MY_WORK_STATUSES = [
+	"Open",
+	"Blocked",
+	"Waiting-on-Parts",
+	"Waiting-on-Permit",
+	"In-Progress",
+	"On-Hold",
+	"Approved",
+	"Rejected",
+] as const;
+type SummaryBucketKey = "assignedToMe" | "createdByMe";
+type SummaryBucketPaginationState = {
+	page: number;
+	totalItems: number;
+	totalPages: number;
+	hasNextPage: boolean;
+	loaded: boolean;
 };
-
-const PAGE_SIZE = 15;
 
 const mergeWorkOrders = (current: WorkOrder[], incoming: WorkOrder[]) => {
 	const merged = [...current];
-	const seenIds = new Set(
-		current.map((order) => String(order?.id || order?._id || order?.order_no || ""))
-	);
+	const seenIds = new Set(current.map((order) => String(order?.id || order?._id || order?.order_no || "")));
 
 	for (const order of incoming) {
 		const orderId = String(order?.id || order?._id || order?.order_no || "");
@@ -58,21 +59,129 @@ const mergeWorkOrders = (current: WorkOrder[], incoming: WorkOrder[]) => {
 	return merged;
 };
 
+const createEmptyBucketState = (): Record<SummaryBucketKey, SummaryBucketPaginationState> => ({
+	assignedToMe: { page: 0, totalItems: 0, totalPages: 0, hasNextPage: true, loaded: false },
+	createdByMe: { page: 0, totalItems: 0, totalPages: 0, hasNextPage: true, loaded: false },
+});
+
+const getSearchHaystack = (workOrder: WorkOrder) => {
+	const assetName = workOrder?.asset?.asset_name || "";
+	const locationName = workOrder?.location?.location_name || "";
+	const reporter = (workOrder as WorkOrder & { reporter?: any })?.reporter;
+	const creatorName = [
+		workOrder?.createdBy?.firstName,
+		workOrder?.createdBy?.lastName,
+		workOrder?.createdBy?.username,
+		reporter?.firstName,
+		reporter?.lastName,
+		reporter?.username,
+	]
+		.filter(Boolean)
+		.join(" ");
+	const assigneeNames = (Array.isArray(workOrder?.assignedUsers) ? workOrder.assignedUsers : [])
+		.map((entry: any) => [entry?.user?.firstName, entry?.user?.lastName].filter(Boolean).join(" "))
+		.filter(Boolean)
+		.join(" ");
+
+	return [
+		workOrder?.order_no,
+		workOrder?.title,
+		workOrder?.description,
+		workOrder?.priority,
+		workOrder?.status,
+		assetName,
+		locationName,
+		creatorName,
+		assigneeNames,
+	]
+		.filter(Boolean)
+		.join(" ")
+		.toLowerCase();
+};
+
 export default function ToDoTab() {
 	const { user } = useAuthStore();
 	const [searchText, setSearchText] = useState("");
-	const [selectedFilter, setSelectedFilter] = useState<WorkerQueueFilterId>("assigned");
 	const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [refreshing, setRefreshing] = useState(false);
-	const [page, setPage] = useState(1);
 	const [hasNextPage, setHasNextPage] = useState(false);
 	const [loadingMore, setLoadingMore] = useState(false);
+	const [bucketState, setBucketState] = useState<Record<SummaryBucketKey, SummaryBucketPaginationState>>(createEmptyBucketState);
+	const [selectedSection, setSelectedSection] = useState<SummaryBucketKey>("assignedToMe");
 
-	const fetchWorkOrders = async (options: { page?: number; reset?: boolean; refresh?: boolean } = {}) => {
-		const nextPage = options.page ?? 1;
+	const getSummaryRequestParams = useCallback((bucketKey: SummaryBucketKey, page: number, limit: number) => {
+		return {
+			page,
+			limit,
+			pageType: bucketKey,
+			sort: "createdAt",
+			order: "desc",
+			status: [...MY_WORK_STATUSES],
+		};
+	}, []);
+
+	const matchesSummaryBucket = useCallback(
+		(bucketKey: SummaryBucketKey, workOrder: WorkOrder) => {
+			const isAssigned = isAssignedToUser(workOrder, user);
+			const isCreated = isCreatedByUser(workOrder, user);
+			const isCompleted = String(workOrder?.status || "").trim() === "Completed";
+
+			switch (bucketKey) {
+				case "assignedToMe":
+					return !isCompleted && isAssigned;
+				case "createdByMe":
+					return !isCompleted && !isAssigned && isCreated;
+				default:
+					return false;
+			}
+		},
+		[user]
+	);
+
+	const hasNextSummaryPage = useCallback((state: Record<SummaryBucketKey, SummaryBucketPaginationState>) => {
+		return (["assignedToMe", "createdByMe"] as SummaryBucketKey[]).some((bucketKey) => {
+			const bucket = state[bucketKey];
+			return !bucket.loaded || bucket.hasNextPage;
+		});
+	}, []);
+
+	const fetchSummaryBucketPage = useCallback(
+		async (
+			state: Record<SummaryBucketKey, SummaryBucketPaginationState>,
+			bucketKey: SummaryBucketKey
+		): Promise<{
+			rows: WorkOrder[];
+			nextState: SummaryBucketPaginationState;
+		}> => {
+			const currentBucketState = state[bucketKey];
+			if (currentBucketState.loaded && !currentBucketState.hasNextPage) {
+				return { rows: [], nextState: currentBucketState };
+			}
+
+			const nextPage = currentBucketState.page + 1;
+			const response = await getWorkOrdersPaginated(getSummaryRequestParams(bucketKey, nextPage, PAGE_SIZE));
+			const rows = Array.isArray(response?.data) ? (response.data as WorkOrder[]) : [];
+			const filteredRows = rows.filter((order) => matchesSummaryBucket(bucketKey, order));
+
+			return {
+				rows: filteredRows,
+				nextState: {
+					page: Number(response?.pagination?.page || nextPage),
+					totalItems: Number(response?.pagination?.totalItems || 0),
+					totalPages: Number(response?.pagination?.totalPages || 0),
+					hasNextPage: Boolean(response?.pagination?.hasNextPage),
+					loaded: true,
+				},
+			};
+		},
+		[getSummaryRequestParams, matchesSummaryBucket]
+	);
+
+	const fetchWorkOrders = async (options: { reset?: boolean; refresh?: boolean } = {}) => {
 		const reset = Boolean(options.reset);
 		const isRefresh = Boolean(options.refresh);
+		const workingBucketState = reset ? createEmptyBucketState() : bucketState;
 
 		if (loadingMore && !reset) {
 			return;
@@ -87,18 +196,34 @@ export default function ToDoTab() {
 		}
 
 		try {
-			const response = await workOrdersPaginated("todo", nextPage, PAGE_SIZE);
-			const nextOrders = Array.isArray(response?.data) ? (response.data as WorkOrder[]) : [];
-			const pagination = response?.pagination;
+			const requestBucketKeys = (["assignedToMe", "createdByMe"] as SummaryBucketKey[]).filter((key) => {
+				const bucket = workingBucketState[key];
+				return !bucket.loaded || bucket.hasNextPage;
+			});
 
+			if (!requestBucketKeys.length) {
+				setHasNextPage(false);
+				return;
+			}
+
+			const results = await Promise.all(
+				requestBucketKeys.map((bucketKey) => fetchSummaryBucketPage(workingBucketState, bucketKey))
+			);
+
+			const nextBucketState = { ...workingBucketState };
+			requestBucketKeys.forEach((bucketKey, index) => {
+				nextBucketState[bucketKey] = results[index].nextState;
+			});
+
+			const nextOrders = results.flatMap((result) => result.rows);
+			setBucketState(nextBucketState);
 			setWorkOrders((current) => (reset ? nextOrders : mergeWorkOrders(current, nextOrders)));
-			setPage(Number(pagination?.page || nextPage));
-			setHasNextPage(Boolean(pagination?.hasNextPage));
+			setHasNextPage(hasNextSummaryPage(nextBucketState));
 		} catch (error) {
 			console.log("worker queue fetch error", error);
 			if (reset) {
 				setWorkOrders([]);
-				setPage(1);
+				setBucketState(createEmptyBucketState());
 				setHasNextPage(false);
 			}
 		} finally {
@@ -110,23 +235,94 @@ export default function ToDoTab() {
 
 	useFocusEffect(
 		useCallback(() => {
-			fetchWorkOrders({ page: 1, reset: true });
+			fetchWorkOrders({ reset: true });
 			return () => {
 				setSearchText("");
 			};
 		}, [])
 	);
 
-	const counts = useMemo(() => buildWorkerQueueCounts(workOrders, user), [workOrders, user]);
+	const normalizedSearch = useMemo(() => String(searchText || "").trim().toLowerCase(), [searchText]);
 
-	const filteredOrders = useMemo(
-		() => filterWorkerQueueOrders(workOrders, selectedFilter, user, searchText),
-		[searchText, selectedFilter, user, workOrders]
+	const assignedOrders = useMemo(
+		() =>
+			workOrders
+				.filter((workOrder) => isAssignedToUser(workOrder, user))
+				.filter((workOrder) => !normalizedSearch || getSearchHaystack(workOrder).includes(normalizedSearch)),
+		[normalizedSearch, user, workOrders]
 	);
 
-	const renderWorkOrder = useCallback(
+	const createdByMeOrders = useMemo(
+		() =>
+			workOrders
+				.filter((workOrder) => !isAssignedToUser(workOrder, user))
+				.filter((workOrder) => isCreatedByUser(workOrder, user))
+				.filter((workOrder) => !normalizedSearch || getSearchHaystack(workOrder).includes(normalizedSearch)),
+		[normalizedSearch, user, workOrders]
+	);
+
+	useEffect(() => {
+		if (selectedSection === "assignedToMe" && !assignedOrders.length && createdByMeOrders.length) {
+			setSelectedSection("createdByMe");
+			return;
+		}
+
+		if (selectedSection === "createdByMe" && !createdByMeOrders.length && assignedOrders.length) {
+			setSelectedSection("assignedToMe");
+		}
+	}, [assignedOrders.length, createdByMeOrders.length, selectedSection]);
+
+	const sectionOptions = useMemo(
+		() => [
+			{
+				key: "assignedToMe" as const,
+				label: "Assigned to Me",
+				helper: "Jobs owned by you",
+				count: assignedOrders.length,
+			},
+			{
+				key: "createdByMe" as const,
+				label: "Created by Me",
+				helper: "Jobs you raised",
+				count: createdByMeOrders.length,
+			},
+		],
+		[assignedOrders.length, createdByMeOrders.length]
+	);
+
+	const visibleOrders = useMemo(
+		() => (selectedSection === "assignedToMe" ? assignedOrders : createdByMeOrders),
+		[assignedOrders, createdByMeOrders, selectedSection]
+	);
+
+	const renderRow = useCallback(
 		({ item }: { item: WorkOrder }) => <WorkOrderCard item={item} variant="worker" currentUser={user} />,
 		[user]
+	);
+
+	const renderSectionChip = useCallback(
+		(section: { key: SummaryBucketKey; label: string; helper: string; count: number }) => {
+			const isActive = section.key === selectedSection;
+
+			return (
+				<Pressable
+					key={section.key}
+					style={[styles.sectionChip, isActive && styles.sectionChipActive]}
+					onPress={() => setSelectedSection(section.key)}
+				>
+					<View style={styles.sectionChipTopRow}>
+						<Text style={[styles.sectionChipLabel, isActive && styles.sectionChipLabelActive]}>{section.label}</Text>
+						<View style={[styles.sectionChipCountBadge, isActive && styles.sectionChipCountBadgeActive]}>
+							<Text style={[styles.sectionChipCountText, isActive && styles.sectionChipCountTextActive]}>
+								{section.count}
+							</Text>
+						</View>
+					</View>
+					<Text style={[styles.sectionChipHelper, isActive && styles.sectionChipHelperActive]}>{section.helper}</Text>
+				</Pressable>
+			);
+		},
+		[selectedSection]
 	);
 
 	const handleLoadMore = useCallback(() => {
@@ -134,20 +330,20 @@ export default function ToDoTab() {
 			return;
 		}
 
-		fetchWorkOrders({ page: page + 1 });
-	}, [hasNextPage, loading, loadingMore, page, refreshing]);
+		fetchWorkOrders();
+	}, [hasNextPage, loading, loadingMore, refreshing]);
 
 	return (
 		<View style={styles.container}>
 			<FlatList
-				data={filteredOrders}
-				keyExtractor={(item, index) => `${item.id || item._id || item.order_no}-${index}`}
-				renderItem={renderWorkOrder}
+				data={visibleOrders}
+				keyExtractor={(item, index) => `${item.id || item._id || item.order_no}-${selectedSection}-${index}`}
+				renderItem={renderRow}
 				style={styles.list}
 				refreshControl={
 					<RefreshControl
 						refreshing={refreshing}
-						onRefresh={() => fetchWorkOrders({ page: 1, reset: true, refresh: true })}
+						onRefresh={() => fetchWorkOrders({ reset: true, refresh: true })}
 						tintColor={FILTER_ACCENT}
 					/>
 				}
@@ -155,16 +351,16 @@ export default function ToDoTab() {
 				onEndReachedThreshold={0.35}
 				contentContainerStyle={[
 					styles.listContent,
-					filteredOrders.length === 0 && !loading ? styles.emptyListContent : undefined,
+					visibleOrders.length === 0 && !loading ? styles.emptyListContent : undefined,
 				]}
-				ListHeaderComponent={(
-					<View>
+				ListHeaderComponent={
+					<View style={styles.headerBlock}>
 						<View style={styles.searchShell}>
 							<Ionicons name="search" size={16} color="#64748B" />
 							<TextInput
 								value={searchText}
 								onChangeText={setSearchText}
-								placeholder="Search order, asset, location, or assignee"
+								placeholder="Search order, asset, location, or creator"
 								placeholderTextColor="#94A3B8"
 								style={styles.searchInput}
 							/>
@@ -175,71 +371,9 @@ export default function ToDoTab() {
 							) : null}
 						</View>
 
-						{/* <View style={styles.filterRow}>
-							{WORKER_QUEUE_FILTERS.map((filter) => {
-								const isActive = selectedFilter === filter.id;
-								const count = counts[filter.id];
-								return (
-									<Pressable
-										key={filter.id}
-										style={[styles.filterChip, isActive && styles.filterChipActive]}
-										onPress={() => setSelectedFilter(filter.id)}
-									>
-										<Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
-											{filter.label}
-										</Text>
-										<View style={[styles.filterCountBadge, isActive && styles.filterCountBadgeActive]}>
-											<Text style={[styles.filterCountText, isActive && styles.filterCountTextActive]}>{count}</Text>
-										</View>
-									</Pressable>
-								);
-							})}
-						</View> */}
-						<ScrollView
-							horizontal
-							showsHorizontalScrollIndicator={false}
-							contentContainerStyle={styles.filterRow}
-							>
-							{WORKER_QUEUE_FILTERS.map((filter) => {
-								const isActive = selectedFilter === filter.id;
-								const count = counts[filter.id];
-
-								return (
-								<Pressable
-									key={filter.id}
-									style={[styles.filterChip, isActive && styles.filterChipActive]}
-									onPress={() => setSelectedFilter(filter.id)}
-								>
-									<Text
-									style={[
-										styles.filterChipText,
-										isActive && styles.filterChipTextActive,
-									]}
-									>
-									{filter.label}
-									</Text>
-
-									<View
-									style={[
-										styles.filterCountBadge,
-										isActive && styles.filterCountBadgeActive,
-									]}
-									>
-									<Text
-										style={[
-										styles.filterCountText,
-										isActive && styles.filterCountTextActive,
-										]}
-									>
-										{count}
-									</Text>
-									</View>
-								</Pressable>
-								);
-							})}
-							</ScrollView>
+						<View style={styles.sectionSwitcherRow}>{sectionOptions.map(renderSectionChip)}</View>
 					</View>
-				)}
+				}
 				ListFooterComponent={
 					loadingMore ? (
 						<View style={styles.footerLoader}>
@@ -257,8 +391,12 @@ export default function ToDoTab() {
 					) : (
 						<View style={styles.emptyState}>
 							<Ionicons name="briefcase-outline" size={24} color="#94A3B8" />
-							<Text style={styles.emptyTitle}>Nothing here yet</Text>
-							<Text style={styles.emptyText}>{FILTER_EMPTY_MESSAGES[selectedFilter]}</Text>
+							<Text style={styles.emptyTitle}>No work orders found</Text>
+							<Text style={styles.emptyText}>
+								{selectedSection === "assignedToMe"
+									? "You do not have any active work orders assigned to you right now."
+									: "You do not have any active work orders created by you right now."}
+							</Text>
 						</View>
 					)
 				}
@@ -270,6 +408,20 @@ export default function ToDoTab() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
+	},
+	list: {
+		flex: 1,
+	},
+	listContent: {
+		paddingHorizontal: 16,
+		paddingBottom: 24,
+		paddingTop: 12,
+	},
+	emptyListContent: {
+		flexGrow: 1,
+	},
+	headerBlock: {
+		marginBottom: 6,
 	},
 	searchShell: {
 		flexDirection: "row",
@@ -290,63 +442,68 @@ const styles = StyleSheet.create({
 		fontSize: 13,
 		color: "#0F172A",
 	},
-	list: {
+	sectionSwitcherRow: {
+		flexDirection: "row",
+		gap: 10,
+		marginBottom: 12,
+	},
+	sectionChip: {
 		flex: 1,
-	},
-	listContent: {
-		paddingHorizontal: 16,
-		paddingBottom: 24,
-		paddingTop: 12,
-	},
-	emptyListContent: {
-		flexGrow: 1,
-	},
-	filterRow: {
-		gap: 6,
-		paddingBottom: 6,
-	},
-	filterChip: {
-		// flexDirection: "row",
-		alignItems: "center",
-		gap: 4,
-		paddingVertical: 6,
-		paddingHorizontal: 10,
 		borderRadius: 16,
-		backgroundColor: "#FFF",
 		borderWidth: 1,
-		borderColor: "#CBD5E1",
+		borderColor: "#E2E8F0",
+		backgroundColor: "#FFFFFF",
+		paddingHorizontal: 12,
+		paddingVertical: 12,
 	},
-	filterChipActive: {
-		backgroundColor: FILTER_ACCENT,
-		borderColor: FILTER_ACCENT,
+	sectionChipActive: {
+		borderColor: "#C084FC",
+		backgroundColor: "#FCFAFF",
 	},
-	filterChipText: {
-		fontFamily: Fonts.medium,
-		fontSize: 11,
-		color: "#334155",
-	},
-	filterChipTextActive: {
-		color: "#FFFFFF",
-	},
-	filterCountBadge: {
-		minWidth: 18,
-		height: 18,
-		borderRadius: 9,
-		paddingHorizontal: 4,
+	sectionChipTopRow: {
+		flexDirection: "row",
 		alignItems: "center",
-		justifyContent: "center",
-		backgroundColor: "#E2E8F0",
+		justifyContent: "space-between",
+		gap: 8,
 	},
-	filterCountBadgeActive: {
-		backgroundColor: "#FFFFFF24",
-	},
-	filterCountText: {
+	sectionChipLabel: {
+		flex: 1,
 		fontFamily: Fonts.semiBold,
-		fontSize: 10,
+		fontSize: 13,
 		color: "#0F172A",
 	},
-	filterCountTextActive: {
-		color: "#FFFFFF",
+	sectionChipLabelActive: {
+		color: "#6D28D9",
+	},
+	sectionChipHelper: {
+		marginTop: 6,
+		fontFamily: Fonts.regular,
+		fontSize: 11,
+		lineHeight: 16,
+		color: "#64748B",
+	},
+	sectionChipHelperActive: {
+		color: "#7C3AED",
+	},
+	sectionChipCountBadge: {
+		minWidth: 28,
+		height: 24,
+		borderRadius: 999,
+		paddingHorizontal: 8,
+		backgroundColor: "#EEF2F6",
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	sectionChipCountBadgeActive: {
+		backgroundColor: "#E9D5FF",
+	},
+	sectionChipCountText: {
+		fontFamily: Fonts.semiBold,
+		fontSize: 11,
+		color: "#475467",
+	},
+	sectionChipCountTextActive: {
+		color: "#6D28D9",
 	},
 	emptyState: {
 		flex: 1,

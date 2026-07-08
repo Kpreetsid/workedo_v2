@@ -1,4 +1,5 @@
 import { MonitoringBrokerConfig, MonitoringMessageSnapshot } from "@/src/types/monitoring";
+import { Buffer } from "buffer";
 
 export interface MonitoringClientHandle {
   disconnect: () => void;
@@ -58,8 +59,114 @@ export const buildBleTopics = (macId: string) => {
   return [`raw/ble/${trimmedMacId}`, `rms/ble/${trimmedMacId}`];
 };
 
-export const normalizePayloadPreview = (payload: string) => {
+const RAW_METADATA_SIZE = 18 + 8 + 4 + 4 + 4 + 1 + 4;
+
+const isRawTopic = (topic?: string | null) => {
+  const normalized = String(topic || "").trim().toLowerCase();
+  return normalized.startsWith("wired/rawdata/") || normalized.startsWith("raw/ble/");
+};
+
+const isLikelyRawTimestamp = (value: number) => Number.isFinite(value) && value > 946684800 && value < 4102444800;
+
+const isLikelyRawMetadata = (decoded: {
+  macId: string;
+  timestamp: number;
+  blockSize: number;
+  samplingRate: number;
+  axis: string;
+  temp: number;
+}) => {
+  return Boolean(
+    decoded.macId &&
+      /^[A-Za-z0-9:_-]+$/.test(decoded.macId) &&
+      isLikelyRawTimestamp(decoded.timestamp) &&
+      Number.isInteger(decoded.blockSize) &&
+      decoded.blockSize > 0 &&
+      decoded.blockSize <= 1_000_000 &&
+      Number.isFinite(decoded.samplingRate) &&
+      decoded.samplingRate > 0 &&
+      decoded.samplingRate <= 1_000_000 &&
+      /^[A-Za-z]$/.test(decoded.axis) &&
+      Number.isFinite(decoded.temp) &&
+      decoded.temp > -200 &&
+      decoded.temp < 300
+  );
+};
+
+const tryDecodeRawMetadata = (buffer: Buffer) => {
+  if (buffer.length < RAW_METADATA_SIZE) {
+    return null;
+  }
+
+  try {
+    const macId = buffer.toString("utf8", 0, 18).replace(/\0/g, "").trim();
+    const timestamp = buffer.readDoubleLE(18);
+    const blockSize = buffer.readInt32LE(26);
+    const samplingRate = buffer.readFloatLE(30);
+    const axis = buffer.toString("utf8", 38, 39).replace(/\0/g, "").trim();
+    const temp = buffer.readFloatLE(39);
+
+    const decoded = {
+      macId,
+      timestamp,
+      blockSize,
+      samplingRate,
+      axis,
+      temp,
+    };
+
+    if (!isLikelyRawMetadata(decoded)) {
+      return null;
+    }
+
+    return {
+      mac_id: decoded.macId,
+      timestamp: decoded.timestamp,
+      no_of_samples: decoded.blockSize,
+      fs: Math.trunc(decoded.samplingRate),
+      axis: decoded.axis.toLowerCase(),
+      temp: Number(decoded.temp),
+    };
+  } catch {
+    return null;
+  }
+};
+
+const decodeRawPayloadPreview = (payload: string) => {
+  if (!payload) return null;
+
+  const binaryBuffer = Buffer.from(payload, "latin1");
+  const directDecoded = tryDecodeRawMetadata(binaryBuffer);
+  if (directDecoded) {
+    return JSON.stringify(directDecoded, null, 2);
+  }
+
+  const sanitized = payload.replace(/\s+/g, "");
+  if (/^[A-Za-z0-9+/=]+$/.test(sanitized) && sanitized.length % 4 === 0) {
+    try {
+      const base64Buffer = Buffer.from(sanitized, "base64");
+      const base64Decoded = tryDecodeRawMetadata(base64Buffer);
+      if (base64Decoded) {
+        return JSON.stringify(base64Decoded, null, 2);
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+};
+
+export const normalizePayloadPreview = (payload: string, topic?: string | null) => {
   if (!payload) return "";
+
+  if (isRawTopic(topic)) {
+    const decodedPreview = decodeRawPayloadPreview(payload);
+    if (decodedPreview) {
+      return decodedPreview;
+    }
+  }
+
   return payload.length > 320 ? `${payload.slice(0, 320)}...` : payload;
 };
 

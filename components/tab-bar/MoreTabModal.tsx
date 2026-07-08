@@ -2,14 +2,14 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { useEffect } from "react";
 import Fonts from "@/constants/Typography";
-import { Academy, ContactSupport, MoreTabIcons } from "@/constants/IconProvider";
+import { Academy, ContactSupport, MoreTabIcons, Scanner } from "@/constants/IconProvider";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { runOnJS } from "react-native-worklets";
 
 type MoreTabItem =
 	| "Gateways"
-	| "Requests"
+	| "Scanner"
 	| "PartsInventory"
 	| "Config"
 	| "Monitoring"
@@ -25,7 +25,7 @@ const SHEET_GAP_ABOVE_TAB_BAR = 8;
 
 const items: MoreTabItem[] = [
 	"Gateways",
-	"Requests",
+	"Scanner",
 	"PartsInventory",
 	// "Config",
 	"Monitoring",
@@ -81,7 +81,7 @@ export default function MoreTabModal({ setModalVisible }: MoreTabModalProps) {
 					keyExtractor={(_, index) => String(index)}
 					numColumns={3}
 					renderItem={({ item }) => {
-						const Icon = MoreTabIcons[item];
+						const Icon = item === "Scanner" ? (() => <Scanner color="#FFFFFF" />) : MoreTabIcons[item];
 						return (
 							<View style={styles.gridItem}>
 								<Pressable
@@ -89,7 +89,7 @@ export default function MoreTabModal({ setModalVisible }: MoreTabModalProps) {
 									onPress={() => {
 										closeModal();
 										if (item === "Gateways") router.push("/gateways");
-										if (item === "Requests") router.push("/requests");
+										if (item === "Scanner") router.push("/scanner");
 										if (item === "PartsInventory") router.push("/partsInventory");
 										if (item === "Monitoring") router.push("/monitoring");
 										if (item === "Preventive") router.push("/preventive");

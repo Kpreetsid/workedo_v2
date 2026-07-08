@@ -5,6 +5,22 @@ import { storage } from "../storage/mmkv";
 import { ACTIVE_WORK_ORDER_STATUSES, CLOSED_WORK_ORDER_STATUSES } from "../utils/workOrderStatus";
 
 const toStatusQuery = (statuses: readonly string[]) => statuses.map((status) => `status=${encodeURIComponent(status)}`).join("&");
+const buildQueryString = (params: Record<string, any>) =>
+    Object.entries(params || {})
+        .flatMap(([key, value]) => {
+            if (value === undefined || value === null || value === "") {
+                return [];
+            }
+
+            if (Array.isArray(value)) {
+                return value
+                    .filter((item) => item !== undefined && item !== null && item !== "")
+                    .map((item) => `${encodeURIComponent(key)}=${encodeURIComponent(String(item))}`);
+            }
+
+            return [`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`];
+        })
+        .join("&");
 
 export const createWorkOrder = async (payload: any) => {
     return await sendRequest('POST', `${endpoints.workOrders.createWorkOrder}`, payload);
@@ -16,6 +32,13 @@ export const workOrdersPaginated = async (pageType: string, page: number, limit:
     console.log('url for request = ', url);
     return await sendRequest('GET', url);
 }
+
+export const getWorkOrdersPaginated = async (params: Record<string, any>) => {
+    const query = buildQueryString(params);
+    const url = `${endpoints.workOrders.workOrders}/get-work-order${query ? `?${query}` : ""}`;
+    console.log("work order paginated url =", url);
+    return await sendRequest("GET", url);
+};
 
 export const getWorkOrders = async (type: string) => {
     let url = '';
