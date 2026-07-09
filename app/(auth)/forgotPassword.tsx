@@ -52,31 +52,36 @@ export default function ForgotPassword() {
 
 	return (
 		<SafeAreaView style={styles.container}>
-			<KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+			<KeyboardAwareScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
 				<AuthHeader />
-				<View style={styles.logoContainer}><Logo /></View>
-				<View style={styles.card}>
-					<View style={styles.cardShadow} />
-					<View style={styles.handle} />
-					<Text style={styles.title}>Reset Password</Text>
-					<Text style={styles.subtitle}>Enter your registered email to receive verification code.</Text>
+				<View style={styles.hero}>
+					<View style={styles.logoContainer}><Logo /></View>
+					<View style={styles.card}>
+						<View style={styles.sheetHandle} />
+						<Text style={styles.title}>Reset Password</Text>
+						<Text style={styles.subtitle}>Enter your registered email to receive verification code.</Text>
 
-					<View style={styles.col}>
-						<Field icon="email" placeholder="Email ID" name="email" control={control} rules={{
-							required: "Email is required",
-							pattern: {
-								value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-								message: "Please enter a valid email address",
-							},
-						}} />
+						<View style={styles.col}>
+							<Field icon="email" placeholder="Email ID" name="email" control={control} rules={{
+								required: "Email is required",
+								pattern: {
+									value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+									message: "Please enter a valid email address",
+								},
+							}} />
+						</View>
+
+						<ActionButton
+							label={isSubmitting ? "Sending..." : "Submit Now"}
+							onPress={handleSubmit(onSubmit)}
+							disabled={isSubmitting}
+							style={styles.actionButton}
+						/>
+
+						<View style={styles.imageContainer}>
+							<Image source={require("../../assets/images/presage_old.png")} style={styles.image} />
+						</View>
 					</View>
-
-					<ActionButton label={isSubmitting ? "Sending..." : "Submit Now"} onPress={handleSubmit(onSubmit)} disabled={isSubmitting} />
-
-				</View>
-
-				<View style={styles.imageContainer}>
-					<Image source={require("../../assets/images/presage.png")} style={styles.image} />
 				</View>
 			</KeyboardAwareScrollView>
 		</SafeAreaView>
@@ -86,69 +91,84 @@ export default function ForgotPassword() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		height: "100%",
 		backgroundColor: "#742BDE",
+	},
+	scrollContent: {
+		flexGrow: 1,
+		paddingBottom: 28,
+	},
+	hero: {
+		flex: 1,
+		paddingHorizontal: 18,
+		paddingTop: 28,
+		paddingBottom: 20,
 	},
 	logoContainer: {
 		alignSelf: "center",
-		marginVertical: 70,
+		marginBottom: 34,
+		marginTop: 18,
 	},
 	card: {
-		flex: 1,
-		height: "75%",
-		backgroundColor: "#fff",
-		borderTopLeftRadius: 40,
-		borderTopRightRadius: 40,
-		paddingHorizontal: 16,
-		paddingTop: 20,
+		backgroundColor: "#FFFFFF",
+		borderTopLeftRadius: 34,
+		borderTopRightRadius: 34,
+		borderBottomLeftRadius: 28,
+		borderBottomRightRadius: 28,
+		overflow: "hidden",
+		shadowColor: "#2C0C61",
+		shadowOpacity: 0.18,
+		shadowRadius: 18,
+		shadowOffset: { width: 0, height: 10 },
+		elevation: 8,
 	},
-	cardShadow: {
-		width: '92%',
-		height: 30,
-		backgroundColor: '#D6B8FF',
+	sheetHandle: {
+		width: 92,
+		height: 6,
+		borderRadius: 999,
+		backgroundColor: "#DDD8E7",
 		alignSelf: "center",
-		borderTopLeftRadius: 100,
-		borderTopRightRadius: 100,
-		position: 'absolute',
-		top: -10,
-		zIndex: -1,
-	},
-	handle: {
-		width: 75,
-		height: 5,
-		borderRadius: 2,
-		backgroundColor: "#D9D9D9",
-		alignSelf: "center",
-		marginBottom: 15,
+		marginTop: 14,
+		marginBottom: 18,
 	},
 	title: {
-		fontSize: 20,
+		fontSize: 22,
 		fontFamily: Fonts.semiBold,
 		textAlign: "center",
 		color: "#742BDE",
 	},
 	subtitle: {
-		fontSize: 12,
+		fontSize: 15,
 		textAlign: "center",
-		color: "#00000099",
-		fontFamily: Fonts.light,
-		marginBottom: 40,
-		paddingHorizontal: 30
+		color: "#8B8B94",
+		fontFamily: Fonts.regular,
+		marginTop: 6,
+		marginBottom: 22,
+		paddingHorizontal: 28,
 	},
 	col: {
-		flexDirection: "column",
-		justifyContent: "space-between",
-		gap: 12,
-		marginBottom: 15,
+		paddingHorizontal: 22,
+		marginBottom: 18,
+	},
+	actionButton: {
+		height: 56,
+		borderRadius: 12,
+		marginHorizontal: 22,
+		marginTop: 0,
+		marginBottom: 12,
+		backgroundColor: "#742BDE",
+		shadowColor: "#742BDE",
+		shadowOpacity: 0.22,
+		shadowRadius: 10,
+		shadowOffset: { width: 0, height: 6 },
+		elevation: 4,
 	},
 	imageContainer: {
 		width: "100%",
-		height: "25%",
-		backgroundColor: "#fff",
+		backgroundColor: "#FFFFFF",
 	},
 	image: {
 		width: "100%",
-		height: "100%",
-		backgroundColor: '#fff'
+		height: 300,
+		resizeMode: "contain",
 	},
 })

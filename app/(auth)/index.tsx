@@ -1,5 +1,4 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, ToastAndroid } from "react-native";
-import AuthHeader from "@/components/auth-screens/AuthHeader";
 import { Logo } from "@/constants/IconProvider";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
@@ -72,12 +71,6 @@ export default function Login() {
 				contentContainerStyle={styles.scrollContent}
 				keyboardShouldPersistTaps="handled"
 			>
-				<AuthHeader
-					title="Don't have an account yet?"
-					btnText="Get Started"
-					onPress={() => router.push("/signUp")}
-				/>
-
 				<View style={styles.hero}>
 					<View style={styles.logoContainer}>
 						<Logo />
@@ -85,8 +78,9 @@ export default function Login() {
 
 					<View style={styles.loginShell}>
 						<View style={styles.card}>
-							<Text style={styles.title}>Login</Text>
-							<Text style={styles.subtitle}>Welcome Back!</Text>
+							<View style={styles.sheetHandle} />
+							<Text style={styles.title}>Welcome Back! 👋</Text>
+							<Text style={styles.subtitle}>Enter Your Details Below</Text>
 
 							<View style={styles.formBlock}>
 								<Field
@@ -111,13 +105,6 @@ export default function Login() {
 								/>
 							</View>
 
-							<TouchableOpacity
-								style={styles.forgotBtn}
-								onPress={() => router.push("/(auth)/forgotPassword")}
-							>
-								<Text style={styles.forgotText}>Forgot Password</Text>
-							</TouchableOpacity>
-
 							<ActionButton
 								label={isSubmitting ? "Signing in..." : "Sign in"}
 								onPress={handleSubmit(onSubmit)}
@@ -125,16 +112,20 @@ export default function Login() {
 								icon
 								style={styles.actionButton}
 							/>
+
+							<TouchableOpacity
+								style={styles.forgotBtn}
+								onPress={() => router.push("/(auth)/forgotPassword")}
+							>
+								<Text style={styles.forgotText}>Forgot your password?</Text>
+							</TouchableOpacity>
 						</View>
 
 						<View style={styles.illustrationPane}>
 							<Image
-								source={require("../../assets/images/presage.png")}
+								source={require("../../assets/images/presage_old.png")}
 								style={styles.illustration}
 							/>
-							<Text style={styles.illustrationCaption}>
-								Presage CMMS keeps your maintenance workflow clear, connected, and ready for action.
-							</Text>
 						</View>
 					</View>
 				</View>
@@ -160,11 +151,15 @@ const styles = StyleSheet.create({
 	},
 	logoContainer: {
 		alignSelf: "center",
-		marginBottom: 28,
+		marginBottom: 34,
+		marginTop: 18,
 	},
 	loginShell: {
 		backgroundColor: "#FFFFFF",
-		borderRadius: 28,
+		borderTopLeftRadius: 34,
+		borderTopRightRadius: 34,
+		borderBottomLeftRadius: 28,
+		borderBottomRightRadius: 28,
 		overflow: "hidden",
 		shadowColor: "#2C0C61",
 		shadowOpacity: 0.18,
@@ -174,42 +169,52 @@ const styles = StyleSheet.create({
 	},
 	card: {
 		paddingHorizontal: 22,
-		paddingTop: 28,
-		paddingBottom: 24,
+		paddingTop: 14,
+		paddingBottom: 12,
+		alignItems: "center",
+	},
+	sheetHandle: {
+		width: 92,
+		height: 6,
+		borderRadius: 999,
+		backgroundColor: "#DDD8E7",
+		marginBottom: 18,
 	},
 	title: {
-		fontSize: 28,
+		fontSize: 22,
 		fontFamily: Fonts.semiBold,
-		textAlign: "left",
-		color: "#742BDE",
+		textAlign: "center",
+		color: "#111827",
 	},
 	subtitle: {
-		fontSize: 16,
-		textAlign: "left",
-		color: "#8E76BE",
+		fontSize: 15,
+		textAlign: "center",
+		color: "#8B8B94",
 		fontFamily: Fonts.regular,
 		marginTop: 6,
 		marginBottom: 22,
 	},
 	formBlock: {
 		gap: 16,
-		marginBottom: 8,
+		marginBottom: 18,
+		width: "100%",
 	},
 	forgotBtn: {
-		alignSelf: "flex-start",
-		marginBottom: 18,
-		marginTop: 6,
+		alignSelf: "center",
+		marginTop: 14,
+		marginBottom: 6,
 	},
 	forgotText: {
 		fontFamily: Fonts.medium,
 		fontSize: 12,
-		textAlign: "left",
-		color: "#742BDE",
+		textAlign: "center",
+		color: "#4B5563",
 	},
 	actionButton: {
 		height: 56,
 		borderRadius: 12,
 		marginTop: 0,
+		width: "100%",
 		backgroundColor: "#742BDE",
 		shadowColor: "#742BDE",
 		shadowOpacity: 0.22,
@@ -218,26 +223,16 @@ const styles = StyleSheet.create({
 		elevation: 4,
 	},
 	illustrationPane: {
-		backgroundColor: "#F6F1FF",
-		paddingHorizontal: 22,
-		paddingTop: 18,
-		paddingBottom: 20,
+		backgroundColor: "#FFFFFF",
+		paddingHorizontal: 0,
+		paddingTop: 0,
+		paddingBottom: 0,
 		alignItems: "center",
 		justifyContent: "center",
 	},
 	illustration: {
 		width: "100%",
-		height: 96,
-		backgroundColor: "transparent",
+		height: 300,
 		resizeMode: "contain",
-	},
-	illustrationCaption: {
-		marginTop: 14,
-		fontSize: 12,
-		lineHeight: 18,
-		color: "#6F5A93",
-		fontFamily: Fonts.regular,
-		textAlign: "center",
-		paddingHorizontal: 10,
 	},
 });
