@@ -19,9 +19,24 @@ interface HeaderProps {
 	showEllipses?: boolean;
 	openEllipses?: () => void;
 	ellipsesRef?: any;
+	onBack?: () => void;
 }
 
-export default function Header({ title, modal = false, dismiss, editAsset, handleEditAsset, showBack = true, showClose = false, showOrientation = false, toggleOrientation, styling, showEllipses = false, openEllipses, ellipsesRef }: HeaderProps) {
+export default function Header({ title, modal = false, dismiss, editAsset, handleEditAsset, showBack = true, showClose = false, showOrientation = false, toggleOrientation, styling, showEllipses = false, openEllipses, ellipsesRef, onBack }: HeaderProps) {
+	const handleBack = () => {
+		if (modal) {
+			dismiss?.();
+			return;
+		}
+
+		if (onBack) {
+			onBack();
+			return;
+		}
+
+		router.back();
+	};
+
 	return (
 		<SafeAreaView edges={["top"]} style={styles.safeArea}>
 			<View style={[styles.headerContainer, styling]}>
@@ -30,7 +45,7 @@ export default function Header({ title, modal = false, dismiss, editAsset, handl
 					showClose && { width: '100%', justifyContent: 'space-between' }
 				]}>
 					{
-						showBack && <TouchableOpacity onPress={() => modal ? dismiss!() : router.back()} style={styles.backButton} hitSlop={200}>
+						showBack && <TouchableOpacity onPress={handleBack} style={styles.backButton} hitSlop={12}>
 							<Ionicons name="chevron-back" size={22} color={"#fff"} />
 						</TouchableOpacity>
 					}

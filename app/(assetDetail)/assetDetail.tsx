@@ -70,9 +70,23 @@ export default function AssetDetailScreen() {
 		});
 	}
 
+	const handleBack = () => {
+		if (activeTab === "sensors") {
+			setActiveTab("info");
+			return;
+		}
+
+		router.back();
+	};
+
 	return (
 		<View style={styles.container}>
-			<Header title={assetData?.asset_name || ""} editAsset={!!assetData} handleEditAsset={handleEditAsset} />
+			<Header
+				title={assetData?.asset_name || ""}
+				editAsset={!!assetData}
+				handleEditAsset={handleEditAsset}
+				onBack={handleBack}
+			/>
 
 			{
 				assetData ? (
