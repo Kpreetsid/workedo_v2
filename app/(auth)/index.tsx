@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, ToastAndroid } from "react-native";
+import { BackHandler, View, Text, StyleSheet, TouchableOpacity, Image, ToastAndroid } from "react-native";
 import { Logo } from "@/constants/IconProvider";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Typography";
@@ -10,7 +10,8 @@ import { loginService } from "@/src/services/auth.service";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { storage } from "@/src/storage/mmkv";
 import { useEffect } from "react";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback } from "react";
 
 type LoginFormValues = {
 	username: string;
@@ -31,6 +32,17 @@ export default function Login() {
 	});
 
 	const setUser = useAuthStore((state) => state.setUser);
+
+	useFocusEffect(
+		useCallback(() => {
+			const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+				BackHandler.exitApp();
+				return true;
+			});
+
+			return () => subscription.remove();
+		}, [])
+	);
 
 	useEffect(() => {
 		const user = storage.getString("user");

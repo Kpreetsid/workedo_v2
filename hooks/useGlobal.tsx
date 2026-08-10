@@ -167,7 +167,6 @@ export function useGlobal() {
 		console.log("Logout");
 		storage.delete('token');
 		storage.delete('user');
-		router.replace("/");
 
 		useOverviewStore.getState().clearOverview();
 		useAssetStore.getState().clearAssetState();
@@ -181,6 +180,11 @@ export function useGlobal() {
 		useCreateAssetStore.getState().resetForm();
 		useCreateLocationStore.getState().resetForm();
 		setUser(null);
+
+		// Remove authenticated screens from the navigation history so Android's
+		// Back button cannot reveal them after the user has logged out.
+		router.dismissAll();
+		router.replace("/");
 	}
 
 	return {
