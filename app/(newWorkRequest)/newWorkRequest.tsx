@@ -136,7 +136,7 @@ export default function NewWorkRequest() {
 				if (res?.status) {
 					ToastAndroid.show("Work request created successfully!", ToastAndroid.SHORT);
 					useWorkRequestStore.getState().resetWorkRequestForm();
-					router.back();
+					router.dismissTo("/requests");
 				}
 			}
 
