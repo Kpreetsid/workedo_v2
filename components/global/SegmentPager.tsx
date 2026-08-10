@@ -14,6 +14,7 @@ interface SegmentedPagerProps {
 	tabs: TabConfig[];
 	comingFrom?: string;
 	initialPage?: number;
+	resetInactivePages?: boolean;
 	containerStyle?: StyleProp<ViewStyle>;
 	tabStyle?: StyleProp<ViewStyle>;
 	activeTabStyle?: StyleProp<ViewStyle>;
@@ -24,7 +25,7 @@ interface SegmentedPagerProps {
 
 console.log("[SegmentedPager] rendering PagerView now");
 
-export default function SegmentedPager({ tabs, comingFrom, initialPage = 0, containerStyle, tabStyle, activeTabStyle, textStyle, activeTextStyle, onPageChange }: SegmentedPagerProps) {
+export default function SegmentedPager({ tabs, comingFrom, initialPage = 0, resetInactivePages = false, containerStyle, tabStyle, activeTabStyle, textStyle, activeTextStyle, onPageChange }: SegmentedPagerProps) {
 
 	const gestureLocked = useGestureLock((s) => s.locked);
 	
@@ -105,6 +106,7 @@ export default function SegmentedPager({ tabs, comingFrom, initialPage = 0, cont
 					<View key={index.toString()} style={styles.page}>
 						{
 							mountedTabs.includes(index) &&
+							(!resetInactivePages || index === activeTab) &&
 							(typeof tab.component === "function"
 								? tab.component()       // ✅ call it if it’s a function component
 								: tab.component)        // ✅ otherwise just render the node directly

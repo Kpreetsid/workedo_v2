@@ -14,7 +14,7 @@ export default function WorkOrders() {
 		<>
 			<Header title="Work Orders" />
 
-			<SegmentedPager tabs={[
+			<SegmentedPager resetInactivePages tabs={[
 				{ label: "My Work", icon: <ToDoIcon />, component: () => <ToDoTab /> },
 				{ label: "Planner", component: () => <PlannerTab /> },
 				{ label: "Completed", icon: <DoneIcon />, component: () => <DoneTab /> }]}

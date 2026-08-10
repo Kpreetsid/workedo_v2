@@ -23,6 +23,7 @@ export default function Assets() {
 
 			<SegmentedPager
 				initialPage={startIndex}
+				resetInactivePages
 				tabs={[
 					{
 						label: "Locations",
