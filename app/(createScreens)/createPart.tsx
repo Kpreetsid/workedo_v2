@@ -4,12 +4,10 @@ import FormInput from "@/components/create-screens/FormInput";
 import AssignInput from "@/components/create-screens/AssignInput";
 import ActionButton from "@/components/create-screens/ActionButton";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { router, useLocalSearchParams, useRouter } from "expo-router";
-import DropDownInput from "@/components/create-screens/DropDownInput";
-import React, { useEffect, useRef, useState } from "react";
-import { useLocationStore } from "@/src/store/useLocationStore";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useMemo, useState } from "react";
 import { usePartFormStore } from "@/src/store/usePartFormStore";
-import { createPart, getPartTypes, updateFullPart, updatePart } from "@/src/services/part.service";
+import { createPart, getPartTypes, updateFullPart } from "@/src/services/part.service";
 import { FormField } from "@/components/global/FormField";
 import LocationPickerModal from "@/components/create-work-order/LocationPickerModal";
 
@@ -18,12 +16,30 @@ type PartTypeOption = {
 	name: string;
 };
 
+const getEntityId = (value: any): string => {
+	if (typeof value === "string" || typeof value === "number") {
+		return String(value);
+	}
+
+	return String(value?.id ?? value?._id ?? "");
+};
+
+const toFormString = (value: any): string => value == null ? "" : String(value);
+
 export default function CreatePart() {
 	const params: any = useLocalSearchParams();
-	console.log('params = ', params);
+	const rawEditData = Array.isArray(params?.data) ? params.data[0] : params?.data;
+	const editData = useMemo(() => {
+		if (!rawEditData || typeof rawEditData !== "string") return null;
 
-	const data = params?.data;
-	const isEdit = !!params?.data;
+		try {
+			return JSON.parse(rawEditData);
+		} catch (error: any) {
+			console.error("Unable to read part edit data:", error);
+			return null;
+		}
+	}, [rawEditData]);
+	const isEdit = Boolean(rawEditData);
 
 	const router = useRouter();
 	const [visible, setVisible] = useState(false);
@@ -31,7 +47,6 @@ export default function CreatePart() {
 	const { setPartFormValue, resetPartForm, isLoaded } = usePartFormStore();
 
 	const [partTypes, setPartTypes] = useState<PartTypeOption[]>([]);
-	const [selectedPartTypeId, setSelectedPartTypeId] = useState("");
 
 	useEffect(() => {
 		fetchPartTypes();
@@ -53,26 +68,29 @@ export default function CreatePart() {
 	}
 
 	useEffect(() => {
-		if (params?.data && !isLoaded) {
-			const data = JSON.parse(params.data);
-			console.log('data here in params = ', data);
+		if (!editData || isLoaded) return;
 
-			// all setters here
-			setPartId(data?.id);
-			setPartFormValue("part_name", data?.part_name);
-			setPartFormValue("description", data?.description);
-			setPartFormValue("location", data?.location);
-			setPartFormValue("selected_part", data?.part_type);
-			setPartFormValue("part_number", data?.part_number);
-			setPartFormValue("available_quantity", String(data?.quantity) ?? "");
-			setPartFormValue("min_stock_quantity", String(data?.min_quantity) ?? "");
-			setPartFormValue("unit_cost", String(data?.cost) ?? "");
-			setPartFormValue("uom", data?.unit);
+		const partTypeValue = editData.partTypeData ?? editData.part_type ?? editData.partType;
+		if (!partTypeValue?.name && !partTypes.length) return;
+		const partTypeId = getEntityId(partTypeValue);
+		const partTypeName = partTypeValue?.name
+			?? partTypes.find((part) => part.id === partTypeId || part.name === partTypeId)?.name
+			?? "";
+		const location = editData.location
+			?? (editData.location_id ? { id: getEntityId(editData.location_id) } : null);
 
-			// finally mark as loaded ONCE
-			setPartFormValue("isLoaded", true);
-		}
-	}, [params]);
+		setPartId(getEntityId(editData));
+		setPartFormValue("part_name", toFormString(editData.part_name));
+		setPartFormValue("description", toFormString(editData.description));
+		setPartFormValue("location", location);
+		setPartFormValue("selected_part", partTypeName);
+		setPartFormValue("part_number", toFormString(editData.part_number));
+		setPartFormValue("available_quantity", toFormString(editData.quantity));
+		setPartFormValue("min_stock_quantity", toFormString(editData.min_quantity));
+		setPartFormValue("unit_cost", toFormString(editData.cost));
+		setPartFormValue("uom", toFormString(editData.unit));
+		setPartFormValue("isLoaded", true);
+	}, [editData, isLoaded, partTypes, setPartFormValue]);
 
 
 	const handleSubmit = async () => {
@@ -103,10 +121,14 @@ export default function CreatePart() {
 		}
 
 		// ✅ Prepare payload for API
+		const selectedPartType = partTypes.find((part) =>
+			part.name === data.selected_part || part.id === getEntityId(data.selected_part)
+		);
+		const originalPartType = editData?.partTypeData ?? editData?.part_type ?? editData?.partType;
 		const payload = {
 			part_name: data.part_name.trim(),
 			part_number: data.part_number.trim(),
-			part_type: partTypes.find((part: any) => part.name === data.selected_part)?.id || "",
+			part_type: selectedPartType?.id || getEntityId(originalPartType),
 			description: data.description.trim(),
 			quantity: Number(data.available_quantity) || 0,
 			min_quantity: Number(data.min_stock_quantity) || 0,
@@ -119,15 +141,21 @@ export default function CreatePart() {
 		console.log("📦 Final Payload:", payload);
 
 		try {
-			if (params && params.data) {
-				const res = await updateFullPart(partId, payload);
+			if (isEdit) {
+				const updateId = partId || getEntityId(editData);
+				if (!updateId) {
+					ToastAndroid.show("Unable to identify this part", ToastAndroid.SHORT);
+					return;
+				}
+
+				const res = await updateFullPart(updateId, payload);
 				console.log("✅ Response:", res);
 				if (res?.status) {
 					ToastAndroid.show("Part updated successfully!", ToastAndroid.SHORT);
 					usePartFormStore.getState().resetPartForm();
 					router.back();
 				} else {
-					ToastAndroid.show("Failed to update part!", ToastAndroid.SHORT);
+					ToastAndroid.show(res?.message || "Failed to update part!", ToastAndroid.SHORT);
 				}
 			} else {
 				const res = await createPart(payload);
@@ -140,9 +168,12 @@ export default function CreatePart() {
 					ToastAndroid.show("Failed to create part!", ToastAndroid.SHORT);
 				}
 			}
-		} catch (error) {
-			console.error("❌ Error creating part:", error);
-			ToastAndroid.show("Failed to create part!", ToastAndroid.SHORT);
+		} catch (error: any) {
+			console.error(`Error ${isEdit ? "updating" : "creating"} part:`, error);
+			const errorMessage = error?.response?.data?.message
+				|| error?.message
+				|| `Failed to ${isEdit ? "update" : "create"} part!`;
+			ToastAndroid.show(errorMessage, ToastAndroid.SHORT);
 		}
 	};
 
