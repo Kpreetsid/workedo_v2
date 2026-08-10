@@ -17,6 +17,39 @@ const normalizeStatus = (value?: string | null) =>
 
 const normalizeRole = (value?: string | null) => String(value || "").trim().toLowerCase();
 
+const decodeHtmlEntity = (entity: string, code?: string, hexCode?: string) => {
+  const namedEntities: Record<string, string> = {
+    amp: "&",
+    apos: "'",
+    gt: ">",
+    lt: "<",
+    nbsp: " ",
+    quot: '"',
+  };
+
+  if (code || hexCode) {
+    const value = Number.parseInt(code ?? hexCode ?? "", hexCode ? 16 : 10);
+    return Number.isFinite(value) && value >= 0 && value <= 0x10ffff
+      ? String.fromCodePoint(value)
+      : entity;
+  }
+
+  return namedEntities[entity.slice(1, -1).toLowerCase()] ?? entity;
+};
+
+export const formatWorkRequestDescription = (value?: string | null) =>
+  String(value || "")
+    .replace(/&(?:#(\d+)|#x([\da-f]+)|amp|apos|gt|lt|nbsp|quot);/gi, decodeHtmlEntity)
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "")
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/\s*(?:p|div|li|h[1-6]|tr|blockquote|ul|ol)\s*>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+
 export const getRequestLinkedWorkOrder = (request?: WorkRequest | null) => {
   if (!request) return null;
   return request.converted_work_order_id || null;

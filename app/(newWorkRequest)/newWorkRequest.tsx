@@ -13,6 +13,7 @@ import { FormField } from "@/components/global/FormField";
 import { Image } from "expo-image";
 import { endpoints } from "@/src/api/endpoints";
 import { WorkRequest } from "@/src/types/workRequest";
+import { formatWorkRequestDescription } from "@/src/utils/workRequestLifecycle";
 
 export default function NewWorkRequest() {
 	const router = useRouter();
@@ -70,7 +71,7 @@ export default function NewWorkRequest() {
 		if (!initialized && data.passedData) {
 			setRequestId(data?.passedData?.id);
 			setWorkRequestForm("title", data?.passedData?.title);
-			setWorkRequestForm("message", data?.passedData?.description);
+			setWorkRequestForm("message", formatWorkRequestDescription(data?.passedData?.description));
 			setWorkRequestForm("location", data?.passedData?.location_id);
 			setWorkRequestForm("selected_asset", data?.passedData?.asset_id);
 			setWorkRequestForm("nature_of_work", data?.passedData?.problemType ?? null);

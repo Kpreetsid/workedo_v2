@@ -23,6 +23,7 @@ import {
 	canRejectRequest,
 	formatRequestDateTime,
 	formatRequestUserLabel,
+	formatWorkRequestDescription,
 	getWorkRequestGovernanceLabel,
 	getWorkRequestGovernanceState,
 	getWorkRequestStage,
@@ -164,6 +165,7 @@ export default function WorkRequestDetail() {
 	const handleCreateWorkOrder = () => {
 		const payload = {
 			...workRequestData,
+			description: formatWorkRequestDescription(workRequestData?.description),
 			sourceType: "work-request",
 			work_request_id: workRequestData?.id,
 			createdFrom: "Work Request",
@@ -312,7 +314,9 @@ export default function WorkRequestDetail() {
 
 				<View style={styles.sectionCard}>
 					<Text style={styles.sectionTitle}>Description</Text>
-					<Text style={styles.descriptionText}>{workRequestData?.description || "No description available."}</Text>
+					<Text style={styles.descriptionText}>
+						{formatWorkRequestDescription(workRequestData?.description) || "No description available."}
+					</Text>
 				</View>
 
 				{linkedWorkOrder?.id ? (
