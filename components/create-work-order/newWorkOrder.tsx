@@ -102,24 +102,6 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 	const procedureIds = useWorkOrderStore((state) => state.procedure_ids);
 	const workOrderLocation = useWorkOrderStore((state) => state.location);
 	const selectedAsset = useWorkOrderStore((state) => state.selected_asset);
-	const titleDraft = useWorkOrderStore((state) => state.title);
-	const messageDraft = useWorkOrderStore((state) => state.message);
-	const assignedUsersDraft = useWorkOrderStore((state) => state.assigned_users);
-	const hasDraft = useMemo(
-		() =>
-			Boolean(
-				titleDraft ||
-				messageDraft ||
-				workOrderLocation ||
-				selectedAsset ||
-				assignedUsersDraft.length ||
-				manualParts.length ||
-				selectedProcedures.length ||
-				attachments.length
-			),
-		[assignedUsersDraft.length, attachments.length, manualParts.length, messageDraft, selectedAsset, selectedProcedures.length, titleDraft, workOrderLocation]
-	);
-
 	const locationId = resolveEntityId(workOrderLocation);
 	const resolvedParts = useMemo(
 		() => buildResolvedWorkOrderParts(manualParts, selectedProcedures),
@@ -128,6 +110,9 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 
 	useEffect(() => {
 		if (passedData) {
+			// Editing, follow-up creation, and request conversion must start from
+			// their explicit source rather than any previously persisted draft.
+			resetForm();
 			const data = passedData as WorkOrder & { procedures?: ProcedureTemplate[] };
 			const isWorkRequestSource =
 				(data as any)?.sourceType === "work-request" ||
@@ -188,7 +173,7 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 
 			setWorkForm("isLoaded", true);
 		}
-	}, [isFollowUpMode, passedData, setWorkForm]);
+	}, [isFollowUpMode, passedData, resetForm, setWorkForm]);
 
 	const mapUserToLocationFunc = async (targetLocationId: string, selectedUsers: any[] = []) => {
 		try {
@@ -453,20 +438,6 @@ export default function NewWorkOrder({ passedData }: WorkOrderProps) {
 	return (
 		<KeyboardAwareScrollView bottomOffset={30}>
 			<ScrollView style={styles.container}>
-				{!passedData && hasDraft ? (
-					<View style={styles.draftBanner}>
-						<View style={{ flex: 1 }}>
-							<Text style={styles.draftBannerTitle}>Draft restored</Text>
-							<Text style={styles.draftBannerText}>
-								Your unsaved work order is still here. Continue editing or clear it and start a fresh job.
-							</Text>
-						</View>
-						<TouchableOpacity onPress={resetForm} style={styles.draftBannerAction}>
-							<Text style={styles.draftBannerActionText}>Clear</Text>
-						</TouchableOpacity>
-					</View>
-				) : null}
-
 				{isFollowUpMode ? (
 					<View style={styles.followUpBanner}>
 						<View style={styles.followUpBannerIconWrap}>
@@ -710,42 +681,6 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		backgroundColor: "#f9f9ff",
-	},
-	draftBanner: {
-		marginHorizontal: 20,
-		marginTop: 16,
-		marginBottom: 8,
-		padding: 14,
-		borderRadius: 12,
-		backgroundColor: "#EFF6FF",
-		borderWidth: 0.8,
-		borderColor: "#BFDBFE",
-		flexDirection: "row",
-		gap: 12,
-		alignItems: "flex-start",
-	},
-	draftBannerTitle: {
-		fontSize: 11,
-		fontFamily: Fonts.semiBold,
-		color: "#1D4ED8",
-	},
-	draftBannerText: {
-		marginTop: 4,
-		fontSize: 11,
-		lineHeight: 16,
-		fontFamily: Fonts.regular,
-		color: "#475569",
-	},
-	draftBannerAction: {
-		paddingVertical: 6,
-		paddingHorizontal: 10,
-		borderRadius: 999,
-		backgroundColor: "#DBEAFE",
-	},
-	draftBannerActionText: {
-		fontSize: 10,
-		fontFamily: Fonts.semiBold,
-		color: "#1D4ED8",
 	},
 	subContainer: {
 		backgroundColor: "#f9f9ff",

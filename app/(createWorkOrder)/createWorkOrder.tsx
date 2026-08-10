@@ -1,10 +1,11 @@
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useState } from 'react'
+import React, { useLayoutEffect, useState } from 'react'
 import { SceneMap, TabView } from 'react-native-tab-view'
 import Header from '@/components/global/Header';
 import NewWorkOrder from '@/components/create-work-order/newWorkOrder';
 import FormsScreen from '@/components/create-work-order/FormsScreen';
 import { useLocalSearchParams } from 'expo-router';
+import { useWorkOrderStore } from '@/src/store/useWorkOrderStore';
 
 const GeneralInfo = ({ data }: any) => (
 	<View style={styles.scene}>
@@ -22,7 +23,16 @@ const createWorkOrder = () => {
 	const layout = Dimensions.get("window");
 	const params: any = useLocalSearchParams();
 	const parsedData = params?.data ? JSON.parse(params.data) : null;
+	const resetForm = useWorkOrderStore((state) => state.resetForm);
 	const [index, setIndex] = useState(0);
+
+	useLayoutEffect(() => {
+		// A route without source data is a genuinely new work order. Reset once
+		// here so selector screens can still return to this mounted draft safely.
+		if (!params?.data) {
+			resetForm();
+		}
+	}, [params?.data, resetForm]);
 
 	const [routes] = useState([
 		{ key: "general", title: "General Info" },
