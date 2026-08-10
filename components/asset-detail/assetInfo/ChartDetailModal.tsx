@@ -10,6 +10,7 @@ import {
 	TextInput,
 	ToastAndroid,
 	type GestureResponderEvent,
+	useWindowDimensions,
 } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { WebView } from "react-native-webview";
@@ -74,7 +75,8 @@ export default function ChartDetailModal({
 	asset_data,
 }: ChartDetailModalProps) {
 	console.log('selectedPoint on modal = ', selectedPoint)
-	const [orientation, setOrientation] = useState("portrait");
+	const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+	const isLandscape = windowWidth > windowHeight;
 
 	const [analyzeLoading, setAnalyzeLoading] = useState(false);
 
@@ -130,6 +132,18 @@ export default function ChartDetailModal({
 	useEffect(() => {
 		setSignalType(resolveSignalType(selectedSignal));
 	}, [selectedSignal]);
+
+	useEffect(() => {
+		if (!visible) return;
+
+		const resizeTimer = setTimeout(() => {
+			const resizeScript = "window.dispatchEvent(new Event('resize')); true;";
+			accWebRef.current?.injectJavaScript(resizeScript);
+			envWebRef.current?.injectJavaScript(resizeScript);
+		}, 150);
+
+		return () => clearTimeout(resizeTimer);
+	}, [visible, windowHeight, windowWidth]);
 
 	// ---------------------------
 	// BUILD PAYLOAD
@@ -371,17 +385,11 @@ export default function ChartDetailModal({
 	}
 
 	const toggleOrientation = async () => {
-		console.log(await ScreenOrientation.getOrientationAsync())
-
-		let current_orientation = await ScreenOrientation.getOrientationAsync();
-
-		if (current_orientation === 1) {
-			setOrientation("landscape");
+		if (!isLandscape) {
 			await ScreenOrientation.lockAsync(
 				ScreenOrientation.OrientationLock.LANDSCAPE
 			);
 		} else {
-			setOrientation("portrait");
 			await ScreenOrientation.lockAsync(
 				ScreenOrientation.OrientationLock.PORTRAIT
 			);
@@ -546,7 +554,7 @@ export default function ChartDetailModal({
 			animationType="slide"
 			onRequestClose={onClose}
 		>
-			<Pressable style={styles.backdrop} onPress={handleOutsideChartPress}>
+			<View style={styles.backdrop} onTouchEnd={handleOutsideChartPress}>
 				<Header
 					title={activeTab === "time" ? "Time Waveform" : "Spectrum"}
 					modal={true}
@@ -556,18 +564,20 @@ export default function ChartDetailModal({
 					showOrientation={true}
 					toggleOrientation={toggleOrientation}
 					styling={{
-						paddingVertical: orientation === "landscape" ? 4 : 15
+						paddingVertical: isLandscape ? 4 : 15
 					}}
 				/>
-					<ScrollView
+				<ScrollView
 						style={styles.container}
 						contentContainerStyle={styles.containerContent}
-						showsVerticalScrollIndicator={false}
+						showsVerticalScrollIndicator={isLandscape}
 						nestedScrollEnabled
+						keyboardDismissMode="on-drag"
+						keyboardShouldPersistTaps="handled"
 					>
 					{/* Tabs */}
 
-					<View style={[styles.tabRow, orientation === "landscape" && { padding: 2 }]}>
+					<View style={[styles.tabRow, isLandscape && styles.tabRowLandscape]}>
 						<Pressable
 							onPress={() => {
 								setStart("")
@@ -616,7 +626,7 @@ export default function ChartDetailModal({
 						width: '90%',
 						justifyContent: 'center',
 						alignItems: 'center',
-						flexDirection: orientation === "landscape" ? "row" : "column",
+						flexDirection: isLandscape ? "row" : "column",
 						gap: 10,
 					}}>
 
@@ -628,7 +638,7 @@ export default function ChartDetailModal({
 						/>
 
 						{
-							orientation === "landscape" && <View style={{ width: 2, height: 20, backgroundColor: "#d3d3d3" }} />
+							isLandscape && <View style={{ width: 2, height: 20, backgroundColor: "#d3d3d3" }} />
 						}
 
 						<SegmentedCheckboxRow
@@ -853,7 +863,7 @@ export default function ChartDetailModal({
 						)}
 					</View>
 				</ScrollView>
-			</Pressable>
+			</View>
 		</Modal >
 	);
 }
@@ -882,6 +892,10 @@ const styles = StyleSheet.create({
 		borderBottomWidth: 1,
 		borderBottomColor: "#eee",
 		padding: 16,
+	},
+	tabRowLandscape: {
+		paddingHorizontal: 16,
+		paddingVertical: 2,
 	},
 	tab: {
 		flex: 1,
