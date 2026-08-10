@@ -13,6 +13,11 @@ import { createPart, getPartTypes, updateFullPart, updatePart } from "@/src/serv
 import { FormField } from "@/components/global/FormField";
 import LocationPickerModal from "@/components/create-work-order/LocationPickerModal";
 
+type PartTypeOption = {
+	id: string;
+	name: string;
+};
+
 export default function CreatePart() {
 	const params: any = useLocalSearchParams();
 	console.log('params = ', params);
@@ -25,7 +30,7 @@ export default function CreatePart() {
 	const [partId, setPartId] = useState("");
 	const { setPartFormValue, resetPartForm, isLoaded } = usePartFormStore();
 
-	const [partTypes, setPartTypes] = useState([]);
+	const [partTypes, setPartTypes] = useState<PartTypeOption[]>([]);
 	const [selectedPartTypeId, setSelectedPartTypeId] = useState("");
 
 	useEffect(() => {
@@ -129,7 +134,8 @@ export default function CreatePart() {
 				console.log("✅ Response:", res);
 				if (res?.status) {
 					ToastAndroid.show("Part created successfully!", ToastAndroid.SHORT);
-					router.back();
+					usePartFormStore.getState().resetPartForm();
+					router.dismissTo("/partsInventory");
 				} else {
 					ToastAndroid.show("Failed to create part!", ToastAndroid.SHORT);
 				}
