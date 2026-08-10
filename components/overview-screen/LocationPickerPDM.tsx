@@ -80,6 +80,24 @@ export default function LocationPickerPDM({
 		});
 	};
 
+	const allLocationsSelected = locations.length > 0 && locations.every((node) =>
+		selectedLocationsLocal.some((location) => location.id === node.id)
+	);
+
+	const handleSelectAll = () => {
+		if (allLocationsSelected) {
+			setSelectedLocationsLocal([]);
+			return;
+		}
+
+		setSelectedLocationsLocal(
+			locations.map((node) => ({
+				id: node.id,
+				location_name: node.location_name,
+			}))
+		);
+	};
+
 	const onSave = () => {
 		if (!selectedLocationsLocal.length) {
 			onClose();
@@ -158,13 +176,28 @@ export default function LocationPickerPDM({
 						loading && <ActivityIndicator size={"small"} />
 					}
 
+					{!loading && locations.length > 0 && (
+						<TouchableOpacity style={styles.selectAllRow} onPress={handleSelectAll}>
+							<View style={styles.checkboxContainer}>
+								<View style={[styles.checkboxOutline, allLocationsSelected && styles.checkboxChecked]}>
+									{allLocationsSelected && <Ionicons name="checkmark" size={12} color="#fff" />}
+								</View>
+							</View>
+							<Text style={styles.selectAllText}>Select All</Text>
+						</TouchableOpacity>
+					)}
+
 					<ScrollView showsVerticalScrollIndicator={false}>
 						{locations.map((node) => renderNode(node))}
 					</ScrollView>
 
 					{/* Buttons */}
 					<View style={styles.footer}>
-						<TouchableOpacity style={styles.saveBtn} onPress={onSave}>
+						<TouchableOpacity
+							style={[styles.saveBtn, !selectedLocationsLocal.length && styles.saveBtnDisabled]}
+							onPress={onSave}
+							disabled={!selectedLocationsLocal.length}
+						>
 							<Text style={styles.saveText}>Save</Text>
 						</TouchableOpacity>
 						<TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
@@ -224,6 +257,23 @@ const styles = StyleSheet.create({
 		justifyContent: "center",
 		alignItems: "center"
 	},
+	checkboxChecked: {
+		backgroundColor: "#742BDE",
+		borderColor: "transparent",
+	},
+	selectAllRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		paddingVertical: 8,
+		borderBottomWidth: StyleSheet.hairlineWidth,
+		borderBottomColor: "#E5E7EB",
+		marginBottom: 4,
+	},
+	selectAllText: {
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
+		color: "#222",
+	},
 	nodeText: {
 		fontSize: 12,
 		fontFamily: Fonts.regular,
@@ -239,6 +289,9 @@ const styles = StyleSheet.create({
 		paddingVertical: 10,
 		paddingHorizontal: 25,
 		borderRadius: 8
+	},
+	saveBtnDisabled: {
+		opacity: 0.45,
 	},
 	saveText: { color: "#fff", fontSize: 14, fontFamily: Fonts.regular },
 	cancelBtn: {

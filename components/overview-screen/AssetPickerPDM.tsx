@@ -54,6 +54,14 @@ export default function AssetPickerPDM
 		});
 	};
 
+	const allAssetsSelected = parentAssets.length > 0 && parentAssets.every((asset) =>
+		selectedIdsLocal.includes(asset.id)
+	);
+
+	const handleSelectAll = () => {
+		setSelectedIdsLocal(allAssetsSelected ? [] : parentAssets.map((asset) => asset.id));
+	};
+
 	const onSave = () => {
 		if (!selectedIdsLocal.length) {
 			onClose();
@@ -116,13 +124,28 @@ export default function AssetPickerPDM
 
 					<View style={styles.separator} />
 
+					{parentAssets.length > 0 && (
+						<TouchableOpacity style={styles.selectAllRow} onPress={handleSelectAll}>
+							<View style={styles.checkboxContainer}>
+								<View style={[styles.checkboxOutline, allAssetsSelected && styles.checkboxChecked]}>
+									{allAssetsSelected && <Ionicons name="checkmark" size={12} color="#fff" />}
+								</View>
+							</View>
+							<Text style={styles.selectAllText}>Select All</Text>
+						</TouchableOpacity>
+					)}
+
 					<ScrollView showsVerticalScrollIndicator={false}>
 						{parentAssets.map((node) => renderNode(node))}
 					</ScrollView>
 
 					{/* Buttons */}
 					<View style={styles.footer}>
-						<TouchableOpacity style={styles.saveBtn} onPress={onSave}>
+						<TouchableOpacity
+							style={[styles.saveBtn, !selectedIdsLocal.length && styles.saveBtnDisabled]}
+							onPress={onSave}
+							disabled={!selectedIdsLocal.length}
+						>
 							<Text style={styles.saveText}>Save</Text>
 						</TouchableOpacity>
 						<TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
@@ -182,6 +205,23 @@ const styles = StyleSheet.create({
 		justifyContent: "center",
 		alignItems: "center"
 	},
+	checkboxChecked: {
+		backgroundColor: "#742BDE",
+		borderColor: "transparent",
+	},
+	selectAllRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		paddingVertical: 8,
+		borderBottomWidth: StyleSheet.hairlineWidth,
+		borderBottomColor: "#E5E7EB",
+		marginBottom: 4,
+	},
+	selectAllText: {
+		fontSize: 12,
+		fontFamily: Fonts.semiBold,
+		color: "#222",
+	},
 	nodeText: {
 		fontSize: 12,
 		fontFamily: Fonts.regular,
@@ -197,6 +237,9 @@ const styles = StyleSheet.create({
 		paddingVertical: 10,
 		paddingHorizontal: 25,
 		borderRadius: 8
+	},
+	saveBtnDisabled: {
+		opacity: 0.45,
 	},
 	saveText: { color: "#fff", fontSize: 14, fontFamily: Fonts.regular },
 	cancelBtn: {
